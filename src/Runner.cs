@@ -171,7 +171,7 @@ public class Runner : IDisposable
 	private string GetGuessPath()
 	{
 		// Attempt to use the user-specified override, if one is set.
-		if (Configuration.Instance.CustomExecutable != null)
+		if (!string.IsNullOrWhiteSpace(Configuration.Instance.CustomExecutable))
 		{
 			if (!File.Exists(Configuration.Instance.CustomExecutable))
 				throw new Exception($"Custom executable is set to '{Configuration.Instance.CustomExecutable}', but this file does not exist.");

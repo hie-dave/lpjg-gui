@@ -44,13 +44,13 @@ public class Configuration
 	/// Path to a custom guess executable. If not set, the current directory
 	/// and then PATH will be searched.
 	/// </summary>
-	[UI("Custom guess executable")]
+	[FileName("Custom guess executable")]
 	public string? CustomExecutable { get; set; }
 
 	/// <summary>
-	/// True to prefer dark mode. If not set, will use system-wide default.
+	/// True to prefer dark mode. False to use system theme.
 	/// </summary>
-	[UI("Dark mode")]
+	[UI("Prefer dark mode")]
 	public bool PreferDarkMode { get; set; }
 
 	/// <summary>
@@ -96,6 +96,10 @@ public class Configuration
 		return LoadFrom(GetConfigPath());
 	}
 
+	/// <summary>
+	/// Load configuration from the specified file.
+	/// </summary>
+	/// <param name="file">Configuration file to be read.</param>
 	private static Configuration LoadFrom(string file)
 	{
 		try

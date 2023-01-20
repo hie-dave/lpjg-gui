@@ -6,7 +6,7 @@ namespace LpjGuess.Frontend.Presenters;
 /// Base class for all presenters.
 /// </summary>
 /// <typeparam name="TView"></typeparam>
-public abstract class PresenterBase<TView> : IPresenter
+public abstract class PresenterBase<TView> : IPresenter<TView>
 	where TView : IView
 {
 	/// <summary>
@@ -15,17 +15,16 @@ public abstract class PresenterBase<TView> : IPresenter
 	protected readonly TView view;
 
 	/// <summary>
-	/// Constructor for this presenter.
+	/// Create a new <see cref="PresenterBase{TView}"/> instance.
 	/// </summary>
-	/// <param name="view"></param>
-	/// <param name="model"></param>
+	/// <param name="view">The view.</param>
 	public PresenterBase(TView view)
 	{
 		this.view = view;
 	}
 
 	/// <inheritdoc />
-	public IView GetView() => view;
+	public TView GetView() => view;
 
 	/// <summary>
 	/// Dispose of native resources.

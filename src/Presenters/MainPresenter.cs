@@ -23,7 +23,12 @@ public class MainPresenter
 	/// <summary>
 	/// The current child presenter.
 	/// </summary>
-	private IPresenter child;
+	private IPresenter<IView> child;
+
+	/// <summary>
+	/// Presenter for the preferences dialog.
+	/// </summary>
+	private readonly PropertiesPresenter propertiesPresenter;
 
 	/// <summary>
 	/// Create a new <see cref="MainPresenter"/> instance connected to the
@@ -42,6 +47,9 @@ public class MainPresenter
 		view.SetChild(child.GetView());
 
 		view.SetTitle(defaultTitle);
+
+
+		propertiesPresenter = new PropertiesPresenter(view, Configuration.Instance, OnPreferencesClosed);
 	}
 
 	/// <summary>
@@ -70,7 +78,15 @@ public class MainPresenter
 	/// </summary>
 	private void OnPreferences()
 	{
-		throw new NotImplementedException();
+		propertiesPresenter.Show();
+	}
+
+	/// <summary>
+	/// User has closed the preferences dialog. Save preferences to disk.
+	/// </summary>
+	private void OnPreferencesClosed()
+	{
+		Configuration.Instance.Save();
 	}
 
 	/// <summary>

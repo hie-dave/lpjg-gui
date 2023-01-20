@@ -7,7 +7,7 @@ namespace LpjGuess.Frontend.Presenters;
 /// A presenter for a view which displays an instruction file. This presenter
 /// handles logic for running the file or aborting an ongoing run.
 /// </summary>
-public class FilePresenter : IPresenter
+public class FilePresenter : IPresenter<IFileView>
 {
 	/// <summary>
 	/// The instruction file for which this presenter is responsible.
@@ -50,10 +50,7 @@ public class FilePresenter : IPresenter
 	}
 
 	/// <inheritdoc />
-	public IView GetView()
-	{
-		return view;
-	}
+	public IFileView GetView() => view;
 
 	/// <summary>
 	/// User has clicked the 'run' button.
