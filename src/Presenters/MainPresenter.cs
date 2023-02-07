@@ -48,7 +48,6 @@ public class MainPresenter
 
 		view.SetTitle(defaultTitle);
 
-
 		propertiesPresenter = new PropertiesPresenter(view, Configuration.Instance, OnPreferencesClosed);
 	}
 
@@ -94,6 +93,6 @@ public class MainPresenter
 	/// </summary>
 	private void OnAbout()
 	{
-		throw new NotImplementedException();
+		new AboutView(view).Show();
 	}
 }

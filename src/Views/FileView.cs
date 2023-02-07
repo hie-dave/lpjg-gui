@@ -74,6 +74,11 @@ public class FileView : Box, IFileView
 	private readonly TextView output;
 
 	/// <summary>
+	/// ScrolledWindow containing the lpj-guess output TextView widget.
+	/// </summary>
+	private readonly ScrolledWindow outputScroller;
+
+	/// <summary>
 	/// The TextView API is currently quite limited, so I'm using a separate
 	/// StringBuilder to track the contents of the output TextView.
 	/// </summary>
@@ -130,7 +135,7 @@ public class FileView : Box, IFileView
 
 		output = new TextView();
 		output.Monospace = true;
-		ScrolledWindow outputScroller = new ScrolledWindow();
+		outputScroller = new ScrolledWindow();
 		outputScroller.Child = output;
 
 		notebook = new Notebook();
@@ -180,11 +185,23 @@ public class FileView : Box, IFileView
 			outputContents.AppendLine(stdout);
 		GLib.Functions.IdleAddFull(0, _ =>
 		{
+			Adjustment? adj = outputScroller.Vadjustment;
+			double scroll = adj?.Value ?? 0;
 			string text;
 			lock (outputContents)
 				text = outputContents.ToString();
 			output.Show();
 			output.GetBuffer().SetText(text, Encoding.UTF8.GetByteCount(text));
+			// If scrolled window is at bottom of screen, scroll to bottom.
+			// Otherwise, scroll to previous scroll position. This should be
+			// refactored once the gircore API includes TextIter methods.
+			if (adj != null)
+			{
+				if (scroll >= (adj.Upper - adj.PageSize))
+					scroll = adj.Upper;
+				Console.WriteLine($"Setting vadj to {scroll} (pos = {adj.Value}, last page cutoff = {adj.Upper - adj.PageSize})");
+				adj.Value = scroll;
+			}
 			return false;
 		});
 	}
