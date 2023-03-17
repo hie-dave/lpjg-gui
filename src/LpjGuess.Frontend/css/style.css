@@ -1,0 +1,13 @@
+#run-btn {
+	border-top-right-radius: 0px;
+	border-bottom-right-radius: 0px;
+	border-right-style: none;
+	border-right-width: 0px;
+}
+
+#run-opts {
+	border-top-left-radius: 0px;
+	border-bottom-left-radius: 0px;
+	border-left-style: solid;
+	border-left-width: 1px;
+}

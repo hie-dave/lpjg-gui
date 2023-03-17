@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LpjGuess.Frontend", "LpjGuess.Frontend\LpjGuess.Frontend.csproj", "{1FAB6791-3C65-4CFD-A1E1-8291355EDE83}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LpjGuess.Core", "LpjGuess.Core\LpjGuess.Core.csproj", "{809336B2-B975-4084-84EB-1D2BE5814DE2}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1FAB6791-3C65-4CFD-A1E1-8291355EDE83}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1FAB6791-3C65-4CFD-A1E1-8291355EDE83}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1FAB6791-3C65-4CFD-A1E1-8291355EDE83}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1FAB6791-3C65-4CFD-A1E1-8291355EDE83}.Release|Any CPU.Build.0 = Release|Any CPU
+		{809336B2-B975-4084-84EB-1D2BE5814DE2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{809336B2-B975-4084-84EB-1D2BE5814DE2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{809336B2-B975-4084-84EB-1D2BE5814DE2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{809336B2-B975-4084-84EB-1D2BE5814DE2}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
