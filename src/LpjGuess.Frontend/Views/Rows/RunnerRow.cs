@@ -11,6 +11,11 @@ namespace LpjGuess.Frontend.Views.Rows;
 internal class RunnerRow : IDisposable
 {
 	/// <summary>
+	/// Index of this row which will be passed into the callback functions.
+	/// </summary>
+	private readonly int index;
+
+	/// <summary>
 	/// A button which allows the user to edit the runner configuration.
 	/// </summary>
 	private readonly Button editButton;
@@ -33,34 +38,39 @@ internal class RunnerRow : IDisposable
 	/// <summary>
 	/// Called when the user wants to edit this runner.
 	/// </summary>
-	public Event OnEdit { get; private init; }
+	public Event<int> OnEdit { get; private init; }
 
 	/// <summary>
 	/// Called when the user wants to delete this runner.
 	/// </summary>
-	public Event OnDelete { get; private init; }
+	public Event<int> OnDelete { get; private init; }
 
 	/// <summary>
 	/// Called when the user wants to toggle this runner's IsDefault status.
 	/// </summary>
-	public Event OnDefault { get; private init; }
+	public Event<int> OnDefault { get; private init; }
 
 	/// <summary>
 	/// Create a new <see cref="RunnerRow"/> instance.
 	/// </summary>
 	/// <param name="name">Name of this runner.</param>
+	/// <param name="index">Index of this runner which will be passed to the callback functions.</param>
 	/// <param name="isDefault">Is this the default runner?</param>
-	public RunnerRow(string name, bool isDefault)
+	public RunnerRow(string name, int index, bool isDefault)
 	{
-		OnDelete = new Event();
-		OnDefault = new Event();
-		OnEdit = new Event();
+		this.index = index;
+
+		OnDelete = new Event<int>();
+		OnDefault = new Event<int>();
+		OnEdit = new Event<int>();
 
 		editButton = new Button();
+		editButton.Valign = Align.Center;
 		editButton.IconName = Icons.Edit;
 
 		deleteButton = new Button();
 		deleteButton.IconName = Icons.Delete;
+		deleteButton.Valign = Align.Center;
 		deleteButton.AddCssClass(StyleClasses.DestructiveAction);
 
 		checkbox = new CheckButton();
@@ -119,7 +129,7 @@ internal class RunnerRow : IDisposable
 	{
 		try
 		{
-			OnDefault.Invoke();
+			OnDefault.Invoke(index);
 		}
 		catch (Exception error)
 		{
@@ -136,7 +146,7 @@ internal class RunnerRow : IDisposable
 	{
 		try
 		{
-			OnDelete.Invoke();
+			OnDelete.Invoke(index);
 		}
 		catch (Exception error)
 		{
@@ -153,7 +163,7 @@ internal class RunnerRow : IDisposable
 	{
 		try
 		{
-			OnEdit.Invoke();
+			OnEdit.Invoke(index);
 		}
 		catch (Exception error)
 		{

@@ -16,7 +16,7 @@ public class Event<T>
 	/// <param name="input">The event input parameter.</param>
 	public void Invoke(T input)
 	{
-		foreach (Action<T> handler in handlers)
+		foreach (Action<T> handler in handlers.ToList())
 			handler(input);
 	}
 

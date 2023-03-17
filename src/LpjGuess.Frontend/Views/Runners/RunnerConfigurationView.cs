@@ -56,8 +56,10 @@ public class RunnerConfigurationView : IRunnerView
 		nameRow = new EntryRow();
 		nameRow.Title = "Name";
 		nameRow.SetText(metadata.Name);
+		nameRow.ShowApplyButton = true;
 
 		isDefaultSwitch = new Switch();
+		isDefaultSwitch.Valign = Align.Center;
 		isDefaultSwitch.Active = metadata.IsDefault;
 
 		ActionRow isDefaultRow = new ActionRow();
@@ -106,6 +108,7 @@ public class RunnerConfigurationView : IRunnerView
 	/// </summary>
 	private void ConnectEvents()
 	{
+		window.OnCloseRequest += OnWindowClosed;
 		isDefaultSwitch.OnStateSet += OnToggleIsDefault;
 		nameRow.OnApply += OnNameChanged;
 	}
@@ -115,6 +118,7 @@ public class RunnerConfigurationView : IRunnerView
 	/// </summary>
 	private void DisconnectEvents()
 	{
+		window.OnCloseRequest -= OnWindowClosed;
 		isDefaultSwitch.OnStateSet += OnToggleIsDefault;
 		nameRow.OnApply += OnNameChanged;
 
@@ -149,6 +153,18 @@ public class RunnerConfigurationView : IRunnerView
 		try
 		{
 			OnToggleDefault.Invoke(args.State);
+		}
+		catch (Exception error)
+		{
+			MainView.Instance.ReportError(error);
+		}
+	}
+
+	private void OnWindowClosed(Gtk.Window sender, EventArgs args)
+	{
+		try
+		{
+			OnClose.Invoke();
 		}
 		catch (Exception error)
 		{

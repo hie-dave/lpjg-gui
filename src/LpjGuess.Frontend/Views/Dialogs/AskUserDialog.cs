@@ -3,6 +3,7 @@ using Gtk;
 using Window = Adw.Window;
 using HeaderBar = Adw.HeaderBar;
 using LpjGuess.Frontend.Utility.Gtk;
+using LpjGuess.Frontend.Delegates;
 
 namespace LpjGuess.Frontend.Views.Dialogs;
 
@@ -27,15 +28,15 @@ internal class AskUserDialog : Window
 	private readonly Button cancelButton;
 
 	/// <summary>
-	/// Function to be called when the select button is clicked. The selected
-	/// option will be returned.
-	/// </summary>
-	private readonly Action<string> onSelected;
-
-	/// <summary>
 	/// Action rows.
 	/// </summary>
 	private readonly IReadOnlyList<ActionRow> actionRows;
+
+	/// <summary>
+	/// Function to be called when the select button is clicked. The selected
+	/// option will be returned.
+	/// </summary>
+	public Event<string> OnSelected { get; private init; }
 
 	/// <summary>
 	/// Create a new <see cref="AskUserDialog"/> instance.
@@ -43,10 +44,9 @@ internal class AskUserDialog : Window
 	/// <param name="prompt">Prompt to the user (displayed as window title).</param>
 	/// <param name="acceptButtonText">Text to go on the 'accept' button.</param>
 	/// <param name="options">Valid options.</param>
-	/// <param name="onSelected">Function to be called when the select button is clicked.</param>
-	public AskUserDialog(string prompt, string acceptButtonText, IEnumerable<string> options, Action<string> onSelected)
+	public AskUserDialog(string prompt, string acceptButtonText, IEnumerable<string> options)
 	{
-		this.onSelected = onSelected;
+		OnSelected = new Event<string>();
 		Modal = true;
 		TransientFor = MainView.Instance;
 		Title = "Preferences";
@@ -65,6 +65,7 @@ internal class AskUserDialog : Window
 		foreach (string option in options)
 		{
 			ActionRow row = new ActionRow();
+			row.Activatable = true;
 			row.Title = option;
 			choicesBox.Append(row);
 			rows.Add(row);
@@ -82,6 +83,8 @@ internal class AskUserDialog : Window
 		main.Orientation = Orientation.Vertical;
 		main.Append(header);
 		main.Append(choices);
+
+		Content = main;
 
 		ConnectEvents();
 	}
@@ -117,7 +120,8 @@ internal class AskUserDialog : Window
 		Action<T> itemSelected)
 	{
 		IEnumerable<string> names = options.Select(nameSelector);
-		AskUserDialog dialog = new AskUserDialog(prompt, acceptText, names, resp =>
+		AskUserDialog dialog = new AskUserDialog(prompt, acceptText, names);
+		dialog.OnSelected.ConnectTo(resp =>
 		{
 			itemSelected(options.First(o => string.Equals(nameSelector(o), resp)));
 		});
@@ -129,7 +133,7 @@ internal class AskUserDialog : Window
 	private void ConnectEvents()
 	{
 		foreach (ActionRow row in actionRows)
-			row.OnActivated += OnSelected;
+			row.OnActivated += OnItemSelected;
 		cancelButton.OnClicked += OnCancel;
 	}
 
@@ -139,8 +143,9 @@ internal class AskUserDialog : Window
 	private void DisconnectEvents()
 	{
 		foreach (ActionRow row in actionRows)
-			row.OnActivated -= OnSelected;
+			row.OnActivated -= OnItemSelected;
 		cancelButton.OnClicked -= OnCancel;
+		OnSelected.DisconnectAll();
 	}
 
 	/// <summary>
@@ -148,14 +153,14 @@ internal class AskUserDialog : Window
 	/// </summary>
 	/// <param name="sender">Sender object.</param>
 	/// <param name="args">Event data.</param>
-	private void OnSelected(ActionRow sender, EventArgs args)
+	private void OnItemSelected(ActionRow sender, EventArgs args)
 	{
 		try
 		{
 			// This should never be null, as we assigned a title to every row.
 			string? selection = sender.Title;
 			if (selection != null)
-				onSelected(selection);
+				OnSelected.Invoke(selection);
 			Hide();
 			Dispose();
 		}

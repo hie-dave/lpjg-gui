@@ -104,10 +104,12 @@ public class PreferencesView : IPreferencesView
 	/// <inheritdoc />
 	public void PopulateRunners(IReadOnlyList<IRunnerMetadata> metadata)
 	{
+		DisconnectRunnerEvents();
 		window.Remove(runnersPage);
 		runnersPage.Dispose();
 		runnersPage = new RunnersView(metadata);
 		window.Add(runnersPage);
+		ConnectRunnerEvents();
 	}
 
 	/// <inheritdoc />
@@ -132,10 +134,7 @@ public class PreferencesView : IPreferencesView
 		darkModeButton.OnStateSet += OnToggleDarkMode;
 		window.OnCloseRequest += OnWindowClosed;
 
-		runnersPage.OnAddRunner.ConnectTo(OnAddRunner);
-		runnersPage.OnDelete.ConnectTo(OnDeleteRunner);
-		runnersPage.OnEdit.ConnectTo(OnEditRunner);
-		runnersPage.OnToggleDefault.ConnectTo(OnToggleDefaultRunner);
+		ConnectRunnerEvents();
 	}
 
 	/// <summary>
@@ -147,6 +146,29 @@ public class PreferencesView : IPreferencesView
 		window.OnCloseRequest -= OnWindowClosed;
 		DarkModeChanged.DisconnectAll();
 		OnClose.DisconnectAll();
+		DisconnectRunnerEvents();
+	}
+
+	/// <summary>
+	/// Connect all events on the runner page.
+	/// </summary>
+	private void ConnectRunnerEvents()
+	{
+		runnersPage.OnAddRunner.ConnectTo(OnAddRunner);
+		runnersPage.OnDelete.ConnectTo(OnDeleteRunner);
+		runnersPage.OnEdit.ConnectTo(OnEditRunner);
+		runnersPage.OnToggleDefault.ConnectTo(OnToggleDefaultRunner);
+	}
+
+	/// <summary>
+	/// Disconnect all events from the runner page.
+	/// </summary>
+	private void DisconnectRunnerEvents()
+	{
+		runnersPage.OnAddRunner.DisconnectAll();
+		runnersPage.OnDelete.DisconnectAll();
+		runnersPage.OnEdit.DisconnectAll();
+		runnersPage.OnToggleDefault.DisconnectAll();
 	}
 
 	/// <inheritdoc />

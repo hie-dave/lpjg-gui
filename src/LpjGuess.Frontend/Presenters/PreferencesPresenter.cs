@@ -5,6 +5,7 @@ using LpjGuess.Frontend.Interfaces.Presenters;
 using LpjGuess.Frontend.Interfaces.Views;
 using LpjGuess.Frontend.Presenters.Runners;
 using LpjGuess.Frontend.Views;
+using LpjGuess.Frontend.Views.Dialogs;
 using LpjGuess.Frontend.Views.Runners;
 
 namespace LpjGuess.Frontend.Presenters;
@@ -170,6 +171,42 @@ public class PreferencesPresenter : IDialogPresenter
 	/// </summary>
 	private void OnAddRunner()
 	{
-		throw new NotImplementedException();
+		IEnumerable<string> runnerTypes = GetKnownRunnerTypes();
+		string prompt = "Select a runner type";
+		AskUserDialog dialog = new AskUserDialog(prompt, "Select", runnerTypes);
+		dialog.OnSelected.ConnectTo(OnRunnerAdded);
+		dialog.Run();
+	}
+
+	/// <summary>
+	/// Called when the user has added a new runner.
+	/// </summary>
+	/// <param name="name">The new runner name.</param>
+	private void OnRunnerAdded(string name)
+	{
+		IRunnerConfiguration runner = CreateRunnerConfiguration(name);
+		Configuration.Instance.Runners.Add(runner);
+		UpdateRunners();
+		OnEditRunner(Configuration.Instance.Runners.Count - 1);
+	}
+
+	/// <summary>
+	/// Enumerate the names of all known runners.
+	/// </summary>
+	private static IEnumerable<string> GetKnownRunnerTypes()
+	{
+		yield return "Local";
+	}
+
+	/// <summary>
+	/// Create a runner configuration object from a runner type name.
+	/// </summary>
+	/// <param name="name">Name of the runner configuration type.</param>
+	private IRunnerConfiguration CreateRunnerConfiguration(string name)
+	{
+		// fixme
+		if (name == "Local")
+			return new LocalRunnerConfiguration("", "New Local Runner");
+		throw new InvalidOperationException($"Unknown runner type: {name}");
 	}
 }

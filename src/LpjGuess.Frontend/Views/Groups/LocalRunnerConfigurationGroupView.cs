@@ -2,6 +2,7 @@ using Adw;
 using Gtk;
 using LpjGuess.Core.Runners.Configuration;
 using LpjGuess.Frontend.Delegates;
+using LpjGuess.Frontend.Extensions;
 using LpjGuess.Frontend.Interfaces.Views;
 using LpjGuess.Frontend.Views.Rows;
 
@@ -30,7 +31,7 @@ internal class LocalRunnerConfigurationGroupView : IGroupView
 	/// <summary>
 	/// The row containing guess executable inputs.
 	/// </summary>
-	private readonly PreferencesRow executableRow;
+	private readonly FileChooserRow executableRow;
 
 	/// <summary>
 	/// Create a new <see cref="LocalRunnerConfigurationGroupView"/> instance.
@@ -41,6 +42,7 @@ internal class LocalRunnerConfigurationGroupView : IGroupView
 		OnGuessPathChanged = new Event<string>();
 
 		executableRow = new FileChooserRow(title, guessPath, true);
+		executableRow.OnChanged.ConnectTo(OnGuessPathChanged);
 		group = new PreferencesGroup();
 		group.Add(executableRow);
 	}

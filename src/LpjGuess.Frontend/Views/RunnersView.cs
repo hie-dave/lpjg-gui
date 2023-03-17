@@ -2,6 +2,7 @@ using Adw;
 using Gtk;
 using LpjGuess.Classes;
 using LpjGuess.Frontend.Delegates;
+using LpjGuess.Frontend.Extensions;
 using LpjGuess.Frontend.Interfaces;
 using LpjGuess.Frontend.Interfaces.Views;
 using LpjGuess.Frontend.Utility.Gtk;
@@ -90,15 +91,16 @@ internal class RunnersView : PreferencesPage
 		for (int i = 0; i < metadata.Count; i++)
 		{
 			IRunnerMetadata meta = metadata[i];
-			RunnerRow row = new RunnerRow(meta.Name, meta.IsDefault);
+			RunnerRow row = new RunnerRow(meta.Name, i, meta.IsDefault);
 			rows.Add(row);
 			runnersGroup.Add(row.Row);
 
-			row.OnEdit.ConnectTo(() => OnEdit.Invoke(i));
-			row.OnDelete.ConnectTo(() => OnDelete.Invoke(i));
-			row.OnDefault.ConnectTo(() => OnToggleDefault.Invoke(i));
+			row.OnEdit.ConnectTo(OnEdit);
+			row.OnDelete.ConnectTo(OnDelete);
+			row.OnDefault.ConnectTo(OnToggleDefault);
 		}
 		this.rows = rows;
+		Add(runnersGroup);
 
 		ConnectEvents();
 	}

@@ -33,6 +33,7 @@ internal class FileChooserRow : EntryRow
 	{
 		Title = title;
 		SetText(file);
+		ShowApplyButton = true;
 		this.filters = GetFilters(allowAnyFile, extensions);
 		OnChanged = new Event<string>();
 

@@ -24,4 +24,13 @@ public class LocalRunnerConfiguration : IRunnerConfiguration
 		GuessPath = guessPath;
 		Name = name;
 	}
+
+	/// <summary>
+	/// Constructor provided for serialisation only. Don't call this.
+	/// </summary>
+	public LocalRunnerConfiguration()
+	{
+		GuessPath = "";
+		Name = "";
+	}
 }
