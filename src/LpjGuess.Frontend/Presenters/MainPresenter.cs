@@ -94,6 +94,9 @@ public class MainPresenter
 		Configuration.Instance.Save();
 		propertiesPresenter?.Dispose();
 		propertiesPresenter = null;
+
+		if (child is FilePresenter fp)
+			fp.PopulateRunners();
 	}
 
 	/// <summary>

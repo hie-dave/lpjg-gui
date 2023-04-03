@@ -1,3 +1,5 @@
+using LpjGuess.Frontend.Delegates;
+
 namespace LpjGuess.Frontend.Interfaces;
 
 /// <summary>
@@ -28,6 +30,14 @@ public interface IFileView : IView
 	void ClearOutput();
 
 	/// <summary>
+	/// Populate the runners dropdown with the given list of options. When one
+	/// of them is activated by the user, <see cref="OnRun"/> will be invoked
+	/// with the name of the selected runner.
+	/// </summary>
+	/// <param name="runners">Runner names.</param>
+	void SetRunners(IEnumerable<string> runners);
+
+	/// <summary>
 	/// Toggle the visibility of the run/stop buttons.
 	/// </summary>
 	/// <param name="show">
@@ -35,4 +45,9 @@ public interface IFileView : IView
 	/// false, the run button will be hidden and the stop button shown.
 	/// </param>
 	void ShowRunButton(bool show);
+
+	/// <summary>
+	/// Called when the user wants to run with a specific runner.
+	/// </summary>
+	Event<string> OnRun { get; }
 }

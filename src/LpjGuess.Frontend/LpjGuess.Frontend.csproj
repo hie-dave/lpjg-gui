@@ -10,8 +10,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="GirCore.Gtk-4.0" Version="0.2.0" />
-    <PackageReference Include="GirCore.Adw-1" Version="0.2.0" />
+    <PackageReference Include="GirCore.Gtk-4.0" Version="0.3.0" />
+    <PackageReference Include="GirCore.Adw-1" Version="0.3.0" />
     <PackageReference Include="ExtendedXmlSerializer" Version="3.7.11" />
 
     <ProjectReference Include="../LpjGuess.Core/LpjGuess.Core.csproj" />

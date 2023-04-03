@@ -1,4 +1,5 @@
 using Gio;
+using GObject;
 using Gtk;
 using LpjGuess.Frontend.Views;
 using System.Reflection;
@@ -57,6 +58,12 @@ public static class GtkExtensions
 	/// <inheritdoc />
 	public static void AddMenuItem(this Menu menu, string domain, string name, Action callback, string? hotkey = null)
 	{
+		menu.AddMenuItem(domain, name, (_, __) => callback(), hotkey);
+	}
+
+	/// <inheritdoc />
+	public static void AddMenuItem(this Menu menu, string domain, string name, SignalHandler<SimpleAction, SimpleAction.ActivateSignalArgs> callback, string? hotkey = null)
+	{
 		Application app = MainView.AppInstance;
 
 		string actionName = name.ToLower().Replace(" ", "-");
@@ -64,9 +71,10 @@ public static class GtkExtensions
 
 		menu.Append($"_{name}", fullName);
 		var action = SimpleAction.New(actionName, null);
-		action.OnActivate += (_, __) => callback();
+		action.OnActivate += callback;
 		if (hotkey != null)
 			app.SetAccelsForAction(fullName, new[] { hotkey });
 		app.AddAction(action);
+		// action.Dispose();
 	}
 }

@@ -25,11 +25,6 @@ public class Configuration
 	private const string fileName = "config.xml";
 
 	/// <summary>
-	/// Index of the default runner.
-	/// </summary>
-	private int defaultRunnerIndex = -1;
-
-	/// <summary>
 	/// Load the configuration from disk the first time this class is accessed.
 	/// </summary>
 	static Configuration()
@@ -60,13 +55,6 @@ public class Configuration
 	public static Configuration Instance { get; private set; }
 
 	/// <summary>
-	/// Path to a custom guess executable. If not set, the current directory
-	/// and then PATH will be searched.
-	/// </summary>
-	// [FileName("Custom guess executable")]
-	public string? CustomExecutable { get; set; }
-
-	/// <summary>
 	/// True to prefer dark mode. False to use system theme.
 	/// </summary>
 	// [UI("Prefer dark mode")]
@@ -81,27 +69,7 @@ public class Configuration
 	/// <summary>
 	/// Get the default runner configuration.
 	/// </summary>
-	[XmlIgnore]
-	public IRunnerConfiguration? DefaultRunner
-	{
-		get
-		{
-			if (defaultRunnerIndex >= Runners.Count || defaultRunnerIndex < 0)
-			{
-				if (Runners.Count == 0)
-					return Runners[0];
-				return null;
-			}
-			return Runners[defaultRunnerIndex];
-		}
-		set
-		{
-			if (value == null)
-				defaultRunnerIndex = -1;
-			else
-				defaultRunnerIndex = Runners.IndexOf(value);
-		}
-	}
+	public int DefaultRunnerIndex { get; set; }
 
 	/// <summary>
 	/// Save current configuration to disk in the default location.

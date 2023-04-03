@@ -65,11 +65,6 @@ public class LocalRunner : IRunner
 	public LocalRunner(LocalRunnerConfiguration runnerConfig, ISimulation simulation,
 		Action<string> stdoutCallback, Action<string> stderrCallback, Action<int> onCompleted)
 	{
-		// Get path to lpj-guess executable.
-		string? guess = GetGuessPath();
-		if (guess == null || !File.Exists(guess))
-			throw GuessNotFoundException();
-
 		// Initialise the process but don't start it.
 		process = new Process();
 		process.StartInfo.FileName = runnerConfig.GuessPath;

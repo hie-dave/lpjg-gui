@@ -127,7 +127,7 @@ public class MainView : ApplicationWindow, IMainView
 		subtitle.Hide();
 
 		Box titleBox = new Box();
-		titleBox.Orientation = Orientation.Vertical;
+		titleBox.SetOrientation(Orientation.Vertical);
 		titleBox.Valign = Align.Center;
 		titleBox.Append(title);
 		titleBox.Append(subtitle);
@@ -139,7 +139,7 @@ public class MainView : ApplicationWindow, IMainView
 		header.PackEnd(menuButton);
 
 		main = new Box();
-		main.Orientation = Orientation.Vertical;
+		main.SetOrientation(Orientation.Vertical);
 		main.MarginTop = margin;
 		main.MarginBottom = margin;
 		main.MarginStart = margin;
@@ -252,6 +252,7 @@ public class MainView : ApplicationWindow, IMainView
 	{
 		try
 		{
+			Rows.FileChooserRow.FixFileChooser();
 			FileChooserNative fileChooser = FileChooserNative.New(
 				"Open Instruction File",
 				this,
@@ -259,17 +260,17 @@ public class MainView : ApplicationWindow, IMainView
 				"Open",
 				"Cancel"
 			);
-
+			fileChooser.SetModal(true);
 			FileFilter filterIns = FileFilter.New();
 			filterIns.AddPattern("*.ins");
 			filterIns.Name = "Instruction Files (*.ins)";
+			fileChooser.AddFilter(filterIns);
 
 			FileFilter filterAll = FileFilter.New();
 			filterAll.AddPattern("*");
 			filterAll.Name = "All Files";
-
-			fileChooser.AddFilter(filterIns);
 			fileChooser.AddFilter(filterAll);
+
 			fileChooser.OnResponse += OnInsFileSelected;
 
 			fileChooser.Show();

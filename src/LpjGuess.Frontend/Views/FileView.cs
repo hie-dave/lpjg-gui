@@ -8,6 +8,7 @@ using File = System.IO.File;
 using Action = System.Action;
 using Application = Gtk.Application;
 using LpjGuess.Frontend.Utility.Gtk;
+using LpjGuess.Frontend.Delegates;
 
 namespace LpjGuess.Frontend.Views;
 
@@ -26,6 +27,11 @@ public class FileView : Box, IFileView
 	/// Domain for file-specific actions.
 	/// </summary>
 	private const string actionDomain = "file";
+
+	/// <summary>
+	/// Name of an action which represents a request to add a runner.
+	/// </summary>
+	private const string addRunnerAction = "Add Runner";
 
 	/// <summary>
 	/// Input modules.
@@ -65,6 +71,11 @@ public class FileView : Box, IFileView
 	private readonly Button run;
 
 	/// <summary>
+	/// Box containing the run button.
+	/// </summary>
+	private readonly Box runBox;
+
+	/// <summary>
 	/// The stop button.
 	/// </summary>
 	private readonly Button stop;
@@ -100,6 +111,9 @@ public class FileView : Box, IFileView
 	/// </summary>
 	private readonly Menu runMenu;
 
+	/// <inheritdoc />
+	public Event<string> OnRun { get; private init; }
+
 	/// <summary>
 	/// Create a new <see cref="FileView"/> instance for a particular .ins file.
 	/// </summary>
@@ -113,8 +127,9 @@ public class FileView : Box, IFileView
 		this.onRun = onRun;
 		this.onStop = onStop;
 		this.onAddRunOption = onAddRunOption;
+		OnRun = new Event<string>();
 
-		Orientation = Orientation.Vertical;
+		SetOrientation(Orientation.Vertical);
 		Spacing = spacing;
 
 		// Create a TextView widget to display file contents.
@@ -134,7 +149,7 @@ public class FileView : Box, IFileView
 		inputModuleDropdown.Hexpand = true;
 
 		Box inputModuleBox = new Box();
-		inputModuleBox.Orientation = Orientation.Horizontal;
+		inputModuleBox.SetOrientation(Orientation.Horizontal);
 		inputModuleBox.Spacing = spacing;
 		inputModuleBox.Append(Label.New("Input Module: "));
 		inputModuleBox.Append(inputModuleDropdown);
@@ -152,8 +167,8 @@ public class FileView : Box, IFileView
 		runOpts.Name = "run-opts";
 		runOpts.MenuModel = runMenu;
 
-		Box runBox = new Box();
-		runBox.Orientation = Orientation.Horizontal;
+		runBox = new Box();
+		runBox.SetOrientation(Orientation.Horizontal);
 		runBox.Append(run);
 		runBox.Append(runOpts);
 
@@ -204,6 +219,7 @@ public class FileView : Box, IFileView
 	public override void Dispose()
 	{
 		DisconnectEvents();
+		runMenu.Dispose();
 		base.Dispose();
 	}
 
@@ -252,7 +268,7 @@ public class FileView : Box, IFileView
 	/// <inheritdoc />
 	public void ShowRunButton(bool show)
 	{
-		run.Visible = show;
+		runBox.Visible = show;
 		stop.Visible = !show;
 	}
 
@@ -270,13 +286,61 @@ public class FileView : Box, IFileView
 	/// </summary>
 	private void DisconnectEvents()
 	{
+		ClearRunOptions();
 		run.OnClicked -= Run;
 		stop.OnClicked -= Stop;
+		OnRun.DisconnectAll();
 	}
 
-	private void AddMenuItem(string name, Action callback)
+	/// <summary>
+	/// Remove all options from the runners dropdown.
+	/// </summary>
+	public void ClearRunOptions()
 	{
-		runMenu.AddMenuItem(actionDomain, name, callback);
+		runMenu.RemoveAll();
+	}
+
+	/// <inheritdoc />
+	public void SetRunners(IEnumerable<string> runners)
+	{
+		ClearRunOptions();
+		foreach (string name in runners)
+			runMenu.AddMenuItem(actionDomain, name, OnRunWithRunner);
+		runMenu.AddMenuItem(actionDomain, addRunnerAction, OnAddRunoption);
+	}
+
+	/// <summary>
+	/// Called when the user wants to add a runner.
+	/// </summary>
+	private void OnAddRunoption()
+	{
+		try
+		{
+			onAddRunOption();
+		}
+		catch (Exception error)
+		{
+			MainView.Instance.ReportError(error);
+		}
+	}
+
+	/// <summary>
+	/// User wants to run the file with a particular runner.
+	/// </summary>
+	/// <param name="sender">Sender object.</param>
+	/// <param name="args">Event data.</param>
+	private void OnRunWithRunner(SimpleAction sender, SimpleAction.ActivateSignalArgs args)
+	{
+		try
+		{
+			string? name = sender.Name;
+			if (name != null)
+				OnRun.Invoke(name);
+		}
+		catch (Exception error)
+		{
+			MainView.Instance.ReportError(error);
+		}
 	}
 
 	/// <summary>
@@ -289,7 +353,7 @@ public class FileView : Box, IFileView
 		try
 		{
 			onRun();
-			run.Hide();
+			runBox.Hide();
 			stop.Show();
 			output.Visible = true;
 		}
@@ -310,7 +374,7 @@ public class FileView : Box, IFileView
 		{
 			onStop();
 			stop.Hide();
-			run.Show();
+			runBox.Show();
 		}
 		catch (Exception error)
 		{
