@@ -6,30 +6,13 @@ using System.Reflection;
 
 namespace LpjGuess.Core.Runners;
 
+using static RunnerConstants;
+
 /// <summary>
 /// This class will run lpj-guess on the local machine.
 /// </summary>
 public class LocalRunner : IRunner
 {
-	/// <summary>
-	/// Name of the guess executable.
-	/// </summary>
-#if WINDOWS
-	private const string exeName = "guesscmd.exe";
-#else
-	private const string exeName = "guess";
-#endif
-
-	/// <summary>
-	/// Name of the PATH environment variable.
-	/// </summary>
-	private const string pathVariableName = "PATH";
-
-	/// <summary>
-	/// CLI argument which should precede the input module.
-	/// </summary>
-	private const string inputCliArgument = "-input";
-
 	/// <summary>
 	/// The lpj-guess process. This is initialised in the constructor, but the
 	/// process itself is not started until Launch() is called.
@@ -65,15 +48,16 @@ public class LocalRunner : IRunner
 	public LocalRunner(LocalRunnerConfiguration runnerConfig, ISimulation simulation,
 		Action<string> stdoutCallback, Action<string> stderrCallback, Action<int> onCompleted)
 	{
-		// Get path to lpj-guess executable.
-		string? guess = GetGuessPath();
-		if (guess == null || !File.Exists(guess))
-			throw GuessNotFoundException();
+		string guessPath = runnerConfig.GuessPath;
+
+		// Search on PATH if no executable path provided.
+		if (string.IsNullOrEmpty(guessPath))
+			guessPath = GetGuessPath();
 
 		// Initialise the process but don't start it.
 		process = new Process();
 		process.StartInfo.FileName = runnerConfig.GuessPath;
-		process.StartInfo.ArgumentList.Add(inputCliArgument);
+		process.StartInfo.ArgumentList.Add(InputCliArgument);
 		process.StartInfo.ArgumentList.Add(simulation.InputModule);
 		process.StartInfo.ArgumentList.Add(simulation.InsFile);
 		process.StartInfo.WorkingDirectory = Path.GetDirectoryName(simulation.InsFile);
@@ -117,12 +101,12 @@ public class LocalRunner : IRunner
 	/// <summary>
 	/// True iff the guess process is currently running.
 	/// </summary>
-	public bool IsRunning => !process.HasExited;
+	public bool IsRunning => InterrogateProcess(p => !p.HasExited, false);
 
 	/// <summary>
 	/// The exit code of the process.
 	/// </summary>
-	public int ExitCode => process.ExitCode;
+	public int ExitCode => InterrogateProcess(p => p.ExitCode, 1);
 
 	/// <summary>
 	/// Stop the running guess proces.
@@ -136,20 +120,14 @@ public class LocalRunner : IRunner
 	/// Search for the specified command on PATH. Return null if not found.
 	/// </summary>
 	/// <param name="fileName">Command/executable to search for.</param>
-	private string? FindOnPath(string fileName)
+	private static string? FindOnPath(string fileName)
 	{
 		// PATH delimiter character.
-#if WINDOWS
-		const string delim = ";";
-#else
-		const string delim = ":";
-#endif
-
-		string? path = Environment.GetEnvironmentVariable(pathVariableName);
+		string? path = Environment.GetEnvironmentVariable(PathVariableName);
 		if (path == null)
 			return null;
 
-		foreach (string directory in path.Split(delim))
+		foreach (string directory in path.Split(PathDelim))
 		{
 			string resolved = Path.Combine(directory, fileName);
 			if (File.Exists(resolved))
@@ -164,26 +142,18 @@ public class LocalRunner : IRunner
 	/// </summary>
 	private string GetGuessPath()
 	{
-		// // Attempt to use the user-specified override, if one is set.
-		// if (!string.IsNullOrWhiteSpace(Configuration.Instance.CustomExecutable))
-		// {
-		// 	if (!File.Exists(Configuration.Instance.CustomExecutable))
-		// 		throw new Exception($"Custom executable is set to '{Configuration.Instance.CustomExecutable}', but this file does not exist.");
-		// 	return Configuration.Instance.CustomExecutable;
-		// }
-
 		// Look in the same directory as this program.
 		string assembly = Assembly.GetExecutingAssembly().Location;
 		string? cwd = Path.GetDirectoryName(assembly);
 		if (cwd != null)
 		{
-			string local = Path.Combine(cwd, exeName);
+			string local = Path.Combine(cwd, ExeName);
 			if (File.Exists(local))
 				return local;
 		}
 
 		// Search on PATH.
-		string? systemGuess = FindOnPath(exeName);
+		string? systemGuess = FindOnPath(ExeName);
 		if (systemGuess != null)
 			return systemGuess;
 
@@ -230,5 +200,27 @@ public class LocalRunner : IRunner
 	{
 		if (!string.IsNullOrEmpty(e.Data))
 			stdoutCallback(e.Data);
+	}
+
+	/// <summary>
+	/// Attempt to access a member of a process, and return a default value if
+	/// the process cannot be interrogated (e.g. if an exception is thrown).
+	/// 
+	/// This function will never throw.
+	/// </summary>
+	/// <param name="func">A function which attempts to access the process object.</param>
+	/// <param name="default">Default return value if the process cannot be interrogated.</param>
+	/// <typeparam name="T">The return type parameter.</typeparam>
+	private T InterrogateProcess<T>(Func<Process, T> func, T @default)
+	{
+		try
+		{
+			return func(process);
+		}
+		catch (Exception error)
+		{
+			Console.Error.WriteLine(error.ToString());
+			return @default;
+		}
 	}
 }
