@@ -155,6 +155,7 @@ public class FileView : Box, IFileView
 		inputModuleBox.Append(inputModuleDropdown);
 
 		// Create a run button.
+		// todo: replace with SplitButton.
 		run = Button.NewWithLabel("Run");
 		run.AddCssClass(StyleClasses.SuggestedAction);
 		run.Hexpand = true;
@@ -183,8 +184,8 @@ public class FileView : Box, IFileView
 		outputScroller.Child = output;
 
 		notebook = new Notebook();
-		notebook.AppendPage(scroller, Label.New("Instruction File"));
-		notebook.AppendPage(outputScroller, Label.New("Guess Output"));
+		// notebook.AppendPage(scroller, Label.New("Instruction File"));
+		// notebook.AppendPage(outputScroller, Label.New("Guess Output"));
 		// notebook.ShowTabs = false;
 
 		Append(notebook);
@@ -221,6 +222,12 @@ public class FileView : Box, IFileView
 		DisconnectEvents();
 		runMenu.Dispose();
 		base.Dispose();
+	}
+
+	/// <inheritdoc />
+	public void AppendTab(string name, IView view)
+	{
+		notebook.AppendPage(view.GetWidget(), Label.New(name));
 	}
 
 	/// <inheritdoc />

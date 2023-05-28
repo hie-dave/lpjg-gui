@@ -13,16 +13,11 @@ public interface IFileView : IView
 	string InputModule { get; }
 
 	/// <summary>
-	/// Display stdout received from the guess child process to the user.
+	/// Append a tab to the file view.
 	/// </summary>
-	/// <param name="stdout">Text written to stdout by lpj-guess.</param>
-	void AppendOutput(string stdout);
-
-	/// <summary>
-	/// Display stderr received from the guess child process to the user.
-	/// </summary>
-	/// <param name="stderr">Text written to stderr by lpj-guess.</param>
-	void AppendError(string stderr);
+	/// <param name="name">Name of the tab.</param>
+	/// <param name="widget">The tab widget.</param>
+	void AppendTab(string name, IView widget);
 
 	/// <summary>
 	/// Clear the buffer of messages received from lpj-guess.

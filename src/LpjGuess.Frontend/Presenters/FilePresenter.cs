@@ -25,6 +25,11 @@ public class FilePresenter : IPresenter<IFileView>
 	private readonly IFileView view;
 
 	/// <summary>
+	/// Widget containing console output from the guess process.
+	/// </summary>
+	private readonly EditorView outputView;
+
+	/// <summary>
 	/// A preferences presenter which will be displayed if no runners exist
 	/// when the user clicks run.
 	/// </summary>
@@ -42,7 +47,11 @@ public class FilePresenter : IPresenter<IFileView>
 	public FilePresenter(string file)
 	{
 		this.file = file;
+		outputView = new EditorView(string.Empty);
 		view = new FileView(file, OnRun, OnStop, OnConfigureRunners);
+		view.AppendTab("Instruction File", new EditorView(File.ReadAllText(file)));
+		view.AppendTab("Console Output", outputView);
+		view.AppendTab("Data", new DataSourcesView());
 		PopulateRunners();
 		view.OnRun.ConnectTo(OnRun);
 	}
