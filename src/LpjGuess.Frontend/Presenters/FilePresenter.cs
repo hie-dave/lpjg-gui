@@ -203,7 +203,7 @@ public class FilePresenter : IPresenter<IFileView>
 		try
 		{
 			if (runner != null && !runner.IsRunning)
-				view.AppendOutput($"Process exited with code {exitCode}");
+				MainView.RunOnMainThread(() => outputView.AppendLine($"Process exited with code {exitCode}"));
 			view.ShowRunButton(true);
 		}
 		catch (Exception error)
@@ -219,7 +219,7 @@ public class FilePresenter : IPresenter<IFileView>
 	/// <param name="stdout">The message written by guess to stdout.</param>
 	private void StdoutCallback(string stdout)
 	{
-		view.AppendOutput(stdout);
+		MainView.RunOnMainThread(() => outputView.AppendLine(stdout));
 	}
 
 	/// <summary>
@@ -229,6 +229,6 @@ public class FilePresenter : IPresenter<IFileView>
 	/// <param name="stderr">The message written by guess to stderr.</param>
 	private void StderrCallback(string stderr)
 	{
-		view.AppendError(stderr);
+		MainView.RunOnMainThread(() => outputView.AppendLine(stderr));
 	}
 }

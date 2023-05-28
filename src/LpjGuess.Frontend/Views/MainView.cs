@@ -190,6 +190,19 @@ public class MainView : ApplicationWindow, IMainView
 	}
 
 	/// <summary>
+	/// Perform the specified action on the main thread.
+	/// </summary>
+	/// <param name="callback">Action to be performed.</param>
+	public static void RunOnMainThread(Action callback)
+	{
+		GLib.Functions.IdleAddFull(0, _ =>
+		{
+			callback();
+			return false;
+		});
+	}
+
+	/// <summary>
 	/// Error handler routine.
 	/// </summary>
 	/// <param name="error"></param>
