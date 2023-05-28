@@ -1,6 +1,7 @@
 using LpjGuess.Core.Interfaces.Runners;
 using LpjGuess.Core.Runners.Configuration;
 using LpjGuess.Frontend.Delegates;
+using LpjGuess.Frontend.Extensions;
 using LpjGuess.Frontend.Interfaces.Presenters;
 using LpjGuess.Frontend.Interfaces.Views;
 using LpjGuess.Frontend.Presenters.Runners;
@@ -62,7 +63,7 @@ public class PreferencesPresenter : IDialogPresenter
 
 	private IRunnerPresenter GetPresenter(IRunnerConfiguration runner)
 	{
-		bool isDefault = Configuration.Instance.DefaultRunner == runner;
+		bool isDefault = Configuration.Instance.GetDefaultRunner() == runner;
 		if (runner is LocalRunnerConfiguration local)
 			return new LocalRunnerConfigurationPresenter(local, isDefault);
 		throw new InvalidOperationException($"Unknown runner configuration type: {runner.GetType().Name}");
@@ -110,11 +111,22 @@ public class PreferencesPresenter : IDialogPresenter
 	/// <param name="isDefault">Is this runner now the default?</param>
 	private void SetDefaultRunner(int i, bool isDefault)
 	{
-		IRunnerConfiguration runner = GetRunner(i);
-		if (isDefault)
-			Configuration.Instance.DefaultRunner = runner;
-		else if (Configuration.Instance.DefaultRunner == runner)
-			Configuration.Instance.DefaultRunner = null;
+		if (!isDefault)
+		{
+			Configuration.Instance.DefaultRunnerIndex = -1;
+			return;
+		}
+
+		if (i < 0 || i >= Configuration.Instance.Runners.Count)
+		{
+			Console.WriteLine($"WARNING: attempted to set default runner to{(isDefault ? "" : "not ")} {i}");
+			return;
+		}
+
+		if (!isDefault)
+			Configuration.Instance.DefaultRunnerIndex = -1;
+
+		Configuration.Instance.DefaultRunnerIndex = i;
 	}
 
 	/// <summary>
@@ -134,8 +146,7 @@ public class PreferencesPresenter : IDialogPresenter
 	/// <param name="i">Index of the runner.</param>
 	private void OnToggleDefaultRunner(int i)
 	{
-		IRunnerConfiguration runner = GetRunner(i);
-		bool oldValue = Configuration.Instance.DefaultRunner == runner;
+		bool oldValue = Configuration.Instance.DefaultRunnerIndex == i;
 		SetDefaultRunner(i, !oldValue);
 		UpdateRunners();
 	}

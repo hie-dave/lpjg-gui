@@ -63,6 +63,34 @@ public class AboutView : IAboutView
 		// License LicenseType
 	}
 
+	/// <summary>
+	/// Connect all event callbacks.
+	/// </summary>
+	private void ConnectEventHandlers()
+	{
+		dialog.OnCloseRequest += OnClose;
+	}
+
+	/// <summary>
+	/// Disconnect all event callbacks.
+	/// </summary>
+	private void DisconnectEventHandlers()
+	{
+		dialog.OnCloseRequest -= OnClose;
+	}
+
+	/// <summary>
+	/// Called when the user closes the dialog.
+	/// </summary>
+	/// <param name="sender">Sender object.</param>
+	/// <param name="args">Event data.</param>
+	private bool OnClose(Gtk.Window sender, EventArgs args)
+	{
+		DisconnectEventHandlers();
+		dialog.Dispose();
+		return true;
+	}
+
 	/// <inheritdoc />
 	public void Show()
 	{

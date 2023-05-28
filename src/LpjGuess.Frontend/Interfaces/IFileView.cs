@@ -1,3 +1,4 @@
+using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.Interfaces.Views;
 
 namespace LpjGuess.Frontend.Interfaces;
@@ -13,21 +14,24 @@ public interface IFileView : IView
 	string InputModule { get; }
 
 	/// <summary>
-	/// Display stdout received from the guess child process to the user.
+	/// Append a tab to the file view.
 	/// </summary>
-	/// <param name="stdout">Text written to stdout by lpj-guess.</param>
-	void AppendOutput(string stdout);
-
-	/// <summary>
-	/// Display stderr received from the guess child process to the user.
-	/// </summary>
-	/// <param name="stderr">Text written to stderr by lpj-guess.</param>
-	void AppendError(string stderr);
+	/// <param name="name">Name of the tab.</param>
+	/// <param name="widget">The tab widget.</param>
+	void AppendTab(string name, IView widget);
 
 	/// <summary>
 	/// Clear the buffer of messages received from lpj-guess.
 	/// </summary>
 	void ClearOutput();
+
+	/// <summary>
+	/// Populate the runners dropdown with the given list of options. When one
+	/// of them is activated by the user, <see cref="OnRun"/> will be invoked
+	/// with the name of the selected runner.
+	/// </summary>
+	/// <param name="runners">Runner names.</param>
+	void SetRunners(IEnumerable<string> runners);
 
 	/// <summary>
 	/// Toggle the visibility of the run/stop buttons.
@@ -41,6 +45,15 @@ public interface IFileView : IView
 	/// <summary>
 	/// Get a reference to the graphs view.
 	/// </summary>
-	/// <value></value>
 	IGraphsView GraphsView { get; }
+
+	/// <summary>
+	/// A child view which displays console output from runs of the model.
+	/// </summary>
+	IEditorView OutputView { get; }
+
+	/// <summary>
+	/// Called when the user wants to run with a specific runner.
+	/// </summary>
+	Event<string> OnRun { get; }
 }

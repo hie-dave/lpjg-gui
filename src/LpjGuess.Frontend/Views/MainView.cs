@@ -180,6 +180,19 @@ public class MainView : ApplicationWindow, IMainView
 	}
 
 	/// <summary>
+	/// Perform the specified action on the main thread.
+	/// </summary>
+	/// <param name="callback">Action to be performed.</param>
+	public static void RunOnMainThread(Action callback)
+	{
+		GLib.Functions.IdleAddFull(0, _ =>
+		{
+			callback();
+			return false;
+		});
+	}
+
+	/// <summary>
 	/// Error handler routine.
 	/// </summary>
 	/// <param name="error"></param>
@@ -243,6 +256,7 @@ public class MainView : ApplicationWindow, IMainView
 	{
 		try
 		{
+			Rows.FileChooserRow.FixFileChooser();
 			FileChooserNative fileChooser = FileChooserNative.New(
 				"Open Instruction File",
 				this,
@@ -250,17 +264,17 @@ public class MainView : ApplicationWindow, IMainView
 				"Open",
 				"Cancel"
 			);
-
+			fileChooser.SetModal(true);
 			FileFilter filterIns = FileFilter.New();
 			filterIns.AddPattern("*.ins");
 			filterIns.Name = "Instruction Files (*.ins)";
+			fileChooser.AddFilter(filterIns);
 
 			FileFilter filterAll = FileFilter.New();
 			filterAll.AddPattern("*");
 			filterAll.Name = "All Files";
-
-			fileChooser.AddFilter(filterIns);
 			fileChooser.AddFilter(filterAll);
+
 			fileChooser.OnResponse += OnInsFileSelected;
 
 			fileChooser.Show();

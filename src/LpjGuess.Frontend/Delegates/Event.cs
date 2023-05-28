@@ -3,7 +3,7 @@ namespace LpjGuess.Frontend.Delegates;
 /// <summary>
 /// An event source.
 /// </summary>
-public class Event
+public class Event : IEvent
 {
 	/// <summary>
 	/// The event callback functions.

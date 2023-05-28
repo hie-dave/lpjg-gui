@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using Adw;
 using Gtk;
 using LpjGuess.Frontend.Delegates;
@@ -10,6 +11,9 @@ namespace LpjGuess.Frontend.Views.Rows;
 /// </summary>
 internal class FileChooserRow : EntryRow
 {
+	[DllImport("libgtk-4.so.1", EntryPoint = "gtk_file_chooser_cell_get_type")]
+	public static extern nuint FixFileChooser();
+
 	/// <summary>
 	/// File extensions allowed to be selected by the user.
 	/// </summary>
@@ -124,6 +128,7 @@ internal class FileChooserRow : EntryRow
 	{
 		try
 		{
+			FixFileChooser();
 			FileChooserNative fileChooser = FileChooserNative.New(
 				"Choose a file",
 				MainView.Instance,
