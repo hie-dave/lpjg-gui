@@ -2,6 +2,7 @@ using LpjGuess.Core.Interfaces.Runners;
 using LpjGuess.Core.Models;
 using LpjGuess.Core.Runners;
 using LpjGuess.Frontend.Interfaces;
+using LpjGuess.Frontend.Interfaces.Presenters;
 using LpjGuess.Frontend.Views;
 
 namespace LpjGuess.Frontend.Presenters;
@@ -13,9 +14,9 @@ namespace LpjGuess.Frontend.Presenters;
 public class FilePresenter : IPresenter<IFileView>
 {
 	/// <summary>
-	/// The instruction file for which this presenter is responsible.
+	/// The current workspace metadata.
 	/// </summary>
-	private readonly string file;
+	private readonly LpjFile lpjFile;
 
 	/// <summary>
 	/// The view object.
@@ -28,13 +29,19 @@ public class FilePresenter : IPresenter<IFileView>
 	private IRunner? runner;
 
 	/// <summary>
+	/// The graphs presenter.
+	/// </summary>
+	private readonly IGraphsPresenter graphsPresenter;
+
+	/// <summary>
 	/// Create a new <see cref="FilePresenter"/> instance for the given file.
 	/// </summary>
 	/// <param name="file">The instruction file.</param>
-	public FilePresenter(string file)
+	public FilePresenter(LpjFile file)
 	{
-		this.file = file;
-		view = new FileView(file, OnRun, OnStop, OnConfigureRunners);
+		this.lpjFile = file;
+		view = new FileView(file.InstructionFile, OnRun, OnStop, OnConfigureRunners);
+		graphsPresenter = new GraphsPresenter(view.GraphsView, file.Graphs);
 	}
 
 	/// <summary>
@@ -57,6 +64,10 @@ public class FilePresenter : IPresenter<IFileView>
 	/// </summary>
 	public void Dispose()
 	{
+		// Save changes to the file.
+		lpjFile.Graphs = graphsPresenter.GetGraphs().ToList();
+		lpjFile.Save();
+
 		view.Dispose();
 	}
 
@@ -85,7 +96,7 @@ public class FilePresenter : IPresenter<IFileView>
 			if (runConfig == null)
 				throw new InvalidOperationException($"No default runner exists.");
 
-			var simulation = new SimulationConfiguration(file, view.InputModule);
+			var simulation = new SimulationConfiguration(lpjFile.InstructionFile, view.InputModule);
 			runner = RunnerFactory.Create(runConfig, simulation, StdoutCallback, StderrCallback, OnCompleted);
 			runner.Run();
 
@@ -94,7 +105,7 @@ public class FilePresenter : IPresenter<IFileView>
 		}
 		catch (Exception error)
 		{
-			throw new Exception($"Unable to run file '{file}'", error);
+			throw new Exception($"Unable to run file '{lpjFile.InstructionFile}'", error);
 		}
 	}
 
@@ -113,7 +124,7 @@ public class FilePresenter : IPresenter<IFileView>
 		}
 		catch (Exception error)
 		{
-			throw new Exception($"Unable to abort execution of file '{file}'", error);
+			throw new Exception($"Unable to abort execution of file '{lpjFile.InstructionFile}'", error);
 		}
 	}
 

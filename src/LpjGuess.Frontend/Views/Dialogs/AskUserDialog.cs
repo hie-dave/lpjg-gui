@@ -80,7 +80,7 @@ internal class AskUserDialog : Window
 		choices.Child = choicesBox;
 
 		Box main = new Box();
-		main.Orientation = Orientation.Vertical;
+		main.SetOrientation(Orientation.Vertical);
 		main.Append(header);
 		main.Append(choices);
 

@@ -40,7 +40,11 @@ public class AboutView : IAboutView
 			dialog.Version = version.ToString();
 		if (view is MainView main)
 			dialog.TransientFor = main;
-		dialog.OnCloseRequest += (_, __) => dialog.Dispose();
+		dialog.OnCloseRequest += (_, __) =>
+		{
+			dialog.Dispose();
+			return true;
+		};
 		// Other metadata we could set:
 		// string[] Artists
 		// string? Comments

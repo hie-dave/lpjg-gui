@@ -21,16 +21,6 @@ namespace LpjGuess.Frontend.Views;
 public class MainView : ApplicationWindow, IMainView
 {
 	/// <summary>
-	/// Default window width.
-	/// </summary>
-	private const int defaultWidth = 640;
-
-	/// <summary>
-	/// Default window height.
-	/// </summary>
-	private const int defaultHeight = 480;
-
-	/// <summary>
 	/// Margin (in px) around window contents and winow border.
 	/// </summary>
 	private const int margin = 8;
@@ -98,8 +88,6 @@ public class MainView : ApplicationWindow, IMainView
 		AppInstance = app;
 		Instance = this;
 
-		DefaultWidth = defaultWidth;
-		DefaultHeight = defaultHeight;
 		SetApplication(app);
 
 		CssProvider provider = CssProvider.New();
@@ -127,7 +115,7 @@ public class MainView : ApplicationWindow, IMainView
 		subtitle.Hide();
 
 		Box titleBox = new Box();
-		titleBox.Orientation = Orientation.Vertical;
+		titleBox.SetOrientation(Orientation.Vertical);
 		titleBox.Valign = Align.Center;
 		titleBox.Append(title);
 		titleBox.Append(subtitle);
@@ -139,7 +127,7 @@ public class MainView : ApplicationWindow, IMainView
 		header.PackEnd(menuButton);
 
 		main = new Box();
-		main.Orientation = Orientation.Vertical;
+		main.SetOrientation(Orientation.Vertical);
 		main.MarginTop = margin;
 		main.MarginBottom = margin;
 		main.MarginStart = margin;
@@ -150,6 +138,8 @@ public class MainView : ApplicationWindow, IMainView
 		contents.Append(header);
 		contents.Append(main);
 		SetContent(contents);
+
+		Maximized = true;
 	}
 
 	/// <inheritdoc />
@@ -219,6 +209,7 @@ public class MainView : ApplicationWindow, IMainView
 		dialog.TransientFor = this;
 		dialog.Title = "Error";
 		dialog.Heading = "Error";
+		dialog.Resizable = true;
 		// dialog.Body = $"<tt>{error.ToString()}</tt>";
 		// dialog.BodyUseMarkup = true;
 		dialog.ExtraChild = scroller;

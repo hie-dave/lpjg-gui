@@ -182,7 +182,7 @@ public class PreferencesView : IPreferencesView
 	/// </summary>
 	/// <param name="sender">Sender object.</param>
 	/// <param name="args">Event data.</param>
-	private void OnWindowClosed(Gtk.Window sender, EventArgs args)
+	private bool OnWindowClosed(Gtk.Window sender, EventArgs args)
 	{
 		try
 		{
@@ -192,6 +192,7 @@ public class PreferencesView : IPreferencesView
 		{
 			MainView.Instance.ReportError(error);
 		}
+		return true;
 	}
 
 	/// <summary>
@@ -199,7 +200,7 @@ public class PreferencesView : IPreferencesView
 	/// </summary>
 	/// <param name="sender">Sender object.</param>
 	/// <param name="args">Event data.</param>
-	private void OnToggleDarkMode(Switch sender, Switch.StateSetSignalArgs args)
+	private bool OnToggleDarkMode(Switch sender, Switch.StateSetSignalArgs args)
 	{
 		try
 		{
@@ -209,5 +210,6 @@ public class PreferencesView : IPreferencesView
 		{
 			MainView.Instance.ReportError(error);
 		}
+		return true;
 	}
 }

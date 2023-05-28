@@ -7,6 +7,10 @@ const string appName = "org.Hie.lpjggui";
 
 var app = Application.New(appName, Gio.ApplicationFlags.FlagsNone);
 
+PangoCairo.Module.Initialize();
+Pango.Module.Initialize();
+Cairo.Module.Initialize();
+
 app.OnStartup += OnStartup;
 app.OnActivate += OnActivated;
 app.OnShutdown += OnShutdown;

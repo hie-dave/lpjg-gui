@@ -3,7 +3,7 @@ using ExtendedXmlSerializer;
 using ExtendedXmlSerializer.Configuration;
 using LpjGuess.Core.Runners.Configuration;
 
-namespace LpjGuess.Frontend.Serialisation;
+namespace LpjGuess.Core.Serialisation;
 
 /// <summary>
 /// XML serialisation/deserialisation methods.
@@ -15,7 +15,8 @@ public static class XmlSerialisation
 	/// </summary>
 	/// <param name="obj">The object to be serialised.</param>
 	/// <param name="file">File name and path to which config will be saved.</param>
-	public static void SerialiseTo(this object obj, string file)
+	/// <param name="config">Serialisation settings to be used.</param>
+	public static void SerialiseTo(this object obj, string file, Func<IConfigurationContainer, IConfigurationContainer>? config = null)
 	{
 		try
 		{
@@ -27,7 +28,7 @@ public static class XmlSerialisation
 			Directory.CreateDirectory(dir);
 
 			using (TextWriter writer = new StreamWriter(file, false))
-				SerialiseTo(obj, writer);
+				SerialiseTo(obj, writer, config);
 		}
 		catch (Exception error)
 		{
@@ -41,10 +42,11 @@ public static class XmlSerialisation
 	/// <param name="obj">The object to be serialised.</param>
 	/// <param name="stream">The stream to which the object will be serialised.</param>
 	/// <param name="leaveOpen">Iff true, the stream will be left open after serialisation.</param>
-	public static void SerialiseTo(this object obj, Stream stream, bool leaveOpen = false)
+	/// <param name="config">Serialisation settings to be used.</param>
+	public static void SerialiseTo(this object obj, Stream stream, bool leaveOpen = false, Func<IConfigurationContainer, IConfigurationContainer>? config = null)
 	{
 		using (TextWriter writer = new StreamWriter(stream, leaveOpen: leaveOpen))
-			SerialiseTo(obj, writer);
+			SerialiseTo(obj, writer, config);
 	}
 
 	/// <summary>
@@ -52,11 +54,12 @@ public static class XmlSerialisation
 	/// </summary>
 	/// <param name="obj">The object to be serialised.</param>
 	/// <param name="writer">The stream writer.</param>
-	public static void SerialiseTo(this object obj, TextWriter writer)
+	/// <param name="config">Serialisation settings to be used.</param>
+	public static void SerialiseTo(this object obj, TextWriter writer, Func<IConfigurationContainer, IConfigurationContainer>? config = null)
 	{
 		using (XmlWriter xmlWriter = XmlWriter.Create(writer, GetSerialisationSettings()))
 		{
-			IExtendedXmlSerializer serialiser = CreateSerialiser();
+			IExtendedXmlSerializer serialiser = CreateSerialiser(config);
 			serialiser.Serialize(xmlWriter, obj);
 		}
 	}
@@ -65,12 +68,13 @@ public static class XmlSerialisation
 	/// Load configuration from the specified file.
 	/// </summary>
 	/// <param name="file">Input file to be read.</param>
-	public static T DeserialiseFrom<T>(string file) where T : new()
+	/// <param name="config">Serialisation settings to be used.</param>
+	public static T DeserialiseFrom<T>(string file, Func<IConfigurationContainer, IConfigurationContainer>? config = null) where T : new()
 	{
 		try
 		{
 			using (TextReader reader = new StreamReader(file))
-				return DeserialiseFrom<T>(reader);
+				return DeserialiseFrom<T>(reader, config);
 		}
 		catch (Exception error)
 		{
@@ -83,22 +87,24 @@ public static class XmlSerialisation
 	/// </summary>
 	/// <param name="stream">The input stream.</param>
 	/// <param name="leaveOpen">Iff true, the input stream will be left open after deserialisation.</param>
-	public static T DeserialiseFrom<T>(Stream stream, bool leaveOpen = false) where T : new()
+	/// <param name="config">Serialisation settings to be used.</param>
+	public static T DeserialiseFrom<T>(Stream stream, bool leaveOpen = false, Func<IConfigurationContainer, IConfigurationContainer>? config = null) where T : new()
 	{
 		using (StreamReader reader = new StreamReader(stream, leaveOpen: leaveOpen))
-			return DeserialiseFrom<T>(reader);
+			return DeserialiseFrom<T>(reader, config);
 	}
 
 	/// <summary>
 	/// Load configuration from the specified stream reader.
 	/// </summary>
 	/// <param name="reader">The input stream reader.</param>
-	public static T DeserialiseFrom<T>(TextReader reader) where T : new()
+	/// <param name="config">Serialisation settings to be used.</param>
+	public static T DeserialiseFrom<T>(TextReader reader, Func<IConfigurationContainer, IConfigurationContainer>? config = null) where T : new()
 	{
 		XmlReaderSettings settings = GetDeserialisationSettings();
 		using (XmlReader xmlReader = XmlReader.Create(reader, settings))
 		{
-			IExtendedXmlSerializer serialiser = CreateSerialiser();
+			IExtendedXmlSerializer serialiser = CreateSerialiser(config);
 			object? result = serialiser.Deserialize(xmlReader);
 			if (result is T inst)
 				return inst;
@@ -110,14 +116,17 @@ public static class XmlSerialisation
 	/// <summary>
 	/// Get XML serialiser with standard configuration.
 	/// </summary>
-	private static IExtendedXmlSerializer CreateSerialiser()
+	/// <param name="config">Serialisation settings to be used.</param>
+	private static IExtendedXmlSerializer CreateSerialiser(Func<IConfigurationContainer, IConfigurationContainer>? config = null)
 	{
-		return new ConfigurationContainer()
+		IConfigurationContainer container = new ConfigurationContainer()
 			// .UseAutoFormatting()
-			.EnableImplicitTyping(typeof(Configuration))
+			// .EnableImplicitTyping(typeof(Configuration))
 			// .EnableImplicitTypingFromNamespace<IRunnerConfiguration>()
-			.EnableImplicitTypingFromAll<LocalRunnerConfiguration>()
-			.Create();
+			.EnableImplicitTypingFromAll<LocalRunnerConfiguration>();
+		if (config != null)
+			container = config(container);
+		return container.Create();
 	}
 
 	/// <summary>

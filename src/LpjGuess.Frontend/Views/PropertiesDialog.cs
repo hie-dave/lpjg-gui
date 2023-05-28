@@ -114,7 +114,7 @@ public class PropertiesDialog : PreferencesWindow, IPropertiesView
 	/// </summary>
 	/// <param name="sender">Sender object..</param>
 	/// <param name="args">Event data.</param>
-	private void OnClosed(object sender, EventArgs args)
+	private bool OnClosed(object sender, EventArgs args)
 	{
 		try
 		{
@@ -124,5 +124,6 @@ public class PropertiesDialog : PreferencesWindow, IPropertiesView
 		{
 			MainView.Instance.ReportError(error);
 		}
+		return true;
 	}
 }

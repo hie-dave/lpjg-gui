@@ -1,3 +1,5 @@
+using LpjGuess.Frontend.Interfaces.Views;
+
 namespace LpjGuess.Frontend.Interfaces;
 
 /// <summary>
@@ -35,4 +37,10 @@ public interface IFileView : IView
 	/// false, the run button will be hidden and the stop button shown.
 	/// </param>
 	void ShowRunButton(bool show);
+
+	/// <summary>
+	/// Get a reference to the graphs view.
+	/// </summary>
+	/// <value></value>
+	IGraphsView GraphsView { get; }
 }

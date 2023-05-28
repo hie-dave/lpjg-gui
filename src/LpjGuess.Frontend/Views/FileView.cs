@@ -6,8 +6,8 @@ using LpjGuess.Frontend.Interfaces;
 
 using File = System.IO.File;
 using Action = System.Action;
-using Application = Gtk.Application;
 using LpjGuess.Frontend.Utility.Gtk;
+using LpjGuess.Frontend.Interfaces.Views;
 
 namespace LpjGuess.Frontend.Views;
 
@@ -82,12 +82,22 @@ public class FileView : Box, IFileView
 	/// <summary>
 	/// TextView containing output from the child lpj-guess process.
 	/// </summary>
-	private readonly TextView output;
+	private readonly TextView logs;
 
 	/// <summary>
 	/// ScrolledWindow containing the lpj-guess output TextView widget.
 	/// </summary>
-	private readonly ScrolledWindow outputScroller;
+	private readonly ScrolledWindow logsScroller;
+
+	/// <summary>
+	/// A view which allows the user to browse the raw outputs from the model.
+	/// </summary>
+	private readonly OutputsView outputsView;
+
+	/// <summary>
+	/// A view which displays configurable graphs.
+	/// </summary>
+	private readonly GraphsView graphsView;
 
 	/// <summary>
 	/// The TextView API is currently quite limited, so I'm using a separate
@@ -114,7 +124,7 @@ public class FileView : Box, IFileView
 		this.onStop = onStop;
 		this.onAddRunOption = onAddRunOption;
 
-		Orientation = Orientation.Vertical;
+		SetOrientation(Orientation.Vertical);
 		Spacing = spacing;
 
 		// Create a TextView widget to display file contents.
@@ -134,7 +144,7 @@ public class FileView : Box, IFileView
 		inputModuleDropdown.Hexpand = true;
 
 		Box inputModuleBox = new Box();
-		inputModuleBox.Orientation = Orientation.Horizontal;
+		inputModuleBox.SetOrientation(Orientation.Horizontal);
 		inputModuleBox.Spacing = spacing;
 		inputModuleBox.Append(Label.New("Input Module: "));
 		inputModuleBox.Append(inputModuleDropdown);
@@ -153,7 +163,7 @@ public class FileView : Box, IFileView
 		runOpts.MenuModel = runMenu;
 
 		Box runBox = new Box();
-		runBox.Orientation = Orientation.Horizontal;
+		runBox.SetOrientation(Orientation.Horizontal);
 		runBox.Append(run);
 		runBox.Append(runOpts);
 
@@ -162,14 +172,19 @@ public class FileView : Box, IFileView
 		stop.AddCssClass(StyleClasses.DestructiveAction);
 		stop.Visible = false;
 
-		output = new TextView();
-		output.Monospace = true;
-		outputScroller = new ScrolledWindow();
-		outputScroller.Child = output;
+		logs = new TextView();
+		logs.Monospace = true;
+		logsScroller = new ScrolledWindow();
+		logsScroller.Child = logs;
+
+		outputsView = new OutputsView();
+		graphsView = new GraphsView();
 
 		notebook = new Notebook();
 		notebook.AppendPage(scroller, Label.New("Instruction File"));
-		notebook.AppendPage(outputScroller, Label.New("Guess Output"));
+		notebook.AppendPage(logsScroller, Label.New("Logs"));
+		notebook.AppendPage(outputsView, Label.New("Outputs"));
+		notebook.AppendPage(graphsView, Label.New("Graphs"));
 		// notebook.ShowTabs = false;
 
 		Append(notebook);
@@ -196,6 +211,9 @@ public class FileView : Box, IFileView
 	}
 
 	/// <inheritdoc />
+	public IGraphsView GraphsView => graphsView;
+
+	/// <inheritdoc />
 	public Widget GetWidget() => this;
 
 	/// <summary>
@@ -214,13 +232,13 @@ public class FileView : Box, IFileView
 			outputContents.AppendLine(stdout);
 		GLib.Functions.IdleAddFull(0, _ =>
 		{
-			Adjustment? adj = outputScroller.Vadjustment;
+			Adjustment? adj = logsScroller.Vadjustment;
 			double scroll = adj?.Value ?? 0;
 			string text;
 			lock (outputContents)
 				text = outputContents.ToString();
-			output.Show();
-			output.GetBuffer().SetText(text, Encoding.UTF8.GetByteCount(text));
+			logs.Show();
+			logs.GetBuffer().SetText(text, Encoding.UTF8.GetByteCount(text));
 			// If scrolled window is at bottom of screen, scroll to bottom.
 			// Otherwise, scroll to previous scroll position. This should be
 			// refactored once the gircore API includes TextIter methods.
@@ -246,7 +264,7 @@ public class FileView : Box, IFileView
 	public void ClearOutput()
 	{
 		outputContents.Clear();
-		output.GetBuffer().SetText("", 0);
+		logs.GetBuffer().SetText("", 0);
 	}
 
 	/// <inheritdoc />
@@ -291,7 +309,7 @@ public class FileView : Box, IFileView
 			onRun();
 			run.Hide();
 			stop.Show();
-			output.Visible = true;
+			logs.Visible = true;
 		}
 		catch (Exception error)
 		{

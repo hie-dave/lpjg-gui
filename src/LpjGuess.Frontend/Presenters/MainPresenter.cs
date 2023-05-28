@@ -1,3 +1,4 @@
+using LpjGuess.Core.Models;
 using LpjGuess.Frontend.Interfaces;
 using LpjGuess.Frontend.Views;
 
@@ -63,11 +64,21 @@ public class MainPresenter
 		child.Dispose();
 
 		// Open new file.
-		child = new FilePresenter(file);
+		LpjFile lpjFile = CreateLpjFile(file);
+		child = new FilePresenter(lpjFile);
 		view.SetChild(child.GetView());
 
 		// Update window title.
 		view.SetTitle(Path.GetFileName(file), Path.GetDirectoryName(file));
+	}
+
+	private LpjFile CreateLpjFile(string file)
+	{
+		if (Path.GetExtension(file).ToLower() == ".ins")
+		{
+			return LpjFile.ForInsFile(file);
+		}
+		return LpjFile.LoadFrom(file);
 	}
 
 	/// <summary>

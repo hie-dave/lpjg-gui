@@ -148,7 +148,7 @@ public class RunnerConfigurationView : IRunnerView
 	/// </summary>
 	/// <param name="sender">Sender object.</param>
 	/// <param name="args">Event data.</param>
-	private void OnToggleIsDefault(Switch sender, Switch.StateSetSignalArgs args)
+	private bool OnToggleIsDefault(Switch sender, Switch.StateSetSignalArgs args)
 	{
 		try
 		{
@@ -158,9 +158,10 @@ public class RunnerConfigurationView : IRunnerView
 		{
 			MainView.Instance.ReportError(error);
 		}
+		return true;
 	}
 
-	private void OnWindowClosed(Gtk.Window sender, EventArgs args)
+	private bool OnWindowClosed(Gtk.Window sender, EventArgs args)
 	{
 		try
 		{
@@ -170,5 +171,6 @@ public class RunnerConfigurationView : IRunnerView
 		{
 			MainView.Instance.ReportError(error);
 		}
+		return true;
 	}
 }
