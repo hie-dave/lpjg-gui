@@ -46,8 +46,9 @@ public class PreferencesPresenter : IDialogPresenter
 		this.preferences = preferences;
 		this.onClose = onClose;
 		runnerPresenters = GetRunnerPresenters().ToList();
-		view = new PreferencesView(preferences.PreferDarkMode, runnerPresenters.Select(p => p.GetMetadata()).ToList());
+		view = new PreferencesView(preferences.PreferDarkMode, preferences.GoToLogsTabOnRun, runnerPresenters.Select(p => p.GetMetadata()).ToList());
 		view.DarkModeChanged.ConnectTo(OnToggleDarkMode);
+		view.GoToLogsTabChanged.ConnectTo(OnToggleGoToLogs);
 		view.OnAddRunner.ConnectTo(OnAddRunner);
 		view.OnDeleteRunner.ConnectTo(OnDeleteRunner);
 		view.OnEditRunner.ConnectTo(OnEditRunner);
@@ -137,6 +138,15 @@ public class PreferencesPresenter : IDialogPresenter
 	{
 		preferences.PreferDarkMode = preferDarkMode;
 		// todo: prompt for restart program.
+	}
+
+	/// <summary>
+	/// Called when the user has toggled the 'go to logs' option.
+	/// </summary>
+	/// <param name="goToLogs">The new value of the property.</param>
+	private void OnToggleGoToLogs(bool goToLogs)
+	{
+		preferences.GoToLogsTabOnRun = goToLogs;
 	}
 
 	/// <summary>

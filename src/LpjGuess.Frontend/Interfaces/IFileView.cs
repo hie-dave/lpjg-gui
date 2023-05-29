@@ -1,4 +1,5 @@
 using LpjGuess.Frontend.Delegates;
+using LpjGuess.Frontend.Enumerations;
 using LpjGuess.Frontend.Interfaces.Views;
 
 namespace LpjGuess.Frontend.Interfaces;
@@ -43,6 +44,12 @@ public interface IFileView : IView
 	void ShowRunButton(bool show);
 
 	/// <summary>
+	/// Select the specified tab.
+	/// </summary>
+	/// <param name="tab">The tab to be selected.</param>
+	void SelectTab(FileTab tab);
+
+	/// <summary>
 	/// Get a reference to the graphs view.
 	/// </summary>
 	IGraphsView GraphsView { get; }
@@ -50,10 +57,22 @@ public interface IFileView : IView
 	/// <summary>
 	/// A child view which displays console output from runs of the model.
 	/// </summary>
-	IEditorView OutputView { get; }
+	IEditorView LogsView { get; }
 
 	/// <summary>
-	/// Called when the user wants to run with a specific runner.
+	/// Called when the user wants to run with a specific runner. The event
+	/// parameter is the name of the runner to be used, or null if the default
+	/// runner is to be used.
 	/// </summary>
-	Event<string> OnRun { get; }
+	Event<string?> OnRun { get; }
+
+	/// <summary>
+	/// Called when the user wants to cancel a running simulation.
+	/// </summary>
+	Event OnStop { get; }
+
+	/// <summary>
+	/// Called when the user wants to add a new run method.
+	/// </summary>
+	Event OnAddRunOption { get; }
 }

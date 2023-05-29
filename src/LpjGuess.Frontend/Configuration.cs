@@ -62,6 +62,12 @@ public class Configuration
 	public bool PreferDarkMode { get; set; }
 
 	/// <summary>
+	/// If true, the "logs" tab will be automatically selected whenever a
+	/// simulation is run.
+	/// </summary>
+	public bool GoToLogsTabOnRun { get; set; }
+
+	/// <summary>
 	/// Runner configurations provided by the user.
 	/// </summary>
 	// [UI("Runners")]

@@ -15,4 +15,9 @@ public interface IEditorView : IView
 	/// </summary>
 	/// <param name="line">The text.</param>
 	void AppendLine(string line);
+
+	/// <summary>
+	/// Empty all text from the output view.
+	/// </summary>
+	void Clear();
 }

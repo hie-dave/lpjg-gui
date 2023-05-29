@@ -29,12 +29,20 @@ public class PreferencesView : IPreferencesView
 	private readonly Switch darkModeButton;
 
 	/// <summary>
+	/// The button used to display the 'go to logs tab' input.
+	/// </summary>
+	private readonly Switch goToLogsTabButton;
+
+	/// <summary>
 	/// Preferencse page which displays runner configurations.
 	/// </summary>
 	private RunnersView runnersPage;
 
 	/// <inheritdoc />
 	public Event<bool> DarkModeChanged { get; private init; }
+
+	/// <inheritdoc />
+	public Event<bool> GoToLogsTabChanged { get; private init; }
 
 	/// <inheritdoc />
 	public Event OnClose { get; private init; }
@@ -61,19 +69,28 @@ public class PreferencesView : IPreferencesView
 	/// Create a new <see cref="PreferencesView"/> instance.
 	/// </summary>
 	/// <param name="darkMode">The initial value of the 'prefer dark mode' property.</param>
+	/// <param name="goToLogs">The initial value of the 'go to logs tab' property.</param>
 	/// <param name="runnerMetadata">The runners' metadata.</param>
-	public PreferencesView(bool darkMode, IReadOnlyList<IRunnerMetadata> runnerMetadata)
+	public PreferencesView(bool darkMode, bool goToLogs, IReadOnlyList<IRunnerMetadata> runnerMetadata)
 	{
 		darkModeButton = new Switch();
 		darkModeButton.Valign = Align.Center;
+		goToLogsTabButton = new Switch();
+		goToLogsTabButton.Valign = Align.Center;
 
 		ActionRow darkModeRow = new ActionRow();
 		darkModeRow.Title = "Prefer dark mode";
 		darkModeRow.Subtitle = "True to use dark theme. False to use system theme.";
 		darkModeRow.AddSuffix(darkModeButton);
 
+		ActionRow goToLogsTabRow = new ActionRow();
+		goToLogsTabRow.Title = "Automatically go to logs tab";
+		goToLogsTabRow.Subtitle = "Iff true, the logs tab will automatically be selected when a simulation is run.";
+		goToLogsTabRow.AddSuffix(goToLogsTabButton);
+
 		PreferencesGroup generalGroup = new PreferencesGroup();
 		generalGroup.Add(darkModeRow);
+		generalGroup.Add(goToLogsTabRow);
 
 		PreferencesPage generalPage = new PreferencesPage();
 		generalPage.Title = "Settings";
@@ -89,6 +106,7 @@ public class PreferencesView : IPreferencesView
 		window.Add(runnersPage);
 
 		DarkModeChanged = new Event<bool>();
+		GoToLogsTabChanged = new Event<bool>();
 		OnClose = new Event();
 		OnAddRunner = new Event();
 		OnDeleteRunner = new Event<int>();
@@ -96,7 +114,9 @@ public class PreferencesView : IPreferencesView
 		OnToggleDefaultRunner = new Event<int>();
 
 		ConnectEvents();
-		Populate(darkMode);
+
+		darkModeButton.State = darkModeButton.Active = darkMode;
+		goToLogsTabButton.State = goToLogsTabButton.Active = goToLogs;
 
 		Instance = window;
 	}
@@ -132,6 +152,7 @@ public class PreferencesView : IPreferencesView
 	private void ConnectEvents()
 	{
 		darkModeButton.OnStateSet += OnToggleDarkMode;
+		goToLogsTabButton.OnStateSet += OnToggleGoToLogsTab;
 		window.OnCloseRequest += OnWindowClosed;
 
 		ConnectRunnerEvents();
@@ -143,6 +164,7 @@ public class PreferencesView : IPreferencesView
 	private void DisconnectEvents()
 	{
 		darkModeButton.OnStateSet -= OnToggleDarkMode;
+		goToLogsTabButton.OnStateSet -= OnToggleGoToLogsTab;
 		window.OnCloseRequest -= OnWindowClosed;
 		DarkModeChanged.DisconnectAll();
 		OnClose.DisconnectAll();
@@ -171,12 +193,6 @@ public class PreferencesView : IPreferencesView
 		runnersPage.OnToggleDefault.DisconnectAll();
 	}
 
-	/// <inheritdoc />
-	public void Populate(bool darkMode)
-	{
-		darkModeButton.Active = darkMode;
-	}
-
 	/// <summary>
 	/// Called when the user has closed the window.
 	/// </summary>
@@ -192,7 +208,7 @@ public class PreferencesView : IPreferencesView
 		{
 			MainView.Instance.ReportError(error);
 		}
-		return true;
+		return false;
 	}
 
 	/// <summary>
@@ -210,6 +226,24 @@ public class PreferencesView : IPreferencesView
 		{
 			MainView.Instance.ReportError(error);
 		}
-		return true;
+		return false;
+	}
+
+	/// <summary>
+	/// Called when the 'prefer dark mode' option is toggled by the user.
+	/// </summary>
+	/// <param name="sender">Sender object.</param>
+	/// <param name="args">Event data.</param>
+	private bool OnToggleGoToLogsTab(Switch sender, Switch.StateSetSignalArgs args)
+	{
+		try
+		{
+			GoToLogsTabChanged.Invoke(args.State);
+		}
+		catch (Exception error)
+		{
+			MainView.Instance.ReportError(error);
+		}
+		return false;
 	}
 }

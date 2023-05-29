@@ -5,12 +5,20 @@ namespace LpjGuess.Frontend.Interfaces.Views;
 /// <summary>
 /// An interface to a preferences view.
 /// </summary>
+/// <remarks>
+/// todo: reimplement using reflection
+/// </remarks>
 public interface IPreferencesView : IDialogView
 {
 	/// <summary>
 	/// Called when the user changes the 'prefer dark mode' option.
 	/// </summary>
 	Event<bool> DarkModeChanged { get; }
+
+	/// <summary>
+	/// Called when the user changes the 'go to logs tab' option.
+	/// </summary>
+	Event<bool> GoToLogsTabChanged { get; }
 
 	/// <summary>
 	/// Called when the user wants to add a new runner.

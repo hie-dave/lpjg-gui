@@ -213,8 +213,15 @@ public class MainView : ApplicationWindow, IMainView
 		scroller.Child = text;
 		scroller.PropagateNaturalHeight = true;
 		scroller.PropagateNaturalWidth = true;
+		// fixme - need to make the error dialogs wide enough to show full call
+		// stack without scrolling.
+		// scroller.HscrollbarPolicy = PolicyType.Never;
 		scroller.Vexpand = true;
 		scroller.Hexpand = true;
+
+		Expander expander = new Expander();
+		expander.Child = scroller;
+		expander.Label = "Details";
 
 		// Show error in a dialog box for now.
 		var dialog = new MessageDialog();
@@ -222,10 +229,9 @@ public class MainView : ApplicationWindow, IMainView
 		dialog.TransientFor = this;
 		dialog.Title = "Error";
 		dialog.Heading = "Error";
+		dialog.Body = error.Message;
 		dialog.Resizable = true;
-		// dialog.Body = $"<tt>{error.ToString()}</tt>";
-		// dialog.BodyUseMarkup = true;
-		dialog.ExtraChild = scroller;
+		dialog.ExtraChild = expander;
 		dialog.DefaultWidth = 480;
 		dialog.AddResponse("ok", "_Ok");
 		dialog.OnResponse += OnCloseErrorDialog;

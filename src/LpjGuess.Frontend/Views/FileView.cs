@@ -9,6 +9,7 @@ using Action = System.Action;
 using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.Interfaces.Views;
 using LpjGuess.Frontend.Utility.Gtk;
+using LpjGuess.Frontend.Enumerations;
 
 namespace LpjGuess.Frontend.Views;
 
@@ -51,21 +52,6 @@ public class FileView : Box, IFileView
 	private readonly string fileName;
 
 	/// <summary>
-	/// Action to be invoked when the user clicks 'run'.
-	/// </summary>
-	private readonly Action onRun;
-
-	/// <summary>
-	/// Action to be invoked when the user clicks 'stop'.
-	/// </summary>
-	private readonly Action onStop;
-
-	/// <summary>
-	/// Called when the user wants to add a new run option.
-	/// </summary>
-	private readonly Action onAddRunOption;
-
-	/// <summary>
 	/// The run button.
 	/// </summary>
 	private readonly Button run;
@@ -91,14 +77,14 @@ public class FileView : Box, IFileView
 	private readonly Notebook notebook;
 
 	/// <summary>
-	/// TextView containing output from the child lpj-guess process.
-	/// </summary>
-	private readonly TextView logs;
-
-	/// <summary>
 	/// ScrolledWindow containing the lpj-guess output TextView widget.
 	/// </summary>
 	private readonly ScrolledWindow logsScroller;
+
+	/// <summary>
+	/// A view which displays the contents of an instruction file.
+	/// </summary>
+	private readonly IEditorView insFileView;
 
 	/// <summary>
 	/// A view which allows the user to browse the raw outputs from the model.
@@ -111,45 +97,40 @@ public class FileView : Box, IFileView
 	private readonly GraphsView graphsView;
 
 	/// <summary>
-	/// The TextView API is currently quite limited, so I'm using a separate
-	/// StringBuilder to track the contents of the output TextView.
-	/// </summary>
-	private readonly StringBuilder outputContents;
-
-	/// <summary>
 	/// The run options menu.
 	/// </summary>
 	private readonly Menu runMenu;
 
 	/// <inheritdoc />
-	public Event<string> OnRun { get; private init; }
+	public Event<string?> OnRun { get; private init; }
+
+	/// <inheritdoc />
+	public Event OnStop { get; private init; }
+
+	/// <inheritdoc />
+	public Event OnAddRunOption { get; private init; }
 
 	/// <summary>
 	/// Create a new <see cref="FileView"/> instance for a particular .ins file.
 	/// </summary>
 	/// <param name="fileName">Full path/name of the file.</param>
-	/// <param name="onRun">Called when the user wants to run the file.</param>
-	/// <param name="onStop">Called when the user wants to cancel a running simulation.</param>
-	/// <param name="onAddRunOption">Called when the user wants to add a new run method.</param>
-	public FileView(string fileName, Action onRun, Action onStop, Action onAddRunOption) : base()
+	public FileView(string fileName) : base()
 	{
 		this.fileName = fileName;
-		this.onRun = onRun;
-		this.onStop = onStop;
-		this.onAddRunOption = onAddRunOption;
-		OnRun = new Event<string>();
+		OnRun = new Event<string?>();
+		OnStop = new Event();
+		OnAddRunOption = new Event();
 
 		SetOrientation(Orientation.Vertical);
 		Spacing = spacing;
 
 		// Create a TextView widget to display file contents.
 		// todo: gtksourceview. But this requires bindings...
-		OutputView = new EditorView();
-
-		outputContents = new StringBuilder();
-
+		insFileView = new EditorView();
+		insFileView.Editable = true;
+		insFileView.AppendLine(File.ReadAllText(fileName));
 		ScrolledWindow scroller = new ScrolledWindow();
-		scroller.Child = OutputView.GetWidget();
+		scroller.Child = insFileView.GetWidget();
 
 		inputModuleDropdown = DropDown.NewFromStrings(inputModules);
 		inputModuleDropdown.Hexpand = true;
@@ -184,10 +165,10 @@ public class FileView : Box, IFileView
 		stop.AddCssClass(StyleClasses.DestructiveAction);
 		stop.Visible = false;
 
-		logs = new TextView();
-		logs.Monospace = true;
+		LogsView = new EditorView();
+		LogsView.Editable = false;
 		logsScroller = new ScrolledWindow();
-		logsScroller.Child = logs;
+		logsScroller.Child = LogsView.GetWidget();
 
 		outputsView = new OutputsView();
 		graphsView = new GraphsView();
@@ -226,7 +207,7 @@ public class FileView : Box, IFileView
 	public IGraphsView GraphsView => graphsView;
 
 	/// <inheritdoc />
-	public IEditorView OutputView { get; private init; }
+	public IEditorView LogsView { get; private init; }
 
 	/// <inheritdoc />
 	public Widget GetWidget() => this;
@@ -250,17 +231,12 @@ public class FileView : Box, IFileView
 	/// <inheritdoc />
 	public void AppendOutput(string stdout)
 	{
-		lock (outputContents)
-			outputContents.AppendLine(stdout);
 		GLib.Functions.IdleAddFull(0, _ =>
 		{
 			Adjustment? adj = logsScroller.Vadjustment;
 			double scroll = adj?.Value ?? 0;
-			string text;
-			lock (outputContents)
-				text = outputContents.ToString();
-			logs.Show();
-			logs.GetBuffer().SetText(text, Encoding.UTF8.GetByteCount(text));
+			LogsView.GetWidget().Show();
+			LogsView.AppendLine(stdout);
 			// If scrolled window is at bottom of screen, scroll to bottom.
 			// Otherwise, scroll to previous scroll position. This should be
 			// refactored once the gircore API includes TextIter methods.
@@ -285,8 +261,7 @@ public class FileView : Box, IFileView
 	/// <inheritdoc />
 	public void ClearOutput()
 	{
-		outputContents.Clear();
-		logs.GetBuffer().SetText("", 0);
+		LogsView.Clear();
 	}
 
 	/// <inheritdoc />
@@ -294,6 +269,12 @@ public class FileView : Box, IFileView
 	{
 		runBox.Visible = show;
 		stop.Visible = !show;
+	}
+
+	/// <inheritdoc />
+	public void SelectTab(FileTab tab)
+	{
+		notebook.SetCurrentPage((int)tab);
 	}
 
 	/// <summary>
@@ -314,6 +295,8 @@ public class FileView : Box, IFileView
 		run.OnClicked -= Run;
 		stop.OnClicked -= Stop;
 		OnRun.DisconnectAll();
+		OnStop.DisconnectAll();
+		OnAddRunOption.DisconnectAll();
 	}
 
 	/// <summary>
@@ -340,7 +323,7 @@ public class FileView : Box, IFileView
 	{
 		try
 		{
-			onAddRunOption();
+			OnAddRunOption.Invoke();
 		}
 		catch (Exception error)
 		{
@@ -360,6 +343,8 @@ public class FileView : Box, IFileView
 			string? name = sender.Name;
 			if (name != null)
 				OnRun.Invoke(name);
+			runBox.Hide();
+			stop.Show();
 		}
 		catch (Exception error)
 		{
@@ -376,10 +361,9 @@ public class FileView : Box, IFileView
 	{
 		try
 		{
-			onRun();
+			OnRun.Invoke(null);
 			runBox.Hide();
 			stop.Show();
-			logs.Visible = true;
 		}
 		catch (Exception error)
 		{
@@ -396,7 +380,7 @@ public class FileView : Box, IFileView
 	{
 		try
 		{
-			onStop();
+			OnStop.Invoke();
 			stop.Hide();
 			runBox.Show();
 		}

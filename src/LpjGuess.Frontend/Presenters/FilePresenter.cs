@@ -2,6 +2,7 @@ using LpjGuess.Core.Interfaces.Runners;
 using LpjGuess.Core.Models;
 using LpjGuess.Core.Runners;
 using LpjGuess.Frontend.Delegates;
+using LpjGuess.Frontend.Enumerations;
 using LpjGuess.Frontend.Extensions;
 using LpjGuess.Frontend.Interfaces;
 using LpjGuess.Frontend.Interfaces.Presenters;
@@ -53,9 +54,13 @@ public class FilePresenter : IPresenter<IFileView>
 	public FilePresenter(LpjFile file)
 	{
 		this.lpjFile = file;
-		view = new FileView(file.InstructionFile, OnRun, OnStop, OnConfigureRunners);
-		this.outputView = view.OutputView;
+		view = new FileView(file.InstructionFile);
+		view.OnRun.ConnectTo(OnRun);
+		view.OnStop.ConnectTo(OnStop);
+		view.OnAddRunOption.ConnectTo(OnConfigureRunners);
+		this.outputView = view.LogsView;
 		graphsPresenter = new GraphsPresenter(view.GraphsView, file.Graphs);
+		PopulateRunners();
 	}
 
 	/// <summary>
@@ -136,6 +141,9 @@ public class FilePresenter : IPresenter<IFileView>
 
 		// Ensure that the stop button is visible and the run button hidden.
 		view.ShowRunButton(false);
+
+		if (Configuration.Instance.GoToLogsTabOnRun)
+			view.SelectTab(FileTab.Logs);
 	}
 
 	/// <summary>
@@ -150,9 +158,11 @@ public class FilePresenter : IPresenter<IFileView>
 	/// Get the runner configuration with the specified name.
 	/// </summary>
 	/// <param name="name">Name of a runner configuration.</param>
-	private IRunnerConfiguration? GetRunner(string name)
+	private IRunnerConfiguration? GetRunner(string? name)
 	{
 		Configuration conf = Configuration.Instance;
+		if (name == null)
+			return conf.GetDefaultRunner();
 		return conf.Runners.FirstOrDefault(r => r.Name.Equals(name, StringComparison.CurrentCulture));
 	}
 
@@ -160,35 +170,18 @@ public class FilePresenter : IPresenter<IFileView>
 	/// User wants to run the runner with the specified name.
 	/// </summary>
 	/// <param name="name">Name of the runner.</param>
-	private void OnRun(string name)
+	private void OnRun(string? name)
 	{
 		IRunnerConfiguration? config = GetRunner(name);
 		if (config == null)
-			// todo: this should be a warning.
+		{
+			if (name == null)
+				throw new InvalidOperationException("No default runner exists");
+			// todo: this should probably be a warning.
 			throw new InvalidOperationException($"Unknown runner configuration: '{name}'");
+		}
 
 		Run(config);
-	}
-
-	/// <summary>
-	/// User has clicked the 'run' button. Run using the default runner
-	/// configuration, if one exists.
-	/// </summary>
-	private void OnRun()
-	{
-		try
-		{
-			// Create a new runner object, and start running the simulation.
-			IRunnerConfiguration? runConfig = Configuration.Instance.GetDefaultRunner();
-			if (runConfig == null)
-				throw new InvalidOperationException($"No default runner exists.");
-
-			Run(runConfig);
-		}
-		catch (Exception error)
-		{
-			throw new Exception($"Unable to run file '{lpjFile.InstructionFile}'", error);
-		}
 	}
 
 	/// <summary>

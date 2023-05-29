@@ -54,6 +54,13 @@ public class EditorView : IEditorView
 		buffer.SetText(text, Encoding.UTF8.GetByteCount(text));
 	}
 
+	/// <inheritdoc />
+	public void Clear()
+	{
+		textView.GetBuffer().SetText("", 0);
+		contents.Clear();
+	}
+
 	/// <summary>
 	/// Dispose of native resources.
 	/// </summary>
