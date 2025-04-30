@@ -17,11 +17,12 @@ public static class RunnerFactory
 	/// <param name="stdoutCallback">Function to be called when the process writes to stdout.</param>
 	/// <param name="stderrCallback">Function to be called when the process writes to stderr.</param>
 	/// <param name="onCompleted">Function to be called when the process exits. The function argument is the exit code of the process.</param>
+	/// <param name="onProgressChanged">Function to be called when the process reports progress. The function argument is the progress as a fraction (0-1).</param>
 	public static IRunner Create(IRunnerConfiguration runConfig, ISimulation simulation,
-		Action<string> stdoutCallback, Action<string> stderrCallback, Action<int> onCompleted)
+		Action<string> stdoutCallback, Action<string> stderrCallback, Action<int> onCompleted, Action<double> onProgressChanged)
 	{
 		if (runConfig is LocalRunnerConfiguration local)
-			return new LocalRunner(local, simulation, stdoutCallback, stderrCallback, onCompleted);
+			return new LocalRunner(local, simulation, stdoutCallback, stderrCallback, onProgressChanged, onCompleted);
 
 		throw new InvalidOperationException($"Unsupported runner configuration: {runConfig.GetType().Name}");
 	}

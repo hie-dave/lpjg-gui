@@ -231,7 +231,7 @@ public class FileView : Box, IFileView
 	/// <inheritdoc />
 	public void AppendOutput(string stdout)
 	{
-		GLib.Functions.IdleAddFull(0, _ =>
+		MainView.RunOnMainThread(() =>
 		{
 			Adjustment? adj = logsScroller.Vadjustment;
 			double scroll = adj?.Value ?? 0;
@@ -247,7 +247,6 @@ public class FileView : Box, IFileView
 				Console.WriteLine($"Setting vadj to {scroll} (pos = {adj.Value}, last page cutoff = {adj.Upper - adj.PageSize})");
 				adj.Value = scroll;
 			}
-			return false;
 		});
 	}
 
@@ -389,4 +388,13 @@ public class FileView : Box, IFileView
 			MainView.Instance.ReportError(error);
 		}
 	}
+
+    /// <summary>
+    /// Show the progress of a currently-running simulation.
+    /// </summary>
+    /// <param name="progress">Current simulation progress.</param>
+    public void ShowProgress(double progress)
+    {
+        Console.WriteLine($"Progress: {progress}");
+    }
 }

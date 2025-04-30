@@ -136,7 +136,8 @@ public class FilePresenter : IPresenter<IFileView>
 		view.ClearOutput();
 
 		var simulation = new SimulationConfiguration(lpjFile.InstructionFile, view.InputModule);
-		runner = RunnerFactory.Create(runConfig, simulation, StdoutCallback, StderrCallback, OnCompleted);
+		runner = RunnerFactory.Create(runConfig, simulation, StdoutCallback, StderrCallback, OnCompleted, OnProgressReceived);
+		// runner.OnProgressChanged.ConnectTo(OnProgressReceived);
 		runner.Run();
 
 		// Ensure that the stop button is visible and the run button hidden.
@@ -147,9 +148,18 @@ public class FilePresenter : IPresenter<IFileView>
 	}
 
 	/// <summary>
-	/// Populate the runners dropdown in the view.
+	/// Called when a progress report is received from the model.
 	/// </summary>
-	public void PopulateRunners()
+	/// <param name="progress">Current model execution progress (0-1).</param>
+    private void OnProgressReceived(double progress)
+    {
+        view.ShowProgress(progress);
+    }
+
+    /// <summary>
+    /// Populate the runners dropdown in the view.
+    /// </summary>
+    public void PopulateRunners()
 	{
 		view.SetRunners(Configuration.Instance.Runners.Select(r => r.Name));
 	}

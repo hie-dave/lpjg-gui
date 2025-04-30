@@ -1,4 +1,4 @@
-﻿using Adw;
+using Adw;
 
 using LpjGuess.Frontend.Presenters;
 using LpjGuess.Frontend.Views;

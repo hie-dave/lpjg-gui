@@ -3,6 +3,7 @@ using LpjGuess.Core.Interfaces.Runners;
 using LpjGuess.Core.Runners.Configuration;
 using System.Diagnostics;
 using System.Reflection;
+using System.Text.RegularExpressions;
 
 namespace LpjGuess.Core.Runners;
 
@@ -38,15 +39,22 @@ public class LocalRunner : IRunner
 	private readonly Action<int> completedCallback;
 
 	/// <summary>
-	/// Create a new <see cref="LocalRunner"/> instance.
+	/// User-specified function which will be called when the child process
+	/// reports progress.
 	/// </summary>
-	/// <param name="runnerConfig">Configuration settings which describe how to run the model.</param>
-	/// <param name="simulation">Settings which describe how to run a particular simulation.</param>
-	/// <param name="stdoutCallback">Function to be called when the process writes to stdout.</param>
-	/// <param name="stderrCallback">Function to be called when the process writes to stderr.</param>
-	/// <param name="onCompleted">Function to be called when the process exits. The function argument is the exit code of the process.</param>
-	public LocalRunner(LocalRunnerConfiguration runnerConfig, ISimulation simulation,
-		Action<string> stdoutCallback, Action<string> stderrCallback, Action<int> onCompleted)
+	private readonly Action<double> progressCallback;
+
+    /// <summary>
+    /// Create a new <see cref="LocalRunner"/> instance.
+    /// </summary>
+    /// <param name="runnerConfig">Configuration settings which describe how to run the model.</param>
+    /// <param name="simulation">Settings which describe how to run a particular simulation.</param>
+    /// <param name="stdoutCallback">Function to be called when the process writes to stdout.</param>
+    /// <param name="stderrCallback">Function to be called when the process writes to stderr.</param>
+    /// <param name="progressCallback">Function to be called when the process reports progress. The function argument is the progress as a fraction (0-1).</param>
+    /// <param name="onCompleted">Function to be called when the process exits. The function argument is the exit code of the process.</param>
+    public LocalRunner(LocalRunnerConfiguration runnerConfig, ISimulation simulation,
+		Action<string> stdoutCallback, Action<string> stderrCallback, Action<double> progressCallback, Action<int> onCompleted)
 	{
 		string guessPath = runnerConfig.GuessPath;
 
@@ -75,6 +83,7 @@ public class LocalRunner : IRunner
 		this.stdoutCallback = stdoutCallback;
 		this.stderrCallback = stderrCallback;
 		this.completedCallback = onCompleted;
+		this.progressCallback = progressCallback;
 	}
 
 	/// <summary>
@@ -198,7 +207,12 @@ public class LocalRunner : IRunner
 	/// <param name="e">Event data.</param>
 	private void OnOutputDataReceived(object sender, DataReceivedEventArgs e)
 	{
-		if (!string.IsNullOrEmpty(e.Data))
+		if (string.IsNullOrEmpty(e.Data))
+			return;
+		Match match = Regex.Match(e.Data, @"([0-9]+)%[ \t]complete,[ \t]+([0-9]+:[0-9]+:[0-9]+)[ \t]+elapsed,[ \t]+([0-9]+:[0-9]+:[0-9]+)[ \t]remaining");
+		if (match.Success && int.TryParse(match.Groups[1].Value, out int percentage))
+			progressCallback(percentage / 100.0);
+		else
 			stdoutCallback(e.Data);
 	}
 

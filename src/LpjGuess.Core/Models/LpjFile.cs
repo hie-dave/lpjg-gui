@@ -40,6 +40,9 @@ public class LpjFile
 		Graphs = new List<Graph>();
 	}
 
+	/// <summary>
+	/// Save all changes to this file to disk.
+	/// </summary>
 	public void Save()
 	{
 		this.SerialiseTo(FilePath);

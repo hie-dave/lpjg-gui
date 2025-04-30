@@ -44,6 +44,12 @@ public interface IFileView : IView
 	void ShowRunButton(bool show);
 
 	/// <summary>
+	/// Show a progress message from the user.
+	/// </summary>
+	/// <param name="progress">Current job progress.</param>
+	void ShowProgress(double progress);
+
+	/// <summary>
 	/// Select the specified tab.
 	/// </summary>
 	/// <param name="tab">The tab to be selected.</param>

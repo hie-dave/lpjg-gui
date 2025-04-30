@@ -156,6 +156,7 @@ public class MainView : ApplicationWindow, IMainView
 	/// <inheritdoc />
 	public void SetTitle(string title, string? subtitle = null)
 	{
+		Title = title;
 		this.title.SetText(title);
 		if (subtitle == null)
 			this.subtitle.Hide();
@@ -185,11 +186,11 @@ public class MainView : ApplicationWindow, IMainView
 	/// <param name="callback">Action to be performed.</param>
 	public static void RunOnMainThread(Action callback)
 	{
-		GLib.Functions.IdleAddFull(0, _ =>
+		GLib.Functions.IdleAdd(0, new GLib.SourceFunc(() =>
 		{
 			callback();
 			return false;
-		});
+		}));
 	}
 
 	/// <summary>
