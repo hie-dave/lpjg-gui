@@ -12,7 +12,7 @@ public class SimulationConfiguration : ISimulation
 	/// <summary>
 	/// Path to the instruction file.
 	/// </summary>
-	public string InsFile { get; private init; }
+	public string InsFiles { get; private init; }
 
 	/// <summary>
 	/// Name of the input module to be used.
@@ -29,7 +29,7 @@ public class SimulationConfiguration : ISimulation
 	/// <param name="inputModule">The input module to be used.</param>
 	public SimulationConfiguration(string insFile, string inputModule)
 	{
-		InsFile = insFile;
+		InsFiles = insFile;
 		InputModule = inputModule;
 	}
 }

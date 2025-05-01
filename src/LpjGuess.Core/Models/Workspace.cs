@@ -8,7 +8,7 @@ namespace LpjGuess.Core.Models;
 /// LPJ-Guess ins file workspace.
 /// </summary>
 [Serializable]
-public class LpjFile
+public class Workspace
 {
 	/// <summary>
 	/// The default file extension used for these workspace files.
@@ -18,7 +18,7 @@ public class LpjFile
 	/// <summary>
 	/// Instruction file path.
 	/// </summary>
-	public string InstructionFile { get; set; }
+	public List<string> InstructionFiles { get; set; }
 
 	/// <summary>
 	/// Path to this lpj file.
@@ -33,9 +33,9 @@ public class LpjFile
 	/// <summary>
 	/// Default constructor provided for deserialization purposes only.
 	/// </summary>
-	public LpjFile()
+	public Workspace()
 	{
-		InstructionFile = string.Empty;
+		InstructionFiles = [];
 		FilePath = string.Empty;
 		Graphs = new List<Graph>();
 	}
@@ -49,27 +49,27 @@ public class LpjFile
 	}
 
 	/// <summary>
-	/// Create a new <see cref="LpjFile"/> instance for the specified instruction
+	/// Create a new <see cref="Workspace"/> instance for the specified instruction
 	/// file and serialise to disk before returning. The lpj file will be saved
 	/// in the same directory as the .ins file, but with the default lpj file
 	/// (not ins) extension.
 	/// </summary>
 	/// <param name="insFile">Path to the instruction file.</param>
-	public static LpjFile ForInsFile(string insFile)
+	public static Workspace ForInsFile(string insFile)
 	{
-		LpjFile result = new LpjFile();
-		result.InstructionFile = insFile;
+		Workspace result = new Workspace();
+		result.InstructionFiles.Add(insFile);
 		result.FilePath = Path.ChangeExtension(insFile, defaultFileExtension);
 		result.Save();
 		return result;
 	}
 
 	/// <summary>
-	/// Deserialise the specified file into an instance of <see cref="LpjFile"/>.
+	/// Deserialise the specified file into an instance of <see cref="Workspace"/>.
 	/// </summary>
 	/// <param name="filePath">Path to the serialised file.</param>
-	public static LpjFile LoadFrom(string filePath)
+	public static Workspace LoadFrom(string filePath)
 	{
-		return XmlSerialisation.DeserialiseFrom<LpjFile>(filePath);
+		return XmlSerialisation.DeserialiseFrom<Workspace>(filePath);
 	}
 }

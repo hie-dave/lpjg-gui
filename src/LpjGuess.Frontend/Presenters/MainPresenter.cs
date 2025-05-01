@@ -64,21 +64,21 @@ public class MainPresenter
 		child.Dispose();
 
 		// Open new file.
-		LpjFile lpjFile = CreateLpjFile(file);
-		child = new FilePresenter(lpjFile);
+		Workspace workspace = CreateWorkspace(file);
+		child = new FilePresenter(workspace);
 		view.SetChild(child.GetView());
 
 		// Update window title.
 		view.SetTitle(Path.GetFileName(file), Path.GetDirectoryName(file));
 	}
 
-	private LpjFile CreateLpjFile(string file)
+	private Workspace CreateWorkspace(string file)
 	{
 		if (Path.GetExtension(file).ToLower() == ".ins")
 		{
-			return LpjFile.ForInsFile(file);
+			return Workspace.ForInsFile(file);
 		}
-		return LpjFile.LoadFrom(file);
+		return Workspace.LoadFrom(file);
 	}
 
 	/// <summary>

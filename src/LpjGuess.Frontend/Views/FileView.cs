@@ -10,6 +10,7 @@ using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.Interfaces.Views;
 using LpjGuess.Frontend.Utility.Gtk;
 using LpjGuess.Frontend.Enumerations;
+using LpjGuess.Runner.Models;
 
 namespace LpjGuess.Frontend.Views;
 
@@ -49,7 +50,7 @@ public class FileView : Box, IFileView
 	/// <summary>
 	/// Full path and filename of the file being displayed.
 	/// </summary>
-	private readonly string fileName;
+	private readonly IReadOnlyList<string> fileNames;
 
 	/// <summary>
 	/// The run button.
@@ -118,10 +119,10 @@ public class FileView : Box, IFileView
 	/// <summary>
 	/// Create a new <see cref="FileView"/> instance for a particular .ins file.
 	/// </summary>
-	/// <param name="fileName">Full path/name of the file.</param>
-	public FileView(string fileName) : base()
+	/// <param name="fileNames">Full path/name of the file.</param>
+	public FileView(IEnumerable<string> fileNames) : base()
 	{
-		this.fileName = fileName;
+		this.fileNames = fileNames.ToList();
 		OnRun = new Event<string?>();
 		OnStop = new Event();
 		OnAddRunOption = new Event();
@@ -133,7 +134,7 @@ public class FileView : Box, IFileView
 		// todo: gtksourceview. But this requires bindings...
 		insFileView = new EditorView();
 		insFileView.Editable = true;
-		insFileView.AppendLine(File.ReadAllText(fileName));
+		insFileView.AppendLine(File.ReadAllText(fileNames));
 		ScrolledWindow scroller = new ScrolledWindow();
 		scroller.Child = insFileView.GetWidget();
 
@@ -409,6 +410,6 @@ public class FileView : Box, IFileView
     {
         progressBar.Fraction = progress;
         progressBar.Text = $"Progress: {progress:P0}";
-        progressBar.Visible = (progress > 0 && progress < 1);
+        progressBar.Visible = (progress > 0 && progress < 1;
     }
 }

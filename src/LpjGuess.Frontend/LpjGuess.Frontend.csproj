@@ -18,6 +18,8 @@
     <PackageReference Include="OxyPlot.Core" Version="2.1.0" />
     <ProjectReference Include="../../../../oxyplot-gtksharp/Source/OxyPlot.GtkSharp4/OxyPlot.GtkSharp4.csproj" />
 
+    <ProjectReference Include="../../../runner/LpjGuess.Runner/LpjGuess.Runner.csproj" />
+
     <EmbeddedResource Include="css/*.css" />
   </ItemGroup>
 

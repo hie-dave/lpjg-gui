@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="ExtendedXmlSerializer" Version="3.7.11" />
+    <ProjectReference Include="../../../runner/LpjGuess.Runner/LpjGuess.Runner.csproj" />
   </ItemGroup>
 
 </Project>

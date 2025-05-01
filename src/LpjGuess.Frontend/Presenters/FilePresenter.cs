@@ -1,12 +1,12 @@
-using LpjGuess.Core.Interfaces.Runners;
+using System.Linq.Expressions;
 using LpjGuess.Core.Models;
-using LpjGuess.Core.Runners;
 using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.Enumerations;
 using LpjGuess.Frontend.Extensions;
 using LpjGuess.Frontend.Interfaces;
 using LpjGuess.Frontend.Interfaces.Presenters;
 using LpjGuess.Frontend.Views;
+using LpjGuess.Runner.Models;
 
 namespace LpjGuess.Frontend.Presenters;
 
@@ -19,7 +19,7 @@ public class FilePresenter : IPresenter<IFileView>
 	/// <summary>
 	/// The current workspace metadata.
 	/// </summary>
-	private readonly LpjFile lpjFile;
+	private readonly Workspace workspace;
 
 	/// <summary>
 	/// The view object.
@@ -38,28 +38,30 @@ public class FilePresenter : IPresenter<IFileView>
 	private PreferencesPresenter? propertiesPresenter;
 
 	/// <summary>
-	/// The runner object. fixme - let's make this non-nullable and reuse it?
+	/// The task representing the currently-running simulations.
 	/// </summary>
-	private IRunner? runner;
+	private Task? simulations;
 
 	/// <summary>
 	/// The graphs presenter.
 	/// </summary>
 	private readonly IGraphsPresenter graphsPresenter;
 
+	private readonly CancellationTokenSource cancellationTokenSource = new();
+
 	/// <summary>
 	/// Create a new <see cref="FilePresenter"/> instance for the given file.
 	/// </summary>
-	/// <param name="file">The instruction file.</param>
-	public FilePresenter(LpjFile file)
+	/// <param name="workspace">The instruction file.</param>
+	public FilePresenter(Workspace workspace)
 	{
-		this.lpjFile = file;
-		view = new FileView(file.InstructionFile);
+		this.workspace = workspace;
+		view = new FileView(workspace.InstructionFiles);
 		view.OnRun.ConnectTo(OnRun);
 		view.OnStop.ConnectTo(OnStop);
 		view.OnAddRunOption.ConnectTo(OnConfigureRunners);
 		this.outputView = view.LogsView;
-		graphsPresenter = new GraphsPresenter(view.GraphsView, file.Graphs);
+		graphsPresenter = new GraphsPresenter(view.GraphsView, workspace.Graphs);
 		PopulateRunners();
 	}
 
@@ -107,11 +109,13 @@ public class FilePresenter : IPresenter<IFileView>
 	public void Dispose()
 	{
 		// Save changes to the file.
-		lpjFile.Graphs = graphsPresenter.GetGraphs().ToList();
-		lpjFile.Save();
+		workspace.Graphs = graphsPresenter.GetGraphs().ToList();
+		workspace.Save();
 
 		view.Dispose();
-		runner?.Dispose();
+		if (IsRunning())
+			cancellationTokenSource.Cancel();
+		simulations = null;
 	}
 
 	/// <inheritdoc />
@@ -123,22 +127,22 @@ public class FilePresenter : IPresenter<IFileView>
 	/// <param name="runConfig">A runner configuration.</param>
 	private void Run(IRunnerConfiguration runConfig)
 	{
-		if (runner != null)
-		{
-			if (runner.IsRunning)
-				throw new InvalidOperationException($"Simulation is already running. Please kill the previous process first.");
-
-			// Dispose of the previous runner object.
-			runner.Dispose();
-		}
+		if (IsRunning())
+			throw new InvalidOperationException($"Simulation is already running. Please kill the previous process first.");
 
 		// Clear output buffer from any previous runs.
 		view.ClearOutput();
 
-		var simulation = new SimulationConfiguration(lpjFile.InstructionFile, view.InputModule);
-		runner = RunnerFactory.Create(runConfig, simulation, StdoutCallback, StderrCallback, OnCompleted, OnProgressReceived);
+		// var simulations = workspace.InstructionFiles.Select(i => new SimulationConfiguration(i, view.InputModule));
+		IEnumerable<Job> jobs = workspace.InstructionFiles.Select(i => new Job(Path.GetFileNameWithoutExtension(i), i));
+		int cpuCount = Environment.ProcessorCount;
+		var progress = new CustomProgressReporter((p, _, __, ___) => view.ShowProgress(p));
+		JobManagerConfig settings = new JobManagerConfig(cpuCount, false, runConfig, view.InputModule);
+
+		JobManager jobManager = new JobManager(settings, jobs, progress);
+		simulations = jobManager.RunAllAsync(cancellationTokenSource.Token);
 		// runner.OnProgressChanged.ConnectTo(OnProgressReceived);
-		runner.Run();
+		// runner.Run();
 
 		// Ensure that the stop button is visible and the run button hidden.
 		view.ShowRunButton(false);
@@ -201,15 +205,15 @@ public class FilePresenter : IPresenter<IFileView>
 	{
 		try
 		{
-			if (runner == null || !runner.IsRunning)
+			if (!IsRunning())
 				return;
 
-			runner.Cancel();
+			cancellationTokenSource.Cancel();
 			view.ShowRunButton(true);
 		}
 		catch (Exception error)
 		{
-			throw new Exception($"Unable to abort execution of file '{lpjFile.InstructionFile}'", error);
+			throw new Exception($"Unable to abort execution of file '{workspace.InstructionFiles}'", error);
 		}
 	}
 
@@ -220,7 +224,7 @@ public class FilePresenter : IPresenter<IFileView>
 	{
 		try
 		{
-			if (runner != null && !runner.IsRunning)
+			if (simulations != null && simulations.IsCompleted)
 				MainView.RunOnMainThread(() => outputView.AppendLine($"Process exited with code {exitCode}"));
 			view.ShowRunButton(true);
 		}
@@ -228,6 +232,15 @@ public class FilePresenter : IPresenter<IFileView>
 		{
 			MainView.Instance.ReportError(error);
 		}
+	}
+
+	/// <summary>
+	/// Check if any simulations are currently running.
+	/// </summary>
+	/// <returns>True iff any simulations are currently running.</returns>
+	private bool IsRunning()
+	{
+		return simulations != null && !simulations.IsCompleted;
 	}
 
 	/// <summary>
