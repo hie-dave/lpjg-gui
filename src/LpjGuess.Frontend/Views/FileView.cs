@@ -101,6 +101,11 @@ public class FileView : Box, IFileView
 	/// </summary>
 	private readonly Menu runMenu;
 
+	/// <summary>
+	/// A progress bar to display the progress of a currently-running simulation.
+	/// </summary>
+	private readonly ProgressBar _progressBar;
+
 	/// <inheritdoc />
 	public Event<string?> OnRun { get; private init; }
 
@@ -180,10 +185,16 @@ public class FileView : Box, IFileView
 		notebook.AppendPage(graphsView, Label.New("Graphs"));
 		// notebook.ShowTabs = false;
 
+		_progressBar = new ProgressBar();
+		_progressBar.ShowText = true;
+		_progressBar.Halign = Align.Fill;
+		_progressBar.Valign = Align.End;
+		_progressBar.Visible = false;
 		Append(notebook);
 		Append(inputModuleBox);
 		Append(runBox);
 		Append(stop);
+		Append(_progressBar);
 
 		ConnectEvents();
 	}
@@ -395,6 +406,8 @@ public class FileView : Box, IFileView
     /// <param name="progress">Current simulation progress.</param>
     public void ShowProgress(double progress)
     {
-        Console.WriteLine($"Progress: {progress}");
+        _progressBar.Fraction = progress;
+        _progressBar.Text = $"Progress: {progress:P0}";
+        _progressBar.Visible = (progress > 0 && progress < 1);
     }
 }
