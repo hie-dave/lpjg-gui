@@ -104,7 +104,7 @@ public class FileView : Box, IFileView
 	/// <summary>
 	/// A progress bar to display the progress of a currently-running simulation.
 	/// </summary>
-	private readonly ProgressBar _progressBar;
+	private readonly ProgressBar progressBar;
 
 	/// <inheritdoc />
 	public Event<string?> OnRun { get; private init; }
@@ -185,16 +185,16 @@ public class FileView : Box, IFileView
 		notebook.AppendPage(graphsView, Label.New("Graphs"));
 		// notebook.ShowTabs = false;
 
-		_progressBar = new ProgressBar();
-		_progressBar.ShowText = true;
-		_progressBar.Halign = Align.Fill;
-		_progressBar.Valign = Align.End;
-		_progressBar.Visible = false;
+		progressBar = new ProgressBar();
+		progressBar.ShowText = true;
+		progressBar.Halign = Align.Fill;
+		progressBar.Valign = Align.End;
+		progressBar.Visible = false;
 		Append(notebook);
 		Append(inputModuleBox);
 		Append(runBox);
 		Append(stop);
-		Append(_progressBar);
+		Append(progressBar);
 
 		ConnectEvents();
 	}
@@ -393,6 +393,7 @@ public class FileView : Box, IFileView
 			OnStop.Invoke();
 			stop.Hide();
 			runBox.Show();
+			progressBar.Visible = false;
 		}
 		catch (Exception error)
 		{
@@ -406,8 +407,8 @@ public class FileView : Box, IFileView
     /// <param name="progress">Current simulation progress.</param>
     public void ShowProgress(double progress)
     {
-        _progressBar.Fraction = progress;
-        _progressBar.Text = $"Progress: {progress:P0}";
-        _progressBar.Visible = (progress > 0 && progress < 1);
+        progressBar.Fraction = progress;
+        progressBar.Text = $"Progress: {progress:P0}";
+        progressBar.Visible = (progress > 0 && progress < 1);
     }
 }
