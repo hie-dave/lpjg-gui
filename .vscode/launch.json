@@ -9,7 +9,7 @@
 			"type": "coreclr",
 			"request": "launch",
 			"preLaunchTask": "build",
-			"program": "${workspaceFolder}/src/LpjGuess.Frontend/bin/Debug/net7.0/LpjGuess.dll",
+			"program": "${workspaceFolder}/src/LpjGuess.Frontend/bin/Debug/net9.0/LpjGuess.dll",
 			"args": [],
 			"cwd": "${workspaceFolder}",
 			"console": "internalConsole",
