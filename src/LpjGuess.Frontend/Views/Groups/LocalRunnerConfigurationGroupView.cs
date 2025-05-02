@@ -1,6 +1,6 @@
 using Adw;
 using Gtk;
-using LpjGuess.Core.Runners.Configuration;
+using LpjGuess.Runner.Models;
 using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.Extensions;
 using LpjGuess.Frontend.Interfaces.Views;

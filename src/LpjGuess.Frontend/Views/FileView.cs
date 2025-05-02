@@ -134,7 +134,8 @@ public class FileView : Box, IFileView
 		// todo: gtksourceview. But this requires bindings...
 		insFileView = new EditorView();
 		insFileView.Editable = true;
-		insFileView.AppendLine(File.ReadAllText(fileNames));
+		// TODO: Handle multiple files.
+		insFileView.AppendLine(File.ReadAllText(fileNames.FirstOrDefault() ?? string.Empty));
 		ScrolledWindow scroller = new ScrolledWindow();
 		scroller.Child = insFileView.GetWidget();
 
@@ -405,11 +406,11 @@ public class FileView : Box, IFileView
     /// <summary>
     /// Show the progress of a currently-running simulation.
     /// </summary>
-    /// <param name="progress">Current simulation progress.</param>
+    /// <param name="progress">Current simulation progress as fraction (0-1).</param>
     public void ShowProgress(double progress)
     {
         progressBar.Fraction = progress;
         progressBar.Text = $"Progress: {progress:P0}";
-        progressBar.Visible = (progress > 0 && progress < 1;
+        progressBar.Visible = progress > 0 && progress < 1;
     }
 }

@@ -1,6 +1,3 @@
-using LpjGuess.Core.Interfaces.Runners;
-using LpjGuess.Core.Runners.Configuration;
-using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.Extensions;
 using LpjGuess.Frontend.Interfaces.Presenters;
 using LpjGuess.Frontend.Interfaces.Views;
@@ -8,6 +5,7 @@ using LpjGuess.Frontend.Presenters.Runners;
 using LpjGuess.Frontend.Views;
 using LpjGuess.Frontend.Views.Dialogs;
 using LpjGuess.Frontend.Views.Runners;
+using LpjGuess.Runner.Models;
 
 namespace LpjGuess.Frontend.Presenters;
 

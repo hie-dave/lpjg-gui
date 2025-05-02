@@ -1,4 +1,4 @@
-using LpjGuess.Core.Interfaces.Runners;
+using LpjGuess.Runner.Models;
 
 namespace LpjGuess.Frontend.Extensions;
 

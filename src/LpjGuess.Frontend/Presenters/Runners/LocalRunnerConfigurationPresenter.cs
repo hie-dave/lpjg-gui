@@ -1,9 +1,9 @@
 using LpjGuess.Classes;
-using LpjGuess.Core.Runners.Configuration;
 using LpjGuess.Frontend.Interfaces;
 using LpjGuess.Frontend.Interfaces.Presenters;
 using LpjGuess.Frontend.Interfaces.Views;
 using LpjGuess.Frontend.Views.Runners;
+using LpjGuess.Runner.Models;
 
 namespace LpjGuess.Frontend.Presenters.Runners;
 

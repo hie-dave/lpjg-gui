@@ -47,7 +47,7 @@ public class FilePresenter : IPresenter<IFileView>
 	/// </summary>
 	private readonly IGraphsPresenter graphsPresenter;
 
-	private readonly CancellationTokenSource cancellationTokenSource = new();
+	private CancellationTokenSource cancellationTokenSource = new();
 
 	/// <summary>
 	/// Create a new <see cref="FilePresenter"/> instance for the given file.
@@ -133,16 +133,19 @@ public class FilePresenter : IPresenter<IFileView>
 		// Clear output buffer from any previous runs.
 		view.ClearOutput();
 
-		// var simulations = workspace.InstructionFiles.Select(i => new SimulationConfiguration(i, view.InputModule));
-		IEnumerable<Job> jobs = workspace.InstructionFiles.Select(i => new Job(Path.GetFileNameWithoutExtension(i), i));
-		int cpuCount = Environment.ProcessorCount;
-		var progress = new CustomProgressReporter((p, _, __, ___) => view.ShowProgress(p));
-		JobManagerConfig settings = new JobManagerConfig(cpuCount, false, runConfig, view.InputModule);
+		if (!cancellationTokenSource.TryReset())
+			cancellationTokenSource = new CancellationTokenSource();
 
-		JobManager jobManager = new JobManager(settings, jobs, progress);
-		simulations = jobManager.RunAllAsync(cancellationTokenSource.Token);
-		// runner.OnProgressChanged.ConnectTo(OnProgressReceived);
-		// runner.Run();
+		// var simulations = workspace.InstructionFiles.Select(i => new SimulationConfiguration(i, view.InputModule));
+		IEnumerable<Job> jobs = workspace.InstructionFiles.Select(i => new Job(GetJobName(i), i));
+		int cpuCount = Environment.ProcessorCount;
+		var progress = new CustomProgressReporter(ProgressCallback);
+		IOutputHelper outputHandler = new CustomOutputHelper(StdoutCallback, StderrCallback);
+		JobManagerConfiguration settings = new JobManagerConfiguration(runConfig, cpuCount, false, view.InputModule);
+
+		JobManager jobManager = new JobManager(settings, progress, outputHandler, jobs);
+		simulations = jobManager.RunAllAsync(cancellationTokenSource.Token)
+							    .ContinueWith(_ => OnCompleted());
 
 		// Ensure that the stop button is visible and the run button hidden.
 		view.ShowRunButton(false);
@@ -151,14 +154,15 @@ public class FilePresenter : IPresenter<IFileView>
 			view.SelectTab(FileTab.Logs);
 	}
 
-	/// <summary>
-	/// Called when a progress report is received from the model.
-	/// </summary>
-	/// <param name="progress">Current model execution progress (0-1).</param>
-    private void OnProgressReceived(double progress)
-    {
-        view.ShowProgress(progress);
-    }
+    /// <summary>
+    /// Generate a job name for the given instruction file.
+    /// </summary>
+    /// <param name="insFile">Path to an instruction file.</param>
+    /// <returns>A suitable job name.</returns>
+    private static string GetJobName(string insFile)
+	{
+		return Path.GetFileNameWithoutExtension(insFile);
+	}
 
     /// <summary>
     /// Populate the runners dropdown in the view.
@@ -210,6 +214,7 @@ public class FilePresenter : IPresenter<IFileView>
 
 			cancellationTokenSource.Cancel();
 			view.ShowRunButton(true);
+			outputView.AppendLine("Simulations were cancelled by the user");
 		}
 		catch (Exception error)
 		{
@@ -220,13 +225,11 @@ public class FilePresenter : IPresenter<IFileView>
 	/// <summary>
 	/// The guess process has completed.
 	/// </summary>
-	private void OnCompleted(int exitCode)
+	private void OnCompleted()
 	{
 		try
 		{
-			if (simulations != null && simulations.IsCompleted)
-				MainView.RunOnMainThread(() => outputView.AppendLine($"Process exited with code {exitCode}"));
-			view.ShowRunButton(true);
+			MainView.RunOnMainThread(() => view.ShowRunButton(true));
 		}
 		catch (Exception error)
 		{
@@ -244,11 +247,24 @@ public class FilePresenter : IPresenter<IFileView>
 	}
 
 	/// <summary>
+	/// Called whenever a guess process writes a progress message.
+	/// </summary>
+	/// <param name="percent">Current overall progress in percent (0-100).</param>
+	/// <param name="elapsed">Total elapsed walltime since start of jobs' execution.</param>
+	/// <param name="ncomplete">Number of completed jobs.</param>
+	/// <param name="njob">Total number of jobs.</param>
+    private void ProgressCallback(double percent, TimeSpan elapsed, int ncomplete, int njob)
+    {
+        MainView.RunOnMainThread(() => view.ShowProgress(percent / 100.0));
+    }
+
+	/// <summary>
 	/// Called whenever a guess process writes to stdout. Propagates the message
 	/// to the user.
 	/// </summary>
+	/// <param name="jobName">Name of the job writing to stdout.</param>
 	/// <param name="stdout">The message written by guess to stdout.</param>
-	private void StdoutCallback(string stdout)
+	private void StdoutCallback(string jobName, string stdout)
 	{
 		MainView.RunOnMainThread(() => outputView.AppendLine(stdout));
 	}
@@ -257,8 +273,9 @@ public class FilePresenter : IPresenter<IFileView>
 	/// Called whenever a guess process writes to stderr. Propagates the message
 	/// to the user.
 	/// </summary>
+	/// <param name="jobName">Name of the job writing to stderr.</param>
 	/// <param name="stderr">The message written by guess to stderr.</param>
-	private void StderrCallback(string stderr)
+	private void StderrCallback(string jobName, string stderr)
 	{
 		MainView.RunOnMainThread(() => outputView.AppendLine(stderr));
 	}

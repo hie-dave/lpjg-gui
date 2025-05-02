@@ -46,7 +46,7 @@ public interface IFileView : IView
 	/// <summary>
 	/// Show a progress message from the user.
 	/// </summary>
-	/// <param name="progress">Current job progress.</param>
+	/// <param name="progress">Current job progress as fraction (0-1).</param>
 	void ShowProgress(double progress);
 
 	/// <summary>

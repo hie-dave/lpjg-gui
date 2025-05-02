@@ -1,7 +1,8 @@
 using System.Xml;
 using ExtendedXmlSerializer;
 using ExtendedXmlSerializer.Configuration;
-using LpjGuess.Core.Runners.Configuration;
+using LpjGuess.Core.Models;
+using LpjGuess.Runner.Models;
 
 namespace LpjGuess.Core.Serialisation;
 
@@ -123,7 +124,8 @@ public static class XmlSerialisation
 			// .UseAutoFormatting()
 			// .EnableImplicitTyping(typeof(Configuration))
 			// .EnableImplicitTypingFromNamespace<IRunnerConfiguration>()
-			.EnableImplicitTypingFromAll<LocalRunnerConfiguration>();
+			.EnableImplicitTypingFromAll<Workspace>()
+			.EnableImplicitTypingFromAll<IRunnerConfiguration>();
 		if (config != null)
 			container = config(container);
 		return container.Create();

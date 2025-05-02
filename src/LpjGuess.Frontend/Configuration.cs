@@ -1,6 +1,6 @@
 using System.Xml.Serialization;
 using ExtendedXmlSerializer;
-using LpjGuess.Core.Interfaces.Runners;
+using LpjGuess.Runner.Models;
 using LpjGuess.Core.Serialisation;
 
 namespace LpjGuess.Frontend;
