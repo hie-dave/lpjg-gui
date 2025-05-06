@@ -3,9 +3,11 @@ using Adw;
 using LpjGuess.Frontend.Presenters;
 using LpjGuess.Frontend.Views;
 
-const string appName = "org.Hie.lpjggui";
+const string appID = "org.Hie.lpjggui";
+const string appName = "LPJ-Guess";
 
-var app = Application.New(appName, Gio.ApplicationFlags.FlagsNone);
+var app = Application.New(appID, Gio.ApplicationFlags.FlagsNone);
+GLib.Functions.SetApplicationName(appName);
 
 PangoCairo.Module.Initialize();
 Pango.Module.Initialize();

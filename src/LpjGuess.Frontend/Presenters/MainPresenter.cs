@@ -42,22 +42,33 @@ public class MainPresenter
 		view.AddMenuItem("Preferences", OnPreferences);
 		view.AddMenuItem("About", OnAbout);
 		view.AddMenuItem("Quit", () => view.Close(), "<Ctrl>Q");
-		view.OpenFile += OpenFile;
+		view.OnOpen.ConnectTo(OpenFile);
+		view.OnNewFromInstructionFile.ConnectTo(OpenFile);
+		view.OnNew.ConnectTo(OnNew);
 
-		child = new NoFilePresenter();
+		RecentFilesPresenter recent = new RecentFilesPresenter();
+		recent.OnOpenFile.ConnectTo(OpenFile);
+		child = recent;
 		view.SetChild(child.GetView());
 
 		view.SetTitle(defaultTitle);
 	}
 
-	/// <summary>
-	/// Open the specified file.
-	/// </summary>
-	/// <param name="file">File path.</param>
-	private void OpenFile(string file)
+    private void OnNew(string path)
+    {
+        Workspace workspace = new Workspace();
+		workspace.FilePath = path;
+		OpenWorkspace(workspace);
+    }
+
+    /// <summary>
+    /// Open the specified file. This can be an instruction file or a workspace.
+    /// </summary>
+    /// <param name="file">File path.</param>
+    private void OpenFile(string file)
 	{
 		// Ensure file exists.
-		if (!System.IO.File.Exists(file))
+		if (!File.Exists(file))
 			throw new FileNotFoundException($"File not found: '${file}'", file);
 
 		// Close previous file.
@@ -65,10 +76,21 @@ public class MainPresenter
 
 		// Open new file.
 		Workspace workspace = CreateWorkspace(file);
+
+		OpenWorkspace(workspace);
+	}
+
+	private void OpenWorkspace(Workspace workspace)
+	{
+		// Update recent files list.
+		Configuration.Instance.RecentWorkspaces.Add(workspace.FilePath);
+		Configuration.Instance.Save();
+
 		child = new FilePresenter(workspace);
 		view.SetChild(child.GetView());
 
 		// Update window title.
+		string file = workspace.FilePath;
 		view.SetTitle(Path.GetFileName(file), Path.GetDirectoryName(file));
 	}
 

@@ -29,7 +29,7 @@ public abstract class PresenterBase<TView> : IPresenter<TView>
 	/// <summary>
 	/// Dispose of native resources.
 	/// </summary>
-	public void Dispose()
+	public virtual void Dispose()
 	{
 		view.Dispose();
 	}

@@ -88,6 +88,11 @@ public class FileView : Box, IFileView
 	private readonly IEditorView insFileView;
 
 	/// <summary>
+	/// Sidebar widget containing one tab per instruction file.
+	/// </summary>
+	private readonly StackSidebar insFilesSidebar;
+
+	/// <summary>
 	/// A view which allows the user to browse the raw outputs from the model.
 	/// </summary>
 	private readonly OutputsView outputsView;
@@ -116,6 +121,9 @@ public class FileView : Box, IFileView
 	/// <inheritdoc />
 	public Event OnAddRunOption { get; private init; }
 
+	/// <inheritdoc />
+	public Event<string> OnAddInsFile { get; private init; }
+
 	/// <summary>
 	/// Create a new <see cref="FileView"/> instance for a particular .ins file.
 	/// </summary>
@@ -126,6 +134,7 @@ public class FileView : Box, IFileView
 		OnRun = new Event<string?>();
 		OnStop = new Event();
 		OnAddRunOption = new Event();
+		OnAddInsFile = new Event<string>();
 
 		SetOrientation(Orientation.Vertical);
 		Spacing = spacing;
@@ -135,9 +144,28 @@ public class FileView : Box, IFileView
 		insFileView = new EditorView();
 		insFileView.Editable = true;
 		// TODO: Handle multiple files.
-		insFileView.AppendLine(File.ReadAllText(fileNames.FirstOrDefault() ?? string.Empty));
-		ScrolledWindow scroller = new ScrolledWindow();
-		scroller.Child = insFileView.GetWidget();
+
+		Stack insFilesStack = Stack.New();
+		insFilesStack.Hexpand = true;
+		foreach (string fileName in fileNames)
+		{
+			insFileView.AppendLine(File.ReadAllText(fileName));
+			ScrolledWindow scroller = new ScrolledWindow();
+			scroller.Child = insFileView.GetWidget();
+
+			insFilesStack.AddTitled(scroller, Path.GetFileName(fileName), Path.GetFileName(fileName));
+		}
+
+		// insFilesStack.AddTitled(addFileWidget, addInsFileName, addInsFileTitle)
+
+		insFilesStack.OnNotify += OnStackNotify;
+		insFilesSidebar = new StackSidebar();
+		insFilesSidebar.Stack = insFilesStack;
+
+		Box insFilesBox = new Box();
+		insFilesBox.SetOrientation(Orientation.Horizontal);
+		insFilesBox.Append(insFilesSidebar);
+		insFilesBox.Append(insFilesStack);
 
 		inputModuleDropdown = DropDown.NewFromStrings(inputModules);
 		inputModuleDropdown.Hexpand = true;
@@ -181,7 +209,7 @@ public class FileView : Box, IFileView
 		graphsView = new GraphsView();
 
 		notebook = new Notebook();
-		notebook.AppendPage(scroller, Label.New("Instruction File"));
+		notebook.AppendPage(insFilesBox, Label.New("Instruction Files"));
 		notebook.AppendPage(logsScroller, Label.New("Logs"));
 		notebook.AppendPage(outputsView, Label.New("Outputs"));
 		notebook.AppendPage(graphsView, Label.New("Graphs"));
@@ -201,10 +229,22 @@ public class FileView : Box, IFileView
 		ConnectEvents();
 	}
 
-	/// <summary>
-	/// Currently-selected input module.
-	/// </summary>
-	public string InputModule
+    private void OnStackNotify(GObject.Object sender, NotifySignalArgs args)
+    {
+        try
+		{
+
+		}
+		catch (Exception error)
+		{
+			MainView.Instance.ReportError(error);
+		}
+    }
+
+    /// <summary>
+    /// Currently-selected input module.
+    /// </summary>
+    public string InputModule
 	{
 		get
 		{

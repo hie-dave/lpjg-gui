@@ -68,6 +68,16 @@ public class Configuration
 	public bool GoToLogsTabOnRun { get; set; }
 
 	/// <summary>
+	/// Maximum number of workspaces to remember in "recent workspaces".
+	/// </summary>
+	public int MaxHistoryLength { get; set; }
+
+	/// <summary>
+	/// List of recent workspaces.
+	/// </summary>
+	public HashSet<string> RecentWorkspaces { get; set; } = new();
+
+	/// <summary>
 	/// Runner configurations provided by the user.
 	/// </summary>
 	// [UI("Runners")]

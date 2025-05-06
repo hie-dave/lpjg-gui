@@ -3,7 +3,7 @@ namespace LpjGuess.Frontend.Delegates;
 /// <summary>
 /// An interface to an event.
 /// </summary>
-public interface IEvent
+public interface IEvent : IDisposable
 {
 	/// <summary>
 	/// Connect this event source to the specified sink.
@@ -15,7 +15,7 @@ public interface IEvent
 /// <summary>
 /// An interface to a parameterised event.
 /// </summary>
-public interface IEvent<T>
+public interface IEvent<T> : IDisposable
 {
 	/// <summary>
 	/// Connect this event source to the specified sink.

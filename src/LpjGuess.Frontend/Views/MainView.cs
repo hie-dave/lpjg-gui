@@ -2,6 +2,8 @@ using System.Text;
 using Adw;
 using Gio;
 using Gtk;
+using LpjGuess.Core.Models;
+using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.Extensions;
 using LpjGuess.Frontend.Interfaces;
 using LpjGuess.Frontend.Utility;
@@ -20,6 +22,11 @@ namespace LpjGuess.Frontend.Views;
 /// </summary>
 public class MainView : ApplicationWindow, IMainView
 {
+	/// <summary>
+	/// Domain for app-level menu items.
+	/// </summary>
+	private const string appDomain = "app";
+
 	/// <summary>
 	/// Margin (in px) around window contents and winow border.
 	/// </summary>
@@ -74,10 +81,14 @@ public class MainView : ApplicationWindow, IMainView
 	/// </summary>
 	private IView? childView;
 
-	/// <summary>
-	/// Called when the user wants to open a file.
-	/// </summary>
-	public event Action<string>? OpenFile;
+	/// <inheritdoc />
+	public Event<string> OnOpen { get; private init; }
+
+	/// <inheritdoc />
+	public Event<string> OnNewFromInstructionFile { get; private init; }
+
+	/// <inheritdoc />
+	public Event<string> OnNew { get; private init; }
 
 	/// <summary>
 	/// Constructor.
@@ -88,11 +99,15 @@ public class MainView : ApplicationWindow, IMainView
 		AppInstance = app;
 		Instance = this;
 
+		OnOpen = new Event<string>();
+		OnNewFromInstructionFile = new Event<string>();
+		OnNew = new Event<string>();
+
 		SetApplication(app);
 
 		CssProvider provider = CssProvider.New();
 		provider.LoadFromEmbeddedResource("LpjGuess.Frontend.css.style.css");
-		uint priority = (uint)Gtk.Constants.STYLE_PROVIDER_PRIORITY_APPLICATION;
+		uint priority = Gtk.Constants.STYLE_PROVIDER_PRIORITY_APPLICATION;
 		if (Display != null)
 			StyleContext.AddProviderForDisplay(Display, provider, priority);
 
@@ -102,8 +117,16 @@ public class MainView : ApplicationWindow, IMainView
 		menuButton.MenuModel = menu;
 		menuButton.IconName = "open-menu-symbolic";
 
-		Button openInsFile = Button.NewWithLabel("Open");
-		openInsFile.OnClicked += OnOpenInsFile;
+		Menu openMenu = Menu.New();
+		openMenu.AddMenuItem(appDomain, "Open", OnOpenWorkspace, "<Ctrl>O");
+		openMenu.AddMenuItem(appDomain, "New", OnNewWorkspace, "<Ctrl>N");
+		openMenu.AddMenuItem(appDomain, "New from Instruction File", OnOpenInsFile, "<Ctrl><Shift>N");
+
+		MenuButton openInsFile = new MenuButton();
+		openInsFile.Label = "Open";
+		openInsFile.AlwaysShowArrow = true;
+		openInsFile.Direction = ArrowType.Down;
+		openInsFile.MenuModel = openMenu;
 
 		title = Label.New(Title);
 		title.AddCssClass(StyleClasses.Title);
@@ -142,8 +165,8 @@ public class MainView : ApplicationWindow, IMainView
 		Maximized = true;
 	}
 
-	/// <inheritdoc />
-	public void SetChild(IView view)
+    /// <inheritdoc />
+    public void SetChild(IView view)
 	{
 		// Remove the old fileView.
 		if (childView != null)
@@ -176,8 +199,7 @@ public class MainView : ApplicationWindow, IMainView
 	/// <inheritdoc />
 	public void AddMenuItem(string name, Action callback, string? hotkey = null)
 	{
-		const string domain = "app";
-		menu.AddMenuItem(domain, name, callback, hotkey);
+		menu.AddMenuItem(appDomain, name, callback, hotkey);
 	}
 
 	/// <summary>
@@ -254,37 +276,56 @@ public class MainView : ApplicationWindow, IMainView
 		}
 	}
 
+    private void OnNewWorkspace()
+    {
+        try
+		{
+			OpenFileChooser(
+				"Save Workspace",
+				"Workspaces",
+				$"*{Workspace.DefaultFileExtension}",
+				true,
+				FileChooserAction.Save,
+				OnNew.Invoke);
+		}
+		catch (Exception error)
+		{
+			MainView.Instance.ReportError(error);
+		}
+    }
+
+    private void OnOpenWorkspace()
+    {
+        try
+		{
+			OpenFileChooser(
+				"Open Workspace",
+				"Workspaces",
+				$"*{Workspace.DefaultFileExtension}",
+				true,
+				FileChooserAction.Open,
+				OnOpen.Invoke);
+		}
+		catch (Exception error)
+		{
+			MainView.Instance.ReportError(error);
+		}
+    }
+
 	/// <summary>
 	/// Called when the user wants to open a file. Opens a file chooser dialog.
 	/// </summary>
-	/// <param name="sender">Sender object.</param>
-	/// <param name="args">Event data.</param>
-	private void OnOpenInsFile(Button sender, EventArgs args)
+	private void OnOpenInsFile()
 	{
 		try
 		{
-			Rows.FileChooserRow.FixFileChooser();
-			FileChooserNative fileChooser = FileChooserNative.New(
+			OpenFileChooser(
 				"Open Instruction File",
-				this,
+				"Instruction Files",
+				"*.ins",
+				true,
 				FileChooserAction.Open,
-				"Open",
-				"Cancel"
-			);
-			fileChooser.SetModal(true);
-			FileFilter filterIns = FileFilter.New();
-			filterIns.AddPattern("*.ins");
-			filterIns.Name = "Instruction Files (*.ins)";
-			fileChooser.AddFilter(filterIns);
-
-			FileFilter filterAll = FileFilter.New();
-			filterAll.AddPattern("*");
-			filterAll.Name = "All Files";
-			fileChooser.AddFilter(filterAll);
-
-			fileChooser.OnResponse += OnInsFileSelected;
-
-			fileChooser.Show();
+				OnNewFromInstructionFile.Invoke);
 		}
 		catch (Exception error)
 		{
@@ -292,28 +333,54 @@ public class MainView : ApplicationWindow, IMainView
 		}
 	}
 
-	/// <summary>
-	/// Called when the file chooser dialog finishes running (ie after the user
-	/// chooses a file).
-	/// </summary>
-	/// <param name="sender">Sender object.</param>
-	/// <param name="args">Event data.</param>
-	private void OnInsFileSelected(NativeDialog sender, NativeDialog.ResponseSignalArgs args)
+	private void OpenFileChooser(
+		string title,
+		string filterName,
+		string filterPattern,
+		bool allowAllFiles,
+		FileChooserAction action,
+		Action<string> callback)
 	{
-		try
+		FileChooserNative fileChooser = FileChooserNative.New(
+			title,
+			this,
+			action,
+			"Open",
+			"Cancel"
+		);
+		fileChooser.SetModal(true);
+		FileFilter filter = FileFilter.New();
+		filter.AddPattern(filterPattern);
+		filter.Name = filterName;
+		fileChooser.AddFilter(filter);
+
+		if (allowAllFiles)
 		{
-			if (sender is FileChooserNative fileChooser &&
-				args.ResponseId == (int)ResponseType.Accept)
+			FileFilter filterAll = FileFilter.New();
+			filterAll.AddPattern("*");
+			filterAll.Name = "All Files";
+			fileChooser.AddFilter(filterAll);
+		}
+
+		fileChooser.OnResponse += (sender, args) =>
+		{
+			try
 			{
-				string? selectedFile = fileChooser.GetFile()?.GetPath();
-				if (!string.IsNullOrEmpty(selectedFile))
-					OpenFile?.Invoke(selectedFile);
+				if (sender is FileChooserNative fileChooser &&
+					args.ResponseId == (int)ResponseType.Accept)
+				{
+					string? selectedFile = fileChooser.GetFile()?.GetPath();
+					if (!string.IsNullOrEmpty(selectedFile))
+						callback(selectedFile);
+				}
+				sender.Dispose();
 			}
-			sender.Dispose();
-		}
-		catch (Exception error)
-		{
-			ReportError(error);
-		}
+			catch (Exception error)
+			{
+				ReportError(error);
+			}
+		};
+
+		fileChooser.Show();
 	}
 }

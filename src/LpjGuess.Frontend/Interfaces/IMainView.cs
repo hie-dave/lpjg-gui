@@ -1,3 +1,5 @@
+using LpjGuess.Frontend.Delegates;
+
 namespace LpjGuess.Frontend.Interfaces;
 
 /// <summary>
@@ -6,9 +8,22 @@ namespace LpjGuess.Frontend.Interfaces;
 public interface IMainView : IView
 {
 	/// <summary>
-	/// Called when the user wants to open a file.
+	/// Called when the user wants to create a new workspace. The parameter is
+	/// the path to the workspace the user wants to create.
 	/// </summary>
-	event Action<string>? OpenFile;
+	Event<string> OnNew { get; }
+
+	/// <summary>
+	/// Called when the user wants to open an existing workspace. The parameter
+	/// is the path to the workspace the user wants to open.
+	/// </summary>
+	Event<string> OnOpen { get; }
+
+	/// <summary>
+	/// Called when the user wants to create a new workspace from an instruction
+	/// file. The parameter is the path to the instruction file.
+	/// </summary>
+	Event<string> OnNewFromInstructionFile { get; }
 
 	/// <summary>
 	/// Add a menu item with the specified name and optional keyboard shortcut

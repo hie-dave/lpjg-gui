@@ -55,4 +55,12 @@ public class Event<T> : IEvent<T>
 	{
 		handlers.Clear();
 	}
+
+	/// <summary>
+	/// Dispoe of the event by disconnecting all sinks.
+	/// </summary>
+	public void Dispose()
+	{
+		DisconnectAll();
+	}
 }

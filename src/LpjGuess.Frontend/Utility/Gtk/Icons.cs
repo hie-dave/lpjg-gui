@@ -34,4 +34,14 @@ public static class Icons
 	/// An icon for a "run settings" menu.
 	/// </summary>
 	public static string RunConfig { get; } = "system-run-symbolic";
+
+	/// <summary>
+	/// An icon for a "pan down" menu. This is a downward arrowhead.
+	/// </summary>
+	public static string PanDown { get; } = "pan-down-symbolic";
+
+	/// <summary>
+	/// An icon for a "open menu" menu.
+	/// </summary>
+	public static string OpenMenu { get; } = "open-menu-symbolic";
 }

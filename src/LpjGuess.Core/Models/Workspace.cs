@@ -5,15 +5,15 @@ using LpjGuess.Core.Serialisation;
 namespace LpjGuess.Core.Models;
 
 /// <summary>
-/// LPJ-Guess ins file workspace.
+/// LPJ-Guess workspace.
 /// </summary>
 [Serializable]
 public class Workspace
 {
 	/// <summary>
-	/// The default file extension used for these workspace files.
+	/// The default file extension used for workspace files.
 	/// </summary>
-	private const string defaultFileExtension = ".lpj";
+	public const string DefaultFileExtension = ".lpj";
 
 	/// <summary>
 	/// Instruction file path.
@@ -21,7 +21,7 @@ public class Workspace
 	public List<string> InstructionFiles { get; set; }
 
 	/// <summary>
-	/// Path to this lpj file.
+	/// Path to this workspace.
 	/// </summary>
 	public string FilePath { get; set; }
 
@@ -59,7 +59,7 @@ public class Workspace
 	{
 		Workspace result = new Workspace();
 		result.InstructionFiles.Add(insFile);
-		result.FilePath = Path.ChangeExtension(insFile, defaultFileExtension);
+		result.FilePath = Path.ChangeExtension(insFile, DefaultFileExtension);
 		result.Save();
 		return result;
 	}
