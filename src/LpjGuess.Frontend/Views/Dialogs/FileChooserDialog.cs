@@ -10,6 +10,11 @@ namespace LpjGuess.Frontend.Views.Dialogs;
 public class FileChooserDialog
 {
     /// <summary>
+    /// The file chooser dialog.
+    /// </summary>
+    private readonly FileChooserNative fileChooser;
+
+    /// <summary>
     /// Invoked when the user selects a file. This is only invoked if selection
     /// of multiple files is disabled.
     /// </summary>
@@ -31,23 +36,32 @@ public class FileChooserDialog
     /// <param name="filterPattern">The pattern to apply to the filter.</param>
     /// <param name="allowAllFiles">Whether to allow all files to be selected.</param>
     /// <param name="allowMultiple">Whether to allow multiple files to be selected.</param>
-    public FileChooserDialog(string title,
+    /// <param name="action">The action to perform when the user selects a file.</param>
+    private FileChooserDialog(string title,
 		string filterName,
 		string filterPattern,
 		bool allowAllFiles,
-        bool allowMultiple)
+        bool allowMultiple,
+        FileChooserAction action)
     {
         OnFileSelected = new Event<string>();
         OnFilesSelected = new Event<IEnumerable<string>>();
 
-        FileChooserNative fileChooser = FileChooserNative.New(
+        string acceptText = GetAcceptText(action);
+
+        fileChooser = FileChooserNative.New(
 			title,
 			MainView.Instance,
-			FileChooserAction.Open,
-			"Open",
+			action,
+			acceptText,
 			"Cancel"
 		);
+
+        // Block main window while dialog is open.
 		fileChooser.SetModal(true);
+        fileChooser.TransientFor = MainView.Instance;
+
+        // Add file filters.
 		FileFilter filter = FileFilter.New();
 		filter.AddPattern(filterPattern);
 		filter.Name = filterName;
@@ -63,10 +77,91 @@ public class FileChooserDialog
 		}
 
 		fileChooser.OnResponse += OnResponse;
+    }
 
+    /// <summary>
+    /// Run the dialog. Non-blocking. The result is obtained via the events
+    /// <see cref="OnFileSelected"/> and <see cref="OnFilesSelected"/> .
+    /// </summary>
+    public void Run()
+    {
 		fileChooser.Show();
     }
 
+    private string GetAcceptText(FileChooserAction action)
+    {
+        if (action == FileChooserAction.Open)
+            return "Open";
+
+        if (action == FileChooserAction.Save)
+            return "Save";
+
+        if (action == FileChooserAction.SelectFolder)
+            return "Select Folder";
+
+        throw new ArgumentException($"Invalid action: {action}");
+    }
+
+    /// <summary>
+    /// Create a new <see cref="FileChooserDialog"/> instance which allows the
+    /// user to select one (or more, if <paramref name="allowMultiple"/> is
+    /// true) existing files.
+    /// </summary>
+    /// <param name="title">Dialog title.</param>
+    /// <param name="filterName">Name of the file filter.</param>
+    /// <param name="filterPattern">File pattern to match.</param>
+    /// <param name="allowAllFiles">True to allow the user to select any file.</param>
+    /// <param name="allowMultiple">True to allow multiple files to be selected.</param>
+    /// <returns>A <see cref="FileChooserDialog"/> instance.</returns>
+    public static FileChooserDialog Open(
+        string title,
+		string filterName,
+		string filterPattern,
+		bool allowAllFiles,
+        bool allowMultiple
+    )
+    {
+        return new FileChooserDialog(
+            title,
+            filterName,
+            filterPattern,
+            allowAllFiles,
+            allowMultiple,
+            FileChooserAction.Open
+        );
+    }
+
+    /// <summary>
+    /// Create a new <see cref="FileChooserDialog"/> instance which allows the
+    /// user to select a file path which does not already exist.
+    /// </summary>
+    /// <param name="title">Dialog title.</param>
+    /// <param name="filterName">Name of the file filter.</param>
+    /// <param name="filterPattern">File pattern to match.</param>
+    /// <param name="allowAllFiles">True to allow the user to select any file.</param>
+    /// <returns>A <see cref="FileChooserDialog"/> instance.</returns>
+    public static FileChooserDialog Save(
+        string title,
+		string filterName,
+		string filterPattern,
+		bool allowAllFiles
+    )
+    {
+        return new FileChooserDialog(
+            title,
+            filterName,
+            filterPattern,
+            allowAllFiles,
+            false,
+            FileChooserAction.Save
+        );
+    }
+
+    /// <summary>
+    /// Called when the user has responded to the file chooser dialog.
+    /// </summary>
+    /// <param name="sender">Sender object.</param>
+    /// <param name="args">Event data.</param>
     private void OnResponse(NativeDialog sender, NativeDialog.ResponseSignalArgs args)
     {
         try
@@ -74,6 +169,8 @@ public class FileChooserDialog
             if (sender is FileChooserNative fileChooser &&
                 args.ResponseId == (int)ResponseType.Accept)
             {
+                fileChooser.OnResponse -= OnResponse;
+
                 if (fileChooser.SelectMultiple)
                 {
                     ListModel model = fileChooser.GetFiles();
@@ -82,6 +179,7 @@ public class FileChooserDialog
                         nint item = model.GetItem(i);
                     }
                     // OnFilesSelected.Invoke(selectedFiles);
+                    throw new NotImplementedException("TBI: selection of multiple files.");
                 }
                 else
                 {

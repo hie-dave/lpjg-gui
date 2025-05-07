@@ -3,22 +3,24 @@ using Gio;
 using Gtk;
 using LpjGuess.Frontend.Extensions;
 using LpjGuess.Frontend.Interfaces;
-
-using File = System.IO.File;
-using Action = System.Action;
 using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.Interfaces.Views;
 using LpjGuess.Frontend.Utility.Gtk;
 using LpjGuess.Frontend.Enumerations;
 using LpjGuess.Runner.Models;
 
+using File = System.IO.File;
+using Action = System.Action;
+using FileChooserDialog = LpjGuess.Frontend.Views.Dialogs.FileChooserDialog;
+using ExtendedXmlSerializer;
+
 namespace LpjGuess.Frontend.Views;
 
 /// <summary>
-/// A view which displays the contents of an instruction file to the user, along
+/// A view which displays the contents of an workspace file to the user, along
 /// with controls for running the file.
 /// </summary>
-public class FileView : Box, IFileView
+public class WorkspaceView : Box, IWorkspaceView
 {
 	/// <summary>
 	/// Spacing between internal widgets (in px).
@@ -36,6 +38,11 @@ public class FileView : Box, IFileView
 	private const string addRunnerAction = "Add Runner";
 
 	/// <summary>
+	/// Name of the dummy widget used to fill the add instruction file stack.
+	/// </summary>
+	private const string addFileDummyWidgetName = "add-file-dummy";
+
+	/// <summary>
 	/// Input modules.
 	/// </summary>
 	private static readonly string[] inputModules = new string[]
@@ -46,11 +53,6 @@ public class FileView : Box, IFileView
 		"cru",
 		"fluxnet",
 	};
-
-	/// <summary>
-	/// Full path and filename of the file being displayed.
-	/// </summary>
-	private readonly IReadOnlyList<string> fileNames;
 
 	/// <summary>
 	/// The run button.
@@ -112,6 +114,31 @@ public class FileView : Box, IFileView
 	/// </summary>
 	private readonly ProgressBar progressBar;
 
+	/// <summary>
+	/// The views used to display instruction files.
+	/// </summary>
+	private readonly List<InstructionFileView> instructionFileViews;
+
+	/// <summary>
+	/// Stack containing the views used to display instruction files.
+	/// </summary>
+	private readonly Stack insFilesStack;
+
+	/// <summary>
+	/// A blank widget used to fill the add instruction file stack.
+	/// </summary>
+	private readonly Widget addFileDummyWidget;
+
+	/// <summary>
+	/// The name of the previously visible instruction file.
+	/// </summary>
+	private string? previouslyVisibleInsFile = null;
+
+	/// <summary>
+	/// Whether the view has previously been populated.
+	/// </summary>
+	private bool isPopulated = false;
+
 	/// <inheritdoc />
 	public Event<string?> OnRun { get; private init; }
 
@@ -124,17 +151,20 @@ public class FileView : Box, IFileView
 	/// <inheritdoc />
 	public Event<string> OnAddInsFile { get; private init; }
 
+	/// <inheritdoc />
+	public Event<string> OnRemoveInsFile { get; private init; }
+
 	/// <summary>
-	/// Create a new <see cref="FileView"/> instance for a particular .ins file.
+	/// Create a new <see cref="WorkspaceView"/> instance for a particular .ins file.
 	/// </summary>
-	/// <param name="fileNames">Full path/name of the file.</param>
-	public FileView(IEnumerable<string> fileNames) : base()
+	public WorkspaceView() : base()
 	{
-		this.fileNames = fileNames.ToList();
 		OnRun = new Event<string?>();
 		OnStop = new Event();
 		OnAddRunOption = new Event();
 		OnAddInsFile = new Event<string>();
+		OnRemoveInsFile = new Event<string>();
+		instructionFileViews = new List<InstructionFileView>();
 
 		SetOrientation(Orientation.Vertical);
 		Spacing = spacing;
@@ -145,26 +175,36 @@ public class FileView : Box, IFileView
 		insFileView.Editable = true;
 		// TODO: Handle multiple files.
 
-		Stack insFilesStack = Stack.New();
+		insFilesStack = Stack.New();
 		insFilesStack.Hexpand = true;
-		foreach (string fileName in fileNames)
-		{
-			insFileView.AppendLine(File.ReadAllText(fileName));
-			ScrolledWindow scroller = new ScrolledWindow();
-			scroller.Child = insFileView.GetWidget();
+		insFilesStack.MarginBottom = 6;
+		insFilesStack.MarginTop = 6;
+		insFilesStack.MarginStart = 6;
+		insFilesStack.MarginEnd = 6;
+		insFilesStack.OnNotify += OnInsFilesStackNotify;
 
-			insFilesStack.AddTitled(scroller, Path.GetFileName(fileName), Path.GetFileName(fileName));
-		}
-
-		// insFilesStack.AddTitled(addFileWidget, addInsFileName, addInsFileTitle)
-
-		insFilesStack.OnNotify += OnStackNotify;
 		insFilesSidebar = new StackSidebar();
+		insFilesSidebar.Vexpand = true;
 		insFilesSidebar.Stack = insFilesStack;
+
+		// Button addFileButton = Button.NewWithLabel("Add File");
+		// addFileButton.AddCssClass("sidebar-action");
+		// addFileButton.OnClicked += OnAddInstructionFile;
+		// addFileButton.MarginTop = 6;
+		// addFileButton.MarginStart = 6;
+		// addFileButton.MarginEnd = 6;
+
+		addFileDummyWidget = new Box();
+		addFileDummyWidget.Name = addFileDummyWidgetName;
+
+		Box sidebarContainer = new Box();
+		sidebarContainer.SetOrientation(Orientation.Vertical);
+		sidebarContainer.Append(insFilesSidebar);
+		// sidebarContainer.Append(addFileButton);
 
 		Box insFilesBox = new Box();
 		insFilesBox.SetOrientation(Orientation.Horizontal);
-		insFilesBox.Append(insFilesSidebar);
+		insFilesBox.Append(sidebarContainer);
 		insFilesBox.Append(insFilesStack);
 
 		inputModuleDropdown = DropDown.NewFromStrings(inputModules);
@@ -229,17 +269,35 @@ public class FileView : Box, IFileView
 		ConnectEvents();
 	}
 
-    private void OnStackNotify(GObject.Object sender, NotifySignalArgs args)
-    {
-        try
+    /// <summary>
+    /// Populate the view with the given instruction files.
+    /// </summary>
+    /// <param name="insFiles">The instruction files with which the view should be populated.</param>
+    public void Populate(IEnumerable<string> insFiles)
+	{
+		// Remove any existing instruction files from the stack.
+		foreach (InstructionFileView view in instructionFileViews)
 		{
+			insFilesStack.Remove(view);
+			view.Dispose();
+		}
+		if (isPopulated)
+			insFilesStack.Remove(addFileDummyWidget);
 
-		}
-		catch (Exception error)
+		instructionFileViews.Clear();
+
+		// Populate the stack with new views.
+		foreach (string fileName in insFiles)
 		{
-			MainView.Instance.ReportError(error);
+			InstructionFileView view = new InstructionFileView(fileName);
+			instructionFileViews.Add(view);
+			insFilesStack.AddTitled(view, GetTabName(fileName), GetTabName(fileName));
+			StackPage page = insFilesStack.GetPage(view);
+			
 		}
-    }
+		insFilesStack.AddTitled(addFileDummyWidget, "Add File", "Add File");
+		isPopulated = true;
+	}
 
     /// <summary>
     /// Currently-selected input module.
@@ -369,6 +427,16 @@ public class FileView : Box, IFileView
 	}
 
 	/// <summary>
+	/// Get an appropriate name for a tab containing an instruction file.
+	/// </summary>
+	/// <param name="insFile">Path to an instruction file.</param>
+	/// <returns>A tab name.</returns>
+	private static string GetTabName(string insFile)
+	{
+		return Path.GetFileName(insFile);
+	}
+
+	/// <summary>
 	/// Called when the user wants to add a runner.
 	/// </summary>
 	private void OnAddRunoption()
@@ -376,6 +444,30 @@ public class FileView : Box, IFileView
 		try
 		{
 			OnAddRunOption.Invoke();
+		}
+		catch (Exception error)
+		{
+			MainView.Instance.ReportError(error);
+		}
+	}
+
+	/// <summary>
+	/// User wants to add an instruction file.
+	/// </summary>
+	/// <param name="sender">Sender object.</param>
+	/// <param name="args">Event data.</param>
+	private void OnAddInstructionFile(object sender, EventArgs args)
+	{
+		try
+		{
+			FileChooserDialog dialog = FileChooserDialog.Open(
+				"Open Instruction File",
+				"Instruction Files",
+				"*.ins",
+				true,
+				false);
+			dialog.OnFileSelected.ConnectTo(OnAddInsFile);
+			dialog.Run();
 		}
 		catch (Exception error)
 		{
@@ -442,6 +534,50 @@ public class FileView : Box, IFileView
 			MainView.Instance.ReportError(error);
 		}
 	}
+
+	/// <summary>
+	/// Callback for the instruction files' stack's "notify" signal.
+	/// </summary>
+	/// <param name="sender">Sender object (the stack).</param>
+	/// <param name="args">Event data.</param>
+    private void OnInsFilesStackNotify(GObject.Object sender, NotifySignalArgs args)
+    {
+        try
+		{
+			if (args.Pspec.GetName() == PropertyNames.VisibleChild)
+			{
+				// The visible child of the stack has changed.
+				if (insFilesStack.VisibleChildName == "Add File")
+				{
+					// The user has clicked the "Add File" button. This button
+					// is an entry in the sidebar with a corresponding blank
+					// widget in the stack. Therefore we try to reset the
+					// visible child to the previously-selected ins file.
+					if (previouslyVisibleInsFile == null)
+					{
+						// No ins file was previously selected. Try to select
+						// the last ins file (ie the one closest to the button).
+						if (instructionFileViews.Count > 0)
+							insFilesStack.VisibleChildName = GetTabName(instructionFileViews.Last().File);
+						// else user has clicked Add File in a workspace with no
+						// instruction files - nothing we can do.
+					}
+					else
+						insFilesStack.VisibleChildName = previouslyVisibleInsFile;
+
+					// Handle the "Add File" action by prompting the user to
+					// select an instruction file.
+					OnAddInstructionFile(sender, EventArgs.Empty);
+				}
+				else
+					previouslyVisibleInsFile = insFilesStack.VisibleChildName;
+			}
+		}
+		catch (Exception error)
+		{
+			MainView.Instance.ReportError(error);
+		}
+    }
 
     /// <summary>
     /// Show the progress of a currently-running simulation.

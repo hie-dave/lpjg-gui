@@ -14,7 +14,7 @@ namespace LpjGuess.Frontend.Presenters;
 /// A presenter for a view which displays an instruction file. This presenter
 /// handles logic for running the file or aborting an ongoing run.
 /// </summary>
-public class FilePresenter : IPresenter<IFileView>
+public class WorkspacePresenter : IPresenter<IWorkspaceView>
 {
 	/// <summary>
 	/// The current workspace metadata.
@@ -24,7 +24,7 @@ public class FilePresenter : IPresenter<IFileView>
 	/// <summary>
 	/// The view object.
 	/// </summary>
-	private readonly IFileView view;
+	private readonly IWorkspaceView view;
 
 	/// <summary>
 	/// Widget containing console output from the guess process.
@@ -50,25 +50,69 @@ public class FilePresenter : IPresenter<IFileView>
 	private CancellationTokenSource cancellationTokenSource = new();
 
 	/// <summary>
-	/// Create a new <see cref="FilePresenter"/> instance for the given file.
+	/// Create a new <see cref="WorkspacePresenter"/> instance for the given file.
 	/// </summary>
 	/// <param name="workspace">The instruction file.</param>
-	public FilePresenter(Workspace workspace)
+	public WorkspacePresenter(Workspace workspace)
 	{
 		this.workspace = workspace;
-		view = new FileView(workspace.InstructionFiles);
+		view = new WorkspaceView();
+		view.Populate(workspace.InstructionFiles);
+
 		view.OnRun.ConnectTo(OnRun);
 		view.OnStop.ConnectTo(OnStop);
 		view.OnAddRunOption.ConnectTo(OnConfigureRunners);
+		view.OnAddInsFile.ConnectTo(OnAddInsFile);
+		view.OnRemoveInsFile.ConnectTo(OnRemoveInsFile);
+
 		this.outputView = view.LogsView;
 		graphsPresenter = new GraphsPresenter(view.GraphsView, workspace.Graphs);
 		PopulateRunners();
 	}
 
 	/// <summary>
-	/// Called when the user wants to configure the available runners.
+	/// Called when the user wants to add an instruction file to the workspace.
 	/// </summary>
-	private void OnConfigureRunners()
+	/// <param name="file">Path to the file to be added.</param>
+    private void OnAddInsFile(string file)
+    {
+		// TODO: we should ensure that this file is already in the workspace,
+		// either directly, or indirectly (ie imported by another ins file).
+
+		// Add the instruction file to the workspace.
+        workspace.InstructionFiles.Add(file);
+
+		// Save the changes to the workspace.
+		workspace.Save();
+
+		// Update the view.
+		view.Populate(workspace.InstructionFiles);
+    }
+
+	/// <summary>
+	/// Called when the user wants to remove an instruction file from the workspace.
+	/// </summary>
+	/// <param name="file">Path to the file to be removed.</param>
+	/// <exception cref="ArgumentException">Thrown if the specified file is not found in the workspace.</exception>
+	private void OnRemoveInsFile(string file)
+	{
+		if (!workspace.InstructionFiles.Contains(file))
+			throw new ArgumentException($"File '{file}' not found in workspace");
+
+		// Remove the instruction file from the workspace.
+		workspace.InstructionFiles.Remove(file);
+
+		// Save the changes to the workspace.
+		workspace.Save();
+
+		// Update the view.
+		view.Populate(workspace.InstructionFiles);
+	}
+
+    /// <summary>
+    /// Called when the user wants to configure the available runners.
+    /// </summary>
+    private void OnConfigureRunners()
 	{
 		try
 		{
@@ -119,7 +163,7 @@ public class FilePresenter : IPresenter<IFileView>
 	}
 
 	/// <inheritdoc />
-	public IFileView GetView() => view;
+	public IWorkspaceView GetView() => view;
 
 	/// <summary>
 	/// Run the file with the specified runner configuration.

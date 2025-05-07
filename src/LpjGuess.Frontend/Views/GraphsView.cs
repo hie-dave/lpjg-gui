@@ -3,6 +3,7 @@ using OxyPlot;
 using Gtk;
 using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.Interfaces.Views;
+using LpjGuess.Frontend.Utility.Gtk;
 
 namespace LpjGuess.Frontend.Views;
 
@@ -20,11 +21,6 @@ public class GraphsView : Box, IGraphsView
 	/// Title of the 'add child' item in the stack (title, not name).
 	/// </summary>
 	private const string addGraphTitle = "Add Graph";
-
-	/// <summary>
-	/// Name of the 'visible-child' property of the stack.
-	/// </summary>
-	private const string visibleChildName = "visible-child";
 
 	/// <summary>
 	/// The stack widget.
@@ -135,7 +131,7 @@ public class GraphsView : Box, IGraphsView
 	{
 		try
 		{
-			if (args.Pspec.GetName() == visibleChildName && stack.VisibleChildName == addGraphName)
+			if (args.Pspec.GetName() == PropertyNames.VisibleChild && stack.VisibleChildName == addGraphName)
 				OnAddGraph.Invoke();
 		}
 		catch (Exception error)

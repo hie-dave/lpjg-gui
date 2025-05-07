@@ -58,6 +58,7 @@ public class MainPresenter
     {
         Workspace workspace = new Workspace();
 		workspace.FilePath = path;
+		workspace.Save();
 		OpenWorkspace(workspace);
     }
 
@@ -86,7 +87,7 @@ public class MainPresenter
 		Configuration.Instance.RecentWorkspaces.Add(workspace.FilePath);
 		Configuration.Instance.Save();
 
-		child = new FilePresenter(workspace);
+		child = new WorkspacePresenter(workspace);
 		view.SetChild(child.GetView());
 
 		// Update window title.
@@ -128,7 +129,7 @@ public class MainPresenter
 		propertiesPresenter?.Dispose();
 		propertiesPresenter = null;
 
-		if (child is FilePresenter fp)
+		if (child is WorkspacePresenter fp)
 			fp.PopulateRunners();
 	}
 

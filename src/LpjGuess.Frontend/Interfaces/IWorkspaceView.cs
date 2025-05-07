@@ -7,7 +7,7 @@ namespace LpjGuess.Frontend.Interfaces;
 /// <summary>
 /// An interface for a view which may display an instruction file to the user.
 /// </summary>
-public interface IFileView : IView
+public interface IWorkspaceView : IView
 {
 	/// <summary>
 	/// Currently-selected input module.
@@ -56,6 +56,12 @@ public interface IFileView : IView
 	void SelectTab(FileTab tab);
 
 	/// <summary>
+	/// Populate the view with the given instruction files.
+	/// </summary>
+	/// <param name="insFiles">The instruction files with which the view should be populated.</param>
+	void Populate(IEnumerable<string> insFiles);
+
+	/// <summary>
 	/// Get a reference to the graphs view.
 	/// </summary>
 	IGraphsView GraphsView { get; }
@@ -81,4 +87,17 @@ public interface IFileView : IView
 	/// Called when the user wants to add a new run method.
 	/// </summary>
 	Event OnAddRunOption { get; }
+
+	/// <summary>
+	/// Called when the user wants to add an instruction file to the workspace.
+	/// The event parameter is the path to the instruction file to be added.
+	/// </summary>
+	Event<string> OnAddInsFile { get; }
+
+	/// <summary>
+	/// Called when the user wants to remove an instruction file from the
+	/// workspace. The event parameter is the path to the instruction file to
+	/// be removed.
+	/// </summary>
+	Event<string> OnRemoveInsFile { get; }
 }
