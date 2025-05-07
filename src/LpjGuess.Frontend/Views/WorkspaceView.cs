@@ -1,4 +1,3 @@
-using System.Text;
 using Gio;
 using Gtk;
 using LpjGuess.Frontend.Extensions;
@@ -7,12 +6,7 @@ using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.Interfaces.Views;
 using LpjGuess.Frontend.Utility.Gtk;
 using LpjGuess.Frontend.Enumerations;
-using LpjGuess.Runner.Models;
-
-using File = System.IO.File;
-using Action = System.Action;
 using FileChooserDialog = LpjGuess.Frontend.Views.Dialogs.FileChooserDialog;
-using ExtendedXmlSerializer;
 
 namespace LpjGuess.Frontend.Views;
 
@@ -85,14 +79,9 @@ public class WorkspaceView : Box, IWorkspaceView
 	private readonly ScrolledWindow logsScroller;
 
 	/// <summary>
-	/// A view which displays the contents of an instruction file.
-	/// </summary>
-	private readonly IEditorView insFileView;
-
-	/// <summary>
 	/// Sidebar widget containing one tab per instruction file.
 	/// </summary>
-	private readonly StackSidebar insFilesSidebar;
+	private readonly InstructionFilesView insFilesView;
 
 	/// <summary>
 	/// A view which allows the user to browse the raw outputs from the model.
@@ -120,11 +109,6 @@ public class WorkspaceView : Box, IWorkspaceView
 	private readonly List<InstructionFileView> instructionFileViews;
 
 	/// <summary>
-	/// Stack containing the views used to display instruction files.
-	/// </summary>
-	private readonly Stack insFilesStack;
-
-	/// <summary>
 	/// A blank widget used to fill the add instruction file stack.
 	/// </summary>
 	private readonly Widget addFileDummyWidget;
@@ -133,11 +117,6 @@ public class WorkspaceView : Box, IWorkspaceView
 	/// The name of the previously visible instruction file.
 	/// </summary>
 	private string? previouslyVisibleInsFile = null;
-
-	/// <summary>
-	/// Whether the view has previously been populated.
-	/// </summary>
-	private bool isPopulated = false;
 
 	/// <inheritdoc />
 	public Event<string?> OnRun { get; private init; }
@@ -169,43 +148,13 @@ public class WorkspaceView : Box, IWorkspaceView
 		SetOrientation(Orientation.Vertical);
 		Spacing = spacing;
 
-		// Create a TextView widget to display file contents.
-		// todo: gtksourceview. But this requires bindings...
-		insFileView = new EditorView();
-		insFileView.Editable = true;
-		// TODO: Handle multiple files.
-
-		insFilesStack = Stack.New();
-		insFilesStack.Hexpand = true;
-		insFilesStack.MarginBottom = 6;
-		insFilesStack.MarginTop = 6;
-		insFilesStack.MarginStart = 6;
-		insFilesStack.MarginEnd = 6;
-		insFilesStack.OnNotify += OnInsFilesStackNotify;
-
-		insFilesSidebar = new StackSidebar();
-		insFilesSidebar.Vexpand = true;
-		insFilesSidebar.Stack = insFilesStack;
-
-		// Button addFileButton = Button.NewWithLabel("Add File");
-		// addFileButton.AddCssClass("sidebar-action");
-		// addFileButton.OnClicked += OnAddInstructionFile;
-		// addFileButton.MarginTop = 6;
-		// addFileButton.MarginStart = 6;
-		// addFileButton.MarginEnd = 6;
+		insFilesView = new InstructionFilesView();
+		insFilesView.OnPageSelected.ConnectTo(OnInsFilesSidebarPageSelected);
+		insFilesView.OnRemove.ConnectTo(OnRemoveInsFile);
+		insFilesView.OnAdd.ConnectTo(OnAddInsFile);
 
 		addFileDummyWidget = new Box();
 		addFileDummyWidget.Name = addFileDummyWidgetName;
-
-		Box sidebarContainer = new Box();
-		sidebarContainer.SetOrientation(Orientation.Vertical);
-		sidebarContainer.Append(insFilesSidebar);
-		// sidebarContainer.Append(addFileButton);
-
-		Box insFilesBox = new Box();
-		insFilesBox.SetOrientation(Orientation.Horizontal);
-		insFilesBox.Append(sidebarContainer);
-		insFilesBox.Append(insFilesStack);
 
 		inputModuleDropdown = DropDown.NewFromStrings(inputModules);
 		inputModuleDropdown.Hexpand = true;
@@ -249,7 +198,7 @@ public class WorkspaceView : Box, IWorkspaceView
 		graphsView = new GraphsView();
 
 		notebook = new Notebook();
-		notebook.AppendPage(insFilesBox, Label.New("Instruction Files"));
+		notebook.AppendPage(insFilesView, Label.New("Instruction Files"));
 		notebook.AppendPage(logsScroller, Label.New("Logs"));
 		notebook.AppendPage(outputsView, Label.New("Outputs"));
 		notebook.AppendPage(graphsView, Label.New("Graphs"));
@@ -275,28 +224,8 @@ public class WorkspaceView : Box, IWorkspaceView
     /// <param name="insFiles">The instruction files with which the view should be populated.</param>
     public void Populate(IEnumerable<string> insFiles)
 	{
-		// Remove any existing instruction files from the stack.
-		foreach (InstructionFileView view in instructionFileViews)
-		{
-			insFilesStack.Remove(view);
-			view.Dispose();
-		}
-		if (isPopulated)
-			insFilesStack.Remove(addFileDummyWidget);
-
-		instructionFileViews.Clear();
-
 		// Populate the stack with new views.
-		foreach (string fileName in insFiles)
-		{
-			InstructionFileView view = new InstructionFileView(fileName);
-			instructionFileViews.Add(view);
-			insFilesStack.AddTitled(view, GetTabName(fileName), GetTabName(fileName));
-			StackPage page = insFilesStack.GetPage(view);
-			
-		}
-		insFilesStack.AddTitled(addFileDummyWidget, "Add File", "Add File");
-		isPopulated = true;
+		insFilesView.Populate(insFiles.Select(f => (f, (Widget)new InstructionFileView(f))));
 	}
 
     /// <summary>
@@ -538,40 +467,36 @@ public class WorkspaceView : Box, IWorkspaceView
 	/// <summary>
 	/// Callback for the instruction files' stack's "notify" signal.
 	/// </summary>
-	/// <param name="sender">Sender object (the stack).</param>
-	/// <param name="args">Event data.</param>
-    private void OnInsFilesStackNotify(GObject.Object sender, NotifySignalArgs args)
-    {
-        try
+	/// <param name="page">The page that was selected.</param>
+	private void OnInsFilesSidebarPageSelected(string page)
+	{
+		try
 		{
-			if (args.Pspec.GetName() == PropertyNames.VisibleChild)
+			// The visible child of the stack has changed.
+			if (page == "Add File")
 			{
-				// The visible child of the stack has changed.
-				if (insFilesStack.VisibleChildName == "Add File")
+				// The user has clicked the "Add File" button. This button
+				// is an entry in the sidebar with a corresponding blank
+				// widget in the stack. Therefore we try to reset the
+				// visible child to the previously-selected ins file.
+				if (previouslyVisibleInsFile == null)
 				{
-					// The user has clicked the "Add File" button. This button
-					// is an entry in the sidebar with a corresponding blank
-					// widget in the stack. Therefore we try to reset the
-					// visible child to the previously-selected ins file.
-					if (previouslyVisibleInsFile == null)
-					{
-						// No ins file was previously selected. Try to select
-						// the last ins file (ie the one closest to the button).
-						if (instructionFileViews.Count > 0)
-							insFilesStack.VisibleChildName = GetTabName(instructionFileViews.Last().File);
-						// else user has clicked Add File in a workspace with no
-						// instruction files - nothing we can do.
-					}
-					else
-						insFilesStack.VisibleChildName = previouslyVisibleInsFile;
-
-					// Handle the "Add File" action by prompting the user to
-					// select an instruction file.
-					OnAddInstructionFile(sender, EventArgs.Empty);
+					// No ins file was previously selected. Try to select
+					// the last ins file (ie the one closest to the button).
+					if (instructionFileViews.Count > 0)
+						insFilesView.VisibleChildName = GetTabName(instructionFileViews.Last().File);
+					// else user has clicked Add File in a workspace with no
+					// instruction files - nothing we can do.
 				}
 				else
-					previouslyVisibleInsFile = insFilesStack.VisibleChildName;
+					insFilesView.VisibleChildName = previouslyVisibleInsFile;
+
+				// Handle the "Add File" action by prompting the user to
+				// select an instruction file.
+				OnAddInstructionFile(this, EventArgs.Empty);
 			}
+			else
+				previouslyVisibleInsFile = insFilesView.VisibleChildName;
 		}
 		catch (Exception error)
 		{

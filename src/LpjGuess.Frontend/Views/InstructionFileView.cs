@@ -6,6 +6,10 @@ namespace LpjGuess.Frontend.Views;
 /// <summary>
 /// A view which displays an instruction file to the user.
 /// </summary>
+/// <remarks>
+/// TODO: gtksourceview. But this requires bindings...
+/// TODO: Handle multiple files.
+/// </remarks>
 public class InstructionFileView : ScrolledWindow, IInstructionFileView
 {
     /// <summary>

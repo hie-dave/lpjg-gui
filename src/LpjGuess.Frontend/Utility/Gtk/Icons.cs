@@ -16,6 +16,11 @@ public static class Icons
 	public static string RemoveItem { get; } = "list-remove-symbolic";
 
 	/// <summary>
+	/// A "view-more" menu item.
+	/// </summary>
+	public static string ViewMore { get; } = "view-more-symbolic";
+
+	/// <summary>
 	/// A settings icon.
 	/// </summary>
 	public static string Settings { get; } = "preferences-system-symbolic";

@@ -37,6 +37,10 @@ public class RecentFilesView : Box, IRecentFilesView
 		container.ActivateOnSingleClick = true;
 		container.OnRowActivated += OnRowActivated;
 		container.ShowSeparators = true;
+		// container.AddCssClass("view");
+		// container.AddCssClass("frame");
+		// container.AddCssClass("rich-list");
+		container.AddCssClass("boxed-list");
 
 		Label title = Label.New("<big><b>Recent Workspaces</b></big>");
 		title.MarginTop = 8;
@@ -65,13 +69,14 @@ public class RecentFilesView : Box, IRecentFilesView
 			const int margin = 5;
 			box.MarginBottom = margin;
 			box.MarginTop = margin;
-			box.MarginStart = margin;
-			box.MarginEnd = margin;
+			box.MarginStart = 2 * margin;
+			box.MarginEnd = 2 * margin;
 
 			string basename = Path.GetFileName(file);
 			Label title = Label.New($"<b>{basename}</b>");
 			title.UseMarkup = true;
 			Label subtitle = Label.New(file);
+			subtitle.AddCssClass("dim-label");
 			box.Append(title);
 			box.Append(subtitle);
 
