@@ -72,6 +72,11 @@ public interface IWorkspaceView : IView
 	IEditorView LogsView { get; }
 
 	/// <summary>
+	/// A view which allows the user to browse the raw outputs from the model.
+	/// </summary>
+	IOutputsView OutputsView { get; }
+
+	/// <summary>
 	/// Called when the user wants to run with a specific runner. The event
 	/// parameter is the name of the runner to be used, or null if the default
 	/// runner is to be used.

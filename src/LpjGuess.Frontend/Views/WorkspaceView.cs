@@ -249,6 +249,11 @@ public class WorkspaceView : Box, IWorkspaceView
 	/// <inheritdoc />
 	public IEditorView LogsView { get; private init; }
 
+	/// <summary>
+	/// A view which allows the user to browse the raw outputs from the model.
+	/// </summary>
+	public IOutputsView OutputsView => outputsView;
+
 	/// <inheritdoc />
 	public Widget GetWidget() => this;
 

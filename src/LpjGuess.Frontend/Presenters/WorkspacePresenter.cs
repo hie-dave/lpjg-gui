@@ -27,11 +27,6 @@ public class WorkspacePresenter : IPresenter<IWorkspaceView>
 	private readonly IWorkspaceView view;
 
 	/// <summary>
-	/// Widget containing console output from the guess process.
-	/// </summary>
-	private readonly IEditorView outputView;
-
-	/// <summary>
 	/// A preferences presenter which will be displayed if no runners exist
 	/// when the user clicks run.
 	/// </summary>
@@ -46,6 +41,11 @@ public class WorkspacePresenter : IPresenter<IWorkspaceView>
 	/// The graphs presenter.
 	/// </summary>
 	private readonly IGraphsPresenter graphsPresenter;
+
+	/// <summary>
+	/// The outputs presenter.
+	/// </summary>
+	private readonly IOutputsPresenter outputsPresenter;
 
 	private CancellationTokenSource cancellationTokenSource = new();
 
@@ -65,9 +65,10 @@ public class WorkspacePresenter : IPresenter<IWorkspaceView>
 		view.OnAddInsFile.ConnectTo(OnAddInsFile);
 		view.OnRemoveInsFile.ConnectTo(OnRemoveInsFile);
 
-		this.outputView = view.LogsView;
+		outputsPresenter = new OutputsPresenter(view.OutputsView);
 		graphsPresenter = new GraphsPresenter(view.GraphsView, workspace.Graphs);
 		PopulateRunners();
+		outputsPresenter.Populate(workspace.InstructionFiles);
 	}
 
 	/// <summary>
@@ -258,7 +259,7 @@ public class WorkspacePresenter : IPresenter<IWorkspaceView>
 
 			cancellationTokenSource.Cancel();
 			view.ShowRunButton(true);
-			outputView.AppendLine("Simulations were cancelled by the user");
+			view.LogsView.AppendLine("Simulations were cancelled by the user");
 		}
 		catch (Exception error)
 		{
@@ -310,7 +311,7 @@ public class WorkspacePresenter : IPresenter<IWorkspaceView>
 	/// <param name="stdout">The message written by guess to stdout.</param>
 	private void StdoutCallback(string jobName, string stdout)
 	{
-		MainView.RunOnMainThread(() => outputView.AppendLine(stdout));
+		MainView.RunOnMainThread(() => view.LogsView.AppendLine(stdout));
 	}
 
 	/// <summary>
@@ -321,6 +322,6 @@ public class WorkspacePresenter : IPresenter<IWorkspaceView>
 	/// <param name="stderr">The message written by guess to stderr.</param>
 	private void StderrCallback(string jobName, string stderr)
 	{
-		MainView.RunOnMainThread(() => outputView.AppendLine(stderr));
+		MainView.RunOnMainThread(() => view.LogsView.AppendLine(stderr));
 	}
 }
