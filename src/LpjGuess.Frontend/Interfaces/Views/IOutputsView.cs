@@ -1,5 +1,6 @@
 using System.Data;
 using Dave.Benchmarks.Core.Models.Importer;
+using LpjGuess.Core.Models;
 using LpjGuess.Frontend.Delegates;
 
 namespace LpjGuess.Frontend.Interfaces.Views;
@@ -22,7 +23,7 @@ public interface IOutputsView : IView
     /// <summary>
     /// Invoked when the user has selected an output file.
     /// </summary>
-    Event<string> OnOutputFileSelected { get; }
+    Event<OutputFile> OnOutputFileSelected { get; }
 
     /// <summary>
     /// Populate the view with the given instruction files.
@@ -34,7 +35,7 @@ public interface IOutputsView : IView
     /// Populate the view with the given output files.
     /// </summary>
     /// <param name="outputFiles">Output file paths.</param>
-    void PopulateOutputFiles(IEnumerable<string> outputFiles);
+    void PopulateOutputFiles(IEnumerable<OutputFile> outputFiles);
 
     /// <summary>
     /// Populate the tabular data widget the contents of an output file.

@@ -12,7 +12,7 @@ namespace LpjGuess.Frontend.Views;
 /// A widget displaying a list of options with a drop-down menu. Also supports
 /// a custom mapping of values to display strings.
 /// </summary>
-public class DropdownView<T> : DropDown where T : class
+public class DropDownView<T> : DropDown where T : class
 {
 	/// <summary>
 	/// Name of the property corresponding to the selected item in a dropdown.
@@ -38,14 +38,13 @@ public class DropdownView<T> : DropDown where T : class
         get
         {
             return (SelectedItem as GenericGObject<DropdownEntry>)?.Instance.Value;
-
         }
     }
 
     /// <summary>
-    /// Create a new <see cref="DropdownView{T}"/> instance.
+    /// Create a new <see cref="DropDownView{T}"/> instance.
     /// </summary>
-    public DropdownView() : base()
+    public DropDownView() : base()
     {
 		// model = new GenericListModel<GenericGObject<DropdownEntry>>();
         // Model = model;
@@ -53,8 +52,58 @@ public class DropdownView<T> : DropDown where T : class
         nint hnd = Gio.Internal.ListStore.New(itemType);
         model = new ListStore(new Gio.Internal.ListStoreHandle(hnd, true));
 
+		SignalListItemFactory factory = SignalListItemFactory.New();
+		factory.OnSetup += OnSetup;
+		factory.OnBind += (_, args) => OnBind<Label>(args, (l, row) => l.SetText(row.Name));
+
+        Factory = factory;
+        Model = model;
+
 		OnSelectionChanged = new Event<T>();
         OnNotify += NotifyHandler;
+    }
+
+    /// <summary>
+    /// The bind callback function which binds a particular data row to a
+    /// widget which renders that row.
+    /// </summary>
+    /// <typeparam name="TWidget">The widget type of the column.</typeparam>
+    /// <param name="args">Sender object.</param>
+    /// <param name="bind">Event data.</param>
+    private void OnBind<TWidget>(SignalListItemFactory.BindSignalArgs args, Action<TWidget, DropdownEntry> bind)
+        where TWidget : Widget
+    {
+        try
+        {
+            ListItem item = (ListItem)args.Object;
+            GenericGObject<DropdownEntry>? wrapper = item.GetItem() as GenericGObject<DropdownEntry>;
+            TWidget? widget = item.GetChild() as TWidget;
+            if (widget != null && wrapper != null)
+                bind(widget, wrapper.Instance);
+        }
+        catch (Exception error)
+        {
+            MainView.Instance.ReportError(error);
+        }
+    }
+
+    /// <summary>
+    /// The factory setup callback. This creates the widgets used to display
+    /// data in a particular column.
+    /// </summary>
+    /// <param name="sender">Sender object.</param>
+    /// <param name="args">Event data.</param>
+    private void OnSetup(SignalListItemFactory sender, SignalListItemFactory.SetupSignalArgs args)
+    {
+        try
+        {
+            ListItem item = (ListItem)args.Object;
+            item.SetChild(new Label() { Halign = Align.Start });
+        }
+        catch (Exception error)
+        {
+            MainView.Instance.ReportError(error);
+        }
     }
 
     /// <summary>
@@ -64,9 +113,9 @@ public class DropdownView<T> : DropDown where T : class
     /// <param name="renderer">A function which takes a value and returns the string to display.</param>
     public void Populate(IEnumerable<T> values, Func<T, string> renderer)
     {
-        model.FreezeNotify();
-
+        // model.FreezeNotify();
         model.RemoveAll();
+        // model.ThawNotify();
 
         foreach (T element in values)
         {
@@ -74,8 +123,6 @@ public class DropdownView<T> : DropDown where T : class
             GenericGObject<DropdownEntry> wrapper = new GenericGObject<DropdownEntry>(entry);
             model.Append(wrapper);
         }
-
-        model.ThawNotify();
     }
 
     /// <summary>
@@ -89,9 +136,7 @@ public class DropdownView<T> : DropDown where T : class
 		{
 			string property = args.Pspec.GetName();
 			if (property == selectedItemProperty && SelectedItem is GenericGObject<DropdownEntry> wrapper)
-            {
 				OnSelectionChanged.Invoke(wrapper.Instance.Value);
-            }
 		}
 		catch (Exception error)
 		{

@@ -1,5 +1,6 @@
 using System.Data;
 using System.Security.Cryptography.X509Certificates;
+using LpjGuess.Core.Extensions;
 
 namespace LpjGuess.Frontend.Views;
 
@@ -8,7 +9,30 @@ namespace LpjGuess.Frontend.Views;
 /// </summary>
 public class DataTableView : StringColumnView<DataRow>
 {
-    private ulong nrender = 0;
+    /// <summary>
+    /// Date format used for yearly data.
+    /// </summary>
+    private const string yearlyFormat = "yyyy";
+
+    /// <summary>
+    /// Date format used for daily data.
+    /// </summary>
+    private const string dailyFormat = "yyyy-MM-dd";
+
+    /// <summary>
+    /// Date format used for subdaily data.
+    /// </summary>
+    private const string hourlyFormat = "yyyy-MM-dd HH:mm:ss";
+
+    /// <summary>
+    /// Number of decimal digits to display in the table.
+    /// </summary>
+    public int Precision { get; set; } = 2;
+
+    /// <summary>
+    /// The date format to be used.
+    /// </summary>
+    private string? dateFormat = null;
 
     /// <summary>
     /// Populate the view.
@@ -19,9 +43,33 @@ public class DataTableView : StringColumnView<DataRow>
         Clear();
         RemoveColumns();
 
+        // TODO: this logic doesn't belong in a view. Need to move it.
+        if (data.Columns.Contains(QuantityExtensions.DateColumn))
+        {
+            // Try to choose a good date format based on the data.
+            dateFormat = GetDateFormat(data);
+        }
+
 		foreach (DataColumn column in data.Columns)
 			AddColumn(column.ColumnName, row => RenderRow(row, column));
         Populate(data.AsEnumerable());
+    }
+
+    private string GetDateFormat(DataTable data)
+    {
+        // If there is exactly one value per year, display only year.
+        if (data.AsEnumerable()
+                .Select(row => (DateTime)row[QuantityExtensions.DateColumn])
+                .GroupBy(date => date.Year)
+                .All(group => group.Count() == 1))
+            return yearlyFormat;
+
+        // If all dates have the same timestamp, only display the
+        // date (ie don't display the time).
+        if (data.AsEnumerable().All(row => row[QuantityExtensions.DateColumn] is DateTime date && date.Date == date))
+            return dailyFormat;
+
+        return hourlyFormat;
     }
 
     /// <summary>
@@ -34,14 +82,17 @@ public class DataTableView : StringColumnView<DataRow>
     {
         try
         {
-            Console.WriteLine($"Render {nrender++}");
             object value = row[column];
             if (value == null)
                 return string.Empty;
 
-            // Round floats to 2 decimal places.
-            if (column.DataType == typeof(double) && value is double dbl)
-                return dbl.ToString("F2");
+            // Round floats to the specified number of decimal places.
+            if (value is double dbl)
+                return dbl.ToString($"F{Precision}");
+
+            if (dateFormat != null && value is DateTime date)
+                return date.ToString(dateFormat);
+
             return value.ToString() ?? string.Empty;
         }
         catch (Exception error)

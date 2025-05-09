@@ -12,7 +12,7 @@ public static class QuantityExtensions
     /// <summary>
     /// Name of the date column in generated data tables.
     /// </summary>
-    private const string dateColumn = "Date";
+    public const string DateColumn = "Date";
 
     /// <summary>
     /// Name of the latitude column in generated data tables.
@@ -54,7 +54,7 @@ public static class QuantityExtensions
         DataTable table = new DataTable(quantity.Name);
 
         // Add common columns based on the aggregation level
-        table.Columns.Add(dateColumn, typeof(DateTime));
+        table.Columns.Add(DateColumn, typeof(DateTime));
         table.Columns.Add(lonColumn, typeof(double));
         table.Columns.Add(latColumn, typeof(double));
 
@@ -102,7 +102,7 @@ public static class QuantityExtensions
             DataRow row = table.NewRow();
 
             // Set common values
-            row[dateColumn] = dataPoint.Timestamp;
+            row[DateColumn] = dataPoint.Timestamp;
             row[lonColumn] = dataPoint.Longitude;
             row[latColumn] = dataPoint.Latitude;
 

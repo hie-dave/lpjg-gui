@@ -1,7 +1,9 @@
 using System.Data;
 using ExtendedXmlSerializer;
 using Gtk;
+using LpjGuess.Core.Models;
 using LpjGuess.Frontend.Delegates;
+using LpjGuess.Frontend.Extensions;
 using LpjGuess.Frontend.Interfaces.Views;
 
 namespace LpjGuess.Frontend.Views;
@@ -12,29 +14,14 @@ namespace LpjGuess.Frontend.Views;
 public class OutputsView : Box, IOutputsView
 {
 	/// <summary>
-	/// Name of the property corresponding to the selected item in a dropdown.
-	/// </summary>
-	private const string selectedItemProperty = "selected-item";
-
-	/// <summary>
-	/// The model behind the instruction files dropdown box.
-	/// </summary>
-	private readonly StringList insFilesModel;
-
-	/// <summary>
 	/// The dropdown box containing the instruction files.
 	/// </summary>
-	private readonly DropDown insFilesDropdown;
-
-	/// <summary>
-	/// The model behind the output files dropdown box.
-	/// </summary>
-	private readonly StringList outputFilesModel;
+	private readonly DropDownView<string> insFilesDropdown;
 
 	/// <summary>
 	/// The dropdown box containing the output files.
 	/// </summary>
-	private readonly DropDown outputsDropdown;
+	private readonly DropDownView<OutputFile> outputsDropdown;
 
 	/// <summary>
 	/// The view responsible for displaying data to the user.
@@ -47,7 +34,7 @@ public class OutputsView : Box, IOutputsView
 	public OutputsView()
 	{
 		OnInstructionFileSelected = new Event<string>();
-		OnOutputFileSelected = new Event<string>();
+		OnOutputFileSelected = new Event<OutputFile>();
 
 		SetOrientation(Orientation.Vertical);
 
@@ -55,21 +42,19 @@ public class OutputsView : Box, IOutputsView
 		insFilesLabel.Halign = Align.Start;
 		insFilesLabel.Valign = Align.Center;
 
-		insFilesDropdown = new DropDown();
-		insFilesModel = StringList.New(Array.Empty<string>());
-		insFilesDropdown.Model = insFilesModel;
+		insFilesDropdown = new DropDownView<string>();
+		insFilesDropdown.Name = "ins-dropdown";
 		insFilesDropdown.Hexpand = true;
-		insFilesDropdown.OnNotify += OnInsFileActivated;
+		insFilesDropdown.OnSelectionChanged.ConnectTo(OnInstructionFileSelected);
 
 		Label outputsLabel = Label.New("Output File:");
 		outputsLabel.Halign = Align.Start;
 		outputsLabel.Valign = Align.Center;
 
-		outputsDropdown = new DropDown();
-		outputFilesModel = StringList.New(Array.Empty<string>());
-		outputsDropdown.Model = outputFilesModel;
+		outputsDropdown = new DropDownView<OutputFile>();
+		outputsDropdown.Name = "out-dropdown";
 		outputsDropdown.Hexpand = true;
-		outputsDropdown.OnNotify += OnOutputActivated;
+		outputsDropdown.OnSelectionChanged.ConnectTo(OnOutputFileSelected);
 
 		dataView = new DataTableView();
 		dataView.Hexpand = true;
@@ -94,21 +79,13 @@ public class OutputsView : Box, IOutputsView
 	}
 
 	/// <inheritdoc />
-	public string? InstructionFile
-	{
-		get
-		{
-			if (insFilesDropdown.SelectedItem is StringObject str)
-				return str.String;
-			return null;
-		}
-	}
+	public string? InstructionFile => insFilesDropdown.Selection;
 
     /// <inheritdoc />
     public Event<string> OnInstructionFileSelected { get; private init; }
 
     /// <inheritdoc />
-    public Event<string> OnOutputFileSelected { get; private init; }
+    public Event<OutputFile> OnOutputFileSelected { get; private init; }
 
     /// <inheritdoc />
     public Widget GetWidget() => this;
@@ -117,75 +94,18 @@ public class OutputsView : Box, IOutputsView
     public void PopulateInstructionFiles(IEnumerable<string> instructionFiles)
     {
 		// Remove everything from the model.
-		insFilesDropdown.OnNotify -= OnInsFileActivated;
-		uint n = insFilesModel.GetNItems();
-        for (uint i = 0; i < n; i++)
-			insFilesModel.Remove(0);
-		insFilesDropdown.OnNotify += OnInsFileActivated;
-
-		// Populate the model with the new collection of instruction files.
-		foreach (string instructionFile in instructionFiles)
-			insFilesModel.Append(instructionFile);
+		insFilesDropdown.Populate(instructionFiles, Path.GetFileName);
     }
 
     /// <inheritdoc />
-    public void PopulateOutputFiles(IEnumerable<string> outputFiles)
+    public void PopulateOutputFiles(IEnumerable<OutputFile> outputFiles)
     {
-		// Remove everything from the model.
-		outputsDropdown.OnNotify -= OnOutputActivated;
-		uint n = outputFilesModel.GetNItems();
-        for (uint i = 0; i < n; i++)
-			outputFilesModel.Remove(0);
-		outputsDropdown.OnNotify += OnOutputActivated;
-
-		// Populate the model with the new collection of output files.
-		foreach (string outputFile in outputFiles)
-			outputFilesModel.Append(outputFile);
+		outputsDropdown.Populate(outputFiles, o => o.Metadata.Description);
     }
 
 	/// <inheritdoc />
     public void PopulateData(DataTable data)
     {
         dataView.Populate(data);
-    }
-
-	/// <summary>
-	/// Called when the user has selected an output file from the dropdown box.
-	/// Propagates the event to the presenter.
-	/// </summary>
-	/// <param name="sender">Sender object.</param>
-	/// <param name="args">Event data.</param>
-    private void OnOutputActivated(GObject.Object sender, NotifySignalArgs args)
-    {
-        try
-		{
-			string property = args.Pspec.GetName();
-			if (property == selectedItemProperty && outputsDropdown.SelectedItem is StringObject str && str.String != null)
-				OnOutputFileSelected.Invoke(str.String);
-		}
-		catch (Exception error)
-		{
-			MainView.Instance.ReportError(error);
-		}
-    }
-
-	/// <summary>
-	/// Called when the user has selected an instruction file from the dropdown
-	/// box. Propagates the event to the presenter.
-	/// </summary>
-	/// <param name="sender">Sender object.</param>
-	/// <param name="args">Event data.</param>
-    private void OnInsFileActivated(GObject.Object sender, NotifySignalArgs args)
-    {
-        try
-		{
-			string property = args.Pspec.GetName();
-			if (property == selectedItemProperty && insFilesDropdown.SelectedItem is StringObject str && str.String != null)
-				OnInstructionFileSelected.Invoke(str.String);
-		}
-		catch (Exception error)
-		{
-			MainView.Instance.ReportError(error);
-		}
     }
 }
