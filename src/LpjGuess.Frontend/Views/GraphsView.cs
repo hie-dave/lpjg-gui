@@ -4,6 +4,7 @@ using Gtk;
 using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.Interfaces.Views;
 using LpjGuess.Frontend.Utility.Gtk;
+using LpjGuess.Frontend.Extensions;
 
 namespace LpjGuess.Frontend.Views;
 
@@ -23,19 +24,9 @@ public class GraphsView : Box, IGraphsView
 	private const string addGraphTitle = "Add Graph";
 
 	/// <summary>
-	/// The stack widget.
-	/// </summary>
-	private readonly Stack stack;
-
-	/// <summary>
 	/// The stack sidebar widget.
 	/// </summary>
-	private readonly StackSidebar sidebar;
-
-	/// <summary>
-	/// The widget added to the stack for the "add graph" button.
-	/// </summary>
-	private readonly Label addGraphWidget;
+	private readonly DynamicStackSidebar<PlotModel> sidebar;
 
 	/// <summary>
 	/// List of plot views.
@@ -47,104 +38,55 @@ public class GraphsView : Box, IGraphsView
 	/// </summary>
 	public GraphsView()
 	{
-		stack = new Stack();
 		this.plots = new List<PlotView>();
 		OnAddGraph = new Event();
+		OnRemoveGraph = new Event<PlotModel>();
 
-		addGraphWidget = Label.New("");
-		addGraphWidget.Visible = false;
-		stack.AddTitled(addGraphWidget, addGraphName, addGraphTitle);
-
-		stack.OnNotify += OnStackNotify;
-
-		sidebar = new StackSidebar();
-		sidebar.Stack = stack;
+		sidebar = new DynamicStackSidebar<PlotModel>(CreateSidebarWidget);
+		sidebar.AddText = "Add Graph";
+		sidebar.OnAdd.ConnectTo(OnAddGraph);
 
 		SetOrientation(Orientation.Horizontal);
 		Append(sidebar);
-		Append(stack);
 	}
 
-	/// <inheritdoc />
-	public Event OnAddGraph { get; private init; }
+    private Widget CreateSidebarWidget(PlotModel model)
+    {
+        Label label = Label.New(model.Title);
+		label.Halign = Align.Start;
+		return label;
+    }
+
+    /// <inheritdoc />
+    public Event OnAddGraph { get; private init; }
+
+    /// <inheritdoc />
+	public Event<PlotModel> OnRemoveGraph { get; private init; }
 
 	/// <inheritdoc />
-	public void Populate(IReadOnlyList<PlotModel> plots)
+	public void Populate(IEnumerable<PlotModel> plots)
 	{
-		EmptyStack();
+		this.plots.Clear();
 
-		foreach (PlotModel model in plots)
-			AddPlotModel(model);
-
-		stack.AddTitled(addGraphWidget, addGraphName, addGraphTitle);
+		IEnumerable<(PlotModel, Widget)> views = plots
+			.Select(model => (model, CreatePlotView(model) as Widget));
+		sidebar.Populate(views);
 	}
 
 	/// <inheritdoc />
-	public IReadOnlyList<PlotModel> GetPlots()
+	public IEnumerable<PlotModel> GetPlots()
 	{
 		return plots.Select(p => p.Model).ToList();
-	}
-
-	/// <inheritdoc />
-	public void SelectGraph(int n)
-	{
-		if (n > plots.Count)
-			throw new InvalidOperationException($"Cannot select graph {n}: only {plots.Count} graphs are displayed");
-		stack.VisibleChild = plots[n];
 	}
 
 	/// <inheritdoc />
 	public Widget GetWidget() => this;
 
 	/// <summary>
-	/// Add a graph to the plot. If adding multiple plots, it will be faster to
-	/// use <see cref="Populate"/>.
-	/// </summary>
-	/// <param name="plot"></param>
-	public void AddGraph(PlotModel plot)
-	{
-		stack.Remove(addGraphWidget);
-		AddPlotModel(plot);
-		stack.AddTitled(addGraphWidget, addGraphName, addGraphTitle);
-	}
-
-	/// <summary>
-	/// Remove everything from the stack.
-	/// </summary>
-	private void EmptyStack()
-	{
-		foreach (PlotView view in this.plots)
-		{
-			stack.Remove(view);
-			view.Dispose();
-		}
-		this.plots.Clear();
-		stack.Remove(addGraphWidget);
-	}
-
-	/// <summary>
-	/// This is connected to the notify signal of the stack.
-	/// </summary>
-	/// <param name="sender">Sender object.</param>
-	/// <param name="args">Event data.</param>
-	private void OnStackNotify(GObject.Object sender, NotifySignalArgs args)
-	{
-		try
-		{
-			if (args.Pspec.GetName() == PropertyNames.VisibleChild && stack.VisibleChildName == addGraphName)
-				OnAddGraph.Invoke();
-		}
-		catch (Exception error)
-		{
-			MainView.Instance.ReportError(error);
-		}
-	}
-
-	/// <summary>
 	/// Add the plot model to the stack.
 	/// </summary>
 	/// <param name="plot">The plot model to be added.</param>
-	private void AddPlotModel(PlotModel plot)
+	private PlotView CreatePlotView(PlotModel plot)
 	{
 		PlotView view = new PlotView();
 		if (Gtk.Settings.GetDefault()?.GtkApplicationPreferDarkTheme == true)
@@ -155,7 +97,6 @@ public class GraphsView : Box, IGraphsView
 		view.Visible = true;
 		view.Hexpand = true;
 		view.Vexpand = true;
-		plots.Add(view);
-		stack.AddTitled(view, $"plot{plots.Count}", plot.Title);
+		return view;
 	}
 }

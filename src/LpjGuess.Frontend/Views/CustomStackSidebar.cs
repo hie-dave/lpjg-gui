@@ -1,28 +1,15 @@
+using System.Diagnostics;
 using Gtk;
 using LpjGuess.Frontend.Delegates;
 
 namespace LpjGuess.Frontend.Views;
 
 /// <summary>
-/// A StackSidebar which allows the caller to use a custom widget in the sidebar
+/// A StackSidebar which allows the caller to use custom widgets in the sidebar
 /// switcher for navigation (stock StackSidebar allows only labels).
 /// </summary>
-public class CustomStackSidebar : Paned
+public class CustomStackSidebar<T> : Paned
 {
-    private class StackEntry
-    {
-        public string Name { get; private init; }
-        public Widget Page { get; private init; }
-        public Widget SidebarWidget { get; private init; }
-
-        public StackEntry(string name, Widget page, Widget sidebarWidget)
-        {
-            Name = name;
-            Page = page;
-            SidebarWidget = sidebarWidget;
-        }
-    }
-
     /// <summary>
     /// The stack which the sidebar manages.
     /// </summary>
@@ -33,12 +20,23 @@ public class CustomStackSidebar : Paned
     /// </summary>
     private readonly ListBox sidebar;
 
-    private readonly List<StackEntry> pages;
+    /// <summary>
+    /// Dictionary mapping page IDs (page names) to pages in the stack.
+    /// This is a workaround to allow us to disambiguate entries when we have
+    /// multiple entries with the same name.
+    /// </summary>
+    private readonly Dictionary<string, StackEntry> pages;
+
+    /// <summary>
+    /// Function which renders a data value to a widget which will be displayed
+    /// in the sidebar.
+    /// </summary>
+    private readonly Func<T, Widget> renderer;
 
     /// <summary>
     /// Called when the user selects a page.
     /// </summary>
-    public Event<string> OnPageSelected { get; private init; }
+    public Event<T> OnPageSelected { get; private init; }
 
     /// <summary>
     /// The name of the currently visible page.
@@ -50,11 +48,12 @@ public class CustomStackSidebar : Paned
     }
 
     /// <summary>
-    /// Create a new <see cref="CustomStackSidebar"/> instance.
+    /// Create a new <see cref="CustomStackSidebar{T}"/> instance.
     /// </summary>
-    public CustomStackSidebar()
+    public CustomStackSidebar(Func<T, Widget> renderer)
     {
-        OnPageSelected = new Event<string>();
+        this.renderer = renderer;
+        OnPageSelected = new Event<T>();
         SetOrientation(Orientation.Horizontal);
 
         stack = new Stack();
@@ -70,7 +69,7 @@ public class CustomStackSidebar : Paned
         sidebar.AddCssClass("navigation-sidebar");
         AddCssClass("sidebar");
 
-        pages = new List<StackEntry>();
+        pages = new Dictionary<string, StackEntry>();
 
         StartChild = sidebar;
         EndChild = stack;
@@ -85,9 +84,9 @@ public class CustomStackSidebar : Paned
     /// Populate the sidebar with the given pages.
     /// </summary>
     /// <param name="pages">The pages to be displayed.</param>
-    public virtual void Populate(IEnumerable<(string, Widget)> pages)
+    public virtual void Populate(IEnumerable<(T, Widget)> pages)
     {
-        foreach (StackEntry entry in this.pages)
+        foreach (StackEntry entry in this.pages.Values)
         {
             stack.Remove(entry.Page);
             sidebar.Remove(entry.SidebarWidget);
@@ -96,28 +95,32 @@ public class CustomStackSidebar : Paned
         }
         this.pages.Clear();
 
-        foreach ((string name, Widget page) in pages)
+        foreach ((T data, Widget page) in pages)
         {
-            Widget sidebarWidget = CreateWidget(name);
-            AddEntry(name, page, sidebarWidget);
+            string id = Guid.NewGuid().ToString();
+            Widget sidebarWidget = CreateWidget(data);
+            AddEntry(id, data, page, sidebarWidget);
         }
     }
 
     /// <summary>
     /// Add an entry to the stack, and a corresponding row to the sidebar.
     /// </summary>
-    /// <param name="name">Name of the entry.</param>
+    /// <param name="id">ID of the entry.</param>
+    /// <param name="data">The data associated with the entry.</param>
     /// <param name="page">The page widget.</param>
     /// <param name="sidebarWidget">The sidebar widget.</param>
-    protected void AddEntry(string name, Widget page, Widget sidebarWidget)
+    protected void AddEntry(string id, T data, Widget page, Widget sidebarWidget)
     {
-        stack.AddTitled(page, name, name);
+        // We can safely use the ID for the title as well, because the title is
+        // not (necessarily) rendered anywhere in the UI.
+        stack.AddTitled(page, id, id);
         ListBoxRow row = new ListBoxRow();
         row.Child = sidebarWidget;
-        row.Name = name;
+        row.Name = id;
         sidebar.Append(row);
 
-        pages.Add(new StackEntry(name, page, row));
+        pages[id] = new StackEntry(data, page, row);
     }
 
     /// <summary>
@@ -129,11 +132,14 @@ public class CustomStackSidebar : Paned
     {
         try
         {
-			string? name = args.Row.Name;
-            if (name == null)
+			string? id = args.Row.Name;
+            if (id == null)
                 return;
-            stack.VisibleChildName = name;
-            OnPageSelected.Invoke(name);
+            stack.VisibleChildName = id;
+            if (!pages.ContainsKey(id))
+                Debug.WriteLine($"{GetType().Name}: Invalid page ID: {id}. Likely a use-after-free bug");
+            StackEntry entry = pages[id];
+            OnPageSelected.Invoke(entry.Data);
         }
         catch (Exception error)
         {
@@ -145,12 +151,24 @@ public class CustomStackSidebar : Paned
     /// Create a widget for the stack element with the specified title which
     /// will be displayed in the sidebar.
     /// </summary>
-    /// <param name="title">Title of the stack element.</param>
+    /// <param name="data">The data value to be rendered to the sidebar.</param>
     /// <returns>A widget to be displayed in the sidebar.</returns>
-    protected virtual Widget CreateWidget(string title)
+    protected virtual Widget CreateWidget(T data)
     {
-        Label label = Label.New(title);
-        label.Halign = Align.Start;
-        return label;
+        return renderer(data);
+    }
+
+    private class StackEntry
+    {
+        public T Data { get; private init; }
+        public Widget Page { get; private init; }
+        public Widget SidebarWidget { get; private init; }
+
+        public StackEntry(T data, Widget page, Widget sidebarWidget)
+        {
+            Data = data;
+            Page = page;
+            SidebarWidget = sidebarWidget;
+        }
     }
 }

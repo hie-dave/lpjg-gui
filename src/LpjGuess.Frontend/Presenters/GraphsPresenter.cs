@@ -35,7 +35,6 @@ public class GraphsPresenter : IGraphsPresenter
 	/// <inheritdoc />
 	public void Dispose()
 	{
-		IReadOnlyList<PlotModel> plots = view.GetPlots();
 		view.Dispose();
 	}
 
@@ -137,6 +136,7 @@ public class GraphsPresenter : IGraphsPresenter
 		Graph graph = new Graph("New Graph");
 		List<Graph> graphs = GetGraphs().ToList();
 		graphs.Add(graph);
-		view.AddGraph(ToOxyPlotModel(graph));
+		// view.AddGraph(ToOxyPlotModel(graph));
+		view.Populate(graphs.Select(ToOxyPlotModel));
 	}
 }

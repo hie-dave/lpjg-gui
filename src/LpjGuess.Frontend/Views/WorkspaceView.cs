@@ -81,7 +81,7 @@ public class WorkspaceView : Box, IWorkspaceView
 	/// <summary>
 	/// Sidebar widget containing one tab per instruction file.
 	/// </summary>
-	private readonly InstructionFilesView insFilesView;
+	private readonly DynamicStackSidebar<string> insFilesView;
 
 	/// <summary>
 	/// A view which allows the user to browse the raw outputs from the model.
@@ -148,10 +148,11 @@ public class WorkspaceView : Box, IWorkspaceView
 		SetOrientation(Orientation.Vertical);
 		Spacing = spacing;
 
-		insFilesView = new InstructionFilesView();
+		insFilesView = new DynamicStackSidebar<string>(CreateInsFileSidebarLabel);
+		insFilesView.AddText = "Add File";
 		insFilesView.OnPageSelected.ConnectTo(OnInsFilesSidebarPageSelected);
 		insFilesView.OnRemove.ConnectTo(OnRemoveInsFile);
-		insFilesView.OnAdd.ConnectTo(OnAddInsFile);
+		insFilesView.OnAdd.ConnectTo(OnAddFile);
 
 		addFileDummyWidget = new Box();
 		addFileDummyWidget.Name = addFileDummyWidgetName;
@@ -217,6 +218,30 @@ public class WorkspaceView : Box, IWorkspaceView
 
 		ConnectEvents();
 	}
+
+    private Widget CreateInsFileSidebarLabel(string instructionFile)
+    {
+        Label label = Label.New(Path.GetFileName(instructionFile));
+		label.Halign = Align.Start;
+		label.Hexpand = true;
+		return label;
+    }
+
+    /// <summary>
+    /// Called when the user wants to add an instruction file.
+    /// </summary>
+    private void OnAddFile()
+    {
+		FileChooserDialog fileChooser = FileChooserDialog.Open(
+			"Open Instruction File",
+			"Instruction Files",
+			"*.ins",
+			true,
+			false);
+		fileChooser.OnFileSelected.ConnectTo(OnAddInsFile);
+		fileChooser.Run();
+		return;
+    }
 
     /// <summary>
     /// Populate the view with the given instruction files.

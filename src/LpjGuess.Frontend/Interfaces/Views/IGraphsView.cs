@@ -14,25 +14,18 @@ public interface IGraphsView : IView
 	Event OnAddGraph { get; }
 
 	/// <summary>
+	/// Called when the user wants to remove a graph.
+	/// </summary>
+	Event<PlotModel> OnRemoveGraph { get; }
+
+	/// <summary>
 	/// Populate the graphs view with graphs.
 	/// </summary>
 	/// <param name="plots">The plots to be displayed.</param>
-	void Populate(IReadOnlyList<PlotModel> plots);
-
-	/// <summary>
-	/// Add a single plot model.
-	/// </summary>
-	/// <param name="plot">The plot to be added.</param>
-	void AddGraph(PlotModel plot);
+	void Populate(IEnumerable<PlotModel> plots);
 
 	/// <summary>
 	/// Get the plot models.
 	/// </summary>
-	IReadOnlyList<PlotModel> GetPlots();
-
-	/// <summary>
-	/// Select the specified graph.
-	/// </summary>
-	/// <param name="n">Index of the graph to be selected/displayed.</param>
-	void SelectGraph(int n);
+	IEnumerable<PlotModel> GetPlots();
 }
