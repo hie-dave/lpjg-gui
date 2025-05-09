@@ -1,12 +1,19 @@
+using System.Data;
+using Dave.Benchmarks.Core.Models.Importer;
 using LpjGuess.Frontend.Delegates;
 
 namespace LpjGuess.Frontend.Interfaces.Views;
 
 /// <summary>
-/// Interface to an outputs view.
+/// Interface to a view which renders model outputs in a tabular display.
 /// </summary>
 public interface IOutputsView : IView
 {
+    /// <summary>
+    /// Get the currently-selected instruction file.
+    /// </summary>
+    string? InstructionFile { get; }
+
     /// <summary>
     /// Invoked when the user has selected an instruction file.
     /// </summary>
@@ -28,4 +35,10 @@ public interface IOutputsView : IView
     /// </summary>
     /// <param name="outputFiles">Output file paths.</param>
     void PopulateOutputFiles(IEnumerable<string> outputFiles);
+
+    /// <summary>
+    /// Populate the tabular data widget the contents of an output file.
+    /// </summary>
+    /// <param name="data">The data to be displayed.</param>
+    void PopulateData(DataTable data);
 }

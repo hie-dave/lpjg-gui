@@ -60,6 +60,11 @@ public class FileChooserDialog
         // Block main window while dialog is open.
 		fileChooser.SetModal(true);
         fileChooser.TransientFor = MainView.Instance;
+        if (Configuration.Instance.PreviousDirectory != null)
+        {
+            Gio.File path = Gio.Functions.FileNewForPath(Configuration.Instance.PreviousDirectory); 
+            fileChooser.SetCurrentFolder(path);
+        }
 
         // Add file filters.
 		FileFilter filter = FileFilter.New();
@@ -179,13 +184,18 @@ public class FileChooserDialog
                         nint item = model.GetItem(i);
                     }
                     // OnFilesSelected.Invoke(selectedFiles);
+                    // When we implement this, remember to update Configuration.Instance.PreviousDirectory.
                     throw new NotImplementedException("TBI: selection of multiple files.");
                 }
                 else
                 {
                     string? selectedFile = fileChooser.GetFile()?.GetPath();
                     if (!string.IsNullOrEmpty(selectedFile))
+                    {
+                        Configuration.Instance.PreviousDirectory = Path.GetDirectoryName(selectedFile);
+                        Configuration.Instance.Save();
                         OnFileSelected.Invoke(selectedFile);
+                    }
                 }
 
             }

@@ -1,8 +1,10 @@
+using System.Data;
+using Dave.Benchmarks.Core.Models.Importer;
 using Dave.Benchmarks.Core.Services;
+using LpjGuess.Core.Extensions;
 using LpjGuess.Frontend.Interfaces.Presenters;
 using LpjGuess.Frontend.Interfaces.Views;
 using LpjGuess.Runner.Models;
-using LpjGuess.Runner.Parsers;
 using Microsoft.Extensions.Logging;
 using InstructionFileParser = LpjGuess.Runner.Parsers.InstructionFileParser;
 
@@ -61,17 +63,16 @@ public class OutputsPresenter : PresenterBase<IOutputsView>, IOutputsPresenter
     private IEnumerable<string> GetOutputFiles(string file)
     {
         InstructionFileParser parser = InstructionFileParser.FromFile(file);
-        InstructionParameter? outputDirectory = parser.GetTopLevelParameter("outputdirectory");
-        if (outputDirectory is null)
+        InstructionParameter? parameter = parser.GetTopLevelParameter("outputdirectory");
+        if (parameter is null)
             throw new ArgumentException($"File '{file}' does not specify an output directory");
 
-        IEnumerable<string> outputFiles = Directory.EnumerateFiles(outputDirectory.AsString(), "*.out");
+        string outputDirectory = parameter.AsString().Trim('"');
+        string relativePath = Path.GetDirectoryName(file) ?? Directory.GetCurrentDirectory();
+        outputDirectory = Path.GetFullPath(outputDirectory, relativePath);
+        IEnumerable<string> outputFiles = Directory.EnumerateFiles(outputDirectory, "*.out");
 
-        var logger = new Logger<OutputFileTypeResolver>(new LoggerFactory());
-        var resolver = new OutputFileTypeResolver(logger);
-        ModelOutputParser outputParser = new ModelOutputParser(new Logger<ModelOutputParser>(new LoggerFactory()), resolver);
         DateTime latestWrite = GetMostRecentWriteTime(outputFiles);
-
         return outputFiles.Where(f => !IsStaleFile(f, latestWrite));
     }
 
@@ -101,13 +102,51 @@ public class OutputsPresenter : PresenterBase<IOutputsView>, IOutputsPresenter
             .Max(f => f.LastWriteTime);
     }
 
+    /// <summary>
+    /// Called when the user has selected an output file in the output files
+    /// dropdown. Populates the data area with the data from the specified
+    /// output file.
+    /// </summary>
+    /// <param name="file">The output file selected by the user.</param>
     private void OnOutputFileSelected(string file)
     {
-        throw new NotImplementedException();
+        string? instructionFile = view.InstructionFile;
+        if (instructionFile == null)
+            return;
+
+        // TODO: dependency injection. Don't create an OutputParser every time.
+        LoggerFactory factory = new LoggerFactory();
+        var logger = new Logger<OutputFileTypeResolver>(factory);
+        var logger2 = new Logger<ModelOutputParser>(factory);
+        var logger3 = new Logger<Dave.Benchmarks.Core.Services.InstructionFileParser>(factory);
+
+        // TODO: consolidate instruction file parsers in runner/benchmarks.
+        // We are double parsing here (since we also parse when ins files are
+        // selected by the user).
+        var insParser = new Dave.Benchmarks.Core.Services.InstructionFileParser(logger3);
+        var task = insParser.ParseInstructionFileAsync(instructionFile);
+        task.Wait();
+
+        var resolver = new OutputFileTypeResolver(logger);
+        ModelOutputParser outputParser = new ModelOutputParser(logger2, resolver);
+        resolver.BuildLookupTable(insParser);
+
+        Task<Quantity> task2 = outputParser.ParseOutputFileAsync(file);
+        task2.Wait();
+        Quantity quantity = task2.Result;
+        DataTable data = quantity.ToDataTable();
+        view.PopulateData(data);
     }
 
+    /// <summary>
+    /// Called when the user has selected an instruction file in the instruction
+    /// files dropdown. Populates the output files dropdown with all available
+    /// outputs for the given instruction file.
+    /// </summary>
+    /// <param name="file">The instruction file selected by the user.</param>
     private void OnInstructionFileSelected(string file)
     {
-        throw new NotImplementedException();
+        IEnumerable<string> outputs = GetOutputFiles(file);
+        view.PopulateOutputFiles(outputs);
     }
 }

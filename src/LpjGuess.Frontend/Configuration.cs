@@ -89,6 +89,12 @@ public class Configuration
 	public int DefaultRunnerIndex { get; set; }
 
 	/// <summary>
+	/// The directory most recently accessed by the user in a file chooser
+	/// dialog.
+	/// </summary>
+	public string? PreviousDirectory { get; set; }
+
+	/// <summary>
 	/// Save current configuration to disk in the default location.
 	/// </summary>
 	public void Save()

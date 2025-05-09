@@ -23,6 +23,16 @@ public class InstructionFilesView : DynamicStackSidebar
     private const string addFileName = "add-file";
 
     /// <summary>
+    /// The name of the previously selected instruction file.
+    /// </summary>
+    private string? previouslySelectedFile = null;
+
+    /// <summary>
+    /// The names of the instruction files currently displayed.
+    /// </summary>
+    private readonly List<string> pageNames;
+
+    /// <summary>
     /// Event which is raised when the user wants to add an instruction file.
     /// </summary>
     public Event<string> OnAdd { get; private init; }
@@ -39,6 +49,7 @@ public class InstructionFilesView : DynamicStackSidebar
     {
         OnAdd = new Event<string>();
         OnRemove = new Event<string>();
+        pageNames = new List<string>();
     }
 
     /// <summary>
@@ -47,6 +58,9 @@ public class InstructionFilesView : DynamicStackSidebar
     /// <param name="pages">The pages to be displayed.</param>
     public override void Populate(IEnumerable<(string, Widget)> pages)
     {
+        pageNames.Clear();
+        pageNames.AddRange(pages.Select(p => p.Item1));
+
         base.Populate(pages);
 
         // Add an "Add File" entry.
@@ -73,6 +87,11 @@ public class InstructionFilesView : DynamicStackSidebar
 
             if (name == addFileName)
             {
+                if (previouslySelectedFile != null)
+                    VisibleChildName = previouslySelectedFile;
+                else if (pageNames.Any())
+                    VisibleChildName = pageNames.Last();
+
                 FileChooserDialog fileChooser = FileChooserDialog.Open(
                     "Open Instruction File",
                     "Instruction Files",
@@ -83,6 +102,8 @@ public class InstructionFilesView : DynamicStackSidebar
                 fileChooser.Run();
                 return;
             }
+            previouslySelectedFile = VisibleChildName;
+            Console.WriteLine($"Visible child: {VisibleChildName}");
             base.OnSidebarRowActivated(sender, args);
         }
         catch (Exception error)

@@ -17,7 +17,7 @@ app.OnStartup += OnStartup;
 app.OnActivate += OnActivated;
 app.OnShutdown += OnShutdown;
 
-app.Run();
+app.Run(args.Length, args);
 
 void OnStartup(object sender, EventArgs args)
 {
