@@ -10,7 +10,7 @@ namespace LpjGuess.Frontend.Views;
 /// <summary>
 /// A class which displays a list of instruction files to the user.
 /// </summary>
-public class InstructionFilesView : DynamicStackSidebar
+public class InstructionFilesView : CustomStackSidebar
 {
     /// <summary>
     /// Spacing, in pixels, between elements in the title box in the sidebar.

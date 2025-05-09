@@ -1,5 +1,4 @@
 using System.Data;
-using System.Security.Cryptography.X509Certificates;
 using LpjGuess.Core.Extensions;
 
 namespace LpjGuess.Frontend.Views;
@@ -37,7 +36,7 @@ public class DataTableView : StringColumnView<DataRow>
     /// <summary>
     /// Populate the view.
     /// </summary>
-    /// <param name="data"></param>
+    /// <param name="data">A data table.</param>
     public void Populate(DataTable data)
     {
         Clear();
@@ -55,6 +54,11 @@ public class DataTableView : StringColumnView<DataRow>
         Populate(data.AsEnumerable());
     }
 
+    /// <summary>
+    /// Get a suitable date format for the given data table.
+    /// </summary>
+    /// <param name="data">The data table.</param>
+    /// <returns>A date format.</returns>
     private string GetDateFormat(DataTable data)
     {
         // If there is exactly one value per year, display only year.

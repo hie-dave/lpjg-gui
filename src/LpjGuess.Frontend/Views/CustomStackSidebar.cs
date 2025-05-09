@@ -4,10 +4,10 @@ using LpjGuess.Frontend.Delegates;
 namespace LpjGuess.Frontend.Views;
 
 /// <summary>
-/// A StackSidebar which gives the controller more control over the sidebar
-/// widgets.
+/// A StackSidebar which allows the caller to use a custom widget in the sidebar
+/// switcher for navigation (stock StackSidebar allows only labels).
 /// </summary>
-public class DynamicStackSidebar : Paned
+public class CustomStackSidebar : Paned
 {
     private class StackEntry
     {
@@ -50,9 +50,9 @@ public class DynamicStackSidebar : Paned
     }
 
     /// <summary>
-    /// Create a new <see cref="DynamicStackSidebar"/> instance.
+    /// Create a new <see cref="CustomStackSidebar"/> instance.
     /// </summary>
-    public DynamicStackSidebar()
+    public CustomStackSidebar()
     {
         OnPageSelected = new Event<string>();
         SetOrientation(Orientation.Horizontal);
