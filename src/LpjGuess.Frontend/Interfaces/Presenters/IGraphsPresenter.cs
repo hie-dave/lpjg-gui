@@ -11,5 +11,5 @@ public interface IGraphsPresenter : IPresenter<IGraphsView>
 	/// <summary>
 	/// Get the graphs as they are currently configured.
 	/// </summary>
-	IReadOnlyList<Graph> GetGraphs();
+	IEnumerable<Graph> GetGraphs();
 }

@@ -1,6 +1,5 @@
 using LpjGuess.Core.Interfaces.Graphing;
 using LpjGuess.Core.Models.Graphing;
-using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.Interfaces.Presenters;
 using LpjGuess.Frontend.Interfaces.Views;
 using OxyPlot;
@@ -10,7 +9,8 @@ using OxyPlot.Series;
 namespace LpjGuess.Frontend.Presenters;
 
 /// <summary>
-/// A presenter which controls a graphs view.
+/// A presenter which controls a graphs view to allow the user to navigate
+/// between and view multiple graphs.
 /// </summary>
 public class GraphsPresenter : IGraphsPresenter
 {
@@ -20,6 +20,11 @@ public class GraphsPresenter : IGraphsPresenter
 	private readonly IGraphsView view;
 
 	/// <summary>
+	/// Dictionary mapping plot models to graph objects.
+	/// </summary>
+	private readonly Dictionary<PlotModel, Graph> plots;
+
+	/// <summary>
 	/// Create a new <see cref="GraphsPresenter"/> instance which displays the
 	/// specified graphs on the specified view.
 	/// </summary>
@@ -27,25 +32,42 @@ public class GraphsPresenter : IGraphsPresenter
 	/// <param name="graphs">The graphs to be displayed.</param>
 	public GraphsPresenter(IGraphsView view, IReadOnlyList<Graph> graphs)
 	{
+		plots = new Dictionary<PlotModel, Graph>();
 		this.view = view;
 		this.view.OnAddGraph.ConnectTo(OnAddGraph);
-		view.Populate(graphs.Select(ToOxyPlotModel).ToList());
+		this.view.OnRemoveGraph.ConnectTo(OnRemoveGraph);
+		Populate(graphs);
 	}
 
-	/// <inheritdoc />
-	public void Dispose()
+    /// <inheritdoc />
+    public void Dispose()
 	{
 		view.Dispose();
 	}
 
-	/// <inheritdoc />
-	public IGraphsView GetView() => view;
+	/// <summary>
+	/// Populate the view with the given list of plots.
+	/// </summary>
+	/// <param name="graphs"></param>
+	private void Populate(IEnumerable<Graph> graphs)
+	{
+		plots.Clear();
+
+		// Temporary list, to guarantee order.
+		List<PlotModel> models = new List<PlotModel>();
+		foreach (Graph graph in graphs)
+		{
+			PlotModel model = ToOxyPlotModel(graph);
+			models.Add(model);
+			plots[model] = graph;
+		}
+
+		// This will remove any existing plots from the view.
+		view.Populate(models);
+	}
 
 	/// <inheritdoc />
-	public IReadOnlyList<Graph> GetGraphs()
-	{
-		return view.GetPlots().Select(ToGraph).ToList();
-	}
+	public IGraphsView GetView() => view;
 
 	/// <summary>
 	/// Convert a graph object to an oxyplot plot model.
@@ -60,15 +82,15 @@ public class GraphsPresenter : IGraphsPresenter
 		plot.Series.Add(SimpleLineSeries());
 		plot.Axes.Add(new LinearAxis() { Position = AxisPosition.Left });
 		plot.Axes.Add(new LinearAxis() { Position = AxisPosition.Bottom });
-		plot.MouseDown += OnChartClick;
+		// plot.MouseDown += OnChartClick;
 		return plot;
 	}
 
-	private void OnChartClick(object? sender, OxyMouseDownEventArgs e)
-	{
-		// if (e.HitTestResult != null && e.HitTestResult.Element is OxyPlot.Annotations.Annotation)
-		// 	plot1.TooltipText = (e.HitTestResult.Element as OxyPlot.Annotations.Annotation).ToolTip;
-	}
+	// private void OnChartClick(object? sender, OxyMouseDownEventArgs e)
+	// {
+	// 	// if (e.HitTestResult != null && e.HitTestResult.Element is OxyPlot.Annotations.Annotation)
+	// 	// 	plot1.TooltipText = (e.HitTestResult.Element as OxyPlot.Annotations.Annotation).ToolTip;
+	// }
 
 	private OxyPlot.Series.Series SimpleLineSeries()
 	{
@@ -134,9 +156,21 @@ public class GraphsPresenter : IGraphsPresenter
 	private void OnAddGraph()
 	{
 		Graph graph = new Graph("New Graph");
-		List<Graph> graphs = GetGraphs().ToList();
+		List<Graph> graphs = plots.Values.ToList();
 		graphs.Add(graph);
-		// view.AddGraph(ToOxyPlotModel(graph));
-		view.Populate(graphs.Select(ToOxyPlotModel));
+		Populate(graphs);
 	}
+
+    private void OnRemoveGraph(PlotModel model)
+    {
+		// Force immediate evaluation.
+        IEnumerable<Graph> graphs = plots.Values.Except([plots[model]]).ToList();
+		Populate(graphs);
+    }
+
+	/// <inheritdoc />
+    public IEnumerable<Graph> GetGraphs()
+    {
+        return plots.Values;
+    }
 }

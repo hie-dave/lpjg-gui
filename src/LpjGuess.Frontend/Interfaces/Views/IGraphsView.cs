@@ -23,9 +23,4 @@ public interface IGraphsView : IView
 	/// </summary>
 	/// <param name="plots">The plots to be displayed.</param>
 	void Populate(IEnumerable<PlotModel> plots);
-
-	/// <summary>
-	/// Get the plot models.
-	/// </summary>
-	IEnumerable<PlotModel> GetPlots();
 }

@@ -29,22 +29,17 @@ public class GraphsView : Box, IGraphsView
 	private readonly DynamicStackSidebar<PlotModel> sidebar;
 
 	/// <summary>
-	/// List of plot views.
-	/// </summary>
-	private List<PlotView> plots;
-
-	/// <summary>
 	/// Create a new <see cref="GraphsView"/> instance.
 	/// </summary>
 	public GraphsView()
 	{
-		this.plots = new List<PlotView>();
 		OnAddGraph = new Event();
 		OnRemoveGraph = new Event<PlotModel>();
 
 		sidebar = new DynamicStackSidebar<PlotModel>(CreateSidebarWidget);
 		sidebar.AddText = "Add Graph";
 		sidebar.OnAdd.ConnectTo(OnAddGraph);
+		sidebar.OnRemove.ConnectTo(OnRemoveGraph);
 
 		SetOrientation(Orientation.Horizontal);
 		Append(sidebar);
@@ -66,17 +61,9 @@ public class GraphsView : Box, IGraphsView
 	/// <inheritdoc />
 	public void Populate(IEnumerable<PlotModel> plots)
 	{
-		this.plots.Clear();
-
 		IEnumerable<(PlotModel, Widget)> views = plots
 			.Select(model => (model, CreatePlotView(model) as Widget));
 		sidebar.Populate(views);
-	}
-
-	/// <inheritdoc />
-	public IEnumerable<PlotModel> GetPlots()
-	{
-		return plots.Select(p => p.Model).ToList();
 	}
 
 	/// <inheritdoc />

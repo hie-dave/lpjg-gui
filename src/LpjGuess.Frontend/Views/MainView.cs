@@ -14,6 +14,7 @@ using Action = System.Action;
 using Application = Adw.Application;
 using ApplicationWindow = Adw.ApplicationWindow;
 using MessageDialog = Adw.MessageDialog;
+using FileChooserDialog = LpjGuess.Frontend.Views.Dialogs.FileChooserDialog;
 
 namespace LpjGuess.Frontend.Views;
 
@@ -280,13 +281,13 @@ public class MainView : ApplicationWindow, IMainView
     {
         try
 		{
-			OpenFileChooser(
+			var fileChooser = FileChooserDialog.Save(
 				"Save Workspace",
 				"Workspaces",
 				$"*{Workspace.DefaultFileExtension}",
-				true,
-				FileChooserAction.Save,
-				OnNew.Invoke);
+				true);
+			fileChooser.OnFileSelected.ConnectTo(OnNew);
+			fileChooser.Run();
 		}
 		catch (Exception error)
 		{
@@ -298,13 +299,14 @@ public class MainView : ApplicationWindow, IMainView
     {
         try
 		{
-			OpenFileChooser(
+			var fileChooser = FileChooserDialog.Open(
 				"Open Workspace",
 				"Workspaces",
 				$"*{Workspace.DefaultFileExtension}",
 				true,
-				FileChooserAction.Open,
-				OnOpen.Invoke);
+				false);
+			fileChooser.OnFileSelected.ConnectTo(OnOpen);
+			fileChooser.Run();
 		}
 		catch (Exception error)
 		{
@@ -319,68 +321,18 @@ public class MainView : ApplicationWindow, IMainView
 	{
 		try
 		{
-			OpenFileChooser(
+			var fileChooser = FileChooserDialog.Open(
 				"Open Instruction File",
 				"Instruction Files",
 				"*.ins",
 				true,
-				FileChooserAction.Open,
-				OnNewFromInstructionFile.Invoke);
+				false);
+			fileChooser.OnFileSelected.ConnectTo(OnNewFromInstructionFile);
+			fileChooser.Run();
 		}
 		catch (Exception error)
 		{
 			ReportError(error);
 		}
-	}
-
-	private void OpenFileChooser(
-		string title,
-		string filterName,
-		string filterPattern,
-		bool allowAllFiles,
-		FileChooserAction action,
-		Action<string> callback)
-	{
-		FileChooserNative fileChooser = FileChooserNative.New(
-			title,
-			this,
-			action,
-			"Open",
-			"Cancel"
-		);
-		fileChooser.SetModal(true);
-		FileFilter filter = FileFilter.New();
-		filter.AddPattern(filterPattern);
-		filter.Name = filterName;
-		fileChooser.AddFilter(filter);
-
-		if (allowAllFiles)
-		{
-			FileFilter filterAll = FileFilter.New();
-			filterAll.AddPattern("*");
-			filterAll.Name = "All Files";
-			fileChooser.AddFilter(filterAll);
-		}
-
-		fileChooser.OnResponse += (sender, args) =>
-		{
-			try
-			{
-				if (sender is FileChooserNative fileChooser &&
-					args.ResponseId == (int)ResponseType.Accept)
-				{
-					string? selectedFile = fileChooser.GetFile()?.GetPath();
-					if (!string.IsNullOrEmpty(selectedFile))
-						callback(selectedFile);
-				}
-				sender.Dispose();
-			}
-			catch (Exception error)
-			{
-				ReportError(error);
-			}
-		};
-
-		fileChooser.Show();
 	}
 }
