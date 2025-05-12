@@ -84,8 +84,11 @@ public class MainPresenter
 	private void OpenWorkspace(Workspace workspace)
 	{
 		// Update recent files list.
-		Configuration.Instance.RecentWorkspaces.Add(workspace.FilePath);
-		Configuration.Instance.Save();
+		if (!Configuration.Instance.RecentWorkspaces.Contains(workspace.FilePath))
+		{
+			Configuration.Instance.RecentWorkspaces.Add(workspace.FilePath);
+			Configuration.Instance.Save();
+		}
 
 		child = new WorkspacePresenter(workspace);
 		view.SetChild(child.GetView());
