@@ -41,10 +41,11 @@ public class MainPresenter
 		this.view = view;
 		view.AddMenuItem("Preferences", OnPreferences);
 		view.AddMenuItem("About", OnAbout);
-		view.AddMenuItem("Quit", () => view.Close(), "<Ctrl>Q");
+		view.AddMenuItem("Quit", OnClose, "<Ctrl>Q");
 		view.OnOpen.ConnectTo(OpenFile);
 		view.OnNewFromInstructionFile.ConnectTo(OpenFile);
 		view.OnNew.ConnectTo(OnNew);
+		view.OnClose.ConnectTo(OnClose);
 
 		RecentFilesPresenter recent = new RecentFilesPresenter();
 		recent.OnOpenFile.ConnectTo(OpenFile);
@@ -150,4 +151,23 @@ public class MainPresenter
 			view.ReportError(error);
 		}
 	}
+
+	/// <summary>
+	/// Called when the user wants to close the window.
+	/// </summary>
+    private void OnClose()
+    {
+		try
+        {
+			if (child != null)
+			{
+				child.Dispose();
+			}
+			view.Close();
+		}
+		catch (Exception error)
+		{
+			view.ReportError(error);
+		}
+    }
 }

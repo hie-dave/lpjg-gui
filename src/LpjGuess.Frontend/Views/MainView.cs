@@ -91,6 +91,9 @@ public class MainView : ApplicationWindow, IMainView
 	/// <inheritdoc />
 	public Event<string> OnNew { get; private init; }
 
+	/// <inheritdoc /> 
+	public Event OnClose { get; private init; }
+
 	/// <summary>
 	/// Constructor.
 	/// </summary>
@@ -103,6 +106,9 @@ public class MainView : ApplicationWindow, IMainView
 		OnOpen = new Event<string>();
 		OnNewFromInstructionFile = new Event<string>();
 		OnNew = new Event<string>();
+		OnClose = new Event();
+
+		OnCloseRequest += OnClosed;
 
 		SetApplication(app);
 
@@ -335,4 +341,27 @@ public class MainView : ApplicationWindow, IMainView
 			ReportError(error);
 		}
 	}
+
+	/// <summary>
+	/// Called when a close-request signal is received.
+	/// </summary>
+	/// <param name="sender">Sender object (this).</param>
+	/// <param name="args">Event data.</param>
+	/// <returns>false</returns>
+    private bool OnClosed(Gtk.Window sender, EventArgs args)
+    {
+		try
+		{
+			OnClose.Invoke();
+		}
+		catch (Exception error)
+		{
+			Console.Error.WriteLine($"Exception thrown in OnClosed callback:");
+			Console.Error.WriteLine(error);
+		}
+
+		// Returning true prevents other callbacks from executing, which
+		// ultimately prevents the window from closing.
+		return false;
+    }
 }

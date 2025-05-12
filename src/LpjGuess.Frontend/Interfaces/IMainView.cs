@@ -26,6 +26,11 @@ public interface IMainView : IView
 	Event<string> OnNewFromInstructionFile { get; }
 
 	/// <summary>
+	/// Called when the user wants to close the window.
+	/// </summary>
+	Event OnClose { get; }
+
+	/// <summary>
 	/// Add a menu item with the specified name and optional keyboard shortcut
 	/// to the menu in the window title bar.
 	/// </summary>
