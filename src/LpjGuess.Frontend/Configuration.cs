@@ -1,7 +1,5 @@
-using System.Xml.Serialization;
-using ExtendedXmlSerializer;
 using LpjGuess.Runner.Models;
-using LpjGuess.Core.Serialisation;
+using LpjGuess.Core.Serialisation.Json;
 
 namespace LpjGuess.Frontend;
 
@@ -23,7 +21,7 @@ public class Configuration
 	/// <summary>
 	/// Name of the config file.
 	/// </summary>
-	private const string fileName = "config.xml";
+	private const string fileName = "config.json";
 
 	/// <summary>
 	/// Load the configuration from disk the first time this class is accessed.
@@ -99,7 +97,7 @@ public class Configuration
 	/// </summary>
 	public void Save()
 	{
-		this.SerialiseTo(GetConfigPath(), c => c.EnableImplicitTyping(typeof(Configuration)));
+		this.SerialiseTo(GetConfigPath());
 	}
 
 	/// <summary>
@@ -111,7 +109,7 @@ public class Configuration
 		// Config file may not exist the first time the application is run.
 		if (!File.Exists(path))
 			return new Configuration();
-		return XmlSerialisation.DeserialiseFrom<Configuration>(path, c => c.EnableImplicitTyping(typeof(Configuration)));
+		return JsonSerialisation.DeserialiseFrom<Configuration>(path);
 	}
 
 	/// <summary>

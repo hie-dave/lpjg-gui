@@ -4,7 +4,7 @@ using ExtendedXmlSerializer.Configuration;
 using LpjGuess.Core.Models;
 using LpjGuess.Runner.Models;
 
-namespace LpjGuess.Core.Serialisation;
+namespace LpjGuess.Core.Serialisation.Xml;
 
 /// <summary>
 /// XML serialisation/deserialisation methods.

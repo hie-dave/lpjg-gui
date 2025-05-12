@@ -1,6 +1,5 @@
-using ExtendedXmlSerializer;
 using LpjGuess.Core.Models.Graphing;
-using LpjGuess.Core.Serialisation;
+using LpjGuess.Core.Serialisation.Json;
 
 namespace LpjGuess.Core.Models;
 
@@ -70,6 +69,6 @@ public class Workspace
 	/// <param name="filePath">Path to the serialised file.</param>
 	public static Workspace LoadFrom(string filePath)
 	{
-		return XmlSerialisation.DeserialiseFrom<Workspace>(filePath);
+		return JsonSerialisation.DeserialiseFrom<Workspace>(filePath);
 	}
 }
