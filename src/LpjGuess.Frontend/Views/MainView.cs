@@ -297,7 +297,7 @@ public class MainView : ApplicationWindow, IMainView
 		}
 		catch (Exception error)
 		{
-			MainView.Instance.ReportError(error);
+			ReportError(error);
 		}
     }
 
@@ -316,7 +316,7 @@ public class MainView : ApplicationWindow, IMainView
 		}
 		catch (Exception error)
 		{
-			MainView.Instance.ReportError(error);
+			ReportError(error);
 		}
     }
 
