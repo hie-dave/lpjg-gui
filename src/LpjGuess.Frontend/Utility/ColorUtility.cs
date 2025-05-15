@@ -1,0 +1,91 @@
+using System.Globalization;
+using OxyPlot;
+
+namespace LpjGuess.Frontend.Utility;
+
+/// <summary>
+/// Utility class for color operations.
+/// </summary>
+public static class ColorUtility
+{
+    /// <summary>
+    /// Default colors for series when no color is specified.
+    /// </summary>
+    public static readonly string[] DefaultColors = new[]
+    {
+        "#1f77b4", // Blue
+        "#ff7f0e", // Orange
+        "#2ca02c", // Green
+        "#d62728", // Red
+        "#9467bd", // Purple
+        "#8c564b", // Brown
+        "#e377c2", // Pink
+        "#7f7f7f", // Gray
+        "#bcbd22", // Olive
+        "#17becf"  // Cyan
+    };
+
+    /// <summary>
+    /// Convert a hex color string to an OxyColor.
+    /// </summary>
+    /// <param name="hexColor">Hex color string (e.g., "#FF0000" or "#FFFF0000").</param>
+    /// <returns>OxyColor object.</returns>
+    public static OxyColor HexToOxyColor(string hexColor)
+    {
+        if (string.IsNullOrEmpty(hexColor))
+            return OxyColors.Blue;
+
+        try
+        {
+            hexColor = hexColor.TrimStart('#');
+            
+            if (hexColor.Length == 6)
+            {
+                // RGB format
+                int r = int.Parse(hexColor.Substring(0, 2), NumberStyles.HexNumber);
+                int g = int.Parse(hexColor.Substring(2, 2), NumberStyles.HexNumber);
+                int b = int.Parse(hexColor.Substring(4, 2), NumberStyles.HexNumber);
+                return OxyColor.FromRgb((byte)r, (byte)g, (byte)b);
+            }
+            else if (hexColor.Length == 8)
+            {
+                // ARGB format
+                int a = int.Parse(hexColor.Substring(0, 2), NumberStyles.HexNumber);
+                int r = int.Parse(hexColor.Substring(2, 2), NumberStyles.HexNumber);
+                int g = int.Parse(hexColor.Substring(4, 2), NumberStyles.HexNumber);
+                int b = int.Parse(hexColor.Substring(6, 2), NumberStyles.HexNumber);
+                return OxyColor.FromArgb((byte)a, (byte)r, (byte)g, (byte)b);
+            }
+            
+            return OxyColors.Blue;
+        }
+        catch
+        {
+            return OxyColors.Blue;
+        }
+    }
+
+    /// <summary>
+    /// Convert an OxyColor to a hex color string.
+    /// </summary>
+    /// <param name="color">OxyColor object.</param>
+    /// <param name="includeAlpha">Whether to include the alpha channel.</param>
+    /// <returns>Hex color string.</returns>
+    public static string OxyColorToHex(OxyColor color, bool includeAlpha = true)
+    {
+        if (includeAlpha)
+            return $"#{color.A:X2}{color.R:X2}{color.G:X2}{color.B:X2}";
+        else
+            return $"#{color.R:X2}{color.G:X2}{color.B:X2}";
+    }
+
+    /// <summary>
+    /// Get a color from the default color palette by index.
+    /// </summary>
+    /// <param name="index">Index in the color palette.</param>
+    /// <returns>Hex color string.</returns>
+    public static string GetColorByIndex(int index)
+    {
+        return DefaultColors[index % DefaultColors.Length];
+    }
+}

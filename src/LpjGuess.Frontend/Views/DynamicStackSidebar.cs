@@ -9,6 +9,13 @@ namespace LpjGuess.Frontend.Views;
 /// A <see cref="CustomStackSidebar{T}"/> which allows the user to add and
 /// remove tabs from the stack.
 /// </summary>
+/// <remarks>
+/// The type parameter represent the type of object encapsulated by the stack.
+/// Each page in the stack will represent an instance of this type.
+///
+/// Generation of sidebar widgets is handled by an argument to the constructor.
+/// Generation of page widgets is handled by the <see cref="Populate"/> method.
+/// </remarks>
 public class DynamicStackSidebar<T> : CustomStackSidebar<T>
 {
     /// <summary>
@@ -44,6 +51,7 @@ public class DynamicStackSidebar<T> : CustomStackSidebar<T>
     /// <summary>
     /// Create a new <see cref="DynamicStackSidebar{T}"/> instance.
     /// </summary>
+    /// <param name="renderer">Function which renders a data value to a widget which will be displayed in the sidebar.</param>
     public DynamicStackSidebar(Func<T, Widget> renderer) : base(renderer)
     {
         OnAdd = new Event();

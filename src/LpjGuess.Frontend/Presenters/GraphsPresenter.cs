@@ -94,7 +94,7 @@ public class GraphsPresenter : IGraphsPresenter
 
 	private OxyPlot.Series.Series SimpleLineSeries()
 	{
-		LineSeries series = new LineSeries();
+        OxyPlot.Series.LineSeries series = new OxyPlot.Series.LineSeries();
 		series.Title = "Sample Series";
 		series.Color = OxyColors.Blue;
 		List<DataPoint> points = SimpleDataSeries();
