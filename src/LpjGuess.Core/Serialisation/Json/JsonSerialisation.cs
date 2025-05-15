@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using LpjGuess.Core.Interfaces;
 using LpjGuess.Core.Interfaces.Graphing;
 using LpjGuess.Runner.Models;
 
@@ -23,7 +24,8 @@ public static class JsonSerialisation
             new JsonStringEnumConverter(),
             // Add polymorphic converters for interfaces
             new PolymorphicConverter<IRunnerConfiguration>(),
-            new PolymorphicConverter<ISeries>()
+            new PolymorphicConverter<ISeries>(),
+            new PolymorphicConverter<IDataSource>(),
             // Add more interface converters as needed
         }
     };

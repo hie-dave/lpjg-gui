@@ -10,19 +10,18 @@ namespace LpjGuess.Frontend.Data;
 public static class DataProviderFactory
 {
     /// <summary>
-    /// Create a data provider for the specified data source.
+    /// Read data from the specified data source.
     /// </summary>
-    /// <typeparam name="T">The data source type.</typeparam>
-    /// <param name="source">The data source instance.</param>
-    /// <returns>A data provider for the specified data source.</returns>
+    /// <param name="source">The data source.</param>
+    /// <returns>The data read from the data source.</returns>
     /// <exception cref="NotSupportedException">Thrown if the data source type is not supported.</exception>
-    public static IDataProvider<T> Create<T>(T source) where T : class, IDataSource
+    public static IEnumerable<SeriesData> Read(IDataSource source)
     {
-        if (source is ModelOutput)
+        if (source is ModelOutput modelOutput)
         {
-            return (IDataProvider<T>)new ModelOutputReader();
+            return new ModelOutputReader().Read(modelOutput);
         }
 
-        throw new NotSupportedException($"Data provider not supported for {typeof(T).Name}");
+        throw new NotSupportedException($"Data provider not supported for {typeof(IDataSource).Name}");
     }
 }

@@ -26,17 +26,18 @@ public class GraphsView : Box, IGraphsView
 	/// <summary>
 	/// The stack sidebar widget.
 	/// </summary>
-	private readonly DynamicStackSidebar<PlotModel> sidebar;
+	private readonly DynamicStackSidebar<IGraphView> sidebar;
 
 	/// <summary>
 	/// Create a new <see cref="GraphsView"/> instance.
 	/// </summary>
 	public GraphsView()
 	{
+		Name = "GraphsView";
 		OnAddGraph = new Event();
-		OnRemoveGraph = new Event<PlotModel>();
+		OnRemoveGraph = new Event<IGraphView>();
 
-		sidebar = new DynamicStackSidebar<PlotModel>(CreateSidebarWidget);
+		sidebar = new DynamicStackSidebar<IGraphView>(CreateSidebarWidget);
 		sidebar.AddText = "Add Graph";
 		sidebar.OnAdd.ConnectTo(OnAddGraph);
 		sidebar.OnRemove.ConnectTo(OnRemoveGraph);
@@ -45,10 +46,11 @@ public class GraphsView : Box, IGraphsView
 		Append(sidebar);
 	}
 
-    private Widget CreateSidebarWidget(PlotModel model)
+    private Widget CreateSidebarWidget(IGraphView view)
     {
-        Label label = Label.New(model.Title);
+        Label label = Label.New(view.Model.Title);
 		label.Halign = Align.Start;
+		label.Name = "GraphsViewSidebarLabel";
 		return label;
     }
 
@@ -56,34 +58,16 @@ public class GraphsView : Box, IGraphsView
     public Event OnAddGraph { get; private init; }
 
     /// <inheritdoc />
-	public Event<PlotModel> OnRemoveGraph { get; private init; }
+	public Event<IGraphView> OnRemoveGraph { get; private init; }
 
 	/// <inheritdoc />
-	public void Populate(IEnumerable<PlotModel> plots)
+	public void Populate(IEnumerable<IGraphView> plots)
 	{
-		IEnumerable<(PlotModel, Widget)> views = plots
-			.Select(model => (model, CreatePlotView(model) as Widget));
+		IEnumerable<(IGraphView, Widget)> views = plots
+			.Select(view => (view, view.GetWidget()));
 		sidebar.Populate(views);
 	}
 
 	/// <inheritdoc />
 	public Widget GetWidget() => this;
-
-	/// <summary>
-	/// Add the plot model to the stack.
-	/// </summary>
-	/// <param name="plot">The plot model to be added.</param>
-	private PlotView CreatePlotView(PlotModel plot)
-	{
-		PlotView view = new PlotView();
-		if (Gtk.Settings.GetDefault()?.GtkApplicationPreferDarkTheme == true)
-		{
-			plot.TextColor = plot.PlotAreaBorderColor = OxyColors.White;
-		}
-		view.Model = plot;
-		view.Visible = true;
-		view.Hexpand = true;
-		view.Vexpand = true;
-		return view;
-	}
 }

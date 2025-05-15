@@ -33,16 +33,27 @@ public class Graph
 	/// Create a new <see cref="Graph"/> instance.
 	/// </summary>
 	/// <param name="title">Graph title.</param>
-	public Graph(string title)
+	/// <param name="series">Series to be displayed on the graph.</param>
+	/// <param name="xAxisTitle">Optional axis title for the X axis. If null, a default title will be generated and used based on the data being displayed.</param>
+	/// <param name="yAxisTitle">Optional axis title for the Y axis. If null, a default title will be generated and used based on the data being displayed.</param>
+	public Graph(
+		string title,
+		IEnumerable<ISeries> series,
+		string? xAxisTitle = null,
+		string? yAxisTitle = null)
 	{
 		Title = title;
-		Series = new List<ISeries>();
+		Series = series.ToList();
+		XAxisTitle = xAxisTitle;
+		YAxisTitle = yAxisTitle;
 	}
 
 	/// <summary>
 	/// Default constructor provided for serialization purposes.
 	/// </summary>
-	public Graph() : this(string.Empty) { }
+	public Graph() : this(string.Empty, [])
+	{
+	}
 
 	/// <summary>
 	/// Get the axis requirements of all series for this graph.

@@ -12,4 +12,9 @@ public interface IGraphsPresenter : IPresenter<IGraphsView>
 	/// Get the graphs as they are currently configured.
 	/// </summary>
 	IEnumerable<Graph> GetGraphs();
+
+	/// <summary>
+	/// Update the instruction files for which data should be displayed.
+	/// </summary>
+	void UpdateInstructionFiles(IEnumerable<string> instructionFiles);
 }

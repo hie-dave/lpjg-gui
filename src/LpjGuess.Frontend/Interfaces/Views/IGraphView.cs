@@ -20,6 +20,11 @@ public interface IGraphView : IView
     Event<ISeries> OnRemoveSeries { get; }
 
     /// <summary>
+    /// The plot model displayed in the view.
+    /// </summary>
+    PlotModel Model { get; }
+
+    /// <summary>
     /// Update the plot model displayed in the view.
     /// </summary>
     /// <param name="model">The plot model to display.</param>

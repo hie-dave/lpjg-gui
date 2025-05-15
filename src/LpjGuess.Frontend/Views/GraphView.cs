@@ -41,17 +41,23 @@ public class GraphView : Box, IGraphView
     /// <inheritdoc />
     public Event<ISeries> OnRemoveSeries { get; private init; }
 
+    /// <inheritdoc />
+    public PlotModel Model => plot.Model;
+
     /// <summary>
     /// Create a new <see cref="GraphView"/> instance.
     /// </summary>
     public GraphView()
     {
+        Name = "GraphView";
+
         // Initialize events.
         OnAddSeries = new Event();
         OnRemoveSeries = new Event<ISeries>();
 
         // Configure plot view.
         plot = new PlotView();
+        plot.Hexpand = true;
 
         // Configure series sidebar.
         seriesSidebar = new DynamicStackSidebar<ISeries>(CreateSeriesSidebarWidget);

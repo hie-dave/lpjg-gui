@@ -15,7 +15,7 @@ public class RecentFilesPresenter : PresenterBase<RecentFilesView>
 	/// </summary>
 	public RecentFilesPresenter() : base(new RecentFilesView())
 	{
-		view.Populate(Configuration.Instance.RecentWorkspaces);
+		view.Populate(Configuration.Instance.RecentWorkspaces.Where(File.Exists));
 		OnOpenFile = new Event<string>();
 		view.OnClick.ConnectTo(OnOpenFile);
 	}

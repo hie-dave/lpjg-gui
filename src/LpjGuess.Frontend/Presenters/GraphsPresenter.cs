@@ -1,11 +1,12 @@
+using LpjGuess.Core.Interfaces;
 using LpjGuess.Core.Interfaces.Graphing;
+using LpjGuess.Core.Models;
 using LpjGuess.Core.Models.Graphing;
+using LpjGuess.Core.Models.Graphing.Series;
 using LpjGuess.Frontend.Interfaces.Presenters;
 using LpjGuess.Frontend.Interfaces.Views;
 using LpjGuess.Frontend.Utility;
-using OxyPlot;
-using OxyPlot.Axes;
-using OxyPlot.Series;
+using LpjGuess.Frontend.Views;
 
 namespace LpjGuess.Frontend.Presenters;
 
@@ -23,7 +24,12 @@ public class GraphsPresenter : IGraphsPresenter
 	/// <summary>
 	/// Dictionary mapping plot models to graph objects.
 	/// </summary>
-	private readonly Dictionary<PlotModel, Graph> plots;
+	private readonly Dictionary<IGraphView, IGraphPresenter> plots;
+
+	/// <summary>
+	/// The list of instruction files.
+	/// </summary>
+	private IEnumerable<string> instructionFiles;
 
 	/// <summary>
 	/// Create a new <see cref="GraphsPresenter"/> instance which displays the
@@ -31,12 +37,14 @@ public class GraphsPresenter : IGraphsPresenter
 	/// </summary>
 	/// <param name="view">The view object.</param>
 	/// <param name="graphs">The graphs to be displayed.</param>
-	public GraphsPresenter(IGraphsView view, IReadOnlyList<Graph> graphs)
+	/// <param name="instructionFiles">The instruction files for which data should be displayed.</param>
+	public GraphsPresenter(IGraphsView view, IReadOnlyList<Graph> graphs, IEnumerable<string> instructionFiles)
 	{
-		plots = new Dictionary<PlotModel, Graph>();
+		plots = new Dictionary<IGraphView, IGraphPresenter>();
 		this.view = view;
 		this.view.OnAddGraph.ConnectTo(OnAddGraph);
 		this.view.OnRemoveGraph.ConnectTo(OnRemoveGraph);
+		this.instructionFiles = instructionFiles;
 		Populate(graphs);
 	}
 
@@ -44,6 +52,16 @@ public class GraphsPresenter : IGraphsPresenter
     public void Dispose()
 	{
 		view.Dispose();
+	}
+
+	/// <summary>
+	/// Update the instruction files for which data should be displayed.
+	/// </summary>
+	/// <param name="instructionFiles">The instruction files for which data should be displayed.</param>
+	public void UpdateInstructionFiles(IEnumerable<string> instructionFiles)
+	{
+		this.instructionFiles = instructionFiles;
+		Populate(GetGraphs());
 	}
 
 	/// <summary>
@@ -55,29 +73,24 @@ public class GraphsPresenter : IGraphsPresenter
 		plots.Clear();
 
 		// Temporary list, to guarantee order.
-		List<PlotModel> models = new List<PlotModel>();
 		foreach (Graph graph in graphs)
 		{
-			PlotModel model = ToOxyPlotModel(graph);
-			models.Add(model);
-			plots[model] = graph;
+			// Construct new child presenter/view to display the oxyplot model.
+			IGraphView graphView = new GraphView();
+			IGraphPresenter presenter = new GraphPresenter(graphView, graph, instructionFiles);
+
+			plots.Add(graphView, presenter);
 		}
 
 		// This will remove any existing plots from the view.
-		view.Populate(models);
+		view.Populate(plots.Keys);
+
+		foreach (IGraphPresenter presenter in plots.Values)
+			presenter.Dispose();
 	}
 
 	/// <inheritdoc />
 	public IGraphsView GetView() => view;
-
-	/// <summary>
-	/// Convert a graph object to an oxyplot plot model.
-	/// </summary>
-	/// <param name="graph">The graph object.</param>
-	private PlotModel ToOxyPlotModel(Graph graph)
-	{
-		return OxyPlotConverter.ToPlotModel(graph);
-	}
 
 	// private void OnChartClick(object? sender, OxyMouseDownEventArgs e)
 	// {
@@ -90,22 +103,45 @@ public class GraphsPresenter : IGraphsPresenter
 	/// </summary>
 	private void OnAddGraph()
 	{
-		Graph graph = new Graph("New Graph");
-		List<Graph> graphs = plots.Values.ToList();
+		// TODO: reconsider how we initialise new graphs.
+		// For now, this is enough.
+		Graph graph = CreateDefaultGraph();
+
+		List<Graph> graphs = plots.Values.Select(p => p.GetGraph()).ToList();
 		graphs.Add(graph);
 		Populate(graphs);
 	}
 
-    private void OnRemoveGraph(PlotModel model)
+    private Graph CreateDefaultGraph()
+    {
+		IDataSource dataSource = new ModelOutput(
+			"file_lai",
+			"Date",
+			"Total",
+			instructionFiles);
+		ISeries series = new LineSeries(
+			"New Series",
+			"Blue",
+			dataSource,
+			AxisPosition.Bottom,
+			AxisPosition.Left,
+			LineType.Solid,
+			LineThickness.Regular);
+		return new Graph("New Graph", [series]);
+    }
+
+    private void OnRemoveGraph(IGraphView view)
     {
 		// Force immediate evaluation.
-        IEnumerable<Graph> graphs = plots.Values.Except([plots[model]]).ToList();
+        IEnumerable<Graph> graphs = GetGraphs()
+			.Except([plots[view].GetGraph()])
+			.ToList();
 		Populate(graphs);
     }
 
 	/// <inheritdoc />
     public IEnumerable<Graph> GetGraphs()
     {
-        return plots.Values;
+        return plots.Values.Select(p => p.GetGraph());
     }
 }

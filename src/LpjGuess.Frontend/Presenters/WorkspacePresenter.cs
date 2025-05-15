@@ -66,7 +66,7 @@ public class WorkspacePresenter : IPresenter<IWorkspaceView>
 		view.OnRemoveInsFile.ConnectTo(OnRemoveInsFile);
 
 		outputsPresenter = new OutputsPresenter(view.OutputsView);
-		graphsPresenter = new GraphsPresenter(view.GraphsView, workspace.Graphs);
+		graphsPresenter = new GraphsPresenter(view.GraphsView, workspace.Graphs, workspace.InstructionFiles);
 		PopulateRunners();
 		outputsPresenter.Populate(workspace.InstructionFiles);
 	}
@@ -88,6 +88,9 @@ public class WorkspacePresenter : IPresenter<IWorkspaceView>
 
 		// Update the view.
 		view.Populate(workspace.InstructionFiles);
+
+		// Update the graphs view.
+		graphsPresenter.UpdateInstructionFiles(workspace.InstructionFiles);
     }
 
 	/// <summary>

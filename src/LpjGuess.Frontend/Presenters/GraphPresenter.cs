@@ -50,15 +50,15 @@ public class GraphPresenter : IGraphPresenter
         this.graph = graph;
         this.instructionFiles = instructionFiles;
 
-        // Initialize plot model.
-        plotModel = new PlotModel();
-
         // Connect event handlers
         view.OnAddSeries.ConnectTo(OnAddSeries);
         view.OnRemoveSeries.ConnectTo(OnRemoveSeries);
 
-        // Initialize the plot model
-        RefreshData();
+        // Create a new plot model
+        plotModel = OxyPlotConverter.ToPlotModel(graph);
+
+        // Update the view
+        view.UpdatePlot(plotModel);
     }
 
     /// <inheritdoc />

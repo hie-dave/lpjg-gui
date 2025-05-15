@@ -16,11 +16,11 @@ public interface IGraphsView : IView
 	/// <summary>
 	/// Called when the user wants to remove a graph.
 	/// </summary>
-	Event<PlotModel> OnRemoveGraph { get; }
+	Event<IGraphView> OnRemoveGraph { get; }
 
 	/// <summary>
 	/// Populate the graphs view with graphs.
 	/// </summary>
 	/// <param name="plots">The plots to be displayed.</param>
-	void Populate(IEnumerable<PlotModel> plots);
+	void Populate(IEnumerable<IGraphView> plots);
 }

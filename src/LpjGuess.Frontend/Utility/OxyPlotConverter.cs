@@ -149,16 +149,15 @@ public static class OxyPlotConverter
     /// </summary>
     /// <param name="series">The series to convert.</param>
     /// <returns>An OxyPlot Series.</returns>
-    public static IEnumerable<Series> ToOxySeries(ISeries series)
+    public static IEnumerable<OxySeries> ToOxySeries(ISeries series)
     {
         // FIXME - this probably doesn't work. Need to rethink the data provider API.
-        var dataProvider = DataProviderFactory.Create(series.DataSource);
-        IEnumerable<SeriesData> data = dataProvider.Read(series.DataSource);
+        IEnumerable<SeriesData> data = DataProviderFactory.Read(series.DataSource);
 
-        return data.Select(seriesData => CreateSeries(series, seriesData));        
+        return data.Select(seriesData => CreateOxySeries(series, seriesData));        
     }
 
-    private static Series CreateSeries(ISeries series, SeriesData data)
+    private static OxySeries CreateOxySeries(ISeries series, SeriesData data)
     {
         // Create the appropriate series type
         if (series is LineSeries line)
