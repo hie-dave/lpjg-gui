@@ -1,0 +1,81 @@
+using Dave.Benchmarks.Core.Models.Importer;
+using Dave.Benchmarks.Core.Services;
+using LpjGuess.Runner.Extensions;
+using LpjGuess.Runner.Parsers;
+using Microsoft.Extensions.Logging;
+
+namespace LpjGuess.Frontend.Classes;
+
+/// <summary>
+/// Data class which combines an instruction file, its parser, and output
+/// file name resolver.
+/// </summary>
+public class Simulation
+{
+    /// <summary>
+    /// The output file parser.
+    /// </summary>
+    private readonly ModelOutputParser outputParser;
+
+    /// <summary>
+    /// Path to the instruction file.
+    /// </summary>
+    public string FileName { get; private init; }
+
+    /// <summary>
+    /// Output file type resolver.
+    /// </summary>
+    public OutputFileTypeResolver Resolver { get; private init; }
+
+    /// <summary>
+    /// Instruction file parser.
+    /// </summary>
+    public InstructionFileParser InstructionFile { get; private init; }
+
+    /// <summary>
+    /// Create a new <see cref="Simulation"/> instance.
+    /// </summary>
+    /// <param name="fileName">Path to the instruction file.</param>
+    public Simulation(string fileName)
+    {
+        FileName = fileName;
+
+        // TODO: dependency injection. Don't create an OutputParser every time.
+        var factory = new LoggerFactory();
+        var logger = new Logger<OutputFileTypeResolver>(factory);
+        var logger2 = new Logger<ModelOutputParser>(factory);
+
+        // TODO: proper async support.
+        InstructionFile = InstructionFileParser.FromFile(fileName);
+
+        Resolver = new OutputFileTypeResolver(logger);
+        Resolver.BuildLookupTable(InstructionFile);
+
+        outputParser = new ModelOutputParser(logger2, Resolver);
+    }
+
+    /// <summary>
+    /// Read a model output file.
+    /// </summary>
+    /// <param name="fileType">The output file *type* (e.g. "file_lai").</param>
+    /// <returns>The parsed output file.</returns>
+    public Task<Quantity> ReadOutputFileTypeAsync(string fileType)
+    {
+        string fileName = Resolver.GetFileName(fileType);
+
+        string outputDirectory = InstructionFile.GetOutputDirectory();
+        string outputFile = Path.Combine(outputDirectory, fileName);
+        return ReadOutputFileAsync(outputFile);;
+    }
+
+    /// <summary>
+    /// Read a model output file.
+    /// </summary>
+    /// <param name="fileName">The output file name (e.g. "lai.out"). This must
+    /// be absolute or relative to the current working directory.</param>
+    /// <returns>The parsed output file.</returns>
+    public Task<Quantity> ReadOutputFileAsync(string fileName)
+    {
+        return outputParser.ParseOutputFileAsync(fileName);
+    }
+}

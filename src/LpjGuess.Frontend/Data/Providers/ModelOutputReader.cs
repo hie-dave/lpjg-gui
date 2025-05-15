@@ -1,9 +1,9 @@
 using Dave.Benchmarks.Core.Models.Importer;
 using Dave.Benchmarks.Core.Services;
-using LightInject;
 using LpjGuess.Core.Models;
-using LpjGuess.Runner.Models;
+using LpjGuess.Frontend.Classes;
 using Microsoft.Extensions.Logging;
+using OxyPlot.Axes;
 
 namespace LpjGuess.Frontend.Data.Providers;
 
@@ -13,98 +13,75 @@ namespace LpjGuess.Frontend.Data.Providers;
 public class ModelOutputReader : IDataProvider<ModelOutput>
 {
     /// <summary>
-    /// Name of the instruction file parameter specifying the output directory.
+    /// List of simulation objects, which are cached between uses of this class,
+    /// to avoid double-parsing.
     /// </summary>
-    private const string outputDirectoryParameter = "outputdirectory";
-
-    /// <summary>
-    /// List of instruction files and associated parsers.
-    /// </summary>
-    private readonly IReadOnlyList<InsFile> insFiles;
+    private static readonly List<Simulation> simulations = new List<Simulation>();
 
     /// <summary>
     /// Create a new <see cref="ModelOutputReader"/> instance.
     /// </summary>
-    /// <param name="instructionFiles">The instruction files for which data should be read.</param>
-    public ModelOutputReader(IEnumerable<string> instructionFiles)
+    public ModelOutputReader()
     {
-        insFiles = instructionFiles.Select(f => new InsFile(f)).ToList();
     }
 
     /// <inheritdoc />
     public IEnumerable<SeriesData> Read(ModelOutput source)
     {
-        return insFiles.Select(f => ReadForInstructionFile(source, f));
+        return source.InstructionFiles.Select(f => ReadSimulation(source, GetSimulation(f)));
     }
 
     /// <summary>
-    /// Read data for a single instruction file.
+    /// Get a simulation object for the given instruction file.
+    /// </summary>
+    /// <param name="instructionFile"></param>
+    /// <returns></returns>
+    public static Simulation GetSimulation(string instructionFile)
+    {
+        var simulation = simulations.FirstOrDefault(s => s.FileName == instructionFile);
+        if (simulation == null)
+        {
+            simulation = new Simulation(instructionFile);
+            lock (simulations)
+                simulations.Add(simulation);
+        }
+
+        return simulation;
+    }
+
+    /// <summary>
+    /// Read data for a single simulation.
     /// </summary>
     /// <param name="source">The model output.</param>
-    /// <param name="instructionFile">The instruction file.</param>
-    /// <returns>The data read from the instruction file.</returns>
-    private SeriesData ReadForInstructionFile(
+    /// <param name="simulation">The simulation from which to read the data.</param>
+    /// <returns>The data read from the simulation.</returns>
+    private SeriesData ReadSimulation(
         ModelOutput source,
-        InsFile instructionFile)
+        Simulation simulation)
     {
-        string fileType = source.OutputFileType;
-        string fileName = instructionFile.Resolver.GetFileName(fileType);
-
-        InstructionParameter? parameter = instructionFile.Parser.GetTopLevelParameter("outputdirectory");
-        if (parameter is null)
-            throw new ArgumentException($"File '{file}' does not specify an output directory");
-
-        string outputDirectory = parameter.AsString().Trim('"');
-        /*
-        string outputFile = instructionFile.Resolver.GetFileName;
+        // TODO: async support.
+        Task<Quantity> task = simulation.ReadOutputFileTypeAsync(source.OutputFileType);
         task.Wait();
 
         Quantity quantity = task.Result;
-        */
+        Layer? layer = quantity.Layers.FirstOrDefault(l => l.Name == source.YAxisColumn);
+        if (layer == null)
+            throw new InvalidOperationException($"Output {quantity.Name} does not have layer: {source.YAxisColumn}");
+
+        if (source.XAxisColumn != "Date")
+            throw new NotImplementedException("TBI: Only date is supported on x axis for plots of model outputs.");
+
+        return new SeriesData(layer.Name, layer.Data.Select(DataPointToOxyPlot));
     }
 
     /// <summary>
-    /// Data class which combines an instruction file, its parser, and output
-    /// file name resolver.
+    /// Convert a model DataPoint to an OxyPlot DataPoint with the date on the
+    /// x-axis.
     /// </summary>
-    private class InsFile
+    /// <param name="point">The data point to convert.</param>
+    /// <returns>An OxyPlot DataPoint requiring a date x-axis.</returns>
+    private OxyPlot.DataPoint DataPointToOxyPlot(DataPoint point)
     {
-        /// <summary>
-        /// Path to the instruction file.
-        /// </summary>
-        public string FileName { get; private init; }
-
-        /// <summary>
-        /// Output file type resolver.
-        /// </summary>
-        public OutputFileTypeResolver Resolver { get; private init; }
-
-        /// <summary>
-        /// Instruction file parser.
-        /// </summary>
-        public InstructionFileParser Parser { get; private init; }
-
-        /// <summary>
-        /// Create a new <see cref="InsFile"/> instance.
-        /// </summary>
-        /// <param name="fileName">Path to the instruction file.</param>
-        public InsFile(string fileName)
-        {
-            FileName = fileName;
-
-            // TODO: dependency injection. Don't create an OutputParser every time.
-            var factory = new LoggerFactory();
-            var logger = new Logger<OutputFileTypeResolver>(factory);
-            var logger2 = new Logger<InstructionFileParser>(factory);
-
-            // TODO: proper async support.
-            Parser = new InstructionFileParser(logger2);
-            Parser.ParseInstructionFileAsync(FileName).Wait();
-
-            Resolver = new OutputFileTypeResolver(logger);
-            Resolver.BuildLookupTable(Parser);
-
-            var usefulParser = Runner.Parsers.InstructionFileParser.FromFile(fileName);
-        }
+        return new OxyPlot.DataPoint(DateTimeAxis.ToDouble(point.Timestamp), point.Value);
     }
 }

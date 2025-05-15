@@ -1,4 +1,4 @@
-namespace LpjGuess.Core.Models.Graphing;
+namespace LpjGuess.Core.Models.Graphing.Series;
 
 /// <summary>
 /// A base series class for all graph series types.

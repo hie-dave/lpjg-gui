@@ -4,11 +4,12 @@ using Dave.Benchmarks.Core.Models.Importer;
 using Dave.Benchmarks.Core.Services;
 using LpjGuess.Core.Extensions;
 using LpjGuess.Core.Models;
+using LpjGuess.Frontend.Classes;
+using LpjGuess.Frontend.Data.Providers;
 using LpjGuess.Frontend.Interfaces.Presenters;
 using LpjGuess.Frontend.Interfaces.Views;
 using LpjGuess.Frontend.Views;
 using LpjGuess.Runner.Models;
-using Microsoft.Extensions.Logging;
 using InstructionFileParser = LpjGuess.Runner.Parsers.InstructionFileParser;
 
 namespace LpjGuess.Frontend.Presenters;
@@ -32,52 +33,19 @@ public class OutputsPresenter : PresenterBase<IOutputsView>, IOutputsPresenter
     private const double staleFileThresholdSeconds = 5.0;
 
     /// <summary>
-    /// Output file type resolver.
-    /// </summary>
-    private readonly OutputFileTypeResolver resolver;
-
-    /// <summary>
-    /// Output file parser.
-    /// </summary>
-    private readonly ModelOutputParser outputParser;
-
-    /// <summary>
-    /// Instruction file parser.
-    /// </summary>
-    private readonly Dave.Benchmarks.Core.Services.InstructionFileParser insParser;
-
-    /// <summary>
-    /// List of instruction files.
-    /// </summary>
-    private List<string> instructionFiles;
-
-    /// <summary>
     /// Create a new <see cref="OutputsPresenter"/> instance.
     /// </summary>
     /// <param name="view">The view object.</param>
     public OutputsPresenter(IOutputsView view) : base(view)
     {
-        instructionFiles = new List<string>();
         view.OnInstructionFileSelected.ConnectTo(OnInstructionFileSelected);
         view.OnOutputFileSelected.ConnectTo(OnOutputFileSelected);
-
-        // TODO: dependency injection. Don't create an OutputParser every time.
-        var factory = new LoggerFactory();
-        var logger = new Logger<OutputFileTypeResolver>(factory);
-        var logger2 = new Logger<ModelOutputParser>(factory);
-        var logger3 = new Logger<Dave.Benchmarks.Core.Services.InstructionFileParser>(factory);
-
-        resolver = new OutputFileTypeResolver(logger);
-        outputParser = new ModelOutputParser(logger2, resolver);
-        insParser = new Dave.Benchmarks.Core.Services.InstructionFileParser(logger3);
     }
 
     /// <inheritdoc />
     /// <exception cref="ArgumentException">Thrown if one of the specified instruction files does not specify an output directory.</exception>
     public void Populate(IEnumerable<string> instructionFiles)
     {
-        this.instructionFiles = instructionFiles.ToList();
-
         // Populate the view.
         view.PopulateInstructionFiles(instructionFiles);
     }
@@ -104,7 +72,7 @@ public class OutputsPresenter : PresenterBase<IOutputsView>, IOutputsPresenter
 
         return outputFiles
             .Where(o => !IsStaleFile(o, latestWrite))
-            .Select(CreateOutputFile)
+            .Select(o => CreateOutputFile(o, file))
             .Where(o => o is not null)
             .Cast<OutputFile>();
     }
@@ -113,19 +81,33 @@ public class OutputsPresenter : PresenterBase<IOutputsView>, IOutputsPresenter
     /// Create a managed output file object corresponding to the output file at
     /// the specified file path.
     /// </summary>
-    /// <param name="filePath">Path to the output file.</param>
+    /// <param name="outputFile">Path to the output file.</param>
+    /// <param name="instructionFile">The instruction file for which the output file should be read.</param>
     /// <returns>An output file object with metadata.</returns>
-    private OutputFile? CreateOutputFile(string filePath)
+    private OutputFile? CreateOutputFile(string outputFile, string instructionFile)
     {
         try
         {
             // This will throw if unrecognised output files are discovered. This
             // can happen any time new outputs are added to the model without
             // updating OutputFileDefinitions.
-            string fileName = Path.GetFileName(filePath);
-            string fileType = resolver.GetFileType(fileName);
+            Simulation simulation = ModelOutputReader.GetSimulation(instructionFile);
+            string fileName = Path.GetFileName(outputFile);
+            string fileType = simulation.Resolver.GetFileType(fileName);
             OutputFileMetadata metadata = OutputFileDefinitions.GetMetadata(fileType);
-            return new OutputFile(metadata, filePath);
+            return new OutputFile(metadata, outputFile);
+        }
+        catch (KeyNotFoundException)
+        {
+            // This will happen if this function is called for an output file
+            // not defined in the instruction file. This occurs commonly, e.g.
+            // when someone runs the model, disables one of the output files by
+            // commenting it out in the instruction file, and then running the
+            // model again. When this happens, we have no robust way of knowing
+            // the output file type (though perhaps we could make some educated
+            // guesses). Nonetheless, we don't really want to clutter up stderr
+            // with repeated exceptions of this kind.
+            return null;
         }
         catch (Exception error)
         {
@@ -169,7 +151,12 @@ public class OutputsPresenter : PresenterBase<IOutputsView>, IOutputsPresenter
     private void OnOutputFileSelected(OutputFile file)
     {
         // TODO: true async support.
-        Task<Quantity> task = outputParser.ParseOutputFileAsync(file.Path);
+        string? instructionFile = view.InstructionFile;
+        if (instructionFile == null)
+            // Shouldn't happen, but best to be safe.
+            return;
+        Simulation simulation = GetSimulation(instructionFile);
+        Task<Quantity> task = simulation.ReadOutputFileAsync(file.Path);
         task.Wait();
 
         Quantity quantity = task.Result;
@@ -188,12 +175,12 @@ public class OutputsPresenter : PresenterBase<IOutputsView>, IOutputsPresenter
         // TODO: consolidate instruction file parsers in runner/benchmarks.
         // We are double parsing here (since we also parse when ins files are
         // selected by the user).
-        // TODO: true async support
-        Task task = insParser.ParseInstructionFileAsync(file);
-        task.Wait();
-        resolver.BuildLookupTable(insParser);
-
         IEnumerable<OutputFile> outputs = GetOutputFiles(file);
         view.PopulateOutputFiles(outputs);
+    }
+
+    private Simulation GetSimulation(string instructionFile)
+    {
+        return ModelOutputReader.GetSimulation(instructionFile);
     }
 }

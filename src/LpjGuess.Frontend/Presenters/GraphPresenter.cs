@@ -1,9 +1,12 @@
 using Dave.Benchmarks.Core.Services;
 using LpjGuess.Core.Interfaces.Graphing;
+using LpjGuess.Core.Models;
 using LpjGuess.Core.Models.Graphing;
+using LpjGuess.Core.Models.Graphing.Series;
 using LpjGuess.Frontend.Interfaces.Presenters;
 using LpjGuess.Frontend.Interfaces.Views;
 using LpjGuess.Frontend.Utility;
+using LpjGuess.Runner.Parsers;
 using Microsoft.Extensions.Logging;
 using OxyPlot;
 
@@ -31,21 +34,6 @@ public class GraphPresenter : IGraphPresenter
     private PlotModel plotModel;
 
     /// <summary>
-    /// Output file type resolver.
-    /// </summary>
-    private readonly OutputFileTypeResolver resolver;
-
-    /// <summary>
-    /// Output file parser.
-    /// </summary>
-    private readonly ModelOutputParser outputParser;
-
-    /// <summary>
-    /// Instruction file parser.
-    /// </summary>
-    private readonly InstructionFileParser insParser;
-
-    /// <summary>
     /// The instruction file path.
     /// </summary>
     private IEnumerable<string> instructionFiles;
@@ -64,16 +52,6 @@ public class GraphPresenter : IGraphPresenter
 
         // Initialize plot model.
         plotModel = new PlotModel();
-
-        // Initialize parsers
-        var factory = new LoggerFactory();
-        var logger = new Logger<OutputFileTypeResolver>(factory);
-        var logger2 = new Logger<ModelOutputParser>(factory);
-        var logger3 = new Logger<InstructionFileParser>(factory);
-
-        resolver = new OutputFileTypeResolver(logger);
-        outputParser = new ModelOutputParser(logger2, resolver);
-        insParser = new InstructionFileParser(logger3);
 
         // Connect event handlers
         view.OnAddSeries.ConnectTo(OnAddSeries);
@@ -112,10 +90,12 @@ public class GraphPresenter : IGraphPresenter
     {
         // TODO: ask user which type of series to add.
         // For now, create a model output series.
-        ModelOutputSeries series = new ModelOutputSeries
+        LineSeries series = new LineSeries
         {
             Title = "New Series",
-            Type = SeriesType.Line,
+            Thickness = LineThickness.Regular,
+            Type = LineType.Solid,
+            DataSource = new ModelOutput("file_lai", "Date", "Total", instructionFiles),
             Colour = "Blue"
         };
 
@@ -143,5 +123,6 @@ public class GraphPresenter : IGraphPresenter
     public void UpdateInstructionFiles(IEnumerable<string> instructionFiles)
     {
         this.instructionFiles = instructionFiles;
+        // TODO: update instruction files in any ModelOutputSeries??
     }
 }
