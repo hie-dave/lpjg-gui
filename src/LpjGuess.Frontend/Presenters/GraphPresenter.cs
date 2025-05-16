@@ -3,6 +3,8 @@ using LpjGuess.Core.Interfaces.Graphing;
 using LpjGuess.Core.Models;
 using LpjGuess.Core.Models.Graphing;
 using LpjGuess.Core.Models.Graphing.Series;
+using LpjGuess.Frontend.Interfaces.Commands;
+using LpjGuess.Frontend.Interfaces.Factories;
 using LpjGuess.Frontend.Interfaces.Presenters;
 using LpjGuess.Frontend.Interfaces.Views;
 using LpjGuess.Frontend.Utility;
@@ -29,6 +31,11 @@ public class GraphPresenter : IGraphPresenter
     private readonly Graph graph;
 
     /// <summary>
+    /// Factory for creating series views.
+    /// </summary>
+    private readonly ISeriesPresenterFactory seriesPresenterFactory;
+
+    /// <summary>
     /// The plot model.
     /// </summary>
     private PlotModel plotModel;
@@ -39,26 +46,34 @@ public class GraphPresenter : IGraphPresenter
     private IEnumerable<string> instructionFiles;
 
     /// <summary>
+    /// List of presenters currently managing views for the graph's series.
+    /// </summary>
+    private List<ISeriesPresenter> seriesPresenters;
+
+    /// <summary>
     /// Create a new <see cref="GraphPresenter"/> instance.
     /// </summary>
     /// <param name="view">The view object.</param>
     /// <param name="graph">The graph model.</param>
     /// <param name="instructionFiles">The instruction files for which data should be displayed.</param>
-    public GraphPresenter(IGraphView view, Graph graph, IEnumerable<string> instructionFiles)
+    /// <param name="seriesPresenterFactory">Factory for creating series views.</param>
+    public GraphPresenter(IGraphView view, Graph graph, IEnumerable<string> instructionFiles, ISeriesPresenterFactory seriesPresenterFactory)
     {
         this.view = view;
         this.graph = graph;
         this.instructionFiles = instructionFiles;
+        this.seriesPresenterFactory = seriesPresenterFactory;
 
         // Connect event handlers
         view.OnAddSeries.ConnectTo(OnAddSeries);
         view.OnRemoveSeries.ConnectTo(OnRemoveSeries);
 
-        // Create a new plot model
-        plotModel = OxyPlotConverter.ToPlotModel(graph);
+        // The plot model is initialised in RefreshData(), but the compiler
+        // doesn't know this.
+        plotModel = null!;
+        seriesPresenters = new();
 
-        // Update the view
-        view.UpdatePlot(plotModel);
+        RefreshData();
     }
 
     /// <inheritdoc />
@@ -81,6 +96,21 @@ public class GraphPresenter : IGraphPresenter
 
         // Update the view
         view.UpdatePlot(plotModel);
+
+        List<ISeriesPresenter> presenters = new();
+        foreach (ISeries series in graph.Series)
+        {
+            ISeriesPresenter seriesPresenter = seriesPresenterFactory.CreatePresenter(series);
+            seriesPresenter.OnSeriesChanged.ConnectTo(OnSeriesChanged);
+            presenters.Add(seriesPresenter);
+        }
+
+        // This will remove the existing series editors.
+        view.PopulateEditors(presenters.Select(p => (p.Series, p.GetView())));
+
+        // Remove existing series presenters.
+        seriesPresenters.ForEach(p => p.Dispose());
+        seriesPresenters = presenters;
     }
 
     /// <summary>
@@ -124,5 +154,15 @@ public class GraphPresenter : IGraphPresenter
     {
         this.instructionFiles = instructionFiles;
         // TODO: update instruction files in any ModelOutputSeries??
+    }
+
+    /// <summary>
+    /// Called when the series has been changed by the user.
+    /// </summary>
+    /// <param name="command">A command which will apply the change.</param>
+    private void OnSeriesChanged(ICommand command)
+    {
+        command.Execute();
+        RefreshData();
     }
 }

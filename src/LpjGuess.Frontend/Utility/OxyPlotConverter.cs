@@ -172,7 +172,7 @@ public static class OxyPlotConverter
     {
         OxyLineSeries lineSeries = new();
         lineSeries.Title = series.Title;
-        lineSeries.Color = ColorUtility.HexToOxyColor(series.Colour);
+        lineSeries.Color = ColourUtility.HexToOxyColor(series.Colour);
 
         // Add data points if data is provided.
         lineSeries.ItemsSource = data.Data;

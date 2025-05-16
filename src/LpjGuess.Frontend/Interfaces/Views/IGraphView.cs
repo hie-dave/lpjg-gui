@@ -34,5 +34,5 @@ public interface IGraphView : IView
     /// Populate the list of series editor views.
     /// </summary>
     /// <param name="views">The series editor views to display.</param>
-    void PopulateEditors(IEnumerable<(ISeries, ISeriesView)> views);
+    void PopulateEditors(IEnumerable<(ISeries, IView)> views);
 }

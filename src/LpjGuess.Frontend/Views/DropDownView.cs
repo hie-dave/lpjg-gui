@@ -12,7 +12,7 @@ namespace LpjGuess.Frontend.Views;
 /// A widget displaying a list of options with a drop-down menu. Also supports
 /// a custom mapping of values to display strings.
 /// </summary>
-public class DropDownView<T> : DropDown where T : class
+public class DropDownView<T> : DropDown
 {
 	/// <summary>
 	/// Name of the property corresponding to the selected item in a dropdown.
@@ -37,7 +37,15 @@ public class DropDownView<T> : DropDown where T : class
     {
         get
         {
-            return (SelectedItem as GenericGObject<DropdownEntry>)?.Instance.Value;
+            if (SelectedItem == null)
+                // This apparently returns null. The null keyword will return
+                // a reference type, and we can't guarantee here that T is a
+                // reference type.
+                return default;
+
+            // The only objects we pack into the model are
+            // GenericGObject<DropdownEntry>, so this should be a safe cast.
+            return ((GenericGObject<DropdownEntry>)SelectedItem).Instance.Value;
         }
     }
 
@@ -61,6 +69,23 @@ public class DropDownView<T> : DropDown where T : class
 
 		OnSelectionChanged = new Event<T>();
         OnNotify += NotifyHandler;
+    }
+
+    /// <summary>
+    /// Select a particular element in the dropdown.
+    /// </summary>
+    /// <param name="element">The element to select.</param>
+    public void Select(T element)
+    {
+        for (uint i = 0; i < model.GetNItems(); i++)
+        {
+            GenericGObject<DropdownEntry>? wrapper = model.GetObject(i) as GenericGObject<DropdownEntry>;
+            if (wrapper != null && wrapper.Instance.Value != null && wrapper.Instance.Value.Equals(element))
+            {
+                SetSelected(i);
+                return;
+            }
+        }
     }
 
     /// <summary>

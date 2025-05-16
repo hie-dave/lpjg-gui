@@ -7,13 +7,16 @@ using LpjGuess.Frontend.Utility.Gtk;
 using OxyPlot;
 using OxyPlot.GtkSharp;
 
+// Disambiguate IView from the OxyPlot interface with the same name.
+using IView = LpjGuess.Frontend.Interfaces.IView;
+
 namespace LpjGuess.Frontend.Views;
 
 /// <summary>
 /// A view which displays a single graph and allows the user to customize it
 /// with inline controls for immediate feedback.
 /// </summary>
-public class GraphView : Box, IGraphView
+public class GraphView : ViewBase<Box>, IGraphView
 {
     /// <summary>
     /// Vertical spacing between elements in the editor box.
@@ -47,10 +50,8 @@ public class GraphView : Box, IGraphView
     /// <summary>
     /// Create a new <see cref="GraphView"/> instance.
     /// </summary>
-    public GraphView()
+    public GraphView() : base(new Box())
     {
-        Name = "GraphView";
-
         // Initialize events.
         OnAddSeries = new Event();
         OnRemoveSeries = new Event<ISeries>();
@@ -61,10 +62,14 @@ public class GraphView : Box, IGraphView
 
         // Configure series sidebar.
         seriesSidebar = new DynamicStackSidebar<ISeries>(CreateSeriesSidebarWidget);
+        // Prevent the stack from expanding horizontally, so that the graph
+        // takes up as much space as possible.
+        seriesSidebar.StackHexpand = false;
         seriesSidebar.OnAdd.ConnectTo(OnAddSeries);
         seriesSidebar.OnRemove.ConnectTo(OnRemoveSeries);
+        seriesSidebar.AddText = "Add Series";
 
-        Box editorBox = New(Orientation.Vertical, editorSpacing);
+        Box editorBox = Box.New(Orientation.Vertical, editorSpacing);
         editorBox.Append(seriesSidebar);
 
         // Create the revealer for the sidebar.
@@ -81,18 +86,15 @@ public class GraphView : Box, IGraphView
         editButton.OnClicked += OnEdit;
         header.PackEnd(editButton);
 
-        Box contentBox = New(Orientation.Horizontal, 0);
+        Box contentBox = Box.New(Orientation.Horizontal, 0);
         contentBox.Append(plot);
         contentBox.Append(revealer);
 
         // Configure the main container.
-        SetOrientation(Orientation.Vertical);
-        Append(header);
-        Append(contentBox);
+        widget.SetOrientation(Orientation.Vertical);
+        widget.Append(header);
+        widget.Append(contentBox);
     }
-
-    /// <inheritdoc />
-    public Widget GetWidget() => this;
 
     /// <inheritdoc />
     public void UpdatePlot(PlotModel model)
@@ -105,7 +107,7 @@ public class GraphView : Box, IGraphView
     }
 
     /// <inheritdoc />
-    public void PopulateEditors(IEnumerable<(ISeries, ISeriesView)> series)
+    public void PopulateEditors(IEnumerable<(ISeries, IView)> series)
     {
         seriesSidebar.Populate(series.Select(s => (s.Item1, s.Item2.GetWidget())));
     }

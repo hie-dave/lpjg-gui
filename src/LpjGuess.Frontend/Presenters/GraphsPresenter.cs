@@ -3,6 +3,8 @@ using LpjGuess.Core.Interfaces.Graphing;
 using LpjGuess.Core.Models;
 using LpjGuess.Core.Models.Graphing;
 using LpjGuess.Core.Models.Graphing.Series;
+using LpjGuess.Frontend.Factories;
+using LpjGuess.Frontend.Interfaces.Factories;
 using LpjGuess.Frontend.Interfaces.Presenters;
 using LpjGuess.Frontend.Interfaces.Views;
 using LpjGuess.Frontend.Utility;
@@ -32,6 +34,11 @@ public class GraphsPresenter : IGraphsPresenter
 	private IEnumerable<string> instructionFiles;
 
 	/// <summary>
+	/// Factory for creating series presenters.
+	/// </summary>
+	private readonly ISeriesPresenterFactory seriesPresenterFactory;
+
+	/// <summary>
 	/// Create a new <see cref="GraphsPresenter"/> instance which displays the
 	/// specified graphs on the specified view.
 	/// </summary>
@@ -45,6 +52,8 @@ public class GraphsPresenter : IGraphsPresenter
 		this.view.OnAddGraph.ConnectTo(OnAddGraph);
 		this.view.OnRemoveGraph.ConnectTo(OnRemoveGraph);
 		this.instructionFiles = instructionFiles;
+		// TODO: consider dependency injection.
+		seriesPresenterFactory = SeriesPresenterFactory.Instance;
 		Populate(graphs);
 	}
 
@@ -77,7 +86,7 @@ public class GraphsPresenter : IGraphsPresenter
 		{
 			// Construct new child presenter/view to display the oxyplot model.
 			IGraphView graphView = new GraphView();
-			IGraphPresenter presenter = new GraphPresenter(graphView, graph, instructionFiles);
+			IGraphPresenter presenter = new GraphPresenter(graphView, graph, instructionFiles, seriesPresenterFactory);
 
 			plots.Add(graphView, presenter);
 		}

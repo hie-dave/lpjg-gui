@@ -6,7 +6,7 @@ namespace LpjGuess.Frontend.Utility;
 /// <summary>
 /// Utility class for color operations.
 /// </summary>
-public static class ColorUtility
+public static class ColourUtility
 {
     /// <summary>
     /// Default colors for series when no color is specified.
@@ -87,5 +87,38 @@ public static class ColorUtility
     public static string GetColorByIndex(int index)
     {
         return DefaultColors[index % DefaultColors.Length];
+    }
+
+    /// <summary>
+    /// Convert a GDK RGBA to a hex color string.
+    /// </summary>
+    /// <param name="rgba">The GDK RGBA to convert.</param>
+    /// <returns>The hex color string.</returns>
+    public static string ToHex(this Gdk.RGBA rgba)
+    {
+        // Each colour is a float in the range [0, 1]. Convert to bytes.
+        byte alpha = (byte)(rgba.Alpha * 255);
+        byte red = (byte)(rgba.Red * 255);
+        byte green = (byte)(rgba.Green * 255);
+        byte blue = (byte)(rgba.Blue * 255);
+
+        return $"#{alpha:X2}{red:X2}{green:X2}{blue:X2}";
+    }
+
+    /// <summary>
+    /// Convert a hex color string to a GDK RGBA.
+    /// </summary>
+    /// <param name="colour">The hex color string.</param>
+    /// <returns>The GDK RGBA.</returns>
+    public static Gdk.RGBA FromString(string colour)
+    {
+        Gdk.RGBA rgba = new Gdk.RGBA();
+        if (!rgba.Parse(colour))
+        {
+            // TODO: emit a warning?
+            Console.Error.WriteLine($"WARNING: failed to parse Gdk.RGBA from colour string: '{colour}'");
+            rgba.Parse("black");
+        }
+        return rgba;
     }
 }

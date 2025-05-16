@@ -201,8 +201,8 @@ public class WorkspaceView : Box, IWorkspaceView
 		notebook = new Notebook();
 		notebook.AppendPage(insFilesView, Label.New("Instruction Files"));
 		notebook.AppendPage(logsScroller, Label.New("Logs"));
-		notebook.AppendPage(outputsView, Label.New("Outputs"));
-		notebook.AppendPage(graphsView, Label.New("Graphs"));
+		notebook.AppendPage(outputsView.GetWidget(), Label.New("Outputs"));
+		notebook.AppendPage(graphsView.GetWidget(), Label.New("Graphs"));
 		// notebook.ShowTabs = false;
 
 		progressBar = new ProgressBar();

@@ -1,9 +1,6 @@
-using OxyPlot.GtkSharp;
-using OxyPlot;
 using Gtk;
 using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.Interfaces.Views;
-using LpjGuess.Frontend.Utility.Gtk;
 using LpjGuess.Frontend.Extensions;
 
 namespace LpjGuess.Frontend.Views;
@@ -11,18 +8,8 @@ namespace LpjGuess.Frontend.Views;
 /// <summary>
 /// A view which allows the user to create, modify, and view graphs.
 /// </summary>
-public class GraphsView : Box, IGraphsView
+public class GraphsView : ViewBase<Box>, IGraphsView
 {
-	/// <summary>
-	/// Name of the 'add child' item in the stack (name, not title).
-	/// </summary>
-	private const string addGraphName = "add";
-
-	/// <summary>
-	/// Title of the 'add child' item in the stack (title, not name).
-	/// </summary>
-	private const string addGraphTitle = "Add Graph";
-
 	/// <summary>
 	/// The stack sidebar widget.
 	/// </summary>
@@ -31,9 +18,8 @@ public class GraphsView : Box, IGraphsView
 	/// <summary>
 	/// Create a new <see cref="GraphsView"/> instance.
 	/// </summary>
-	public GraphsView()
+	public GraphsView() : base(new Box())
 	{
-		Name = "GraphsView";
 		OnAddGraph = new Event();
 		OnRemoveGraph = new Event<IGraphView>();
 
@@ -42,8 +28,8 @@ public class GraphsView : Box, IGraphsView
 		sidebar.OnAdd.ConnectTo(OnAddGraph);
 		sidebar.OnRemove.ConnectTo(OnRemoveGraph);
 
-		SetOrientation(Orientation.Horizontal);
-		Append(sidebar);
+		widget.SetOrientation(Orientation.Horizontal);
+		widget.Append(sidebar);
 	}
 
     private Widget CreateSidebarWidget(IGraphView view)
@@ -67,7 +53,4 @@ public class GraphsView : Box, IGraphsView
 			.Select(view => (view, view.GetWidget()));
 		sidebar.Populate(views);
 	}
-
-	/// <inheritdoc />
-	public Widget GetWidget() => this;
 }

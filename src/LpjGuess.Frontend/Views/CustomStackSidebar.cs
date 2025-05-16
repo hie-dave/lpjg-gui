@@ -48,6 +48,15 @@ public class CustomStackSidebar<T> : Paned
     }
 
     /// <summary>
+    /// Get or set the Hexapnd property on the stack.
+    /// </summary>
+    public bool StackHexpand
+    {
+        get => stack.Hexpand;
+        set => stack.Hexpand = value;
+    }
+
+    /// <summary>
     /// Create a new <see cref="CustomStackSidebar{T}"/> instance.
     /// </summary>
     public CustomStackSidebar(Func<T, Widget> renderer)
