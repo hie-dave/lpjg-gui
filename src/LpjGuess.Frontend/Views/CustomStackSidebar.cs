@@ -84,6 +84,7 @@ public class CustomStackSidebar<T> : Paned
         EndChild = stack;
 
         ShrinkStartChild = false;
+        ShrinkEndChild = false;
         StartChild.Hexpand = false;
         EndChild.Hexpand = true;
         Position = 0;

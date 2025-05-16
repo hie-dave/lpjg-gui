@@ -173,6 +173,21 @@ public static class OxyPlotConverter
         OxyLineSeries lineSeries = new();
         lineSeries.Title = series.Title;
         lineSeries.Color = ColourUtility.HexToOxyColor(series.Colour);
+        lineSeries.LineStyle = series.Type switch
+        {
+            LineType.Solid => LineStyle.Solid,
+            LineType.Dashed => LineStyle.Dash,
+            LineType.Dotted => LineStyle.Dot,
+            _ => throw new InvalidOperationException($"Unknown line type: {series.Type}")
+        };
+
+        lineSeries.StrokeThickness = series.Thickness switch
+        {
+            LineThickness.Thin => 1,
+            LineThickness.Regular => 2,
+            LineThickness.Thick => 4,
+            _ => throw new InvalidOperationException($"Unknown line thickness: {series.Thickness}")
+        };
 
         // Add data points if data is provided.
         lineSeries.ItemsSource = data.Data;

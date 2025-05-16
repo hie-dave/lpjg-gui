@@ -25,19 +25,21 @@ public class LineSeriesView : SeriesViewBase<LineSeries>
     public LineSeriesView() : base()
     {
         lineTypeDropdown = new EnumDropDownView<LineType>();
-        lineTypeDropdown.OnSelectionChanged.ConnectTo(OnLineTypeChanged);
         AddControl("Line Type", lineTypeDropdown);
 
         lineThicknessDropdown = new EnumDropDownView<LineThickness>();
-        lineThicknessDropdown.OnSelectionChanged.ConnectTo(OnLineThicknessChanged);
         AddControl("Line Thickness", lineThicknessDropdown);
     }
 
     /// <inheritdoc />
     protected override void PopulateView(LineSeries series)
     {
+        DisconnectEvents();
+
         lineTypeDropdown.Select(series.Type);
         lineThicknessDropdown.Select(series.Thickness);
+
+        ConnectEvents();
     }
 
     /// <inheritdoc />
@@ -45,6 +47,12 @@ public class LineSeriesView : SeriesViewBase<LineSeries>
     {
         lineTypeDropdown.OnSelectionChanged.DisconnectAll();
         lineThicknessDropdown.OnSelectionChanged.DisconnectAll();
+    }
+
+    private void ConnectEvents()
+    {
+        lineTypeDropdown.OnSelectionChanged.ConnectTo(OnLineTypeChanged);
+        lineThicknessDropdown.OnSelectionChanged.ConnectTo(OnLineThicknessChanged);
     }
 
     /// <summary>

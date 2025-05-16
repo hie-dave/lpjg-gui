@@ -71,6 +71,8 @@ public abstract class SeriesViewBase<T> : ViewBase<Box>, ISeriesView<T> where T 
         container = Grid.New();
         container.RowSpacing = 6;
         container.ColumnSpacing = 6;
+        container.MarginStart = 6;
+        container.MarginEnd = 6;
 
         // Configure container with controls for editing common properties.
         titleEntry = Entry.New();
@@ -85,14 +87,12 @@ public abstract class SeriesViewBase<T> : ViewBase<Box>, ISeriesView<T> where T 
         // Axis position dropdowns should only display the valid axis positions
         // for their respective axis types.
         xAxisPositionDropdown = new DropDownView<AxisPosition>();
-        xAxisPositionDropdown.OnSelectionChanged.ConnectTo(OnXAxisPositionChanged);
         xAxisPositionDropdown.Populate(
             [AxisPosition.Bottom, AxisPosition.Top],
             p => Enum.GetName(p)!);
         AddControl("X-axis position", xAxisPositionDropdown);
 
         yAxisPositionDropdown = new DropDownView<AxisPosition>();
-        yAxisPositionDropdown.OnSelectionChanged.ConnectTo(OnYAxisPositionChanged);
         yAxisPositionDropdown.Populate(
             [AxisPosition.Left, AxisPosition.Right],
             p => Enum.GetName(p)!);
@@ -111,6 +111,7 @@ public abstract class SeriesViewBase<T> : ViewBase<Box>, ISeriesView<T> where T 
     /// <inheritdoc />
     public override void Dispose()
     {
+        OnEditSeries.DisconnectAll();
         DisconnectBaseClassEvents();
         DisconnectEvents();
         base.Dispose();
@@ -119,10 +120,14 @@ public abstract class SeriesViewBase<T> : ViewBase<Box>, ISeriesView<T> where T 
     /// <inheritdoc />
     public void Populate(T series)
     {
+        DisconnectBaseClassEvents();
+
         titleEntry.SetText(series.Title);
         chooseColourButton.Rgba = ColourUtility.FromString(series.Colour);
         xAxisPositionDropdown.Select(series.XAxisPosition);
         yAxisPositionDropdown.Select(series.YAxisPosition);
+
+        ConnectBaseClassEvents();
 
         PopulateView(series);
     }
@@ -158,6 +163,8 @@ public abstract class SeriesViewBase<T> : ViewBase<Box>, ISeriesView<T> where T 
     {
         titleEntry.OnActivate += OnTitleChanged;
         chooseColourButton.OnNotify += OnColourChanged;
+        xAxisPositionDropdown.OnSelectionChanged.ConnectTo(OnXAxisPositionChanged);
+        yAxisPositionDropdown.OnSelectionChanged.ConnectTo(OnYAxisPositionChanged);
     }
 
     /// <summary>
@@ -167,8 +174,8 @@ public abstract class SeriesViewBase<T> : ViewBase<Box>, ISeriesView<T> where T 
     {
         titleEntry.OnActivate -= OnTitleChanged;
         chooseColourButton.OnNotify -= OnColourChanged;
-
-        OnEditSeries.DisconnectAll();
+        xAxisPositionDropdown.OnSelectionChanged.DisconnectAll();
+        yAxisPositionDropdown.OnSelectionChanged.DisconnectAll();
     }
 
     /// <summary>
