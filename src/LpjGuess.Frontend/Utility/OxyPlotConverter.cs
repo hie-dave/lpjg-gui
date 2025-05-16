@@ -44,6 +44,11 @@ public static class OxyPlotConverter
         PlotModel plot = new PlotModel();
         plot.Title = graph.Title;
 
+        // Default font size is very small for some reason.
+        plot.DefaultFontSize *= 2;
+        plot.TitleFontSize *= 2;
+        plot.SubtitleFontSize *= 2;
+
         // Add axes.
         foreach (OxyAxis axis in CreateAxes(graph))
             plot.Axes.Add(axis);
@@ -94,9 +99,15 @@ public static class OxyPlotConverter
     private static string GenerateAxisTitle(Graph graph, IGrouping<AxisPosition, AxisRequirements> requirements)
     {
         IEnumerable<string> titles = requirements.Select(r => r.Title);
-        if (titles.Distinct().Count() == 1)
-            return titles.First();
-        return "Various Data";
+        if (titles.Distinct().Count() != 1)
+            return "Various Data";
+        string title = titles.First();
+        if (!string.IsNullOrWhiteSpace(title))
+            return title;
+        IEnumerable<string> dataNames = graph.Series.Select(s => DataProviderFactory.GetName(s.DataSource));
+        if (dataNames.Distinct().Count() != 1)
+            return graph.Title;
+        return dataNames.First();
     }
 
     private static OxyAxis CreateOxyAxis(IGrouping<AxisPosition, AxisRequirements> group)

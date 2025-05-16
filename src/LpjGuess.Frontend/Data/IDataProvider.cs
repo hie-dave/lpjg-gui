@@ -14,4 +14,12 @@ public interface IDataProvider<T> where T : IDataSource
     /// <param name="source">The data source.</param>
     /// <returns>The data read from the data source.</returns>
     IEnumerable<SeriesData> Read(T source);
+
+    /// <summary>
+    /// Generate a name for the data source which would be suitable for display
+    /// on a graph.
+    /// </summary>
+    /// <param name="source">The data source.</param>
+    /// <returns>A name which describes the data returned form this data source.</returns>
+    string GetName(T source);
 }

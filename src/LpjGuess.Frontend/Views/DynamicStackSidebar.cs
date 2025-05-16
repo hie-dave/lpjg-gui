@@ -89,6 +89,10 @@ public class DynamicStackSidebar<T> : CustomStackSidebar<T>
         menuButton.IconName = Icons.Delete;
         menuButton.AddCssClass("flat");
         menuButton.Halign = Align.End;
+        // Setting hexpand = true doesn't actually make the button wider (its
+        // width is always that of the icon), but without it, Halign = End has
+        // no effect.
+        menuButton.Hexpand = true;
         menuButton.OnClicked += (_, __) => RemoveFile(data);
 
         Box box = Box.New(Orientation.Horizontal, spacing);

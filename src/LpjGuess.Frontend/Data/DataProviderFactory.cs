@@ -24,4 +24,18 @@ public static class DataProviderFactory
 
         throw new NotSupportedException($"Data provider not supported for {typeof(IDataSource).Name}");
     }
+
+    /// <summary>
+    /// Get the name of the data source.
+    /// </summary>
+    /// <param name="source">The data source.</param>
+    /// <returns>The name of the data source.</returns>
+    public static string GetName(IDataSource source)
+    {
+        // fixme!!
+        if (source is ModelOutput modelOutput)
+            return new ModelOutputReader().GetName(modelOutput);
+
+        throw new NotSupportedException($"Data provider not supported for {typeof(IDataSource).Name}");
+    }
 }

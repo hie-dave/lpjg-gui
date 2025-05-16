@@ -80,11 +80,11 @@ public class GraphView : ViewBase<Box>, IGraphView
         revealer.SetChild(editorBox);
 
         // Create a header bar for the graph.
-        HeaderBar header = HeaderBar.New();
-        header.ShowTitleButtons = false;
+        Box header = Box.New(Orientation.Horizontal, 0);
+        header.Halign = Align.Start;
         Button editButton = Button.NewFromIconName(Icons.Edit);
         editButton.OnClicked += OnEdit;
-        header.PackEnd(editButton);
+        header.Append(editButton);
 
         Box contentBox = Box.New(Orientation.Horizontal, 0);
         contentBox.Append(plot);
@@ -119,7 +119,10 @@ public class GraphView : ViewBase<Box>, IGraphView
     /// <returns>A label containing the series title.</returns>
     private Widget CreateSeriesSidebarWidget(ISeries series)
     {
-        Label label = Label.New(series.Title);
+        string name = series.Title;
+        if (string.IsNullOrWhiteSpace(name))
+            name = "Untitled Series";
+        Label label = Label.New(name);
         label.Halign = Align.Start;
         return label;
     }

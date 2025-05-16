@@ -1,3 +1,4 @@
+using Dave.Benchmarks.Core.Models;
 using Dave.Benchmarks.Core.Models.Importer;
 using Dave.Benchmarks.Core.Services;
 using LpjGuess.Core.Models;
@@ -83,5 +84,12 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
     private OxyPlot.DataPoint DataPointToOxyPlot(DataPoint point)
     {
         return new OxyPlot.DataPoint(DateTimeAxis.ToDouble(point.Timestamp), point.Value);
+    }
+
+    /// <inheritdoc />
+    public string GetName(ModelOutput source)
+    {
+        OutputFileMetadata metadata = OutputFileDefinitions.GetMetadata(source.OutputFileType);
+        return metadata.Name;
     }
 }
