@@ -129,7 +129,8 @@ public class GraphsPresenter : IGraphsPresenter
 			"Total",
 			instructionFiles);
 		ISeries series = new LineSeries(
-			"New Series",
+			// Empty series name will use data source as title.
+			string.Empty,
 			"Blue",
 			dataSource,
 			AxisPosition.Bottom,

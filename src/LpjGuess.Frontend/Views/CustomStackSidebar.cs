@@ -57,6 +57,29 @@ public class CustomStackSidebar<T> : Paned
     }
 
     /// <summary>
+    /// Get or set the currently selected page.
+    /// </summary>
+    public T? Selected
+    {
+        get
+        {
+            string? id = stack.VisibleChildName;
+            if (id == null)
+                return default;
+            if (!pages.ContainsKey(id))
+                throw new ArgumentException($"No page with ID {id}");
+            return pages[id].Data;
+        }
+        set
+        {
+            KeyValuePair<string, StackEntry> pair = pages.FirstOrDefault(p => p.Value.Data != null && p.Value.Data.Equals(value));
+            stack.VisibleChildName = pair.Key;
+            if (pair.Value.SidebarWidget is ListBoxRow row)
+                sidebar.SelectRow(row);
+        }
+    }
+
+    /// <summary>
     /// Create a new <see cref="CustomStackSidebar{T}"/> instance.
     /// </summary>
     public CustomStackSidebar(Func<T, Widget> renderer)
@@ -111,6 +134,9 @@ public class CustomStackSidebar<T> : Paned
             Widget sidebarWidget = CreateWidget(data);
             AddEntry(id, data, page, sidebarWidget);
         }
+
+        // Select first item by default.
+        Selected = pages.First().Item1;
     }
 
     /// <summary>
