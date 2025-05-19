@@ -14,9 +14,18 @@ namespace LpjGuess.Frontend.Factories;
 public class SeriesPresenterFactory : ISeriesPresenterFactory
 {
     /// <summary>
-    /// Get the singleton factory object.
+    /// The data source presenter factory.
     /// </summary>
-    public static SeriesPresenterFactory Instance { get; } = new();
+    private readonly IDataSourcePresenterFactory dataSourcePresenterFactory;
+
+    /// <summary>
+    /// Creates a new instance of SeriesPresenterFactory.
+    /// </summary>
+    /// <param name="dataSourcePresenterFactory">The data source presenter factory.</param>
+    public SeriesPresenterFactory(IDataSourcePresenterFactory dataSourcePresenterFactory)
+    {
+        this.dataSourcePresenterFactory = dataSourcePresenterFactory;
+    }
 
     /// <summary>
     /// Creates an appropriate presenter for the given series.
@@ -37,9 +46,9 @@ public class SeriesPresenterFactory : ISeriesPresenterFactory
     /// </summary>
     /// <param name="series">The line series.</param>
     /// <returns>A line series presenter.</returns>
-    private static SeriesPresenter<LineSeries> CreateLineSeriesPresenter(LineSeries series)
+    private SeriesPresenter<LineSeries> CreateLineSeriesPresenter(LineSeries series)
     {
         ISeriesView<LineSeries> view = new LineSeriesView();
-        return new SeriesPresenter<LineSeries>(view, series);
+        return new SeriesPresenter<LineSeries>(view, series, dataSourcePresenterFactory);
     }
 }

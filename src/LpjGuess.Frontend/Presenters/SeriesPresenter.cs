@@ -2,9 +2,11 @@ using LpjGuess.Core.Interfaces.Graphing;
 using LpjGuess.Frontend.Commands;
 using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.Events;
+using LpjGuess.Frontend.Factories;
 using LpjGuess.Frontend.Interfaces;
 using LpjGuess.Frontend.Interfaces.Commands;
 using LpjGuess.Frontend.Interfaces.Events;
+using LpjGuess.Frontend.Interfaces.Factories;
 using LpjGuess.Frontend.Interfaces.Presenters;
 using LpjGuess.Frontend.Interfaces.Views;
 
@@ -21,16 +23,27 @@ public class SeriesPresenter<T> : PresenterBase<ISeriesView<T>>, ISeriesPresente
     public T Series { get; private init; }
 
     /// <summary>
+    /// The data source presenter factory.
+    /// </summary>
+    private readonly IDataSourcePresenterFactory factory;
+
+    /// <summary>
     /// Creates a new instance of SeriesPresenter.
     /// </summary>
     /// <param name="view">The view to present to.</param>
     /// <param name="series">The series being edited.</param>
-    public SeriesPresenter(ISeriesView<T> view, T series) : base(view)
+    /// <param name="factory">The data source presenter factory.</param>
+    public SeriesPresenter(ISeriesView<T> view, T series, IDataSourcePresenterFactory factory) : base(view)
     {
         Series = series;
         OnSeriesChanged = new Event<ICommand>();
         view.Populate(series);
         view.OnEditSeries.ConnectTo(OnEditSeries);
+        this.factory = factory;
+
+        IDataSourcePresenter dataSourcePresenter = this.factory.CreatePresenter(series.DataSource);
+        dataSourcePresenter.OnDataSourceChanged.ConnectTo(OnDataSourceChanged);
+        view.ShowDataSourceView(dataSourcePresenter.GetView());
     }
 
     /// <inheritdoc />
@@ -64,6 +77,15 @@ public class SeriesPresenter<T> : PresenterBase<ISeriesView<T>>, ISeriesPresente
     private void OnEditSeries(IModelChange<T> change)
     {
         ICommand command = change.ToCommand(Series);
+        OnSeriesChanged.Invoke(command);
+    }
+
+    /// <summary>
+    /// Called when the data source has been changed by the user.
+    /// </summary>
+    /// <param name="command">The action to perform on the data source.</param>
+    private void OnDataSourceChanged(ICommand command)
+    {
         OnSeriesChanged.Invoke(command);
     }
 }

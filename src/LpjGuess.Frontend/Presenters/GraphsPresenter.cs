@@ -53,7 +53,8 @@ public class GraphsPresenter : IGraphsPresenter
 		this.view.OnRemoveGraph.ConnectTo(OnRemoveGraph);
 		this.instructionFiles = instructionFiles;
 		// TODO: consider dependency injection.
-		seriesPresenterFactory = SeriesPresenterFactory.Instance;
+		seriesPresenterFactory = new SeriesPresenterFactory(
+			new DataSourcePresenterFactory(instructionFiles));
 		Populate(graphs);
 	}
 

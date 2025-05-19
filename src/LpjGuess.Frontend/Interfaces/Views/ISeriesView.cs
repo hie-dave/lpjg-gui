@@ -1,4 +1,5 @@
 using LpjGuess.Core.Interfaces.Graphing;
+using LpjGuess.Core.Models;
 using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.Interfaces.Events;
 
@@ -16,8 +17,19 @@ public interface ISeriesView<T> : IView where T : ISeries
     Event<IModelChange<T>> OnEditSeries { get; }
 
     /// <summary>
+    /// Called when the user wants to change the data source type.
+    /// </summary>
+    Event<DataSourceType> OnDataSourceTypeChanged { get; }
+
+    /// <summary>
     /// Populate the view.
     /// </summary>
     /// <param name="series">The series to populate the view with.</param>
     void Populate(T series);
+
+    /// <summary>
+    /// Show the specified data source view.
+    /// </summary>
+    /// <param name="view">The view to show.</param>
+    void ShowDataSourceView(IView view);
 }

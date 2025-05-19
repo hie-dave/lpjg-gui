@@ -89,6 +89,23 @@ public class DropDownView<T> : DropDown
     }
 
     /// <summary>
+    /// Populate the dropdown with the specified values.
+    /// </summary>
+    /// <param name="values">The values to populate the dropdown with.</param>
+    /// <param name="renderer">A function which takes a value and returns the string to display.</param>
+    public void Populate(IEnumerable<T> values, Func<T, string> renderer)
+    {
+        model.RemoveAll();
+
+        foreach (T element in values)
+        {
+            DropdownEntry entry = new DropdownEntry(renderer(element), element);
+            GenericGObject<DropdownEntry> wrapper = new GenericGObject<DropdownEntry>(entry);
+            model.Append(wrapper);
+        }
+    }
+
+    /// <summary>
     /// The bind callback function which binds a particular data row to a
     /// widget which renders that row.
     /// </summary>
@@ -128,25 +145,6 @@ public class DropDownView<T> : DropDown
         catch (Exception error)
         {
             MainView.Instance.ReportError(error);
-        }
-    }
-
-    /// <summary>
-    /// Populate the dropdown with the specified values.
-    /// </summary>
-    /// <param name="values">The values to populate the dropdown with.</param>
-    /// <param name="renderer">A function which takes a value and returns the string to display.</param>
-    public void Populate(IEnumerable<T> values, Func<T, string> renderer)
-    {
-        // model.FreezeNotify();
-        model.RemoveAll();
-        // model.ThawNotify();
-
-        foreach (T element in values)
-        {
-            DropdownEntry entry = new DropdownEntry(renderer(element), element);
-            GenericGObject<DropdownEntry> wrapper = new GenericGObject<DropdownEntry>(entry);
-            model.Append(wrapper);
         }
     }
 

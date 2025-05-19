@@ -12,6 +12,10 @@ using LpjGuess.Frontend.Utility;
 
 using Object = GObject.Object;
 using NotifySignalArgs = GObject.Object.NotifySignalArgs;
+using LpjGuess.Frontend.Interfaces;
+using LpjGuess.Core.Models;
+using LpjGuess.Core.Extensions;
+using LpjGuess.Frontend.Extensions;
 
 namespace LpjGuess.Frontend.Views;
 
@@ -54,6 +58,11 @@ public abstract class SeriesViewBase<T> : ViewBase<Box>, ISeriesView<T> where T 
     private readonly DropDownView<AxisPosition> yAxisPositionDropdown;
 
     /// <summary>
+    /// Dropdown for selecting the data source type.
+    /// </summary>
+    private readonly DropDownView<DataSourceType> dataSourceTypeDropdown;
+
+    /// <summary>
     /// The number of rows of widgets currently in the grid.
     /// </summary>
     private int nrow = 0;
@@ -64,6 +73,7 @@ public abstract class SeriesViewBase<T> : ViewBase<Box>, ISeriesView<T> where T 
     protected SeriesViewBase() : base(new Box())
     {
         OnEditSeries = new Event<IModelChange<T>>();
+        OnDataSourceTypeChanged = new Event<DataSourceType>();
 
         widget.SetOrientation(Orientation.Vertical);
 
@@ -96,6 +106,13 @@ public abstract class SeriesViewBase<T> : ViewBase<Box>, ISeriesView<T> where T 
             p => Enum.GetName(p)!);
         AddControl("Y-axis position", yAxisPositionDropdown);
 
+        dataSourceTypeDropdown = new DropDownView<DataSourceType>();
+        dataSourceTypeDropdown.Populate(
+            Enum.GetValues<DataSourceType>(),
+            t => Enum.GetName(t)!);
+        AddControl("Data source type", dataSourceTypeDropdown);
+        dataSourceTypeDropdown.OnSelectionChanged.ConnectTo(OnDataSourceTypeChanged);
+
         // Pack children into this widget.
         widget.Append(container);
 
@@ -105,6 +122,9 @@ public abstract class SeriesViewBase<T> : ViewBase<Box>, ISeriesView<T> where T 
 
     /// <inheritdoc />
     public Event<IModelChange<T>> OnEditSeries { get; private init; }
+
+    /// <inheritdoc />
+    public Event<DataSourceType> OnDataSourceTypeChanged { get; private init; }
 
     /// <inheritdoc />
     public override void Dispose()
@@ -128,6 +148,14 @@ public abstract class SeriesViewBase<T> : ViewBase<Box>, ISeriesView<T> where T 
         ConnectBaseClassEvents();
 
         PopulateView(series);
+    }
+
+    /// <inheritdoc />
+    public void ShowDataSourceView(IView view)
+    {
+        // FIXME: Should really pack this into the grid, so that everything
+        // is properly aligned.
+        widget.Append(view.GetWidget());
     }
 
     /// <summary>
