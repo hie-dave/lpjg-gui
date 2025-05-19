@@ -44,7 +44,12 @@ public class CustomStackSidebar<T> : Paned
     public string? VisibleChildName
     {
         get => stack.VisibleChildName;
-        set => stack.VisibleChildName = value;
+        set
+        {
+            if (value != null && !pages.ContainsKey(value))
+                throw new ArgumentException($"No page with ID {value}");
+            stack.VisibleChildName = value;
+        }
     }
 
     /// <summary>
@@ -119,6 +124,11 @@ public class CustomStackSidebar<T> : Paned
     /// <param name="pages">The pages to be displayed.</param>
     public virtual void Populate(IEnumerable<(T, Widget)> pages)
     {
+        // Record selected item. FIXME: see below - this is probably not robust.
+        int? selectedIndex = null;
+        if (this.pages.Any())
+            selectedIndex = GetSelectedIndex();
+
         foreach (StackEntry entry in this.pages.Values)
         {
             stack.Remove(entry.Page);
@@ -135,8 +145,14 @@ public class CustomStackSidebar<T> : Paned
             AddEntry(id, data, page, sidebarWidget);
         }
 
-        // Select first item by default.
-        Selected = pages.First().Item1;
+        // Attempt to select previously-selected item.
+        // FIXME: this relies on dictionary ordering. Need to rethink this.
+        if (selectedIndex != null && selectedIndex.Value >= 0 && selectedIndex.Value < pages.Count())
+            SetSelectedIndex(selectedIndex.Value);
+        else if (pages.Any())
+            // No item was previously selected (maybe the sidebar was just
+            // created). Attempt to select the first item in the list.
+            Selected = pages.First().Item1;
     }
 
     /// <summary>
@@ -195,6 +211,24 @@ public class CustomStackSidebar<T> : Paned
     protected virtual Widget CreateWidget(T data)
     {
         return renderer(data);
+    }
+
+    private int? GetSelectedIndex()
+    {
+        string? id = stack.VisibleChildName;
+        if (id == null)
+            return null;
+        return pages.Keys.ToList().IndexOf(id);
+    }
+
+    private void SetSelectedIndex(int index)
+    {
+        string? id = pages.Keys.ToList()[index];
+        stack.VisibleChildName = id;
+        if (!pages.ContainsKey(id))
+            Debug.WriteLine($"{GetType().Name}: Invalid page ID: {id}. Likely a use-after-free bug");
+        StackEntry entry = pages[id];
+        OnPageSelected.Invoke(entry.Data);
     }
 
     private class StackEntry

@@ -65,6 +65,11 @@ public class DynamicStackSidebar<T> : CustomStackSidebar<T>
     /// <param name="pages">The pages to be displayed.</param>
     public override void Populate(IEnumerable<(T, Widget)> pages)
     {
+        // The previously selected name is an ID specific to the current
+        // contents of the stack, and will be invalidated by calling the base
+        // class' populate method.
+        previouslySelected = null;
+
         base.Populate(pages);
 
         // Add an "Add Element" entry.
@@ -115,7 +120,10 @@ public class DynamicStackSidebar<T> : CustomStackSidebar<T>
         {
 			string? name = args.Row.Name;
             if (name == null)
+            {
+                previouslySelected = null;
                 return;
+            }
 
             if (name == addName)
             {
