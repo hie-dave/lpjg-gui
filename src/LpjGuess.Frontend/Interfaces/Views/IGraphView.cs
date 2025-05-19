@@ -20,6 +20,11 @@ public interface IGraphView : IView
     Event<ISeries> OnRemoveSeries { get; }
 
     /// <summary>
+    /// Called when the user wants to change the title of the graph.
+    /// </summary>
+    Event<string> OnTitleChanged { get; }
+
+    /// <summary>
     /// The plot model displayed in the view.
     /// </summary>
     PlotModel Model { get; }

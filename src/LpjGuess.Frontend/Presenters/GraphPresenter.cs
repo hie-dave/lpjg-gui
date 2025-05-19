@@ -67,6 +67,7 @@ public class GraphPresenter : IGraphPresenter
         // Connect event handlers
         view.OnAddSeries.ConnectTo(OnAddSeries);
         view.OnRemoveSeries.ConnectTo(OnRemoveSeries);
+        view.OnTitleChanged.ConnectTo(OnTitleChanged);
 
         // The plot model is initialised in RefreshData(), but the compiler
         // doesn't know this.
@@ -154,6 +155,16 @@ public class GraphPresenter : IGraphPresenter
     {
         this.instructionFiles = instructionFiles;
         // TODO: update instruction files in any ModelOutputSeries??
+    }
+
+    /// <summary>
+    /// Called when the user has changed the graph title.
+    /// </summary>
+    /// <param name="title">The new title.</param>
+    private void OnTitleChanged(string title)
+    {
+        graph.Title = title;
+        RefreshData();
     }
 
     /// <summary>

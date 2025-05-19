@@ -71,8 +71,6 @@ public abstract class SeriesViewBase<T> : ViewBase<Box>, ISeriesView<T> where T 
         container = Grid.New();
         container.RowSpacing = 6;
         container.ColumnSpacing = 6;
-        container.MarginStart = 6;
-        container.MarginEnd = 6;
 
         // Configure container with controls for editing common properties.
         titleEntry = Entry.New();

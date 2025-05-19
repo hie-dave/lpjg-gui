@@ -19,9 +19,19 @@ namespace LpjGuess.Frontend.Views;
 public class GraphView : ViewBase<Box>, IGraphView
 {
     /// <summary>
+    /// Spacing between elements in the graph properties grid.
+    /// </summary>
+    private const int propertySpacing = 6;
+
+    /// <summary>
     /// Vertical spacing between elements in the editor box.
     /// </summary>
     private const int editorSpacing = 6;
+
+    /// <summary>
+    /// Spacing within the frame widgets.
+    /// </summary>
+    private const int frameSpacing = 6;
 
     /// <summary>
     /// The plot view control for displaying the graph.
@@ -38,11 +48,19 @@ public class GraphView : ViewBase<Box>, IGraphView
     /// </summary>
     private readonly Revealer revealer;
 
+    /// <summary>
+    /// Entry widget for editing the graph title.
+    /// </summary>
+    private readonly Entry titleEntry;
+
     /// <inheritdoc />
     public Event OnAddSeries { get; private init; }
 
     /// <inheritdoc />
     public Event<ISeries> OnRemoveSeries { get; private init; }
+
+    /// <inheritdoc />
+    public Event<string> OnTitleChanged { get; private init; }
 
     /// <inheritdoc />
     public PlotModel Model => plot.Model;
@@ -55,6 +73,7 @@ public class GraphView : ViewBase<Box>, IGraphView
         // Initialize events.
         OnAddSeries = new Event();
         OnRemoveSeries = new Event<ISeries>();
+        OnTitleChanged = new Event<string>();
 
         // Configure plot view.
         plot = new PlotView();
@@ -69,14 +88,44 @@ public class GraphView : ViewBase<Box>, IGraphView
         seriesSidebar.OnRemove.ConnectTo(OnRemoveSeries);
         seriesSidebar.AddText = "Add Series";
 
+        Frame seriesPropertiesFrame = new Frame();
+        seriesPropertiesFrame.Child = seriesSidebar;
+        seriesPropertiesFrame.Label = "Series Properties";
+        seriesPropertiesFrame.LabelXalign = 0.5f;
+
+        Label title = Label.New("Title");
+        titleEntry = Entry.New();
+        titleEntry.SetText(string.Empty);
+        titleEntry.OnActivate += OnTitleEdited;
+        titleEntry.Hexpand = true;
+
+        // A grid container for graph properties.
+        Grid graphProperties = new Grid();
+        graphProperties.RowSpacing = propertySpacing;
+        graphProperties.ColumnSpacing = propertySpacing;
+        graphProperties.RowHomogeneous = true;
+        graphProperties.Attach(title, 0, 0, 1, 1);
+        graphProperties.Attach(titleEntry, 1, 0, 1, 1);
+        graphProperties.MarginBottom = frameSpacing;
+        graphProperties.MarginTop = frameSpacing;
+        graphProperties.MarginStart = frameSpacing;
+        graphProperties.MarginEnd = frameSpacing;
+
+        Frame graphPropertiesFrame = new Frame();
+        graphPropertiesFrame.Child = graphProperties;
+        graphPropertiesFrame.Label = "Graph Properties";
+        graphPropertiesFrame.LabelXalign = 0.5f;
+
         Box editorBox = Box.New(Orientation.Vertical, editorSpacing);
-        editorBox.Append(seriesSidebar);
+        editorBox.Append(graphPropertiesFrame);
+        editorBox.Append(seriesPropertiesFrame);
 
         // Create the revealer for the sidebar.
         revealer = Revealer.New();
         revealer.TransitionType = RevealerTransitionType.SlideRight;
         revealer.TransitionDuration = 250; // milliseconds
         revealer.RevealChild = false;
+        revealer.Hexpand = false;
         revealer.SetChild(editorBox);
 
         // Create a header bar for the graph.
@@ -104,6 +153,7 @@ public class GraphView : ViewBase<Box>, IGraphView
             model.TextColor = model.PlotAreaBorderColor = OxyColors.White;
 
         plot.Model = model;
+        titleEntry.SetText(model.Title);
     }
 
     /// <inheritdoc />
@@ -124,6 +174,7 @@ public class GraphView : ViewBase<Box>, IGraphView
             name = "Untitled Series";
         Label label = Label.New(name);
         label.Halign = Align.Start;
+        label.Hexpand = true;
         return label;
     }
 
@@ -137,6 +188,25 @@ public class GraphView : ViewBase<Box>, IGraphView
         try
         {
             revealer.RevealChild = !revealer.RevealChild;
+        }
+        catch (Exception error)
+        {
+            MainView.Instance.ReportError(error);
+        }
+    }
+
+    /// <summary>
+    /// Called when the user has edited the title. This responds to the
+    /// "activated" signal of the entry widget, which is emitted when the
+    /// user hits the enter key.
+    /// </summary>
+    /// <param name="sender">Sender object.</param>
+    /// <param name="args">Event data.</param>
+    private void OnTitleEdited(Entry sender, EventArgs args)
+    {
+        try
+        {
+            OnTitleChanged.Invoke(sender.GetText());
         }
         catch (Exception error)
         {

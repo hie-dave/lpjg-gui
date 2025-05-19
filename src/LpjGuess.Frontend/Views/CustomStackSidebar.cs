@@ -128,6 +128,9 @@ public class CustomStackSidebar<T> : Paned
         ListBoxRow row = new ListBoxRow();
         row.Child = sidebarWidget;
         row.Name = id;
+        // Note that the ListBox has Hexpand = false, so this will not cause the
+        // row widgets to grow beyond the width of the sidebar.
+        row.Hexpand = true;
         sidebar.Append(row);
 
         pages[id] = new StackEntry(data, page, row);
