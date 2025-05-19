@@ -36,6 +36,11 @@ public static class Icons
 	public static string Edit { get; } = "document-edit-symbolic";
 
 	/// <summary>
+	/// A save icon.
+	/// </summary>
+	public static string Save { get; } = "document-save-symbolic";
+
+	/// <summary>
 	/// An icon for a "run settings" menu.
 	/// </summary>
 	public static string RunConfig { get; } = "system-run-symbolic";
@@ -49,4 +54,9 @@ public static class Icons
 	/// An icon for a "open menu" menu.
 	/// </summary>
 	public static string OpenMenu { get; } = "open-menu-symbolic";
+
+	/// <summary>
+	/// A checkmark symbol.
+	/// </summary>
+	public static string Checkmark { get; } = "checkmark-symbolic";
 }

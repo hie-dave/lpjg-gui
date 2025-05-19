@@ -131,8 +131,11 @@ public class GraphView : ViewBase<Box>, IGraphView
         // Create a header bar for the graph.
         Box header = Box.New(Orientation.Horizontal, 0);
         header.Halign = Align.Start;
-        Button editButton = Button.NewFromIconName(Icons.Edit);
-        editButton.OnClicked += OnEdit;
+        ToggleButton editButton = new ToggleButton();
+        editButton.TooltipText = "Show/hide graph configuration options";
+        editButton.Active = false;
+        editButton.IconName = Icons.Edit;
+        editButton.OnToggled += OnEdit;
         header.Append(editButton);
 
         Box contentBox = Box.New(Orientation.Horizontal, 0);
@@ -187,7 +190,9 @@ public class GraphView : ViewBase<Box>, IGraphView
     {
         try
         {
-            revealer.RevealChild = !revealer.RevealChild;
+            bool newState = !revealer.RevealChild;
+            revealer.RevealChild = newState;
+            sender.IconName = newState ? Icons.Checkmark : Icons.Edit;
         }
         catch (Exception error)
         {
