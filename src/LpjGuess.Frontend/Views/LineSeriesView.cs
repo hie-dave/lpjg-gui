@@ -25,10 +25,10 @@ public class LineSeriesView : SeriesViewBase<LineSeries>
     public LineSeriesView() : base()
     {
         lineTypeDropdown = new EnumDropDownView<LineType>();
-        AddControl("Line Type", lineTypeDropdown);
+        AddControl("Line Type", lineTypeDropdown.GetWidget());
 
         lineThicknessDropdown = new EnumDropDownView<LineThickness>();
-        AddControl("Line Thickness", lineThicknessDropdown);
+        AddControl("Line Thickness", lineThicknessDropdown.GetWidget());
     }
 
     /// <inheritdoc />

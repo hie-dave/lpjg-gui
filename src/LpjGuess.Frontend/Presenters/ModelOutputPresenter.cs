@@ -1,5 +1,6 @@
 using System.Security.Cryptography.X509Certificates;
 using Dave.Benchmarks.Core.Models;
+using Dave.Benchmarks.Core.Models.Entities;
 using Dave.Benchmarks.Core.Models.Importer;
 using Dave.Benchmarks.Core.Services;
 using LpjGuess.Core.Interfaces;
@@ -37,7 +38,7 @@ public class ModelOutputPresenter : PresenterBase<IModelOutputView>, IDataSource
     IDataSource IDataSourcePresenter.DataSource => DataSource;
 
     /// <inheritdoc/>
-    IView IDataSourcePresenter.GetView() => view;
+    IDataSourceView IDataSourcePresenter.GetView() => view;
 
     /// <summary>
     /// Create a new <see cref="ModelOutputPresenter"/> instance.
@@ -83,7 +84,25 @@ public class ModelOutputPresenter : PresenterBase<IModelOutputView>, IDataSource
                 .Select(s => s.ReadOutputFileMetadataAsync(DataSource.OutputFileType));
             Task.WaitAll(tasks);
             IEnumerable<LayerMetadata> metadata = tasks.SelectMany(t => t.Result).Distinct();
-            columns = metadata.Select(l => l.Name);
+            // All  output files should have date, latitude, and longitude.
+            columns = ["Date", "Lat", "Lon"];
+            columns = columns.Concat(metadata.Select(l => l.Name));
+
+            // FIXME: patch-level outputs will not output a patch column if the
+            // simulation contains only a single patch. It seemed like such a
+            // clever idea at the time too...
+            OutputFileMetadata meta = OutputFileDefinitions.GetMetadata(DataSource.OutputFileType);
+            if (meta.Level  > AggregationLevel.Gridcell)
+                columns = columns.Append("stand");
+            if (meta.Level > AggregationLevel.Stand)
+                columns = columns.Append("patch");
+            if (meta.Level > AggregationLevel.Patch)
+                columns = columns.Append("indiv");
+
+            if (!columns.Contains(DataSource.XAxisColumn))
+                columns = columns.Append(DataSource.XAxisColumn);
+            if (!columns.Contains(DataSource.YAxisColumn))
+                columns = columns.Append(DataSource.YAxisColumn);
         }
 
         view.Populate(

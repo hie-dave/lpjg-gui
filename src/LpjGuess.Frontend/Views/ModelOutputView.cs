@@ -10,58 +10,60 @@ namespace LpjGuess.Frontend.Views;
 /// <summary>
 /// A view for editing a model output data source.
 /// </summary>
-public class ModelOutputView : ViewBase<Grid>, IModelOutputView
+public class ModelOutputView : IModelOutputView
 {
     /// <summary>
-    /// Dropdown allowing the user to select an output file type.
+    /// The view for selecting the output file type.
     /// </summary>
     private readonly DropDownView<string> fileTypeView;
 
     /// <summary>
-    /// Dropdown allowing the user to select an x-axis column.
+    /// The view for selecting the x-axis column.
     /// </summary>
     private readonly DropDownView<string> xAxisColumnView;
 
     /// <summary>
-    /// Dropdown allowing the user to select a y-axis column.
+    /// The view for selecting the y-axis column.
     /// </summary>
     private readonly DropDownView<string> yAxisColumnView;
 
     /// <summary>
     /// Create a new <see cref="ModelOutputView"/> instance.
     /// </summary>
-    public ModelOutputView() : base(new Grid())
+    public ModelOutputView()
     {
         OnEditDataSource = new Event<IModelChange<ModelOutput>>();
 
         fileTypeView = new DropDownView<string>();
-        xAxisColumnView = new DropDownView<string>();
-        yAxisColumnView = new DropDownView<string>();
-
-        Label fileTypeLabel = Label.New("Output file");
-        Label xAxisColumnLabel = Label.New("X-axis column");
-        Label yAxisColumnLabel = Label.New("Y-axis column");
-
-        widget.RowSpacing = 6;
-        widget.ColumnSpacing = 6;
-
-        widget.Attach(fileTypeLabel   , 0, 0, 1, 1);
-        widget.Attach(fileTypeView    , 1, 0, 1, 1);
-
-        widget.Attach(xAxisColumnLabel, 0, 1, 1, 1);
-        widget.Attach(xAxisColumnView , 1, 1, 1, 1);
-
-        widget.Attach(yAxisColumnLabel, 0, 2, 1, 1);
-        widget.Attach(yAxisColumnView , 1, 2, 1, 1);
-
-        widget.Hexpand = false;
-        fileTypeView.Hexpand = true;
-        xAxisColumnView.Hexpand = true;
-        yAxisColumnView.Hexpand = true;
-
+        fileTypeView.GetWidget().Hexpand = true;
         fileTypeView.OnSelectionChanged.ConnectTo(OnFileTypeChanged);
+
+        xAxisColumnView = new DropDownView<string>();
+        xAxisColumnView.GetWidget().Hexpand = true;
         xAxisColumnView.OnSelectionChanged.ConnectTo(OnXAxisColumnChanged);
+
+        yAxisColumnView = new DropDownView<string>();
+        yAxisColumnView.GetWidget().Hexpand = true;
         yAxisColumnView.OnSelectionChanged.ConnectTo(OnYAxisColumnChanged);
+    }
+
+    /// <inheritdoc/>
+    public IEnumerable<INamedView> CreateConfigurationViews()
+    {
+        return [
+            new NamedView(fileTypeView, "Output file"),
+            new NamedView(xAxisColumnView, "X-axis column"),
+            new NamedView(yAxisColumnView, "Y-axis column")
+        ];
+    }
+
+    /// <inheritdoc/>
+    public Widget GetWidget() => fileTypeView.GetWidget();
+
+    /// <inheritdoc/>
+    public void Dispose()
+    {
+        // Ownership of the wrapped widgets is passed to the series view.
     }
 
     /// <inheritdoc/>

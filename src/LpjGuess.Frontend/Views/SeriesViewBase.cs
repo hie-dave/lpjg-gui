@@ -98,20 +98,18 @@ public abstract class SeriesViewBase<T> : ViewBase<Box>, ISeriesView<T> where T 
         xAxisPositionDropdown.Populate(
             [AxisPosition.Bottom, AxisPosition.Top],
             p => Enum.GetName(p)!);
-        AddControl("X-axis position", xAxisPositionDropdown);
+        AddControl("X-axis position", xAxisPositionDropdown.GetWidget());
 
         yAxisPositionDropdown = new DropDownView<AxisPosition>();
         yAxisPositionDropdown.Populate(
             [AxisPosition.Left, AxisPosition.Right],
             p => Enum.GetName(p)!);
-        AddControl("Y-axis position", yAxisPositionDropdown);
+        AddControl("Y-axis position", yAxisPositionDropdown.GetWidget());
 
         dataSourceTypeDropdown = new DropDownView<DataSourceType>();
         dataSourceTypeDropdown.Populate(
             Enum.GetValues<DataSourceType>(),
             t => Enum.GetName(t)!);
-        AddControl("Data source type", dataSourceTypeDropdown);
-        dataSourceTypeDropdown.OnSelectionChanged.ConnectTo(OnDataSourceTypeChanged);
 
         // Pack children into this widget.
         widget.Append(container);
@@ -151,11 +149,13 @@ public abstract class SeriesViewBase<T> : ViewBase<Box>, ISeriesView<T> where T 
     }
 
     /// <inheritdoc />
-    public void ShowDataSourceView(IView view)
+    public void ShowDataSourceView(IDataSourceView view)
     {
-        // FIXME: Should really pack this into the grid, so that everything
-        // is properly aligned.
-        widget.Append(view.GetWidget());
+        // FIXME: Should probably remove any existing data source views.
+        AddControl("Data source type", dataSourceTypeDropdown.GetWidget());
+        dataSourceTypeDropdown.OnSelectionChanged.ConnectTo(OnDataSourceTypeChanged);
+        foreach (INamedView namedView in view.CreateConfigurationViews())
+            AddControl(namedView.Name, namedView.View.GetWidget());
     }
 
     /// <summary>

@@ -69,10 +69,81 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
         if (layer == null)
             throw new InvalidOperationException($"Output {quantity.Name} does not have layer: {source.YAxisColumn}");
 
+        Layer? xlayer = quantity.Layers.FirstOrDefault(l => l.Name == source.XAxisColumn);
+        if (xlayer != null)
+            return new SeriesData(layer.Name, MergeLayers(xlayer, layer));
+
         if (source.XAxisColumn != "Date")
             throw new NotImplementedException("TBI: Only date is supported on x axis for plots of model outputs.");
 
-        return new SeriesData(layer.Name, layer.Data.Select(DataPointToOxyPlot));
+        return new SeriesData(layer.Name, layer.Data.Select(DataPointToOxyDateDataPoint));
+    }
+
+    /// <summary>
+    /// Merge the two layers on all coordinate values.
+    /// </summary>
+    /// <param name="xlayer">The layer to use for the x-axis.</param>
+    /// <param name="ylayer">The layer to use for the y-axis.</param>
+    /// <returns>The merged data points.</returns>
+    private IEnumerable<OxyPlot.DataPoint> MergeLayers(Layer xlayer, Layer ylayer)
+    {
+        if (!xlayer.Data.Any() || !ylayer.Data.Any())
+            return [];
+
+        DataPoint xfirst = xlayer.Data.First();
+        DataPoint yfirst = ylayer.Data.First();
+
+        List<Func<DataPoint, DataPoint, bool>> predicates = [
+            (x, y) => x.Timestamp == y.Timestamp,
+            (x, y) => x.Latitude == y.Latitude,
+            (x, y) => x.Longitude == y.Longitude,
+        ];
+
+        if (xfirst.Stand != null || yfirst.Stand != null)
+        {
+            if (xfirst.Stand == null || yfirst.Stand == null)
+                throw new InvalidOperationException("Stand values do not exist in both layers");
+            predicates.Add((x, y) => x.Stand == y.Stand);
+        }
+
+        if (xfirst.Patch != null || yfirst.Patch != null)
+        {
+            if (xfirst.Patch == null || yfirst.Patch == null)
+                throw new InvalidOperationException("Patch values do not exist in both layers");
+            predicates.Add((x, y) => x.Patch == y.Patch);
+        }
+
+        if (xfirst.Individual != null || yfirst.Individual != null)
+        {
+            if (xfirst.Individual == null || yfirst.Individual == null)
+                throw new InvalidOperationException("Indiv values do not exist in both layers");
+            predicates.Add((x, y) => x.Individual == y.Individual);
+        }
+
+        return MergeLayersOn(xlayer, ylayer, predicates);
+    }
+
+    /// <summary>
+    /// Zip the two layers together matching on the given coordinates.
+    /// </summary>
+    /// <param name="xlayer">The layer to use for the x-axis.</param>
+    /// <param name="ylayer">The layer to use for the y-axis.</param>
+    /// <param name="predicates">The matchers to use to match the layers.</param>
+    /// <returns>The merged data points.</returns>
+    private IEnumerable<OxyPlot.DataPoint> MergeLayersOn(Layer xlayer, Layer ylayer, IReadOnlyList<Func<DataPoint, DataPoint, bool>> predicates)
+    {
+        // For each data point in xlayer, select a data point in ylayer for which
+        // all coordinates match.
+        foreach (DataPoint xpoint in xlayer.Data)
+        {
+            // Allow for multiple matches.
+            IEnumerable<DataPoint> ypoints = ylayer.Data.Where(y => predicates.All(p => p(xpoint, y)));
+            foreach (DataPoint ypoint in ypoints)
+                yield return new OxyPlot.DataPoint(xpoint.Value, ypoint.Value);
+        }
+
+        // We can assume commutativity of the predicates, so there's no need for
+        // double-iteration.
     }
 
     /// <summary>
@@ -81,7 +152,7 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
     /// </summary>
     /// <param name="point">The data point to convert.</param>
     /// <returns>An OxyPlot DataPoint requiring a date x-axis.</returns>
-    private OxyPlot.DataPoint DataPointToOxyPlot(DataPoint point)
+    private OxyPlot.DataPoint DataPointToOxyDateDataPoint(DataPoint point)
     {
         return new OxyPlot.DataPoint(DateTimeAxis.ToDouble(point.Timestamp), point.Value);
     }

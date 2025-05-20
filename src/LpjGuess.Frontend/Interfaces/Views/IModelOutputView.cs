@@ -8,7 +8,7 @@ namespace LpjGuess.Frontend.Interfaces.Views;
 /// Interface to a view which allows the user to edit a single model output data
 /// source.
 /// </summary>
-public interface IModelOutputView : IView
+public interface IModelOutputView : IDataSourceView<ModelOutput>
 {
     /// <summary>
     /// Populate the view with the given data source.
@@ -24,10 +24,4 @@ public interface IModelOutputView : IView
         string fileType,
         string xColumn,
         string yColumn);
-
-    /// <summary>
-    /// Called when the user wants to edit the series.
-    /// The event parameter is the action to perform on the series.
-    /// </summary>
-    Event<IModelChange<ModelOutput>> OnEditDataSource { get; }
 }

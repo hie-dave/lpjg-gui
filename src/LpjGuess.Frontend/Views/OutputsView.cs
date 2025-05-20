@@ -43,8 +43,7 @@ public class OutputsView : Box, IOutputsView
 		insFilesLabel.Valign = Align.Center;
 
 		insFilesDropdown = new DropDownView<string>();
-		insFilesDropdown.Name = "ins-dropdown";
-		insFilesDropdown.Hexpand = true;
+		insFilesDropdown.GetWidget().Hexpand = true;
 		insFilesDropdown.OnSelectionChanged.ConnectTo(OnInstructionFileSelected);
 
 		Label outputsLabel = Label.New("Output File:");
@@ -52,8 +51,7 @@ public class OutputsView : Box, IOutputsView
 		outputsLabel.Valign = Align.Center;
 
 		outputsDropdown = new DropDownView<OutputFile>();
-		outputsDropdown.Name = "out-dropdown";
-		outputsDropdown.Hexpand = true;
+		outputsDropdown.GetWidget().Hexpand = true;
 		outputsDropdown.OnSelectionChanged.ConnectTo(OnOutputFileSelected);
 
 		dataView = new DataTableView();
@@ -70,9 +68,9 @@ public class OutputsView : Box, IOutputsView
 		grid.MarginStart = 6;
 		grid.MarginEnd = 6;
 		grid.Attach(insFilesLabel, 0, 0, 1, 1);
-		grid.Attach(insFilesDropdown, 1, 0, 1, 1);
+		grid.Attach(insFilesDropdown.GetWidget(), 1, 0, 1, 1);
 		grid.Attach(outputsLabel, 0, 1, 1, 1);
-		grid.Attach(outputsDropdown, 1, 1, 1, 1);
+		grid.Attach(outputsDropdown.GetWidget(), 1, 1, 1, 1);
 		grid.Attach(dataScroller, 0, 2, 2, 1);
 
 		Append(grid);

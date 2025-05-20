@@ -23,5 +23,5 @@ public interface IDataSourcePresenter : IDisposable
     /// <summary>
     /// Get the view being managed by this presenter.
     /// </summary>
-    IView GetView();
+    IDataSourceView GetView();
 }

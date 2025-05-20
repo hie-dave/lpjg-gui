@@ -65,7 +65,9 @@ public class Simulation
     {
         string outputDirectory = InstructionFile.GetOutputDirectory();
         IEnumerable<string> outputFiles = Directory.EnumerateFiles(outputDirectory, "*.out");
-        return outputFiles.Select(CreateOutputFile);
+        return outputFiles.Select(CreateOutputFile)
+                          .Where(file => file != null)
+                          .Cast<OutputFile>();
     }
 
     /// <summary>
@@ -73,11 +75,27 @@ public class Simulation
     /// </summary>
     /// <param name="outputFile">Path to an output file.</param>
     /// <returns>The output file object.</returns>
-    private OutputFile CreateOutputFile(string outputFile)
+    private OutputFile? CreateOutputFile(string outputFile)
     {
-        string fileType = Resolver.GetFileType(outputFile);
-        OutputFileMetadata metadata = OutputFileDefinitions.GetMetadata(fileType);
-        return new OutputFile(metadata, outputFile);
+        try
+        {
+            string fileName = Path.GetFileName(outputFile);
+            string fileType = Resolver.GetFileType(fileName);
+            OutputFileMetadata metadata = OutputFileDefinitions.GetMetadata(fileType);
+            return new OutputFile(metadata, outputFile);
+        }
+        catch (KeyNotFoundException)
+        {
+            // This will happen if this function is called for an output file
+            // not defined in the instruction file. This occurs commonly, e.g.
+            // when someone runs the model, disables one of the output files by
+            // commenting it out in the instruction file, and then running the
+            // model again. When this happens, we have no robust way of knowing
+            // the output file type (though perhaps we could make some educated
+            // guesses). Nonetheless, we don't really want to clutter up stderr
+            // with repeated exceptions of this kind.
+            return null;
+        }
     }
 
     /// <summary>

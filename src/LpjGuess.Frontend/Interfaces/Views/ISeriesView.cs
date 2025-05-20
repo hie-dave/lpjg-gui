@@ -31,5 +31,5 @@ public interface ISeriesView<T> : IView where T : ISeries
     /// Show the specified data source view.
     /// </summary>
     /// <param name="view">The view to show.</param>
-    void ShowDataSourceView(IView view);
+    void ShowDataSourceView(IDataSourceView view);
 }

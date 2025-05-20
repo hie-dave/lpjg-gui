@@ -5,6 +5,7 @@ using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.Views.Helpers;
 
 using ListStore = Gio.ListStore;
+using static GObject.Object;
 
 namespace LpjGuess.Frontend.Views;
 
@@ -12,7 +13,7 @@ namespace LpjGuess.Frontend.Views;
 /// A widget displaying a list of options with a drop-down menu. Also supports
 /// a custom mapping of values to display strings.
 /// </summary>
-public class DropDownView<T> : DropDown
+public class DropDownView<T> : ViewBase<DropDown>
 {
 	/// <summary>
 	/// Name of the property corresponding to the selected item in a dropdown.
@@ -37,7 +38,7 @@ public class DropDownView<T> : DropDown
     {
         get
         {
-            if (SelectedItem == null)
+            if (widget.SelectedItem == null)
                 // This apparently returns null. The null keyword will return
                 // a reference type, and we can't guarantee here that T is a
                 // reference type.
@@ -45,14 +46,14 @@ public class DropDownView<T> : DropDown
 
             // The only objects we pack into the model are
             // GenericGObject<DropdownEntry>, so this should be a safe cast.
-            return ((GenericGObject<DropdownEntry>)SelectedItem).Instance.Value;
+            return ((GenericGObject<DropdownEntry>)widget.SelectedItem).Instance.Value;
         }
     }
 
     /// <summary>
     /// Create a new <see cref="DropDownView{T}"/> instance.
     /// </summary>
-    public DropDownView() : base()
+    public DropDownView() : base(new DropDown())
     {
 		// model = new GenericListModel<GenericGObject<DropdownEntry>>();
         // Model = model;
@@ -64,11 +65,11 @@ public class DropDownView<T> : DropDown
 		factory.OnSetup += OnSetup;
 		factory.OnBind += (_, args) => OnBind<Label>(args, (l, row) => l.SetText(row.Name));
 
-        Factory = factory;
-        Model = model;
+        widget.Factory = factory;
+        widget.Model = model;
 
 		OnSelectionChanged = new Event<T>();
-        OnNotify += NotifyHandler;
+        widget.OnNotify += NotifyHandler;
     }
 
     /// <summary>
@@ -82,7 +83,7 @@ public class DropDownView<T> : DropDown
             GenericGObject<DropdownEntry>? wrapper = model.GetObject(i) as GenericGObject<DropdownEntry>;
             if (wrapper != null && wrapper.Instance.Value != null && wrapper.Instance.Value.Equals(element))
             {
-                SetSelected(i);
+                widget.SetSelected(i);
                 return;
             }
         }
@@ -158,7 +159,7 @@ public class DropDownView<T> : DropDown
         try
 		{
 			string property = args.Pspec.GetName();
-			if (property == selectedItemProperty && SelectedItem is GenericGObject<DropdownEntry> wrapper)
+			if (property == selectedItemProperty && widget.SelectedItem is GenericGObject<DropdownEntry> wrapper)
 				OnSelectionChanged.Invoke(wrapper.Instance.Value);
 		}
 		catch (Exception error)
