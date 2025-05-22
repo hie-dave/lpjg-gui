@@ -139,7 +139,7 @@ public class GraphsPresenter : IGraphsPresenter
 			AxisPosition.Left,
 			LineType.Solid,
 			LineThickness.Regular);
-		return new Graph("New Graph", [series]);
+		return new Graph(string.Empty, [series]);
     }
 
     private void OnRemoveGraph(IGraphView view)

@@ -99,8 +99,7 @@ public class ModelOutput : IDataSource
     {
         try
         {
-            string name = OutputFileDefinitions.GetMetadata(OutputFileType).Name;
-            return $"{YAxisColumn} {name}";
+            return OutputFileDefinitions.GetMetadata(OutputFileType).Name;
         }
         catch (Exception)
         {

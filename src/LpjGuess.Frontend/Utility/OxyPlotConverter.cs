@@ -199,6 +199,9 @@ public static class OxyPlotConverter
     {
         OxyLineSeries lineSeries = new();
         lineSeries.Title = series.Title;
+        if (string.IsNullOrWhiteSpace(series.Title))
+            lineSeries.Title = data.Name;
+
         lineSeries.Color = ColourUtility.HexToOxyColor(series.Colour);
         lineSeries.LineStyle = series.Type switch
         {

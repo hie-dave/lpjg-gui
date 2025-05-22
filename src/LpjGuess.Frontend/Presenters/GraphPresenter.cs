@@ -104,9 +104,13 @@ public class GraphPresenter : IGraphPresenter
     public void RefreshData()
     {
         // Create a new plot model
+        string? newName = null;
         try
         {
+            string? oldName = plotModel?.Title;
             plotModel = OxyPlotConverter.ToPlotModel(graph);
+            if (plotModel.Title != oldName)
+                newName = plotModel.Title;
         }
         catch (Exception error)
         {
@@ -131,6 +135,9 @@ public class GraphPresenter : IGraphPresenter
         // Remove existing series presenters.
         seriesPresenters.ForEach(p => p.Dispose());
         seriesPresenters = presenters;
+
+        if (newName != null)
+            OnTitleChanged.Invoke(newName);
     }
 
     /// <summary>

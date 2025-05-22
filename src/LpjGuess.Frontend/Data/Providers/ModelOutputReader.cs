@@ -69,14 +69,28 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
         if (layer == null)
             throw new InvalidOperationException($"Output {quantity.Name} does not have layer: {source.YAxisColumn}");
 
+        string name = GenerateSeriesName(simulation, layer);
+
         Layer? xlayer = quantity.Layers.FirstOrDefault(l => l.Name == source.XAxisColumn);
         if (xlayer != null)
-            return new SeriesData(layer.Name, MergeLayers(xlayer, layer));
+            return new SeriesData(name, MergeLayers(xlayer, layer));
 
         if (source.XAxisColumn != "Date")
             throw new NotImplementedException("TBI: Only date is supported on x axis for plots of model outputs.");
 
-        return new SeriesData(layer.Name, layer.Data.Select(DataPointToOxyDateDataPoint));
+        return new SeriesData(name, layer.Data.Select(DataPointToOxyDateDataPoint));
+    }
+
+    /// <summary>
+    /// Generate a series name for the given simulation and layer.
+    /// </summary>
+    /// <param name="simulation">The simulation.</param>
+    /// <param name="layer">The layer.</param>
+    /// <returns>The series name.</returns>
+    private static string GenerateSeriesName(Simulation simulation, Layer layer)
+    {
+        string simulationName = Path.GetFileNameWithoutExtension(simulation.FileName);
+        return $"{simulationName}: {layer.Name}";
     }
 
     /// <summary>
@@ -161,6 +175,6 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
     public string GetName(ModelOutput source)
     {
         OutputFileMetadata metadata = OutputFileDefinitions.GetMetadata(source.OutputFileType);
-        return $"{source.YAxisColumn} {metadata.Name}";
+        return metadata.Name;
     }
 }
