@@ -25,6 +25,16 @@ public interface IGraphView : IView
     Event<string> OnTitleChanged { get; }
 
     /// <summary>
+    /// Called when the user wants to change the X-axis title of the graph.
+    /// </summary>
+    Event<string> OnXAxisTitleChanged { get; }
+
+    /// <summary>
+    /// Called when the user wants to change the Y-axis title of the graph.
+    /// </summary>
+    Event<string> OnYAxisTitleChanged { get; }
+
+    /// <summary>
     /// The plot model displayed in the view.
     /// </summary>
     PlotModel Model { get; }
@@ -34,6 +44,14 @@ public interface IGraphView : IView
     /// </summary>
     /// <param name="model">The plot model to display.</param>
     void UpdatePlot(PlotModel model);
+
+    /// <summary>
+    /// Update the properties of the graph displayed in the view.
+    /// </summary>
+    /// <param name="title">The title of the graph.</param>
+    /// <param name="xaxisTitle">The X-axis title of the graph.</param>
+    /// <param name="yaxisTitle">The Y-axis title of the graph.</param>
+    void UpdateProperties(string title, string? xaxisTitle, string? yaxisTitle);
 
     /// <summary>
     /// Populate the list of series editor views.

@@ -1,3 +1,4 @@
+using Dave.Benchmarks.Core.Services;
 using LpjGuess.Core.Interfaces;
 using LpjGuess.Core.Models.Graphing;
 
@@ -91,5 +92,25 @@ public class ModelOutput : IDataSource
     private static AxisType GetAxisType(string column)
     {
         return column == "Date" ? AxisType.DateTime : AxisType.Linear;
+    }
+
+    /// <inheritdoc />
+    public string GetName()
+    {
+        try
+        {
+            string name = OutputFileDefinitions.GetMetadata(OutputFileType).Name;
+            return $"{YAxisColumn} {name}";
+        }
+        catch (Exception)
+        {
+            // Fallback to output file type for unknown files types.
+            return OutputFileType;
+        }
+    }
+
+    public override string ToString()
+    {
+        return $"{OutputFileType} {XAxisColumn} {YAxisColumn}";
     }
 }

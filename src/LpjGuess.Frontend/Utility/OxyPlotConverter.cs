@@ -42,7 +42,7 @@ public static class OxyPlotConverter
     public static PlotModel ToPlotModel(Graph graph)
     {
         PlotModel plot = new PlotModel();
-        plot.Title = graph.Title;
+        plot.Title = GetPlotTitle(graph);
 
         // Default font size is very small for some reason.
         plot.DefaultFontSize *= 2;
@@ -59,6 +59,22 @@ public static class OxyPlotConverter
                 plot.Series.Add(oxySeries);
 
         return plot;
+    }
+
+    private static string GetPlotTitle(Graph graph)
+    {
+        if (!string.IsNullOrWhiteSpace(graph.Title))
+            return graph.Title;
+
+        // Fallback titles.
+        if (graph.Series.Count == 1)
+        {
+            if (!string.IsNullOrWhiteSpace(graph.Series[0].Title))
+                return graph.Series[0].Title;
+            return graph.Series[0].DataSource.GetName();
+        }
+
+        return "";
     }
 
     /// <summary>
@@ -87,11 +103,11 @@ public static class OxyPlotConverter
         AxisPosition position = requirements.Key;
         return position switch
         {
-            AxisPosition.Bottom => graph.XAxisTitle ?? GenerateAxisTitle(graph, requirements),
-            AxisPosition.Left => graph.YAxisTitle ?? GenerateAxisTitle(graph, requirements),
+            AxisPosition.Bottom => string.IsNullOrWhiteSpace(graph.XAxisTitle) ? GenerateAxisTitle(graph, requirements) : graph.XAxisTitle,
+            AxisPosition.Left => string.IsNullOrWhiteSpace(graph.YAxisTitle) ? GenerateAxisTitle(graph, requirements) : graph.YAxisTitle,
             // FIXME: should add explicit properties for left/right/top/bottom axis titles.
-            AxisPosition.Right => graph.YAxisTitle ?? GenerateAxisTitle(graph, requirements),
-            AxisPosition.Top => graph.XAxisTitle ?? GenerateAxisTitle(graph, requirements),
+            AxisPosition.Right => string.IsNullOrWhiteSpace(graph.YAxisTitle) ? GenerateAxisTitle(graph, requirements) : graph.YAxisTitle,
+            AxisPosition.Top => string.IsNullOrWhiteSpace(graph.XAxisTitle) ? GenerateAxisTitle(graph, requirements) : graph.XAxisTitle,
             _ => throw new InvalidOperationException($"Unknown axis position: {position}")
         };
     }

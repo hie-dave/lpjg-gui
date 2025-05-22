@@ -2,6 +2,7 @@ using Gtk;
 using LpjGuess.Core.Models;
 using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.Events;
+using LpjGuess.Frontend.Extensions;
 using LpjGuess.Frontend.Interfaces.Events;
 using LpjGuess.Frontend.Interfaces.Views;
 
@@ -27,12 +28,19 @@ public class ModelOutputView : IModelOutputView
     /// </summary>
     private readonly DropDownView<string> yAxisColumnView;
 
+    /// <inheritdoc/>
+    public Event<IModelChange<ModelOutput>> OnEditDataSource { get; private init; }
+
+    /// <inheritdoc/>
+    public Event<string> OnFileTypeChanged { get; private init; }
+
     /// <summary>
     /// Create a new <see cref="ModelOutputView"/> instance.
     /// </summary>
     public ModelOutputView()
     {
         OnEditDataSource = new Event<IModelChange<ModelOutput>>();
+        OnFileTypeChanged = new Event<string>();
 
         fileTypeView = new DropDownView<string>();
         fileTypeView.GetWidget().Hexpand = true;
@@ -65,9 +73,6 @@ public class ModelOutputView : IModelOutputView
     {
         // Ownership of the wrapped widgets is passed to the series view.
     }
-
-    /// <inheritdoc/>
-    public Event<IModelChange<ModelOutput>> OnEditDataSource { get; private init; }
 
     /// <inheritdoc/>
     public void Populate(IEnumerable<string> fileTypes,
@@ -120,27 +125,6 @@ public class ModelOutputView : IModelOutputView
                 m => m.YAxisColumn,
                 (m, v) => m.YAxisColumn = v,
                 obj);
-            OnEditDataSource.Invoke(change);
-        }
-        catch (Exception error)
-        {
-            MainView.Instance.ReportError(error);
-        }
-    }
-
-    /// <summary>
-    /// Called when the user changes the output file type. Propagates the event
-    /// back up to the owner of this view.
-    /// </summary>
-    /// <param name="fileType">The new output file type.</param>
-    private void OnFileTypeChanged(string fileType)
-    {
-        try
-        {
-            var change = new ModelChangeEventArgs<ModelOutput, string>(
-                m => m.OutputFileType,
-                (m, v) => m.OutputFileType = v,
-                fileType);
             OnEditDataSource.Invoke(change);
         }
         catch (Exception error)

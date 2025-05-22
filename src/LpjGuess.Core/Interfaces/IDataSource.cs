@@ -30,4 +30,10 @@ public interface IDataSource
     /// </summary>
     /// <returns>The y-axis title.</returns>
     string GetYAxisTitle();
+
+    /// <summary>
+    /// Get a name which describes the data plotted by this source.
+    /// </summary>
+    /// <returns>The name of the data source.</returns>
+    string GetName();
 }

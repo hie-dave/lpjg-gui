@@ -88,6 +88,7 @@ public class GraphsPresenter : IGraphsPresenter
 			// Construct new child presenter/view to display the oxyplot model.
 			IGraphView graphView = new GraphView();
 			IGraphPresenter presenter = new GraphPresenter(graphView, graph, instructionFiles, seriesPresenterFactory);
+			presenter.OnTitleChanged.ConnectTo(t => OnGraphRenamed(t, graphView));
 
 			plots.Add(graphView, presenter);
 		}
@@ -99,8 +100,8 @@ public class GraphsPresenter : IGraphsPresenter
 			presenter.Dispose();
 	}
 
-	/// <inheritdoc />
-	public IGraphsView GetView() => view;
+    /// <inheritdoc />
+    public IGraphsView GetView() => view;
 
 	// private void OnChartClick(object? sender, OxyMouseDownEventArgs e)
 	// {
@@ -155,4 +156,14 @@ public class GraphsPresenter : IGraphsPresenter
     {
         return plots.Values.Select(p => p.GetGraph());
     }
+
+	/// <summary>
+	/// Called after the user has renamed a graph.
+	/// </summary>
+	/// <param name="title">The new title.</param>
+	/// <param name="view">The view associated with the graph.</param>
+	private void OnGraphRenamed(string title, IGraphView view)
+	{
+		this.view.Rename(view, title);
+	}
 }

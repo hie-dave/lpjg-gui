@@ -161,6 +161,6 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
     public string GetName(ModelOutput source)
     {
         OutputFileMetadata metadata = OutputFileDefinitions.GetMetadata(source.OutputFileType);
-        return metadata.Name;
+        return $"{source.YAxisColumn} {metadata.Name}";
     }
 }

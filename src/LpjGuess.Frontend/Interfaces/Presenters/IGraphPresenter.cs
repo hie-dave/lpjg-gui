@@ -1,4 +1,5 @@
 using LpjGuess.Core.Models.Graphing;
+using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.Interfaces.Views;
 
 namespace LpjGuess.Frontend.Interfaces.Presenters;
@@ -28,4 +29,9 @@ public interface IGraphPresenter : IPresenter<IGraphView>
     /// </summary>
     /// <param name="instructionFiles">The instruction files.</param>
     void UpdateInstructionFiles(IEnumerable<string> instructionFiles);
+
+    /// <summary>
+    /// Event raised when the graph title is changed.
+    /// </summary>
+    Event<string> OnTitleChanged { get; }
 }

@@ -78,14 +78,27 @@ public class DropDownView<T> : ViewBase<DropDown>
     /// <param name="element">The element to select.</param>
     public void Select(T element)
     {
-        for (uint i = 0; i < model.GetNItems(); i++)
+        // Temporarily disconnect the notify signal - we only want to receive
+        // notifications when the user changes the selection, not when we're
+        // setting it programmatically.
+        widget.OnNotify -= NotifyHandler;
+
+        try
         {
-            GenericGObject<DropdownEntry>? wrapper = model.GetObject(i) as GenericGObject<DropdownEntry>;
-            if (wrapper != null && wrapper.Instance.Value != null && wrapper.Instance.Value.Equals(element))
+            for (uint i = 0; i < model.GetNItems(); i++)
             {
-                widget.SetSelected(i);
-                return;
+                GenericGObject<DropdownEntry>? wrapper = model.GetObject(i) as GenericGObject<DropdownEntry>;
+                if (wrapper != null && wrapper.Instance.Value != null && wrapper.Instance.Value.Equals(element))
+                {
+                    widget.SetSelected(i);
+                    return;
+                }
             }
+        }
+        finally
+        {
+            // Reconnect the notify signal.
+            widget.OnNotify += NotifyHandler;
         }
     }
 
@@ -96,14 +109,23 @@ public class DropDownView<T> : ViewBase<DropDown>
     /// <param name="renderer">A function which takes a value and returns the string to display.</param>
     public void Populate(IEnumerable<T> values, Func<T, string> renderer)
     {
+        // Temporarily disconnect the notify signal to avoid signal handlers
+        // being called while we're populating the dropdown.
+        widget.OnNotify -= NotifyHandler;
+
+        // Remove all existing items from the model.
         model.RemoveAll();
 
+        // Populate the model with the new values.
         foreach (T element in values)
         {
             DropdownEntry entry = new DropdownEntry(renderer(element), element);
             GenericGObject<DropdownEntry> wrapper = new GenericGObject<DropdownEntry>(entry);
             model.Append(wrapper);
         }
+
+        // Reconnect the notify signal.
+        widget.OnNotify += NotifyHandler;
     }
 
     /// <summary>

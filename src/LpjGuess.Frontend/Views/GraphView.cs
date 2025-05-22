@@ -53,6 +53,16 @@ public class GraphView : ViewBase<Box>, IGraphView
     /// </summary>
     private readonly Entry titleEntry;
 
+    /// <summary>
+    /// Entry widget for editing the X-axis title.
+    /// </summary>
+    private readonly Entry xaxisTitleEntry;
+
+    /// <summary>
+    /// Entry widget for editing the Y-axis title.
+    /// </summary>
+    private readonly Entry yaxisTitleEntry;
+
     /// <inheritdoc />
     public Event OnAddSeries { get; private init; }
 
@@ -61,6 +71,12 @@ public class GraphView : ViewBase<Box>, IGraphView
 
     /// <inheritdoc />
     public Event<string> OnTitleChanged { get; private init; }
+
+    /// <inheritdoc />
+    public Event<string> OnXAxisTitleChanged { get; private init; }
+
+    /// <inheritdoc />
+    public Event<string> OnYAxisTitleChanged { get; private init; }
 
     /// <inheritdoc />
     public PlotModel Model => plot.Model;
@@ -74,6 +90,8 @@ public class GraphView : ViewBase<Box>, IGraphView
         OnAddSeries = new Event();
         OnRemoveSeries = new Event<ISeries>();
         OnTitleChanged = new Event<string>();
+        OnXAxisTitleChanged = new Event<string>();
+        OnYAxisTitleChanged = new Event<string>();
 
         // Configure plot view.
         plot = new PlotView();
@@ -99,17 +117,34 @@ public class GraphView : ViewBase<Box>, IGraphView
         titleEntry.OnActivate += OnTitleEdited;
         titleEntry.Hexpand = true;
 
+        Label xaxisTitleTitle = Label.New("X-axis title");
+        xaxisTitleEntry = Entry.New();
+        xaxisTitleEntry.SetText(string.Empty);
+        xaxisTitleEntry.OnActivate += OnXAxisTitleEdited;
+        xaxisTitleEntry.Hexpand = true;
+
+        Label yaxisTitleTitle = Label.New("Y-axis title");
+        yaxisTitleEntry = Entry.New();
+        yaxisTitleEntry.SetText(string.Empty);
+        yaxisTitleEntry.OnActivate += OnYAxisTitleEdited;
+        yaxisTitleEntry.Hexpand = true;
+
         // A grid container for graph properties.
         Grid graphProperties = new Grid();
         graphProperties.RowSpacing = propertySpacing;
         graphProperties.ColumnSpacing = propertySpacing;
         graphProperties.RowHomogeneous = true;
-        graphProperties.Attach(title, 0, 0, 1, 1);
-        graphProperties.Attach(titleEntry, 1, 0, 1, 1);
         graphProperties.MarginBottom = frameSpacing;
         graphProperties.MarginTop = frameSpacing;
         graphProperties.MarginStart = frameSpacing;
         graphProperties.MarginEnd = frameSpacing;
+
+        graphProperties.Attach(title, 0, 0, 1, 1);
+        graphProperties.Attach(titleEntry, 1, 0, 1, 1);
+        graphProperties.Attach(xaxisTitleTitle, 0, 1, 1, 1);
+        graphProperties.Attach(xaxisTitleEntry, 1, 1, 1, 1);
+        graphProperties.Attach(yaxisTitleTitle, 0, 2, 1, 1);
+        graphProperties.Attach(yaxisTitleEntry, 1, 2, 1, 1);
 
         Frame graphPropertiesFrame = new Frame();
         graphPropertiesFrame.Child = graphProperties;
@@ -156,7 +191,17 @@ public class GraphView : ViewBase<Box>, IGraphView
             model.TextColor = model.PlotAreaBorderColor = OxyColors.White;
 
         plot.Model = model;
-        titleEntry.SetText(model.Title);
+    }
+
+    /// <inheritdoc />
+    public void UpdateProperties(
+        string title,
+        string? xaxisTitle,
+        string? yaxisTitle)
+    {
+        titleEntry.SetText(title);
+        xaxisTitleEntry.SetText(xaxisTitle ?? string.Empty);
+        yaxisTitleEntry.SetText(yaxisTitle ?? string.Empty);
     }
 
     /// <inheritdoc />
@@ -212,6 +257,44 @@ public class GraphView : ViewBase<Box>, IGraphView
         try
         {
             OnTitleChanged.Invoke(sender.GetText());
+        }
+        catch (Exception error)
+        {
+            MainView.Instance.ReportError(error);
+        }
+    }
+
+    /// <summary>
+    /// Called when the user has edited the X-axis title. This responds to the
+    /// "activated" signal of the entry widget, which is emitted when the
+    /// user hits the enter key.
+    /// </summary>
+    /// <param name="sender">Sender object.</param>
+    /// <param name="args">Event data.</param>
+    private void OnXAxisTitleEdited(Entry sender, EventArgs args)
+    {
+        try
+        {
+            OnXAxisTitleChanged.Invoke(sender.GetText());
+        }
+        catch (Exception error)
+        {
+            MainView.Instance.ReportError(error);
+        }
+    }
+
+    /// <summary>
+    /// Called when the user has edited the Y-axis title. This responds to the
+    /// "activated" signal of the entry widget, which is emitted when the
+    /// user hits the enter key.
+    /// </summary>
+    /// <param name="sender">Sender object.</param>
+    /// <param name="args">Event data.</param>
+    private void OnYAxisTitleEdited(Entry sender, EventArgs args)
+    {
+        try
+        {
+            OnYAxisTitleChanged.Invoke(sender.GetText());
         }
         catch (Exception error)
         {

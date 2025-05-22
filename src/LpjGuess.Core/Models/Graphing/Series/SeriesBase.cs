@@ -67,7 +67,7 @@ public abstract class SeriesBase : ISeries
         return
         [
             new AxisRequirements(DataSource.GetXAxisType(), XAxisPosition, DataSource.GetXAxisTitle()),
-            new AxisRequirements(DataSource.GetYAxisType(), YAxisPosition, Title)
+            new AxisRequirements(DataSource.GetYAxisType(), YAxisPosition, DataSource.GetYAxisTitle())
         ];
     }
 }

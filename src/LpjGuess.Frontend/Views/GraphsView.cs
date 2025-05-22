@@ -16,12 +16,18 @@ public class GraphsView : ViewBase<Box>, IGraphsView
 	private readonly DynamicStackSidebar<IGraphView> sidebar;
 
 	/// <summary>
+	/// The graph presenter associated with each graph view.
+	/// </summary>
+	private readonly Dictionary<IGraphView, Label> sidebarWidgets;
+
+	/// <summary>
 	/// Create a new <see cref="GraphsView"/> instance.
 	/// </summary>
 	public GraphsView() : base(new Box())
 	{
 		OnAddGraph = new Event();
 		OnRemoveGraph = new Event<IGraphView>();
+		sidebarWidgets = new Dictionary<IGraphView, Label>();
 
 		sidebar = new DynamicStackSidebar<IGraphView>(CreateSidebarWidget);
 		sidebar.AddText = "Add Graph";
@@ -34,9 +40,12 @@ public class GraphsView : ViewBase<Box>, IGraphsView
 
     private Widget CreateSidebarWidget(IGraphView view)
     {
-        Label label = Label.New(view.Model.Title);
+        Label label = Label.New(SanitiseGraphTitle(view.Model.Title));
 		label.Halign = Align.Start;
 		label.Name = "GraphsViewSidebarLabel";
+
+		sidebarWidgets[view] = label;
+
 		return label;
     }
 
@@ -52,5 +61,23 @@ public class GraphsView : ViewBase<Box>, IGraphsView
 		IEnumerable<(IGraphView, Widget)> views = plots
 			.Select(view => (view, view.GetWidget()));
 		sidebar.Populate(views);
+	}
+
+    /// <inheritdoc />
+	public void Rename(IGraphView view, string title)
+	{
+		sidebarWidgets[view].SetText(SanitiseGraphTitle(title));
+	}
+
+	/// <summary>
+	/// Sanitise a graph title for display in the sidebar.
+	/// </summary>
+	/// <param name="title">The title to sanitise.</param>
+	/// <returns>The sanitised title.</returns>
+	private static string SanitiseGraphTitle(string title)
+	{
+		if (string.IsNullOrWhiteSpace(title))
+			return "Untitled Graph";
+		return title;
 	}
 }

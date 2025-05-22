@@ -11,6 +11,11 @@ namespace LpjGuess.Frontend.Interfaces.Views;
 public interface IModelOutputView : IDataSourceView<ModelOutput>
 {
     /// <summary>
+    /// Event raised when the user changes the output file type.
+    /// </summary>
+    Event<string> OnFileTypeChanged { get; }
+
+    /// <summary>
     /// Populate the view with the given data source.
     /// </summary>
     /// <param name="fileTypes">The file types to display in the file type dropdown.</param>

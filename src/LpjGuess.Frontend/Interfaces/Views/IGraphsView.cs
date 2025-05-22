@@ -23,4 +23,11 @@ public interface IGraphsView : IView
 	/// </summary>
 	/// <param name="plots">The plots to be displayed.</param>
 	void Populate(IEnumerable<IGraphView> plots);
+
+	/// <summary>
+	/// Rename a graph.
+	/// </summary>
+	/// <param name="view">The view associated with the graph.</param>
+	/// <param name="title">The new title.</param>
+	void Rename(IGraphView view, string title);
 }
