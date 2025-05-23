@@ -40,7 +40,6 @@ public class DataTableView : StringColumnView<DataRow>
     public void Populate(DataTable data)
     {
         Clear();
-        RemoveColumns();
 
         // TODO: this logic doesn't belong in a view. Need to move it.
         if (data.Columns.Contains(QuantityExtensions.DateColumn))

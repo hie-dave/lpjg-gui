@@ -92,12 +92,13 @@ public class StringColumnView<TData> : ColumnView where TData : class
 	public void Clear()
 	{
 		model.RemoveAll();
+        RemoveColumns();
 	}
 
 	/// <summary>
 	/// Remove all columns from the view.
 	/// </summary>
-	public void RemoveColumns()
+	private void RemoveColumns()
 	{
 		foreach (ColumnViewColumn column in columns)
 		{

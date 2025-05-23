@@ -1,6 +1,4 @@
-using GObject;
 using Gtk;
-using Gio;
 using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.Views.Helpers;
 
@@ -13,7 +11,7 @@ namespace LpjGuess.Frontend.Views;
 /// A widget displaying a list of options with a drop-down menu. Also supports
 /// a custom mapping of values to display strings.
 /// </summary>
-public class DropDownView<T> : ViewBase<DropDown>
+public abstract class DropDownView<T, TWidget> : ViewBase<DropDown> where TWidget : Widget
 {
 	/// <summary>
 	/// Name of the property corresponding to the selected item in a dropdown.
@@ -51,7 +49,7 @@ public class DropDownView<T> : ViewBase<DropDown>
     }
 
     /// <summary>
-    /// Create a new <see cref="DropDownView{T}"/> instance.
+    /// Create a new <see cref="DropDownView{T, TWidget}"/> instance.
     /// </summary>
     public DropDownView() : base(new DropDown())
     {
@@ -63,7 +61,7 @@ public class DropDownView<T> : ViewBase<DropDown>
 
 		SignalListItemFactory factory = SignalListItemFactory.New();
 		factory.OnSetup += OnSetup;
-		factory.OnBind += (_, args) => OnBind<Label>(args, (l, row) => l.SetText(row.Name));
+		factory.OnBind += OnBind;
 
         widget.Factory = factory;
         widget.Model = model;
@@ -106,8 +104,7 @@ public class DropDownView<T> : ViewBase<DropDown>
     /// Populate the dropdown with the specified values.
     /// </summary>
     /// <param name="values">The values to populate the dropdown with.</param>
-    /// <param name="renderer">A function which takes a value and returns the string to display.</param>
-    public void Populate(IEnumerable<T> values, Func<T, string> renderer)
+    public void Populate(IEnumerable<T> values)
     {
         // Temporarily disconnect the notify signal to avoid signal handlers
         // being called while we're populating the dropdown.
@@ -119,7 +116,7 @@ public class DropDownView<T> : ViewBase<DropDown>
         // Populate the model with the new values.
         foreach (T element in values)
         {
-            DropdownEntry entry = new DropdownEntry(renderer(element), element);
+            DropdownEntry entry = new DropdownEntry(element);
             GenericGObject<DropdownEntry> wrapper = new GenericGObject<DropdownEntry>(entry);
             model.Append(wrapper);
         }
@@ -129,14 +126,24 @@ public class DropDownView<T> : ViewBase<DropDown>
     }
 
     /// <summary>
+    /// Create a new widget to display a row in the dropdown.
+    /// </summary>
+    protected abstract TWidget CreateWidget();
+
+    /// <summary>
+    /// Bind a particular data row to a widget which renders that row.
+    /// </summary>
+    /// <param name="item">The data row to bind.</param>
+    /// <param name="widget">The widget to bind to.</param>
+    protected abstract void BindWidget(T item, TWidget widget);
+
+    /// <summary>
     /// The bind callback function which binds a particular data row to a
     /// widget which renders that row.
     /// </summary>
-    /// <typeparam name="TWidget">The widget type of the column.</typeparam>
-    /// <param name="args">Sender object.</param>
-    /// <param name="bind">Event data.</param>
-    private void OnBind<TWidget>(SignalListItemFactory.BindSignalArgs args, Action<TWidget, DropdownEntry> bind)
-        where TWidget : Widget
+    /// <param name="sender">Sender object.</param>
+    /// <param name="args">Event data.</param>
+    private void OnBind(SignalListItemFactory sender, SignalListItemFactory.BindSignalArgs args)
     {
         try
         {
@@ -144,7 +151,7 @@ public class DropDownView<T> : ViewBase<DropDown>
             GenericGObject<DropdownEntry>? wrapper = item.GetItem() as GenericGObject<DropdownEntry>;
             TWidget? widget = item.GetChild() as TWidget;
             if (widget != null && wrapper != null)
-                bind(widget, wrapper.Instance);
+                BindWidget(wrapper.Instance.Value, widget);
         }
         catch (Exception error)
         {
@@ -163,7 +170,7 @@ public class DropDownView<T> : ViewBase<DropDown>
         try
         {
             ListItem item = (ListItem)args.Object;
-            item.SetChild(new Label() { Halign = Align.Start });
+            item.SetChild(CreateWidget());
         }
         catch (Exception error)
         {
@@ -198,10 +205,6 @@ public class DropDownView<T> : ViewBase<DropDown>
     private class DropdownEntry
     {
         /// <summary>
-        /// Display name of this entry in the dropdown.
-        /// </summary>
-        public string Name { get; private init; }
-        /// <summary>
         /// The value.
         /// </summary>
         public T Value { get; private init; }
@@ -209,12 +212,7 @@ public class DropDownView<T> : ViewBase<DropDown>
         /// <summary>
         /// Create a new <see cref="DropdownEntry"/> instance.
         /// </summary>
-        /// <param name="name">The display name of the entry.</param>
         /// <param name="value">The value of the entry.</param>
-        public DropdownEntry(string name, T value)
-        {
-            Name = name;
-            Value = value;
-        }
+        public DropdownEntry(T value) => Value = value;
     }
 }

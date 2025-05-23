@@ -1,16 +1,11 @@
 using System.Data;
-using Dave.Benchmarks.Core.Models;
 using Dave.Benchmarks.Core.Models.Importer;
-using Dave.Benchmarks.Core.Services;
 using LpjGuess.Core.Extensions;
 using LpjGuess.Core.Models;
 using LpjGuess.Frontend.Classes;
 using LpjGuess.Frontend.Data.Providers;
 using LpjGuess.Frontend.Interfaces.Presenters;
 using LpjGuess.Frontend.Interfaces.Views;
-using LpjGuess.Frontend.Views;
-using LpjGuess.Runner.Models;
-using InstructionFileParser = LpjGuess.Runner.Parsers.InstructionFileParser;
 
 namespace LpjGuess.Frontend.Presenters;
 
@@ -20,18 +15,6 @@ namespace LpjGuess.Frontend.Presenters;
 /// </summary>
 public class OutputsPresenter : PresenterBase<IOutputsView>, IOutputsPresenter
 {
-    /// <summary>
-    /// Sites with output files written more than this number of seconds before
-    /// the most recent write time of any site-level run are considered stale.
-    /// </summary>
-    private const int staleSiteThresholdSeconds = 300;
-
-    /// <summary>
-    /// Output files written more than this number of seconds before the 
-    /// newest file are considered stale.
-    /// </summary>
-    private const double staleFileThresholdSeconds = 5.0;
-
     /// <summary>
     /// Create a new <see cref="OutputsPresenter"/> instance.
     /// </summary>
@@ -43,11 +26,12 @@ public class OutputsPresenter : PresenterBase<IOutputsView>, IOutputsPresenter
     }
 
     /// <inheritdoc />
-    /// <exception cref="ArgumentException">Thrown if one of the specified instruction files does not specify an output directory.</exception>
     public void Populate(IEnumerable<string> instructionFiles)
     {
         // Populate the view.
         view.PopulateInstructionFiles(instructionFiles);
+        // TODO: should we select an instruction file?
+        // TODO: should we select an output file?
     }
 
     /// <summary>

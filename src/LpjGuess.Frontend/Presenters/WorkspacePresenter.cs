@@ -1,4 +1,5 @@
 using System.Linq.Expressions;
+using LpjGuess.Core.Extensions;
 using LpjGuess.Core.Models;
 using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.Enumerations;
@@ -47,6 +48,9 @@ public class WorkspacePresenter : IPresenter<IWorkspaceView>
 	/// </summary>
 	private readonly IOutputsPresenter outputsPresenter;
 
+	/// <summary>
+	/// Cancellation token used to cancel running simulations.
+	/// </summary>
 	private CancellationTokenSource cancellationTokenSource = new();
 
 	/// <summary>
@@ -193,7 +197,7 @@ public class WorkspacePresenter : IPresenter<IWorkspaceView>
 
 		JobManager jobManager = new JobManager(settings, progress, outputHandler, jobs);
 		simulations = jobManager.RunAllAsync(cancellationTokenSource.Token)
-							    .ContinueWith(_ => OnCompleted());
+							    .ContinueWithOnMainThread(() => OnCompleted());
 
 		// Ensure that the stop button is visible and the run button hidden.
 		view.ShowRunButton(false);
@@ -277,7 +281,9 @@ public class WorkspacePresenter : IPresenter<IWorkspaceView>
 	{
 		try
 		{
-			MainView.RunOnMainThread(() => view.ShowRunButton(true));
+			view.ShowRunButton(true);
+			outputsPresenter.Populate(workspace.InstructionFiles);
+			graphsPresenter.UpdateInstructionFiles(workspace.InstructionFiles);
 		}
 		catch (Exception error)
 		{

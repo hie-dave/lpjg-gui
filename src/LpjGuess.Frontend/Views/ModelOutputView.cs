@@ -16,17 +16,17 @@ public class ModelOutputView : IModelOutputView
     /// <summary>
     /// The view for selecting the output file type.
     /// </summary>
-    private readonly DropDownView<string> fileTypeView;
+    private readonly StringDropDownView fileTypeView;
 
     /// <summary>
     /// The view for selecting the x-axis column.
     /// </summary>
-    private readonly DropDownView<string> xAxisColumnView;
+    private readonly StringDropDownView xAxisColumnView;
 
     /// <summary>
     /// The view for selecting the y-axis column.
     /// </summary>
-    private readonly DropDownView<string> yAxisColumnView;
+    private readonly StringDropDownView yAxisColumnView;
 
     /// <inheritdoc/>
     public Event<IModelChange<ModelOutput>> OnEditDataSource { get; private init; }
@@ -42,15 +42,15 @@ public class ModelOutputView : IModelOutputView
         OnEditDataSource = new Event<IModelChange<ModelOutput>>();
         OnFileTypeChanged = new Event<string>();
 
-        fileTypeView = new DropDownView<string>();
+        fileTypeView = new StringDropDownView();
         fileTypeView.GetWidget().Hexpand = true;
         fileTypeView.OnSelectionChanged.ConnectTo(OnFileTypeChanged);
 
-        xAxisColumnView = new DropDownView<string>();
+        xAxisColumnView = new StringDropDownView();
         xAxisColumnView.GetWidget().Hexpand = true;
         xAxisColumnView.OnSelectionChanged.ConnectTo(OnXAxisColumnChanged);
 
-        yAxisColumnView = new DropDownView<string>();
+        yAxisColumnView = new StringDropDownView();
         yAxisColumnView.GetWidget().Hexpand = true;
         yAxisColumnView.OnSelectionChanged.ConnectTo(OnYAxisColumnChanged);
     }
@@ -81,9 +81,9 @@ public class ModelOutputView : IModelOutputView
                          string xColumn,
                          string yColumn)
     {
-        fileTypeView.Populate(fileTypes, x => x);
-        xAxisColumnView.Populate(columns, x => x);
-        yAxisColumnView.Populate(columns, x => x);
+        fileTypeView.Populate(fileTypes);
+        xAxisColumnView.Populate(columns);
+        yAxisColumnView.Populate(columns);
 
         // This will fail if the collections don't contain the selected values.
         fileTypeView.Select(fileType);

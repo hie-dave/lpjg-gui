@@ -42,4 +42,14 @@ public interface IOutputsView : IView
     /// </summary>
     /// <param name="data">The data to be displayed.</param>
     void PopulateData(DataTable data);
+
+    /// <summary>
+    /// Select the specified instruction file.
+    /// </summary>
+    void SelectInstructionFile(string file);
+
+    /// <summary>
+    /// Select the specified output file.
+    /// </summary>
+    void SelectOutputFile(OutputFile file);
 }

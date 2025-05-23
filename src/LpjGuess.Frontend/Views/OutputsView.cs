@@ -16,12 +16,12 @@ public class OutputsView : Box, IOutputsView
 	/// <summary>
 	/// The dropdown box containing the instruction files.
 	/// </summary>
-	private readonly DropDownView<string> insFilesDropdown;
+	private readonly StringDropDownView<string> insFilesDropdown;
 
 	/// <summary>
 	/// The dropdown box containing the output files.
 	/// </summary>
-	private readonly DropDownView<OutputFile> outputsDropdown;
+	private readonly OutputFilesDropDownView outputsDropdown;
 
 	/// <summary>
 	/// The view responsible for displaying data to the user.
@@ -42,7 +42,7 @@ public class OutputsView : Box, IOutputsView
 		insFilesLabel.Halign = Align.Start;
 		insFilesLabel.Valign = Align.Center;
 
-		insFilesDropdown = new DropDownView<string>();
+		insFilesDropdown = new StringDropDownView<string>(Path.GetFileName);
 		insFilesDropdown.GetWidget().Hexpand = true;
 		insFilesDropdown.OnSelectionChanged.ConnectTo(OnInstructionFileSelected);
 
@@ -50,9 +50,9 @@ public class OutputsView : Box, IOutputsView
 		outputsLabel.Halign = Align.Start;
 		outputsLabel.Valign = Align.Center;
 
-		outputsDropdown = new DropDownView<OutputFile>();
+		outputsDropdown = new OutputFilesDropDownView();
 		outputsDropdown.GetWidget().Hexpand = true;
-		outputsDropdown.OnSelectionChanged.ConnectTo(OnOutputFileSelected);
+		outputsDropdown.OnDataItemSelected.ConnectTo(OnOutputFileSelected);
 
 		dataView = new DataTableView();
 		dataView.Hexpand = true;
@@ -92,13 +92,13 @@ public class OutputsView : Box, IOutputsView
     public void PopulateInstructionFiles(IEnumerable<string> instructionFiles)
     {
 		// Remove everything from the model.
-		insFilesDropdown.Populate(instructionFiles, Path.GetFileName);
+		insFilesDropdown.Populate(instructionFiles);
     }
 
     /// <inheritdoc />
     public void PopulateOutputFiles(IEnumerable<OutputFile> outputFiles)
     {
-		outputsDropdown.Populate(outputFiles, o => o.Metadata.Description);
+		outputsDropdown.Populate(outputFiles);
     }
 
 	/// <inheritdoc />
@@ -106,4 +106,17 @@ public class OutputsView : Box, IOutputsView
     {
         dataView.Populate(data);
     }
+
+	/// <inheritdoc />
+	public void SelectInstructionFile(string file)
+	{
+		insFilesDropdown.Select(file);
+	}
+
+	/// <inheritdoc />
+	public void SelectOutputFile(OutputFile file)
+	{
+		outputsDropdown.Select(file);
+		dataView.Clear();
+	}
 }

@@ -50,17 +50,17 @@ public abstract class SeriesViewBase<T> : ViewBase<Box>, ISeriesView<T> where T 
     /// <summary>
     /// Dropdown for selecting the x-axis position.
     /// </summary>
-    private readonly DropDownView<AxisPosition> xAxisPositionDropdown;
+    private readonly StringDropDownView<AxisPosition> xAxisPositionDropdown;
 
     /// <summary>
     /// Dropdown for selecting the y-axis position.
     /// </summary>
-    private readonly DropDownView<AxisPosition> yAxisPositionDropdown;
+    private readonly StringDropDownView<AxisPosition> yAxisPositionDropdown;
 
     /// <summary>
     /// Dropdown for selecting the data source type.
     /// </summary>
-    private readonly DropDownView<DataSourceType> dataSourceTypeDropdown;
+    private readonly StringDropDownView<DataSourceType> dataSourceTypeDropdown;
 
     /// <summary>
     /// The number of rows of widgets currently in the grid.
@@ -94,22 +94,16 @@ public abstract class SeriesViewBase<T> : ViewBase<Box>, ISeriesView<T> where T 
 
         // Axis position dropdowns should only display the valid axis positions
         // for their respective axis types.
-        xAxisPositionDropdown = new DropDownView<AxisPosition>();
-        xAxisPositionDropdown.Populate(
-            [AxisPosition.Bottom, AxisPosition.Top],
-            p => Enum.GetName(p)!);
+        xAxisPositionDropdown = new StringDropDownView<AxisPosition>(Enum.GetName!);
+        xAxisPositionDropdown.Populate([AxisPosition.Bottom, AxisPosition.Top]);
         AddControl("X-axis position", xAxisPositionDropdown.GetWidget());
 
-        yAxisPositionDropdown = new DropDownView<AxisPosition>();
-        yAxisPositionDropdown.Populate(
-            [AxisPosition.Left, AxisPosition.Right],
-            p => Enum.GetName(p)!);
+        yAxisPositionDropdown = new StringDropDownView<AxisPosition>(Enum.GetName!);
+        yAxisPositionDropdown.Populate([AxisPosition.Left, AxisPosition.Right]);
         AddControl("Y-axis position", yAxisPositionDropdown.GetWidget());
 
-        dataSourceTypeDropdown = new DropDownView<DataSourceType>();
-        dataSourceTypeDropdown.Populate(
-            Enum.GetValues<DataSourceType>(),
-            t => Enum.GetName(t)!);
+        dataSourceTypeDropdown = new StringDropDownView<DataSourceType>(Enum.GetName!);
+        dataSourceTypeDropdown.Populate(Enum.GetValues<DataSourceType>());
 
         // Pack children into this widget.
         widget.Append(container);

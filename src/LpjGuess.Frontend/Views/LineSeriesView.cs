@@ -12,12 +12,12 @@ public class LineSeriesView : SeriesViewBase<LineSeries>
     /// <summary>
     /// Dropdown for selecting the line type.
     /// </summary>
-    private readonly DropDownView<LineType> lineTypeDropdown;
+    private readonly StringDropDownView<LineType> lineTypeDropdown;
 
     /// <summary>
     /// Dropdown for selecting the line thickness.
     /// </summary>
-    private readonly DropDownView<LineThickness> lineThicknessDropdown;
+    private readonly StringDropDownView<LineThickness> lineThicknessDropdown;
 
     /// <summary>
     /// Creates a new instance of LineSeriesView.
