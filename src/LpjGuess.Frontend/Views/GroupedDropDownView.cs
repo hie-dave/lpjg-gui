@@ -1,3 +1,4 @@
+using System.Security.AccessControl;
 using Gtk;
 using LpjGuess.Frontend.Classes;
 using LpjGuess.Frontend.Delegates;
@@ -25,6 +26,11 @@ public class GroupedDropDownView<T> : DropDownView<IDropDownGroupItem, Label> wh
     /// A function which renders an item as a string.
     /// </summary>
     private readonly Func<T, string> itemRenderer;
+
+    /// <summary>
+    /// A function which compares two items for equality.
+    /// </summary>
+    private readonly Func<T, T, bool> itemComparer;
 
     /// <summary>
     /// If true, group headers will always be shown, even if there is only one
@@ -61,10 +67,29 @@ public class GroupedDropDownView<T> : DropDownView<IDropDownGroupItem, Label> wh
     public GroupedDropDownView(
         Func<T, string> groupKeySelector,
         Func<T, string> itemRenderer,
-        bool alwaysShowHeaders) : base()
+        bool alwaysShowHeaders) : this(groupKeySelector,
+                                       itemRenderer,
+                                       alwaysShowHeaders,
+                                       (a, b) => a.Equals(b))
+    {
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="GroupedDropDownView{T}"/> instance.
+    /// </summary>
+    /// <param name="groupKeySelector">Function to extract the group key from an item.</param>
+    /// <param name="itemRenderer">Function to render an item as a string.</param>
+    /// <param name="itemComparer">Function to compare two items for equality.</param>
+    /// <param name="alwaysShowHeaders">If true, group headers will always be shown, even if there is only one item in the group. If false, group headers will be shown only for groups with multiple items.</param>
+    public GroupedDropDownView(
+        Func<T, string> groupKeySelector,
+        Func<T, string> itemRenderer,
+        bool alwaysShowHeaders,
+        Func<T, T, bool> itemComparer) : base()
     {
         this.groupKeySelector = groupKeySelector;
         this.itemRenderer = itemRenderer;
+        this.itemComparer = itemComparer;
         this.alwaysShowHeaders = alwaysShowHeaders;
         OnDataItemSelected = new Event<T>();
         OnSelectionChanged.ConnectTo(HandleSelectionChanged);
@@ -89,15 +114,15 @@ public class GroupedDropDownView<T> : DropDownView<IDropDownGroupItem, Label> wh
         // Find the corresponding DropdownGroupItem
         for (uint i = 0; i < widget.Model.GetNItems(); i++)
         {
-            var obj = widget.Model.GetObject(i);
-            if (obj is GenericGObject<IDropDownGroupItem> wrapper &&
-                wrapper.Instance is DataItem<T> dataItem &&
-                dataItem.Value.Equals(item))
+            IDropDownGroupItem? element = GetElement(i);
+            if (element is DataItem<T> dataItem &&
+                    itemComparer(dataItem.Value, item))
             {
                 widget.Selected = i;
                 return;
             }
         }
+        throw new InvalidOperationException($"Item {item} not found in dropdown (which contains {widget.Model.GetNItems()} items). ");
     }
 
     /// <summary>

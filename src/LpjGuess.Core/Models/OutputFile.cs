@@ -27,4 +27,7 @@ public class OutputFile
         Metadata = metadata;
         Path = path;
     }
+
+    /// <inheritdoc/>
+    public override string ToString() => Metadata.FileName;
 }

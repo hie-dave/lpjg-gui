@@ -15,7 +15,8 @@ public class OutputFilesDropDownView : GroupedDropDownView<OutputFile>
         : base(
             file => file.Metadata.Name,
             file => file.Metadata.GetLongName(),
-            false)
+            false,
+            (a, b) => a.Metadata.FileName == b.Metadata.FileName)
     {
     }
 

@@ -126,6 +126,27 @@ public abstract class DropDownView<T, TWidget> : ViewBase<DropDown> where TWidge
     }
 
     /// <summary>
+    /// Get the element at a particular index.
+    /// </summary>
+    /// <param name="index">The index of the element to get.</param>
+    /// <returns>The element at the specified index.</returns>
+    /// <remarks>
+    /// This method is made available to derived classes because the base class
+    /// packs the actual elements inside wrapper objects. This method unwraps
+    /// these and returns the object passed in by the derived class.
+    /// </remarks>
+    protected T? GetElement(uint index)
+    {
+        if (index >= model.GetNItems())
+            return default;
+
+        GenericGObject<DropdownEntry>? wrapper = model.GetObject(index) as GenericGObject<DropdownEntry>;
+        if (wrapper != null && wrapper.Instance.Value != null)
+            return wrapper.Instance.Value;
+        return default;
+    }
+
+    /// <summary>
     /// Create a new widget to display a row in the dropdown.
     /// </summary>
     protected abstract TWidget CreateWidget();
