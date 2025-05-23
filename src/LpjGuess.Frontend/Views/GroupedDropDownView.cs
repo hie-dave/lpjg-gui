@@ -172,7 +172,7 @@ public class GroupedDropDownView<T> : DropDownView<IDropDownGroupItem, Label> wh
         {
             widget.RemoveCssClass("dropdown-header");
             widget.SetText(item.GetDisplayText());
-            widget.MarginStart = data.IsGrouped ? 6 : 0;
+            widget.MarginStart = data.IsGrouped ? 12 : 0;
         }
     }
 }
