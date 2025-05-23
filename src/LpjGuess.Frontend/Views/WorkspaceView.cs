@@ -314,7 +314,6 @@ public class WorkspaceView : Box, IWorkspaceView
 			{
 				if (scroll >= (adj.Upper - adj.PageSize))
 					scroll = adj.Upper;
-				Console.WriteLine($"Setting vadj to {scroll} (pos = {adj.Value}, last page cutoff = {adj.Upper - adj.PageSize})");
 				adj.Value = scroll;
 			}
 		});
