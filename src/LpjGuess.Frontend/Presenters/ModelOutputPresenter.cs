@@ -67,17 +67,32 @@ public class ModelOutputPresenter : PresenterBase<IModelOutputView>, IDataSource
     /// </summary>
     public void RefreshView()
     {
-        IEnumerable<string> fileTypes = instructionFiles
+        IEnumerable<OutputFile> fileTypes = instructionFiles
             .Select(ModelOutputReader.GetSimulation)
             .SelectMany(s => s.GetOutputFiles())
-            .DistinctBy(o => o.Metadata.FileName)
-            .Select(o => o.Metadata.FileName);
+            .DistinctBy(o => o.Metadata.FileName);
+
+        OutputFile? outputFileType = fileTypes
+            .FirstOrDefault(o => o.Metadata.FileName == DataSource.OutputFileType);
+
+        if (outputFileType == null)
+        {
+            // TODO: think about exception handling (this can throw).
+            OutputFileMetadata meta = OutputFileDefinitions.GetMetadata(DataSource.OutputFileType);
+            outputFileType = new OutputFile(meta, string.Empty);
+            if (!fileTypes.Any(f => f.Metadata.FileName == meta.FileName))
+                fileTypes = fileTypes.Append(outputFileType);
+        }
+
+        IEnumerable<string> columns = GetColumns(DataSource.OutputFileType)
+                .Append(DataSource.XAxisColumn)
+                .Append(DataSource.YAxisColumn)
+                .Distinct();
 
         view.Populate(
-            fileTypes
-                .Append(DataSource.XAxisColumn).Append(DataSource.YAxisColumn),
-            GetColumns(DataSource.OutputFileType),
-            DataSource.OutputFileType,
+            fileTypes,
+            columns,
+            outputFileType,
             DataSource.XAxisColumn,
             DataSource.YAxisColumn);
     }
@@ -134,9 +149,9 @@ public class ModelOutputPresenter : PresenterBase<IModelOutputView>, IDataSource
     /// Called when the user changes the output file type.
     /// </summary>
     /// <param name="fileType">The new output file type.</param>
-    private void OnFileTypeChanged(string fileType)
+    private void OnFileTypeChanged(OutputFile fileType)
     {
-        GuessColumns(fileType, out string xcol, out string ycol);
+        GuessColumns(fileType.Metadata.FileName, out string xcol, out string ycol);
 
         // Changing the file type will invalidate the x and y columns. Therefore
         // we need to create a composite command to update both.
@@ -145,7 +160,7 @@ public class ModelOutputPresenter : PresenterBase<IModelOutputView>, IDataSource
             new PropertyChangeCommand<ModelOutput, string>(
                 DataSource,
                 DataSource.OutputFileType,
-                fileType,
+                fileType.Metadata.FileName,
                 (m, v) => m.OutputFileType = v),
             // A command to change the x-axis column.
             new PropertyChangeCommand<ModelOutput, string>(

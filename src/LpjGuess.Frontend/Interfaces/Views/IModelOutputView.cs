@@ -13,7 +13,7 @@ public interface IModelOutputView : IDataSourceView<ModelOutput>
     /// <summary>
     /// Event raised when the user changes the output file type.
     /// </summary>
-    Event<string> OnFileTypeChanged { get; }
+    Event<OutputFile> OnFileTypeChanged { get; }
 
     /// <summary>
     /// Populate the view with the given data source.
@@ -24,9 +24,9 @@ public interface IModelOutputView : IDataSourceView<ModelOutput>
     /// <param name="xColumn">The selected x-axis column.</param>
     /// <param name="yColumn">The selected y-axis column.</param>
     public void Populate(
-        IEnumerable<string> fileTypes,
+        IEnumerable<OutputFile> fileTypes,
         IEnumerable<string> columns,
-        string fileType,
+        OutputFile fileType,
         string xColumn,
         string yColumn);
 }

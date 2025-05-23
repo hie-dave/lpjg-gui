@@ -107,9 +107,4 @@ public class ModelOutput : IDataSource
             return OutputFileType;
         }
     }
-
-    public override string ToString()
-    {
-        return $"{OutputFileType} {XAxisColumn} {YAxisColumn}";
-    }
 }

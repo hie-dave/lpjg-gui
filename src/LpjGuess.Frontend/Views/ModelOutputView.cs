@@ -16,7 +16,7 @@ public class ModelOutputView : IModelOutputView
     /// <summary>
     /// The view for selecting the output file type.
     /// </summary>
-    private readonly StringDropDownView fileTypeView;
+    private readonly OutputFilesDropDownView fileTypeView;
 
     /// <summary>
     /// The view for selecting the x-axis column.
@@ -32,7 +32,7 @@ public class ModelOutputView : IModelOutputView
     public Event<IModelChange<ModelOutput>> OnEditDataSource { get; private init; }
 
     /// <inheritdoc/>
-    public Event<string> OnFileTypeChanged { get; private init; }
+    public Event<OutputFile> OnFileTypeChanged { get; private init; }
 
     /// <summary>
     /// Create a new <see cref="ModelOutputView"/> instance.
@@ -40,11 +40,11 @@ public class ModelOutputView : IModelOutputView
     public ModelOutputView()
     {
         OnEditDataSource = new Event<IModelChange<ModelOutput>>();
-        OnFileTypeChanged = new Event<string>();
+        OnFileTypeChanged = new Event<OutputFile>();
 
-        fileTypeView = new StringDropDownView();
+        fileTypeView = new OutputFilesDropDownView();
         fileTypeView.GetWidget().Hexpand = true;
-        fileTypeView.OnSelectionChanged.ConnectTo(OnFileTypeChanged);
+        fileTypeView.OnDataItemSelected.ConnectTo(OnFileTypeChanged);
 
         xAxisColumnView = new StringDropDownView();
         xAxisColumnView.GetWidget().Hexpand = true;
@@ -75,9 +75,9 @@ public class ModelOutputView : IModelOutputView
     }
 
     /// <inheritdoc/>
-    public void Populate(IEnumerable<string> fileTypes,
+    public void Populate(IEnumerable<OutputFile> fileTypes,
                          IEnumerable<string> columns,
-                         string fileType,
+                         OutputFile fileType,
                          string xColumn,
                          string yColumn)
     {
