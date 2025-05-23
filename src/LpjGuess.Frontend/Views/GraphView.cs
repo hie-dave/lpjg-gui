@@ -95,6 +95,7 @@ public class GraphView : ViewBase<Box>, IGraphView
 
         // Configure plot view.
         plot = new PlotView();
+        plot.Model = new();
         plot.Hexpand = true;
 
         // Configure series sidebar.

@@ -118,9 +118,9 @@ public class Simulation
     /// <param name="fileName">The output file name (e.g. "lai.out"). This must
     /// be absolute or relative to the current working directory.</param>
     /// <returns>The parsed output file.</returns>
-    public Task<Quantity> ReadOutputFileAsync(string fileName)
+    public async Task<Quantity> ReadOutputFileAsync(string fileName)
     {
-        return outputParser.ParseOutputFileAsync(fileName);
+        return await outputParser.ParseOutputFileAsync(fileName);
     }
 
     /// <summary>

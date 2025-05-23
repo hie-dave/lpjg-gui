@@ -26,6 +26,7 @@ using OxyAxis = OxyPlot.Axes.Axis;
 using OxyLinearAxis = OxyPlot.Axes.LinearAxis;
 using OxyDateTimeAxis = OxyPlot.Axes.DateTimeAxis;
 using OxyLogarithmicAxis = OxyPlot.Axes.LogarithmicAxis;
+using System.Threading.Tasks;
 
 namespace LpjGuess.Frontend.Utility;
 
@@ -39,7 +40,7 @@ public static class OxyPlotConverter
     /// </summary>
     /// <param name="graph">The graph to convert.</param>
     /// <returns>An OxyPlot PlotModel.</returns>
-    public static PlotModel ToPlotModel(Graph graph)
+    public static async Task<PlotModel> ToPlotModelAsync(Graph graph)
     {
         PlotModel plot = new PlotModel();
         plot.Title = GetPlotTitle(graph);
@@ -55,7 +56,7 @@ public static class OxyPlotConverter
 
         // Add series.
         foreach (ISeries series in graph.Series)
-            foreach (OxySeries oxySeries in ToOxySeries(series))
+            foreach (OxySeries oxySeries in await ToOxySeriesAsync(series))
                 plot.Series.Add(oxySeries);
 
         return plot;
@@ -176,10 +177,10 @@ public static class OxyPlotConverter
     /// </summary>
     /// <param name="series">The series to convert.</param>
     /// <returns>An OxyPlot Series.</returns>
-    public static IEnumerable<OxySeries> ToOxySeries(ISeries series)
+    public static async Task<IEnumerable<OxySeries>> ToOxySeriesAsync(ISeries series)
     {
         // FIXME - this probably doesn't work. Need to rethink the data provider API.
-        IEnumerable<SeriesData> data = DataProviderFactory.Read(series.DataSource);
+        IEnumerable<SeriesData> data = await DataProviderFactory.ReadAsync(series.DataSource);
 
         return data.Select(seriesData => CreateOxySeries(series, seriesData));        
     }

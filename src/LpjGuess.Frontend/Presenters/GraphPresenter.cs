@@ -1,4 +1,5 @@
 using Dave.Benchmarks.Core.Services;
+using LpjGuess.Core.Extensions;
 using LpjGuess.Core.Interfaces.Graphing;
 using LpjGuess.Core.Models;
 using LpjGuess.Core.Models.Graphing;
@@ -82,7 +83,7 @@ public class GraphPresenter : IGraphPresenter
 
         // The plot model is initialised in RefreshData(), but the compiler
         // doesn't know this.
-        plotModel = null!;
+        plotModel = new();
         seriesPresenters = new();
 
         RefreshData();
@@ -103,22 +104,22 @@ public class GraphPresenter : IGraphPresenter
     /// <inheritdoc />
     public void RefreshData()
     {
-        // Create a new plot model
-        string? newName = null;
-        try
-        {
-            string? oldName = plotModel?.Title;
-            plotModel = OxyPlotConverter.ToPlotModel(graph);
-            if (plotModel.Title != oldName)
-                newName = plotModel.Title;
-        }
-        catch (Exception error)
-        {
-            MainView.Instance.ReportError(error);
-            plotModel = new();
-        }
+        CreatePlotModelAsync()
+            .ContinueWithOnMainThread(OnPlotModelReady);
+    }
 
-        view.UpdatePlot(plotModel);
+    /// <summary>
+    /// Called when the plot model is ready. This method is called on the main
+    /// thread.
+    /// </summary>
+    /// <remarks>
+    /// FIXME: This is a bandaid on the fact that we don't currently have true
+    /// async support at the gtk signal handler level.
+    /// </remarks>
+    /// <param name="model">The plot model.</param>
+    private void OnPlotModelReady(PlotModel model)
+    {
+        view.UpdatePlot(model);
         view.UpdateProperties(graph.Title, graph.XAxisTitle, graph.YAxisTitle);
 
         List<ISeriesPresenter> presenters = new();
@@ -136,8 +137,32 @@ public class GraphPresenter : IGraphPresenter
         seriesPresenters.ForEach(p => p.Dispose());
         seriesPresenters = presenters;
 
-        if (newName != null)
-            OnTitleChanged.Invoke(newName);
+        if (model.Title != plotModel.Title)
+            OnTitleChanged.Invoke(model.Title);
+
+        plotModel = model;
+    }
+
+    /// <summary>
+    /// Create the plot model for the graph.
+    /// </summary>
+    /// <returns>The plot model.</returns>
+    private async Task<PlotModel> CreatePlotModelAsync()
+    {
+        try
+        {
+            return await OxyPlotConverter.ToPlotModelAsync(graph);
+        }
+        catch (Exception ex)
+        {
+            MainView.RunOnMainThread(() => MainView.Instance.ReportError(ex));
+
+            // If plot generation fails, return an empty plot model. This will
+            // be displayed as a blank plot, which is the best we can do in this
+            // case, but it also allows the user to continue editing the graph
+            // properties to fix the error.
+            return new PlotModel();
+        }
     }
 
     /// <summary>

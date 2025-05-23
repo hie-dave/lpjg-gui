@@ -16,6 +16,11 @@ public interface IOutputsView : IView
     string? InstructionFile { get; }
 
     /// <summary>
+    /// Get the currently-selected output file.
+    /// </summary>
+    OutputFile? SelectedOutputFile { get; }
+
+    /// <summary>
     /// Invoked when the user has selected an instruction file.
     /// </summary>
     Event<string> OnInstructionFileSelected { get; }

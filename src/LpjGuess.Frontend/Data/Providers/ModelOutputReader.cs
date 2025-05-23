@@ -27,9 +27,11 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
     }
 
     /// <inheritdoc />
-    public IEnumerable<SeriesData> Read(ModelOutput source)
+    public async Task<IEnumerable<SeriesData>> ReadAsync(ModelOutput source)
     {
-        return source.InstructionFiles.Select(f => ReadSimulation(source, GetSimulation(f)));
+        return await Task.WhenAll(
+            source.InstructionFiles
+                  .Select(f => ReadSimulationAsync(source, GetSimulation(f))));
     }
 
     /// <summary>
@@ -56,15 +58,13 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
     /// <param name="source">The model output.</param>
     /// <param name="simulation">The simulation from which to read the data.</param>
     /// <returns>The data read from the simulation.</returns>
-    private SeriesData ReadSimulation(
+    private async Task<SeriesData> ReadSimulationAsync(
         ModelOutput source,
         Simulation simulation)
     {
         // TODO: async support.
-        Task<Quantity> task = simulation.ReadOutputFileTypeAsync(source.OutputFileType);
-        task.Wait();
+        Quantity quantity = await simulation.ReadOutputFileTypeAsync(source.OutputFileType);
 
-        Quantity quantity = task.Result;
         Layer? layer = quantity.Layers.FirstOrDefault(l => l.Name == source.YAxisColumn);
         if (layer == null)
             throw new InvalidOperationException($"Output {quantity.Name} does not have layer: {source.YAxisColumn}");

@@ -217,7 +217,14 @@ public class MainView : ApplicationWindow, IMainView
 	{
 		GLib.Functions.IdleAdd(0, new GLib.SourceFunc(() =>
 		{
-			callback();
+			try
+			{
+				callback();
+			}
+			catch (Exception error)
+			{
+				Instance.ReportError(error);
+			}
 			return false;
 		}));
 	}

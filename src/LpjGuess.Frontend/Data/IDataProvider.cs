@@ -13,7 +13,7 @@ public interface IDataProvider<T> where T : IDataSource
     /// </summary>
     /// <param name="source">The data source.</param>
     /// <returns>The data read from the data source.</returns>
-    IEnumerable<SeriesData> Read(T source);
+    Task<IEnumerable<SeriesData>> ReadAsync(T source);
 
     /// <summary>
     /// Generate a name for the data source which would be suitable for display

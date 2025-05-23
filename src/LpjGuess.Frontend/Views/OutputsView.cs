@@ -79,8 +79,11 @@ public class OutputsView : Box, IOutputsView
 	/// <inheritdoc />
 	public string? InstructionFile => insFilesDropdown.Selection;
 
-    /// <inheritdoc />
-    public Event<string> OnInstructionFileSelected { get; private init; }
+	/// <inheritdoc />
+	public OutputFile? SelectedOutputFile => outputsDropdown.Selection;
+
+	/// <inheritdoc />
+	public Event<string> OnInstructionFileSelected { get; private init; }
 
     /// <inheritdoc />
     public Event<OutputFile> OnOutputFileSelected { get; private init; }

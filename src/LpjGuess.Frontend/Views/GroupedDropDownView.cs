@@ -39,6 +39,20 @@ public class GroupedDropDownView<T> : DropDownView<IDropDownGroupItem, Label> wh
     public Event<T> OnDataItemSelected { get; private init; }
 
     /// <summary>
+    /// Get the currently selected item.
+    /// </summary>
+    public new T? Selection
+    {
+        get
+        {
+            IDropDownGroupItem? selected = base.Selection;
+            if (selected is DataItem<T> dataItem)
+                return dataItem.Value;
+            return null;
+        }
+    }
+
+    /// <summary>
     /// Creates a new <see cref="GroupedDropDownView{T}"/> instance.
     /// </summary>
     /// <param name="groupKeySelector">Function to extract the group key from an item.</param>
