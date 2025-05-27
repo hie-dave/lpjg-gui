@@ -16,6 +16,9 @@ using LpjGuess.Frontend.Interfaces;
 using LpjGuess.Core.Models;
 using LpjGuess.Core.Extensions;
 using LpjGuess.Frontend.Extensions;
+using LpjGuess.Core.Models.Graphing.Style;
+using LpjGuess.Core.Interfaces.Graphing.Style;
+using System.ComponentModel;
 
 namespace LpjGuess.Frontend.Views;
 
@@ -41,6 +44,11 @@ public abstract class SeriesViewBase<T> : ViewBase<Box>, ISeriesView<T> where T 
     /// Entry widget for editing the series title.
     /// </summary>
     private readonly Entry titleEntry;
+
+    /// <summary>
+    /// Dropdown for selecting the colour strategy.
+    /// </summary>
+    private readonly EnumDropDownView<StyleVariationStrategy> colourStrategyDropdown;
 
     /// <summary>
     /// Button which opens a colour picker dialog.
@@ -89,8 +97,10 @@ public abstract class SeriesViewBase<T> : ViewBase<Box>, ISeriesView<T> where T 
         ColorDialog colourDialog = new ColorDialog();
         colourDialog.Modal = true;
 
+        colourStrategyDropdown = new EnumDropDownView<StyleVariationStrategy>();
+
         chooseColourButton = ColorDialogButton.New(colourDialog);
-        AddControl("Colour", chooseColourButton);
+        AddControl("Colour", colourStrategyDropdown.GetWidget(), chooseColourButton);
 
         // Axis position dropdowns should only display the valid axis positions
         // for their respective axis types.
@@ -133,7 +143,16 @@ public abstract class SeriesViewBase<T> : ViewBase<Box>, ISeriesView<T> where T 
         DisconnectBaseClassEvents();
 
         titleEntry.SetText(series.Title);
-        chooseColourButton.Rgba = ColourUtility.FromString(series.Colour);
+        if (series.ColourProvider is FixedStyleProvider<Colour> fixedProvider)
+        {
+            chooseColourButton.Rgba = fixedProvider.Style.ToRgba();
+            chooseColourButton.Show();
+        }
+        else
+        {
+            // Not using a fixed colour, so hide the colour button.
+            chooseColourButton.Hide();
+        }
         xAxisPositionDropdown.Select(series.XAxisPosition);
         yAxisPositionDropdown.Select(series.YAxisPosition);
 
@@ -153,16 +172,21 @@ public abstract class SeriesViewBase<T> : ViewBase<Box>, ISeriesView<T> where T 
     }
 
     /// <summary>
-    /// Add a control to the grid.
+    /// Add a control and optional value control (in the 3rd column) to the
+    /// grid.
     /// </summary>
     /// <param name="name">The name of the control.</param>
     /// <param name="control">The control to add.</param>
-    protected void AddControl(string name, Widget control)
+    /// <param name="valueControl">The control to add to the right of the
+    /// control.</param>
+    protected void AddControl(string name, Widget control, Widget? valueControl = null)
     {
         Label label = Label.New(name);
         label.Halign = Align.Start;
         container.Attach(label, 0, nrow, 1, 1);
-        container.Attach(control, 1, nrow, 1, 1);
+        container.Attach(control, 1, nrow, valueControl == null ? 2 : 1, 1);
+        if (valueControl != null)
+            container.Attach(valueControl, 2, nrow, 1, 1);
         nrow++;
     }
 
@@ -185,6 +209,7 @@ public abstract class SeriesViewBase<T> : ViewBase<Box>, ISeriesView<T> where T 
         chooseColourButton.OnNotify += OnColourChanged;
         xAxisPositionDropdown.OnSelectionChanged.ConnectTo(OnXAxisPositionChanged);
         yAxisPositionDropdown.OnSelectionChanged.ConnectTo(OnYAxisPositionChanged);
+        colourStrategyDropdown.OnSelectionChanged.ConnectTo(OnColourStrategyChanged);
     }
 
     /// <summary>
@@ -196,6 +221,7 @@ public abstract class SeriesViewBase<T> : ViewBase<Box>, ISeriesView<T> where T 
         chooseColourButton.OnNotify -= OnColourChanged;
         xAxisPositionDropdown.OnSelectionChanged.DisconnectAll();
         yAxisPositionDropdown.OnSelectionChanged.DisconnectAll();
+        colourStrategyDropdown.OnSelectionChanged.DisconnectAll();
     }
 
     /// <summary>
@@ -236,11 +262,16 @@ public abstract class SeriesViewBase<T> : ViewBase<Box>, ISeriesView<T> where T 
             string property = args.Pspec.GetName();
             if (property != rgbaProperty)
                 return;
-            Gdk.RGBA rgba = chooseColourButton.Rgba;
-            OnEditSeries.Invoke(new ModelChangeEventArgs<T, string>(
-                series => series.Colour,
-                (series, value) => series.Colour = value,
-                rgba.ToHex()));
+
+            // Capture value now, as it may change before the event is handled.
+            Colour colour = chooseColourButton.Rgba.ToColour();
+            OnEditSeries.Invoke(
+                new ModelChangeEventArgs<T, IStyleProvider<Colour>>(
+                    series => series.ColourProvider,
+                    (series, provider) => series.ColourProvider = provider,
+                    new FixedStyleProvider<Colour>(colour)
+                )
+            );
         }
         catch (Exception error)
         {
@@ -270,5 +301,17 @@ public abstract class SeriesViewBase<T> : ViewBase<Box>, ISeriesView<T> where T 
             series => series.XAxisPosition,
             (series, value) => series.XAxisPosition = value,
             position));
+    }
+
+    /// <summary>
+    /// Called when the user has changed the colour strategy.
+    /// </summary>
+    /// <param name="strategy">The new colour strategy.</param>
+    private void OnColourStrategyChanged(StyleVariationStrategy strategy)
+    {
+        OnEditSeries.Invoke(new ColourProviderChangeEvent<T>(
+            strategy,
+            series => series.ColourProvider,
+            (series, provider) => series.ColourProvider = provider));
     }
 }

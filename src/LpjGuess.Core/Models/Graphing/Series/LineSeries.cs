@@ -1,4 +1,6 @@
 using LpjGuess.Core.Interfaces;
+using LpjGuess.Core.Interfaces.Graphing.Style;
+using LpjGuess.Core.Models.Graphing.Style;
 
 namespace LpjGuess.Core.Models.Graphing.Series;
 
@@ -9,45 +11,45 @@ namespace LpjGuess.Core.Models.Graphing.Series;
 public class LineSeries : SeriesBase
 {
     /// <summary>
-    /// The type of line to use for the series.
+    /// The line type provider.
     /// </summary>
-    public LineType Type { get; set; }
+    public IStyleProvider<LineType> Type { get; set; }
 
     /// <summary>
-    /// The thickness of the line.
+    /// The line thickness provider.
     /// </summary>
-    public LineThickness Thickness { get; set; }
+    public IStyleProvider<LineThickness> Thickness { get; set; }
 
     /// <summary>
     /// Create a new <see cref="LineSeries"/> instance.
     /// </summary>
     public LineSeries()
     {
-        Type = LineType.Solid;
-        Thickness = LineThickness.Regular;
+        Type = new FixedStyleProvider<LineType>(LineType.Solid);
+        Thickness = new FixedStyleProvider<LineThickness>(LineThickness.Regular);
     }
 
     /// <summary>
     /// Create a new <see cref="LineSeries"/> instance.
     /// </summary>
     /// <param name="title">The title of the series.</param>
-    /// <param name="colour">The colour of the series.</param>
+    /// <param name="colourProvider">The colour provider.</param>
     /// <param name="dataSource">The data source for the series.</param>
     /// <param name="xAxisPosition">The position of the X axis for the series.</param>
     /// <param name="yAxisPosition">The position of the Y axis for the series.</param>
-    /// <param name="type">The type of line to use for the series.</param>
-    /// <param name="thickness">The thickness of the line.</param>
+    /// <param name="typeProvider">The line type provider.</param>
+    /// <param name="thicknessProvider">The line thickness provider.</param>
     public LineSeries(
         string title,
-        string colour,
+        IStyleProvider<Colour> colourProvider,
         IDataSource dataSource,
         AxisPosition xAxisPosition,
         AxisPosition yAxisPosition,
-        LineType type,
-        LineThickness thickness)
-        : base(title, colour, dataSource, xAxisPosition, yAxisPosition)
+        IStyleProvider<LineType> typeProvider,
+        IStyleProvider<LineThickness> thicknessProvider)
+        : base(title, colourProvider, dataSource, xAxisPosition, yAxisPosition)
     {
-        Type = type;
-        Thickness = thickness;
+        Type = typeProvider;
+        Thickness = thicknessProvider;
     }
 }

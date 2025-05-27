@@ -98,11 +98,8 @@ public class OutputsPresenter : PresenterBase<IOutputsView>, IOutputsPresenter
             return;
         Simulation simulation = ModelOutputReader.GetSimulation(instructionFile);
         Task<Quantity> task = simulation.ReadOutputFileAsync(file.Path);
-        task.ContinueWithOnMainThread(q =>
-        {
-            DataTable data = q.ToDataTable();
-            view.PopulateData(data);
-        });
+        task.ContinueWith(q => q.Result.ToDataTable())
+            .ContinueWithOnMainThread(view.PopulateData);
     }
 
     /// <summary>

@@ -153,21 +153,28 @@ public class StringColumnView<TData> : ColumnView where TData : class
 		}
 	}
 
-    /// <summary>
-    /// The bind callback function which binds a particular data row to a
-    /// widget which renders that row.
-    /// </summary>
-    /// <typeparam name="TWidget">The widget type of the column.</typeparam>
-    /// <param name="args">Sender object.</param>
-    /// <param name="bind">Event data.</param>
+	/// <summary>
+	/// The bind callback function which binds a particular data row to a
+	/// widget which renders that row.
+	/// </summary>
+	/// <typeparam name="TWidget">The widget type of the column.</typeparam>
+	/// <param name="args">Sender object.</param>
+	/// <param name="bind">Event data.</param>
 	private void HandleBind<TWidget>(SignalListItemFactory.BindSignalArgs args, Action<TWidget, TData> bind)
 		where TWidget : Widget
 	{
-		ListItem item = (ListItem)args.Object;
-		Wrapper? wrapper = item.GetItem() as Wrapper;
-		TWidget? widget = item.GetChild() as TWidget;
-		if (widget != null && wrapper != null)
-			bind(widget, wrapper.Data);
+		try
+		{
+			ListItem item = (ListItem)args.Object;
+			Wrapper? wrapper = item.GetItem() as Wrapper;
+			TWidget? widget = item.GetChild() as TWidget;
+			if (widget != null && wrapper != null)
+				bind(widget, wrapper.Data);
+		}
+		catch (Exception error)
+		{
+			MainView.Instance.ReportError(error);
+		}
 	}
 
     /// <summary>

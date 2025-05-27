@@ -29,9 +29,10 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
     /// <inheritdoc />
     public async Task<IEnumerable<SeriesData>> ReadAsync(ModelOutput source)
     {
-        return await Task.WhenAll(
+        return (await Task.WhenAll(
             source.InstructionFiles
-                  .Select(f => ReadSimulationAsync(source, GetSimulation(f))));
+                  .Select(f => ReadSimulationAsync(source, GetSimulation(f)))))
+            .SelectMany(x => x);
     }
 
     /// <summary>
@@ -58,7 +59,7 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
     /// <param name="source">The model output.</param>
     /// <param name="simulation">The simulation from which to read the data.</param>
     /// <returns>The data read from the simulation.</returns>
-    private async Task<SeriesData> ReadSimulationAsync(
+    private async Task<IEnumerable<SeriesData>> ReadSimulationAsync(
         ModelOutput source,
         Simulation simulation)
     {
@@ -67,18 +68,97 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
 
         Layer? layer = quantity.Layers.FirstOrDefault(l => l.Name == source.YAxisColumn);
         if (layer == null)
+            // TBI: allow for plotting date on the y-axis.
             throw new InvalidOperationException($"Output {quantity.Name} does not have layer: {source.YAxisColumn}");
 
         string name = GenerateSeriesName(simulation, layer);
 
+        Func<DataPoint, double> xselector = GetSelector(source.XAxisColumn);
+        Func<DataPoint, double> yselector = GetSelector(source.YAxisColumn);
+
         Layer? xlayer = quantity.Layers.FirstOrDefault(l => l.Name == source.XAxisColumn);
         if (xlayer != null)
-            return new SeriesData(name, MergeLayers(xlayer, layer));
+            return GenerateSeries(simulation, name, xlayer, layer, xselector, yselector);
 
+        // "Date" is a valid layer name from the user's perspective, but it
+        // doesn't correspond to an actual layer object. Rather, it corresponds
+        // to the Timestamp property of the data points. Therefore, we can pass
+        // in the same layer for both x and y, and the x selector will return
+        // DateTimeAxis.ToDouble() for the timestamps.
         if (source.XAxisColumn != "Date")
-            throw new NotImplementedException("TBI: Only date is supported on x axis for plots of model outputs.");
+            throw new InvalidOperationException($"Unknown layer name: {source.XAxisColumn}");
 
-        return new SeriesData(name, layer.Data.Select(DataPointToOxyDateDataPoint));
+        return GenerateSeries(simulation, name, layer, layer, xselector, yselector);
+    }
+
+    /// <summary>
+    /// Get a selector function for the given column.
+    /// </summary>
+    /// <param name="column">The name of the column to be displayed on the graph.</param>
+    /// <returns>Function which takes a data point and returns a numeric value to be displayed on the plot.</returns>
+    private static Func<DataPoint, double> GetSelector(string column)
+    {
+        if (column == "Date")
+            return dp => DateTimeAxis.ToDouble(dp.Timestamp);
+
+        return dp => dp.Value;
+    }
+
+    private IEnumerable<SeriesData> GenerateSeries(
+        Simulation simulation,
+        string name,
+        Layer xlayer,
+        Layer ylayer,
+        Func<DataPoint, double>? xselector,
+        Func<DataPoint, double>? yselector)
+    {
+        // First group by context. Each group is a list of data points with the
+        // same gridcell, stand, patch, and indiv id (where those properties are
+        // applicable for this output file type).
+        var xgroups = xlayer.Data.GroupBy(d => GetContext(simulation, d));
+        var ygroups = ylayer.Data.GroupBy(d => GetContext(simulation, d));
+
+        // Now we can zip the groups together.
+        foreach (IGrouping<SeriesContext, DataPoint> xgroup in xgroups)
+        {
+            IGrouping<SeriesContext, DataPoint>? ygroup = ygroups
+                .FirstOrDefault(g => g.Key.Equals(xgroup.Key));
+
+            if (ygroup == null)
+            {
+                // TODO: log warning
+                // This should probably never happen, especially if both layers
+                // are coming from the same output file.
+                continue;
+            }
+
+            IEnumerable<OxyPlot.DataPoint> data = MergeOn(
+                xgroup,
+                ygroup,
+                xselector,
+                yselector,
+                predicates: (x, y) => x.Timestamp == y.Timestamp).ToList();
+            yield return new SeriesData(name, xgroup.Key, data);
+        }
+    }
+
+    /// <summary>
+    /// Get the context for the given data point.
+    /// </summary>
+    /// <param name="simulation">The simulation.</param>
+    /// <param name="datapoint">The data point.</param>
+    /// <returns>The context for the data point.</returns>
+    private static SeriesContext GetContext(Simulation simulation, DataPoint datapoint)
+    {
+        // FIXME: this will throw for coordinates not in the gridlist. Would it
+        // be better to use the fallback name (lat, lon) in that case?
+        string name = simulation.Gridlist.GetName(datapoint.Longitude, datapoint.Latitude);
+        return new SeriesContext(
+            new Gridcell(datapoint.Longitude, datapoint.Latitude, name),
+            datapoint.Stand,
+            datapoint.Patch,
+            datapoint.Individual,
+            Path.GetFileNameWithoutExtension(simulation.FileName));
     }
 
     /// <summary>
@@ -146,16 +226,40 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
     /// <returns>The merged data points.</returns>
     private IEnumerable<OxyPlot.DataPoint> MergeLayersOn(Layer xlayer, Layer ylayer, IReadOnlyList<Func<DataPoint, DataPoint, bool>> predicates)
     {
+        return MergeOn(xlayer.Data, ylayer.Data, null, null, predicates.ToArray());
+    }
+
+    /// <summary>
+    /// Zip the two collections together matching on the given predicates.
+    /// </summary>
+    /// <param name="xpoints">Collection of x values.</param>
+    /// <param name="ypoints">Collection of y values.</param>
+    /// <param name="predicates">The matchers to use to match the collections.</param>
+    /// <param name="xselector">Selector for the x value. If null, x.Value will be selected.</param>
+    /// <param name="yselector">Selector for the y value. If null, y.Value will be selected.</param>
+    /// <returns>The merged data points.</returns>
+    private IEnumerable<OxyPlot.DataPoint> MergeOn(
+        IEnumerable<DataPoint> xpoints,
+        IEnumerable<DataPoint> ypoints,
+        Func<DataPoint, double>? xselector = null,
+        Func<DataPoint, double>? yselector = null,
+        params Func<DataPoint, DataPoint, bool>[] predicates)
+    {
+        if (xselector == null)
+            xselector = x => x.Value;
+        if (yselector == null)
+            yselector = y => y.Value;
+
         // For each data point in xlayer, select a data point in ylayer for which
         // all coordinates match.
-        foreach (DataPoint xpoint in xlayer.Data)
+        foreach (DataPoint x in xpoints)
         {
             // Allow for multiple matches.
-            IEnumerable<DataPoint> ypoints = ylayer.Data.Where(y => predicates.All(p => p(xpoint, y)));
-            foreach (DataPoint ypoint in ypoints)
-                yield return new OxyPlot.DataPoint(xpoint.Value, ypoint.Value);
+            IEnumerable<DataPoint> matches = ypoints
+                .Where(yi => predicates.All(p => p(x, yi)));
+            foreach (DataPoint y in matches)
+                yield return new OxyPlot.DataPoint(xselector(x), yselector(y));
         }
-
         // We can assume commutativity of the predicates, so there's no need for
         // double-iteration.
     }

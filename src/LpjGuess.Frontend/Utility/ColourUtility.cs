@@ -1,4 +1,5 @@
 using System.Globalization;
+using LpjGuess.Core.Models.Graphing;
 using OxyPlot;
 
 namespace LpjGuess.Frontend.Utility;
@@ -26,6 +27,16 @@ public static class ColourUtility
     };
 
     /// <summary>
+    /// Convert a <see cref="Colour"/> to an <see cref="OxyColor"/>.
+    /// </summary>
+    /// <param name="colour">The colour to convert.</param>
+    /// <returns>The converted colour.</returns>
+    public static OxyColor ToOxyColor(this Colour colour)
+    {
+        return OxyColor.FromArgb(colour.A, colour.R, colour.G, colour.B);
+    }
+
+    /// <summary>
     /// Convert a hex color string to an OxyColor.
     /// </summary>
     /// <param name="hexColor">Hex color string (e.g., "#FF0000" or "#FFFF0000").</param>
@@ -38,7 +49,7 @@ public static class ColourUtility
         try
         {
             hexColor = hexColor.TrimStart('#');
-            
+
             if (hexColor.Length == 6)
             {
                 // RGB format
@@ -56,7 +67,7 @@ public static class ColourUtility
                 int b = int.Parse(hexColor.Substring(6, 2), NumberStyles.HexNumber);
                 return OxyColor.FromArgb((byte)a, (byte)r, (byte)g, (byte)b);
             }
-            
+
             return OxyColors.Blue;
         }
         catch
@@ -103,6 +114,35 @@ public static class ColourUtility
         byte blue = (byte)(rgba.Blue * 255);
 
         return $"#{alpha:X2}{red:X2}{green:X2}{blue:X2}";
+    }
+
+    /// <summary>
+    /// Convert a <see cref="Colour"/> to a GDK RGBA.
+    /// </summary>
+    /// <param name="colour">The colour to convert.</param>
+    /// <returns>The GDK RGBA.</returns>
+    public static Gdk.RGBA ToRgba(this Colour colour)
+    {
+        Gdk.RGBA rgba = new Gdk.RGBA();
+        rgba.Alpha = colour.A / 255f;
+        rgba.Red = colour.R / 255f;
+        rgba.Green = colour.G / 255f;
+        rgba.Blue = colour.B / 255f;
+        return rgba;
+    }
+
+    /// <summary>
+    /// Convert a GDK RGBA to a <see cref="Colour"/>.
+    /// </summary>
+    /// <param name="rgba">The GDK RGBA to convert.</param>
+    /// <returns>The <see cref="Colour"/>.</returns>
+    public static Colour ToColour(this Gdk.RGBA rgba)
+    {
+        byte red = (byte)(rgba.Red * 255);
+        byte green = (byte)(rgba.Green * 255);
+        byte blue = (byte)(rgba.Blue * 255);
+        byte alpha = (byte)(rgba.Alpha * 255);
+        return new Colour(red, green, blue, alpha);
     }
 
     /// <summary>

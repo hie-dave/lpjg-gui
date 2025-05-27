@@ -3,6 +3,7 @@ using LpjGuess.Core.Interfaces.Graphing;
 using LpjGuess.Core.Models;
 using LpjGuess.Core.Models.Graphing;
 using LpjGuess.Core.Models.Graphing.Series;
+using LpjGuess.Core.Models.Graphing.Style;
 using LpjGuess.Frontend.Factories;
 using LpjGuess.Frontend.Interfaces.Factories;
 using LpjGuess.Frontend.Interfaces.Presenters;
@@ -133,12 +134,12 @@ public class GraphsPresenter : IGraphsPresenter
 		ISeries series = new LineSeries(
 			// Empty series name will use data source as title.
 			string.Empty,
-			"Blue",
+			new DynamicStyleProvider<Colour>(new GridcellStrategy(), new ColourStrategy()),
 			dataSource,
 			AxisPosition.Bottom,
 			AxisPosition.Left,
-			LineType.Solid,
-			LineThickness.Regular);
+			new FixedStyleProvider<LineType>(LineType.Solid),
+			new FixedStyleProvider<LineThickness>(LineThickness.Regular));
 		return new Graph(string.Empty, [series]);
     }
 

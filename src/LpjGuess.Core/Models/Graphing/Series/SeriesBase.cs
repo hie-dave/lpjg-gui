@@ -1,5 +1,7 @@
 using LpjGuess.Core.Interfaces;
 using LpjGuess.Core.Interfaces.Graphing;
+using LpjGuess.Core.Interfaces.Graphing.Style;
+using LpjGuess.Core.Models.Graphing.Style;
 
 namespace LpjGuess.Core.Models.Graphing.Series;
 
@@ -12,7 +14,7 @@ public abstract class SeriesBase : ISeries
     public string Title { get; set; }
 
     /// <inheritdoc />
-    public string Colour { get; set; }
+    public IStyleProvider<Colour> ColourProvider { get; set; }
 
     /// <inheritdoc />
     public IDataSource DataSource { get; set; }
@@ -33,7 +35,7 @@ public abstract class SeriesBase : ISeries
     public SeriesBase()
     {
         Title = string.Empty;
-        Colour = string.Empty;
+        ColourProvider = new FixedStyleProvider<Colour>(Colours.Black);
         DataSource = null!;
         XAxisPosition = AxisPosition.Bottom;
         YAxisPosition = AxisPosition.Left;
@@ -43,19 +45,19 @@ public abstract class SeriesBase : ISeries
     /// Create a new <see cref="SeriesBase"/> instance.
     /// </summary>
     /// <param name="title">The title of the series.</param>
-    /// <param name="colour">The colour of the series.</param>
+    /// <param name="colourProvider">The colour provider for the series.</param>
     /// <param name="dataSource">The data source for the series.</param>
     /// <param name="xAxisPosition">The position of the X axis for the series.</param>
     /// <param name="yAxisPosition">The position of the Y axis for the series.</param>
     public SeriesBase(
         string title,
-        string colour,
+        IStyleProvider<Colour> colourProvider,
         IDataSource dataSource,
         AxisPosition xAxisPosition,
         AxisPosition yAxisPosition)
     {
         Title = title;
-        Colour = colour;
+        ColourProvider = colourProvider;
         DataSource = dataSource;
         XAxisPosition = xAxisPosition;
         YAxisPosition = yAxisPosition;

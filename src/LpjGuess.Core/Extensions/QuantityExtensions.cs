@@ -108,6 +108,7 @@ public static class QuantityExtensions
             timestampMatches = (p0, p1) => p0.Timestamp == p1.Timestamp;
 
         // Create rows for each data point.
+        // FIXME: this is impractically inefficient with spinup outputs.
         foreach (DataPoint dataPoint in dataPoints)
         {
             DataRow row = table.NewRow();

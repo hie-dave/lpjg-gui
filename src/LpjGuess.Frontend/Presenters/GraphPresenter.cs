@@ -4,6 +4,7 @@ using LpjGuess.Core.Interfaces.Graphing;
 using LpjGuess.Core.Models;
 using LpjGuess.Core.Models.Graphing;
 using LpjGuess.Core.Models.Graphing.Series;
+using LpjGuess.Core.Models.Graphing.Style;
 using LpjGuess.Frontend.Commands;
 using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.Interfaces.Commands;
@@ -175,10 +176,10 @@ public class GraphPresenter : IGraphPresenter
         LineSeries series = new LineSeries
         {
             Title = "New Series",
-            Thickness = LineThickness.Regular,
-            Type = LineType.Solid,
+            Thickness = new FixedStyleProvider<LineThickness>(LineThickness.Regular),
+            Type = new FixedStyleProvider<LineType>(LineType.Solid),
             DataSource = new ModelOutput("file_lai", "Date", "Total", instructionFiles),
-            Colour = "Blue"
+            ColourProvider = new DynamicStyleProvider<Colour>(new GridcellStrategy(), new ColourStrategy())
         };
 
         // Add the series to the graph

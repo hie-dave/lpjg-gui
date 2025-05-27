@@ -3,6 +3,7 @@ using Dave.Benchmarks.Core.Models.Importer;
 using Dave.Benchmarks.Core.Services;
 using LpjGuess.Core.Models;
 using LpjGuess.Runner.Extensions;
+using LpjGuess.Runner.Helpers;
 using LpjGuess.Runner.Models;
 using LpjGuess.Runner.Parsers;
 using Microsoft.Extensions.Logging;
@@ -36,6 +37,16 @@ public class Simulation
     public InstructionFileParser InstructionFile { get; private init; }
 
     /// <summary>
+    /// Helper for the instruction file.
+    /// </summary>
+    public InstructionFileHelper Helper { get; private init; }
+
+    /// <summary>
+    /// Gridlist parser.
+    /// </summary>
+    public GridlistParser Gridlist { get; private init; }
+
+    /// <summary>
     /// Create a new <see cref="Simulation"/> instance.
     /// </summary>
     /// <param name="fileName">Path to the instruction file.</param>
@@ -50,6 +61,10 @@ public class Simulation
 
         // TODO: proper async support.
         InstructionFile = InstructionFileParser.FromFile(fileName);
+        Helper = new InstructionFileHelper(InstructionFile);
+
+        string gridlist = Helper.GetGridlist();
+        Gridlist = new GridlistParser(gridlist);
 
         Resolver = new OutputFileTypeResolver(logger);
         Resolver.BuildLookupTable(InstructionFile);
@@ -63,11 +78,13 @@ public class Simulation
     /// <returns>Collection of output files.</returns>
     public IEnumerable<OutputFile> GetOutputFiles()
     {
-        string outputDirectory = InstructionFile.GetOutputDirectory();
+        string outputDirectory = Helper.GetOutputDirectory();
         IEnumerable<string> outputFiles = Directory.EnumerateFiles(outputDirectory, "*.out");
-        return outputFiles.Select(CreateOutputFile)
+        var files = outputFiles.Select(CreateOutputFile)
                           .Where(file => file != null)
-                          .Cast<OutputFile>();
+                          .Cast<OutputFile>()
+                          .ToList();
+        return files;
     }
 
     /// <summary>
@@ -107,7 +124,7 @@ public class Simulation
     {
         string fileName = Resolver.GetFileName(fileType);
 
-        string outputDirectory = InstructionFile.GetOutputDirectory();
+        string outputDirectory = Helper.GetOutputDirectory();
         string outputFile = Path.Combine(outputDirectory, fileName);
         return ReadOutputFileAsync(outputFile);
     }
@@ -131,7 +148,7 @@ public class Simulation
     public Task<IEnumerable<LayerMetadata>> ReadOutputFileMetadataAsync(string fileType)
     {
         string fileName = Resolver.GetFileName(fileType);
-        string outputDirectory = InstructionFile.GetOutputDirectory();
+        string outputDirectory = Helper.GetOutputDirectory();
         string outputFile = Path.Combine(outputDirectory, fileName);
         return outputParser.ParseOutputFileHeaderAsync(outputFile);
     }

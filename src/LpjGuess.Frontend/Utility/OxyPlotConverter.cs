@@ -203,8 +203,8 @@ public static class OxyPlotConverter
         if (string.IsNullOrWhiteSpace(series.Title))
             lineSeries.Title = data.Name;
 
-        lineSeries.Color = ColourUtility.HexToOxyColor(series.Colour);
-        lineSeries.LineStyle = series.Type switch
+        lineSeries.Color = series.ColourProvider.GetStyle(data).ToOxyColor();
+        lineSeries.LineStyle = series.Type.GetStyle(data) switch
         {
             LineType.Solid => LineStyle.Solid,
             LineType.Dashed => LineStyle.Dash,
@@ -212,7 +212,7 @@ public static class OxyPlotConverter
             _ => throw new InvalidOperationException($"Unknown line type: {series.Type}")
         };
 
-        lineSeries.StrokeThickness = series.Thickness switch
+        lineSeries.StrokeThickness = series.Thickness.GetStyle(data) switch
         {
             LineThickness.Thin => 1,
             LineThickness.Regular => 2,

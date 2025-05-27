@@ -1,3 +1,4 @@
+using LpjGuess.Core.Interfaces.Graphing.Style;
 using LpjGuess.Core.Models.Graphing;
 
 namespace LpjGuess.Core.Interfaces.Graphing;
@@ -15,7 +16,7 @@ public interface ISeries
     /// <summary>
     /// Series colour.
     /// </summary>
-    string Colour { get; set; }
+    IStyleProvider<Colour> ColourProvider { get; set; }
 
     /// <summary>
     /// The source for data displayed in the series.
