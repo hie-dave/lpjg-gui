@@ -2,6 +2,8 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using LpjGuess.Core.Interfaces;
 using LpjGuess.Core.Interfaces.Graphing;
+using LpjGuess.Core.Interfaces.Graphing.Style;
+using LpjGuess.Core.Models.Graphing;
 using LpjGuess.Runner.Models;
 
 namespace LpjGuess.Core.Serialisation.Json;
@@ -19,13 +21,16 @@ public static class JsonSerialisation
         WriteIndented = true,
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-        Converters = 
-        { 
+        Converters =
+        {
             new JsonStringEnumConverter(),
             // Add polymorphic converters for interfaces
             new PolymorphicConverter<IRunnerConfiguration>(),
             new PolymorphicConverter<ISeries>(),
             new PolymorphicConverter<IDataSource>(),
+            new PolymorphicConverter<IStyleProvider<Colour>>(),
+            new PolymorphicConverter<IStyleProvider<LineThickness>>(),
+            new PolymorphicConverter<IStyleProvider<LineType>>(),
             // Add more interface converters as needed
         }
     };

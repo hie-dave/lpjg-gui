@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LpjGuess.Frontend", "LpjGue
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LpjGuess.Core", "LpjGuess.Core\LpjGuess.Core.csproj", "{809336B2-B975-4084-84EB-1D2BE5814DE2}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LpjGuess.Tests", "LpjGuess.Tests\LpjGuess.Tests.csproj", "{1CEBD18B-3942-47A2-9F23-B637E200FF9F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +26,9 @@ Global
 		{809336B2-B975-4084-84EB-1D2BE5814DE2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{809336B2-B975-4084-84EB-1D2BE5814DE2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{809336B2-B975-4084-84EB-1D2BE5814DE2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1CEBD18B-3942-47A2-9F23-B637E200FF9F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1CEBD18B-3942-47A2-9F23-B637E200FF9F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1CEBD18B-3942-47A2-9F23-B637E200FF9F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1CEBD18B-3942-47A2-9F23-B637E200FF9F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

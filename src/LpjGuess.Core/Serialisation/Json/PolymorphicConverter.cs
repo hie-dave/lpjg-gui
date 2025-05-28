@@ -27,7 +27,8 @@ public class PolymorphicConverter<TInterface> : JsonConverter<TInterface> where 
     public PolymorphicConverter(params Assembly[] assemblies)
     {
         this.assemblies = [..assemblies];
-        this.assemblies.Add(GetType().Assembly);
+        this.assemblies.Add(GetType().Assembly); // LpjGuess.Core
+        this.assemblies.Add(typeof(string).Assembly);
         if (assemblies.Length == 0)
             this.assemblies.Add(typeof(TInterface).Assembly);
     }
@@ -120,24 +121,106 @@ public class PolymorphicConverter<TInterface> : JsonConverter<TInterface> where 
         {
             return cachedType;
         }
-        
-        // Search for the type in the provided assemblies
+
+        Type resolvedType = ParseTypeName(typeDiscriminator);
+
+        TypeCache[typeDiscriminator] = resolvedType;
+        return resolvedType;
+    }
+
+    /// <summary>
+    /// Parse the name to a known type.
+    /// </summary>
+    /// <param name="typeName">The type name.</param>
+    /// <returns></returns>
+    /// <exception cref="JsonException"></exception>
+    private Type ParseTypeName(string typeName)
+    {
+        // Check if this is a generic type
+        if (typeName.Contains('<') && typeName.EndsWith('>'))
+        {
+            return ParseGenericTypeName(typeName);
+        }
+
+        // This is a non-generic type, find it in the assemblies
         foreach (var assembly in assemblies)
         {
-            foreach (var type in assembly.GetTypes())
+            Type? type = assembly.GetTypes().FirstOrDefault(t =>
+                SanitiseTypeName(t) == typeName);
+
+            if (type != null)
+                return type;
+        }
+
+        throw new JsonException($"Could not find type: {typeName}");
+    }
+
+    private Type ParseGenericTypeName(string typeName)
+    {
+        // Parse the base name and generic arguments
+        int openBracketIndex = typeName.IndexOf('<');
+        string baseName = typeName.Substring(0, openBracketIndex);
+        string argsString = typeName.Substring(openBracketIndex + 1, typeName.Length - openBracketIndex - 2);
+
+        // Parse the arguments, handling nested generics
+        List<string> argNames = new List<string>();
+        int nestLevel = 0;
+        int startPos = 0;
+
+        for (int i = 0; i < argsString.Length; i++)
+        {
+            char c = argsString[i];
+
+            if (c == '<')
+                nestLevel++;
+            else if (c == '>')
+                nestLevel--;
+            else if (c == ',' && nestLevel == 0)
             {
-                if (!type.IsAbstract && !type.IsInterface && 
-                    typeof(TInterface).IsAssignableFrom(type) && 
-                    type.Name == typeDiscriminator)
+                // Found a top-level argument separator
+                argNames.Add(argsString.Substring(startPos, i - startPos).Trim());
+                startPos = i + 1;
+            }
+        }
+
+        // Add the last argument
+        if (startPos < argsString.Length)
+            argNames.Add(argsString.Substring(startPos).Trim());
+
+        // Recursively resolve each generic argument.
+        Type[] genericArgs = argNames.Select(ParseTypeName).ToArray();
+
+        // The prefix with which the runtime type's Name must begin.
+        string pfx = $"{baseName}`";
+
+        // Find the generic type definition.
+        foreach (Assembly assembly in assemblies)
+        {
+            // Restrict the search to generic types which have the prefix.
+            IEnumerable<Type> candidates = assembly.GetTypes()
+                .Where(t => t.IsGenericTypeDefinition && t.Name.StartsWith(pfx));
+            foreach (Type type in candidates)
+            {
+                try
                 {
-                    // Add to cache and return
-                    TypeCache[typeDiscriminator] = type;
-                    return type;
+                    // Check if this type can be constructed with the
+                    // required generic type arguments.
+                    if (genericArgs.Length != type.GetGenericArguments().Length)
+                        continue;
+
+                    Type constructed = type.MakeGenericType(genericArgs);
+                    if (GetDiscriminatorFromType(constructed) == typeName)
+                        return constructed;
+                }
+                catch
+                {
+                    // If this type can't be constructed with the required type
+                    // parameters, it's not the type we're looking for.
                 }
             }
         }
-        
-        throw new JsonException($"Unknown type discriminator: {typeDiscriminator}");
+
+        throw new JsonException($"Could not find generic type definition for: {baseName}");
     }
 
     /// <summary>
@@ -152,12 +235,39 @@ public class PolymorphicConverter<TInterface> : JsonConverter<TInterface> where 
         {
             return cachedDiscriminator;
         }
-        
+
         // Use the type name as the discriminator
-        string discriminator = type.Name;
-        
+        string discriminator = SanitiseTypeName(type);
+
         // Add to cache and return
         DiscriminatorCache[type] = discriminator;
         return discriminator;
+    }
+
+    /// <summary>
+    /// Sanitise a type name for JSON serialisation. This is required for
+    /// generic types, as the default type.Name is not parse-able during
+    /// deserialization.
+    /// </summary>
+    /// <param name="type">The type to sanitise.</param>
+    /// <returns>The sanitised type name.</returns>
+    private string SanitiseTypeName(Type type)
+    {
+        string name = type.Name;
+
+        if (type.IsGenericType)
+        {
+            // Get the base name without the `1 suffix
+            string baseName = name.Split('`')[0];
+
+            // Get the generic type arguments
+            Type[] genericArgs = type.GetGenericArguments();
+
+            // Format as BaseName<Arg1,Arg2,...>
+            string args = string.Join(",", genericArgs.Select(SanitiseTypeName));
+            name = $"{baseName}<{args}>";
+        }
+
+        return name;
     }
 }
