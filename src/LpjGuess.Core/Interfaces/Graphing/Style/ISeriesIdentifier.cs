@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace LpjGuess.Core.Interfaces.Graphing.Style;
 
 /// <summary>

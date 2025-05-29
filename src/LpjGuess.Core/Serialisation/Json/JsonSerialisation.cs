@@ -1,5 +1,5 @@
-using System.Text.Json;
-using System.Text.Json.Serialization;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 using LpjGuess.Runner.Models;
 
 namespace LpjGuess.Core.Serialisation.Json;
@@ -10,21 +10,16 @@ namespace LpjGuess.Core.Serialisation.Json;
 public static class JsonSerialisation
 {
     /// <summary>
-    /// Default JSON serialization options.
+    /// Default JSON serialization settings.
     /// </summary>
-    private static readonly JsonSerializerOptions DefaultOptions = new JsonSerializerOptions
+    private static readonly JsonSerializerSettings DefaultSettings = new()
     {
-        WriteIndented = true,
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-        Converters =
+        Formatting = Formatting.Indented,
+        NullValueHandling = NullValueHandling.Ignore,
+        TypeNameHandling = TypeNameHandling.Auto,
+        Converters = 
         {
-            new JsonStringEnumConverter(),
-            // Add a single polymorphic converter factory that handles all interfaces
-            new PolymorphicConverterFactory(
-                typeof(JsonSerialisation).Assembly,   // LpjGuess.Core
-                typeof(IRunnerConfiguration).Assembly // LpjGuess.Runner
-            )
+            new StringEnumConverter()
         }
     };
 
@@ -33,8 +28,8 @@ public static class JsonSerialisation
     /// </summary>
     /// <param name="obj">The object to be serialised.</param>
     /// <param name="file">File name and path to which config will be saved.</param>
-    /// <param name="options">Optional custom serialization options.</param>
-    public static void SerialiseTo(this object obj, string file, JsonSerializerOptions? options = null)
+    /// <param name="settings">Optional custom serialization settings.</param>
+    public static void SerialiseTo(this object obj, string file, JsonSerializerSettings? settings = null)
     {
         try
         {
@@ -45,7 +40,7 @@ public static class JsonSerialisation
             if (!Directory.Exists(dir))
                 Directory.CreateDirectory(dir);
 
-            string json = JsonSerializer.Serialize(obj, options ?? DefaultOptions);
+            string json = JsonConvert.SerializeObject(obj, settings ?? DefaultSettings);
             File.WriteAllText(file, json);
         }
         catch (Exception error)
@@ -58,8 +53,8 @@ public static class JsonSerialisation
     /// Load configuration from the specified file.
     /// </summary>
     /// <param name="file">Input file to be read.</param>
-    /// <param name="options">Optional custom serialization options.</param>
-    public static T DeserialiseFrom<T>(string file, JsonSerializerOptions? options = null) where T : new()
+    /// <param name="settings">Optional custom serialization settings.</param>
+    public static T DeserialiseFrom<T>(string file, JsonSerializerSettings? settings = null) where T : new()
     {
         try
         {
@@ -67,7 +62,7 @@ public static class JsonSerialisation
                 throw new FileNotFoundException($"File not found: '{file}'", file);
 
             string json = File.ReadAllText(file);
-            T? result = JsonSerializer.Deserialize<T>(json, options ?? DefaultOptions);
+            T? result = JsonConvert.DeserializeObject<T>(json, settings ?? DefaultSettings);
             
             return result ?? new T();
         }
@@ -82,15 +77,15 @@ public static class JsonSerialisation
     /// </summary>
     /// <typeparam name="T">The type of object to clone.</typeparam>
     /// <param name="source">The source object to clone.</param>
-    /// <param name="options">Optional custom serialization options.</param>
+    /// <param name="settings">Optional custom serialization settings.</param>
     /// <returns>A deep clone of the source object.</returns>
-    public static T DeepClone<T>(T source, JsonSerializerOptions? options = null)
+    public static T DeepClone<T>(T source, JsonSerializerSettings? settings = null)
     {
         if (source == null)
             throw new ArgumentNullException(nameof(source));
 
-        string json = JsonSerializer.Serialize(source, options ?? DefaultOptions);
-        return JsonSerializer.Deserialize<T>(json, options ?? DefaultOptions) ?? 
+        string json = JsonConvert.SerializeObject(source, settings ?? DefaultSettings);
+        return JsonConvert.DeserializeObject<T>(json, settings ?? DefaultSettings) ??
                throw new InvalidOperationException("Failed to deserialize cloned object");
     }
 }

@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="ExtendedXmlSerializer" Version="3.7.11" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <ProjectReference Include="../../../runner/LpjGuess.Runner/LpjGuess.Runner.csproj" />
     <ProjectReference Include="../../../benchmarks/Dave.Benchmarks.Core/Dave.Benchmarks.Core.csproj" />
   </ItemGroup>

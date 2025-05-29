@@ -68,7 +68,7 @@ public class Configuration
 	/// <summary>
 	/// Maximum number of workspaces to remember in "recent workspaces".
 	/// </summary>
-	public int MaxHistoryLength { get; set; }
+	public int MaxHistoryLength { get; set; } = 20;
 
 	/// <summary>
 	/// List of recent workspaces.
