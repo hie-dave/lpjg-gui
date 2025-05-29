@@ -12,28 +12,30 @@ public class DynamicStyleProvider<T> : IStyleProvider<T>
     /// The strategy used to identify a series. The series' identity is used by
     /// the value strategy to get a style value.
     /// </summary>
-    private readonly ISeriesIdentifier identifier;
+    public ISeriesIdentifier Identifier { get; private init; }
 
     /// <summary>
     /// The strategy to use to select the value for a given index.
     /// </summary>
-    private readonly IStyleStrategy<T> valueStrategy;
+    public IStyleStrategy<T> ValueStrategy { get; private init; }
 
     /// <summary>
     /// Create a new <see cref="DynamicStyleProvider{T}"/> instance.
     /// </summary>
+    /// <param name="identifier">The identifier strategy.</param>
+    /// <param name="valueStrategy">The value strategy.</param>
     public DynamicStyleProvider(ISeriesIdentifier identifier, IStyleStrategy<T> valueStrategy)
     {
-        this.identifier = identifier;
-        this.valueStrategy = valueStrategy;
+        Identifier = identifier;
+        ValueStrategy = valueStrategy;
     }
 
     /// <inheritdoc />
     public T GetStyle(ISeriesData data)
     {
-        SeriesIdentifierBase identity = identifier.GetIdentifier(data);
+        SeriesIdentifierBase identity = Identifier.GetIdentifier(data);
         uint index = GetIndex(identity);
-        return valueStrategy.GetValue(index);
+        return ValueStrategy.GetValue(index);
     }
 
     /// <summary>
@@ -44,7 +46,7 @@ public class DynamicStyleProvider<T> : IStyleProvider<T>
     /// <returns>The index.</returns>
     private uint GetIndex(SeriesIdentifierBase identity)
     {
-        int n = valueStrategy.Count;
+        int n = ValueStrategy.Count;
 
         // Primary hash.
         int hash = identity.GetHashCode();

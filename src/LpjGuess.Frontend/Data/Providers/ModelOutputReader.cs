@@ -154,7 +154,7 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
         // be better to use the fallback name (lat, lon) in that case?
         string name = simulation.Gridlist.GetName(datapoint.Longitude, datapoint.Latitude);
         return new SeriesContext(
-            new Gridcell(datapoint.Longitude, datapoint.Latitude, name),
+            new Gridcell(datapoint.Latitude, datapoint.Longitude, name),
             datapoint.Stand,
             datapoint.Patch,
             datapoint.Individual,

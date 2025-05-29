@@ -6,17 +6,18 @@ using System.Collections.Concurrent;
 namespace LpjGuess.Core.Serialisation.Json;
 
 /// <summary>
-/// A generic JSON converter that supports polymorphic serialization of interface or abstract types.
+/// A generic JSON converter that supports polymorphic serialization of generic
+/// types. This converter can also handle interfaces and abstract classes.
 /// </summary>
-/// <typeparam name="TInterface">The interface or abstract type to convert.</typeparam>
-public class PolymorphicConverter<TInterface> : JsonConverter<TInterface> where TInterface : class
+/// <typeparam name="T">The type to convert.</typeparam>
+public class PolymorphicConverter<T> : JsonConverter<T> where T : class
 {
     private const string TypeDiscriminatorPropertyName = "$type";
-    
+
     // Cache of type mappings for better performance
     private static readonly ConcurrentDictionary<string, Type> TypeCache = new();
     private static readonly ConcurrentDictionary<Type, string> DiscriminatorCache = new();
-    
+
     // Assemblies to search for implementations
     private readonly HashSet<Assembly> assemblies;
 
@@ -28,85 +29,72 @@ public class PolymorphicConverter<TInterface> : JsonConverter<TInterface> where 
     {
         this.assemblies = [..assemblies];
         this.assemblies.Add(GetType().Assembly); // LpjGuess.Core
-        this.assemblies.Add(typeof(string).Assembly);
+        this.assemblies.Add(typeof(string).Assembly); // System.Private.CoreLib
         if (assemblies.Length == 0)
-            this.assemblies.Add(typeof(TInterface).Assembly);
+            this.assemblies.Add(typeof(T).Assembly);
     }
-    
+
     /// <summary>
     /// Read and convert the JSON to the interface type.
     /// </summary>
-    public override TInterface? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    public override T? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         if (reader.TokenType != JsonTokenType.StartObject)
-        {
             throw new JsonException("Expected start of object");
-        }
 
-        using (JsonDocument document = JsonDocument.ParseValue(ref reader))
-        {
-            if (!document.RootElement.TryGetProperty(TypeDiscriminatorPropertyName, out JsonElement typeProperty))
-            {
-                throw new JsonException($"Missing type discriminator property '{TypeDiscriminatorPropertyName}'");
-            }
+        using JsonDocument document = JsonDocument.ParseValue(ref reader);
+        if (!document.RootElement.TryGetProperty(TypeDiscriminatorPropertyName, out JsonElement typeProperty))
+            throw new JsonException($"Missing type discriminator property '{TypeDiscriminatorPropertyName}'");
 
-            string typeDiscriminator = typeProperty.GetString() ?? 
-                throw new JsonException("Type discriminator cannot be null");
+        string typeDiscriminator = typeProperty.GetString() ??
+            throw new JsonException("Type discriminator cannot be null");
 
-            // Get the concrete type based on the discriminator
-            Type concreteType = GetTypeFromDiscriminator(typeDiscriminator);
-            
-            // Deserialize to the concrete type
-            return (TInterface?)JsonSerializer.Deserialize(
-                document.RootElement.GetRawText(), 
-                concreteType, 
-                options);
-        }
+        // Get the concrete type based on the discriminator
+        Type concreteType = GetTypeFromDiscriminator(typeDiscriminator);
+
+        // Deserialize to the concrete type
+        return (T?)JsonSerializer.Deserialize(
+            document.RootElement.GetRawText(),
+            concreteType,
+            options);
     }
 
     /// <summary>
     /// Write an interface object to JSON.
     /// </summary>
-    public override void Write(Utf8JsonWriter writer, TInterface value, JsonSerializerOptions options)
+    public override void Write(Utf8JsonWriter writer, T value, JsonSerializerOptions options)
     {
         if (value == null)
         {
             writer.WriteNullValue();
             return;
         }
-        
+
         // Create a temporary options to avoid infinite recursion
         var serializerOptions = new JsonSerializerOptions(options)
         {
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
         };
-        
+
         // Remove this converter to avoid infinite recursion
         foreach (var converter in serializerOptions.Converters.ToList())
-        {
-            if (converter is PolymorphicConverter<TInterface>)
-            {
+            if (converter is PolymorphicConverterFactory)
                 serializerOptions.Converters.Remove(converter);
-            }
-        }
-        
+
         // Serialize the object to a JsonDocument
         string valueJson = JsonSerializer.Serialize(value, value.GetType(), serializerOptions);
-        using (JsonDocument document = JsonDocument.Parse(valueJson))
-        {
-            writer.WriteStartObject();
-            
-            // Write the type discriminator
-            writer.WriteString(TypeDiscriminatorPropertyName, GetDiscriminatorFromType(value.GetType()));
-            
-            // Write all the properties from the original object
-            foreach (JsonProperty property in document.RootElement.EnumerateObject())
-            {
-                property.WriteTo(writer);
-            }
-            
-            writer.WriteEndObject();
-        }
+        using JsonDocument document = JsonDocument.Parse(valueJson);
+
+        writer.WriteStartObject();
+
+        // Write the type discriminator
+        writer.WriteString(TypeDiscriminatorPropertyName, GetDiscriminatorFromType(value.GetType()));
+
+        // Write all the properties from the original object
+        foreach (JsonProperty property in document.RootElement.EnumerateObject())
+            property.WriteTo(writer);
+
+        writer.WriteEndObject();
     }
 
     /// <summary>
@@ -118,9 +106,7 @@ public class PolymorphicConverter<TInterface> : JsonConverter<TInterface> where 
     {
         // Check cache first
         if (TypeCache.TryGetValue(typeDiscriminator, out Type? cachedType))
-        {
             return cachedType;
-        }
 
         Type resolvedType = ParseTypeName(typeDiscriminator);
 
@@ -138,9 +124,7 @@ public class PolymorphicConverter<TInterface> : JsonConverter<TInterface> where 
     {
         // Check if this is a generic type
         if (typeName.Contains('<') && typeName.EndsWith('>'))
-        {
             return ParseGenericTypeName(typeName);
-        }
 
         // This is a non-generic type, find it in the assemblies
         foreach (var assembly in assemblies)
@@ -232,9 +216,7 @@ public class PolymorphicConverter<TInterface> : JsonConverter<TInterface> where 
     {
         // Check cache first
         if (DiscriminatorCache.TryGetValue(type, out string? cachedDiscriminator))
-        {
             return cachedDiscriminator;
-        }
 
         // Use the type name as the discriminator
         string discriminator = SanitiseTypeName(type);
