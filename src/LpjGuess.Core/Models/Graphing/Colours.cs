@@ -6,6 +6,11 @@ namespace LpjGuess.Core.Models.Graphing;
 public static class Colours
 {
     /// <summary>
+    /// Transparent.
+    /// </summary>
+    public static readonly Colour Transparent = new Colour(0, 0, 0, 0);
+
+    /// <summary>
     /// Black.
     /// </summary>
     public static readonly Colour Black = new Colour(0, 0, 0);

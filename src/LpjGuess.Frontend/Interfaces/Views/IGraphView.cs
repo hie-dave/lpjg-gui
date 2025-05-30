@@ -1,5 +1,7 @@
 using LpjGuess.Core.Interfaces.Graphing;
+using LpjGuess.Core.Models.Graphing;
 using LpjGuess.Frontend.Delegates;
+using LpjGuess.Frontend.Interfaces.Events;
 using OxyPlot;
 
 namespace LpjGuess.Frontend.Interfaces.Views;
@@ -20,19 +22,9 @@ public interface IGraphView : IView
     Event<ISeries> OnRemoveSeries { get; }
 
     /// <summary>
-    /// Called when the user wants to change the title of the graph.
+    /// Called when the user wants to change the graph.
     /// </summary>
-    Event<string> OnTitleChanged { get; }
-
-    /// <summary>
-    /// Called when the user wants to change the X-axis title of the graph.
-    /// </summary>
-    Event<string> OnXAxisTitleChanged { get; }
-
-    /// <summary>
-    /// Called when the user wants to change the Y-axis title of the graph.
-    /// </summary>
-    Event<string> OnYAxisTitleChanged { get; }
+    Event<IModelChange<Graph>> OnGraphChanged { get; }
 
     /// <summary>
     /// The plot model displayed in the view.
@@ -51,7 +43,20 @@ public interface IGraphView : IView
     /// <param name="title">The title of the graph.</param>
     /// <param name="xaxisTitle">The X-axis title of the graph.</param>
     /// <param name="yaxisTitle">The Y-axis title of the graph.</param>
-    void UpdateProperties(string title, string? xaxisTitle, string? yaxisTitle);
+    /// <param name="position">The position of the legend.</param>
+    /// <param name="placement">The placement of the legend.</param>
+    /// <param name="orientation">The orientation of the legend.</param>
+    /// <param name="legendBackground">The background colour of the legend.</param>
+    /// <param name="legendBorder">The border colour of the legend.</param>
+    void UpdateProperties(
+        string title,
+        string? xaxisTitle,
+        string? yaxisTitle,
+        LegendPosition position,
+        LegendPlacement placement,
+        LegendOrientation orientation,
+        Colour legendBackground,
+        Colour legendBorder);
 
     /// <summary>
     /// Populate the list of series editor views.

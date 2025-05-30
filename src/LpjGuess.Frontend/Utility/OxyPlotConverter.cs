@@ -26,7 +26,18 @@ using OxyAxis = OxyPlot.Axes.Axis;
 using OxyLinearAxis = OxyPlot.Axes.LinearAxis;
 using OxyDateTimeAxis = OxyPlot.Axes.DateTimeAxis;
 using OxyLogarithmicAxis = OxyPlot.Axes.LogarithmicAxis;
-using System.Threading.Tasks;
+
+using Legend = LpjGuess.Core.Models.Graphing.Legend;
+using OxyLegend = OxyPlot.Legends.Legend;
+
+using LegendPosition = LpjGuess.Core.Models.Graphing.LegendPosition;
+using OxyLegendPosition = OxyPlot.Legends.LegendPosition;
+
+using LegendPlacement = LpjGuess.Core.Models.Graphing.LegendPlacement;
+using OxyLegendPlacement = OxyPlot.Legends.LegendPlacement;
+
+using LegendOrientation = LpjGuess.Core.Models.Graphing.LegendOrientation;
+using OxyLegendOrientation = OxyPlot.Legends.LegendOrientation;
 
 namespace LpjGuess.Frontend.Utility;
 
@@ -59,7 +70,51 @@ public static class OxyPlotConverter
             foreach (OxySeries oxySeries in await ToOxySeriesAsync(series))
                 plot.Series.Add(oxySeries);
 
+        // Add legend.
+        OxyLegend legend = new OxyLegend();
+        legend.LegendOrientation = ToOxyOrientation(graph.Legend.Orientation);
+        legend.LegendPlacement = ToOxyPlacement(graph.Legend.Placement);
+        legend.LegendPosition = ToOxyPosition(graph.Legend.Position);
+        legend.LegendBackground = graph.Legend.BackgroundColour.ToOxyColor();
+        legend.LegendBorder = graph.Legend.BorderColour.ToOxyColor();
+        legend.IsLegendVisible = plot.Series.Count > 1;
+        plot.Legends.Add(legend);
+
         return plot;
+    }
+
+    private static OxyLegendPosition ToOxyPosition(LegendPosition position)
+    {
+        return position switch
+        {
+            LegendPosition.TopLeft => OxyLegendPosition.TopLeft,
+            LegendPosition.TopCenter => OxyLegendPosition.TopCenter,
+            LegendPosition.TopRight => OxyLegendPosition.TopRight,
+            LegendPosition.BottomLeft => OxyLegendPosition.BottomLeft,
+            LegendPosition.BottomCenter => OxyLegendPosition.BottomCenter,
+            LegendPosition.BottomRight => OxyLegendPosition.BottomRight,
+            _ => throw new InvalidOperationException($"Unknown legend position: {position}")
+        };
+    }
+
+    private static OxyLegendPlacement ToOxyPlacement(LegendPlacement placement)
+    {
+        return placement switch
+        {
+            LegendPlacement.Inside => OxyLegendPlacement.Inside,
+            LegendPlacement.Outside => OxyLegendPlacement.Outside,
+            _ => throw new InvalidOperationException($"Unknown legend placement: {placement}")
+        };
+    }
+
+    private static OxyLegendOrientation ToOxyOrientation(LegendOrientation orientation)
+    {
+        return orientation switch
+        {
+            LegendOrientation.Vertical => OxyLegendOrientation.Vertical,
+            LegendOrientation.Horizontal => OxyLegendOrientation.Horizontal,
+            _ => throw new InvalidOperationException($"Unknown legend orientation: {orientation}")
+        };
     }
 
     private static string GetPlotTitle(Graph graph)
@@ -182,7 +237,7 @@ public static class OxyPlotConverter
         // FIXME - this probably doesn't work. Need to rethink the data provider API.
         IEnumerable<SeriesData> data = await DataProviderFactory.ReadAsync(series.DataSource);
 
-        return data.Select(seriesData => CreateOxySeries(series, seriesData));        
+        return data.Select(seriesData => CreateOxySeries(series, seriesData));
     }
 
     private static OxySeries CreateOxySeries(ISeries series, SeriesData data)

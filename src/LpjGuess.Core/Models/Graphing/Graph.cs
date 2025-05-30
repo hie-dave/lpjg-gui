@@ -25,6 +25,11 @@ public class Graph
 	public string? YAxisTitle { get; set; }
 
 	/// <summary>
+	/// The legend for this graph.
+	/// </summary>
+	public Legend Legend { get; set; }
+
+	/// <summary>
 	/// Series displayed on this graph.
 	/// </summary>
 	public List<ISeries> Series { get; set; }
@@ -34,16 +39,19 @@ public class Graph
 	/// </summary>
 	/// <param name="title">Graph title.</param>
 	/// <param name="series">Series to be displayed on the graph.</param>
+	/// <param name="legend">The legend for this graph.</param>
 	/// <param name="xAxisTitle">Optional axis title for the X axis. If null, a default title will be generated and used based on the data being displayed.</param>
 	/// <param name="yAxisTitle">Optional axis title for the Y axis. If null, a default title will be generated and used based on the data being displayed.</param>
 	public Graph(
 		string title,
 		IEnumerable<ISeries> series,
+		Legend? legend = null,
 		string? xAxisTitle = null,
 		string? yAxisTitle = null)
 	{
 		Title = title;
 		Series = series.ToList();
+		Legend = legend ?? new Legend();
 		XAxisTitle = xAxisTitle;
 		YAxisTitle = yAxisTitle;
 	}
@@ -51,7 +59,7 @@ public class Graph
 	/// <summary>
 	/// Default constructor provided for serialization purposes.
 	/// </summary>
-	public Graph() : this(string.Empty, [])
+	public Graph() : this(string.Empty, [], new Legend())
 	{
 	}
 

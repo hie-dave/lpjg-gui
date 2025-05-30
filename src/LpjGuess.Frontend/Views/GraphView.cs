@@ -1,8 +1,12 @@
 using Gtk;
 using LpjGuess.Core.Interfaces.Graphing;
+using LpjGuess.Core.Models.Graphing;
 using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.Extensions;
+using LpjGuess.Frontend.Events;
+using LpjGuess.Frontend.Interfaces.Events;
 using LpjGuess.Frontend.Interfaces.Views;
+using LpjGuess.Frontend.Utility;
 using LpjGuess.Frontend.Utility.Gtk;
 using OxyPlot;
 using OxyPlot.GtkSharp;
@@ -63,6 +67,41 @@ public class GraphView : ViewBase<Box>, IGraphView
     /// </summary>
     private readonly Entry yaxisTitleEntry;
 
+    /// <summary>
+    /// Dropdown widget for selecting the legend position.
+    /// </summary>
+    private readonly EnumDropDownView<LegendPosition> legendPositionDropdown;
+
+    /// <summary>
+    /// Dropdown widget for selecting the legend placement.
+    /// </summary>
+    private readonly EnumDropDownView<LegendPlacement> legendPlacementDropdown;
+
+    /// <summary>
+    /// Dropdown widget for selecting the legend orientation.
+    /// </summary>
+    private readonly EnumDropDownView<LegendOrientation> legendOrientationDropdown;
+
+    /// <summary>
+    /// Button for selecting the legend background colour.
+    /// </summary>
+    private readonly ColourChangeView legendBackgroundButton;
+
+    /// <summary>
+    /// Button for selecting the legend border colour.
+    /// </summary>
+    private readonly ColourChangeView legendBorderButton;
+
+    /// <summary>
+    /// The grid container for graph properties.
+    /// </summary>
+    private readonly Grid graphProperties;
+
+    /// <summary>
+    /// Number of rows in the grid.
+    /// </summary>
+    private int nrow;
+
     /// <inheritdoc />
     public Event OnAddSeries { get; private init; }
 
@@ -70,13 +109,7 @@ public class GraphView : ViewBase<Box>, IGraphView
     public Event<ISeries> OnRemoveSeries { get; private init; }
 
     /// <inheritdoc />
-    public Event<string> OnTitleChanged { get; private init; }
-
-    /// <inheritdoc />
-    public Event<string> OnXAxisTitleChanged { get; private init; }
-
-    /// <inheritdoc />
-    public Event<string> OnYAxisTitleChanged { get; private init; }
+    public Event<IModelChange<Graph>> OnGraphChanged { get; private init; }
 
     /// <inheritdoc />
     public PlotModel Model => plot.Model;
@@ -89,9 +122,7 @@ public class GraphView : ViewBase<Box>, IGraphView
         // Initialize events.
         OnAddSeries = new Event();
         OnRemoveSeries = new Event<ISeries>();
-        OnTitleChanged = new Event<string>();
-        OnXAxisTitleChanged = new Event<string>();
-        OnYAxisTitleChanged = new Event<string>();
+        OnGraphChanged = new Event<IModelChange<Graph>>();
 
         // Configure plot view.
         plot = new PlotView();
@@ -112,26 +143,38 @@ public class GraphView : ViewBase<Box>, IGraphView
         seriesPropertiesFrame.Label = "Series Properties";
         seriesPropertiesFrame.LabelXalign = 0.5f;
 
-        Label title = Label.New("Title");
         titleEntry = Entry.New();
         titleEntry.SetText(string.Empty);
         titleEntry.OnActivate += OnTitleEdited;
         titleEntry.Hexpand = true;
 
-        Label xaxisTitleTitle = Label.New("X-axis title");
         xaxisTitleEntry = Entry.New();
         xaxisTitleEntry.SetText(string.Empty);
         xaxisTitleEntry.OnActivate += OnXAxisTitleEdited;
         xaxisTitleEntry.Hexpand = true;
 
-        Label yaxisTitleTitle = Label.New("Y-axis title");
         yaxisTitleEntry = Entry.New();
         yaxisTitleEntry.SetText(string.Empty);
         yaxisTitleEntry.OnActivate += OnYAxisTitleEdited;
         yaxisTitleEntry.Hexpand = true;
 
+        legendPositionDropdown = new EnumDropDownView<LegendPosition>();
+        legendPositionDropdown.OnSelectionChanged.ConnectTo(OnLegendPositionChanged);
+
+        legendPlacementDropdown = new EnumDropDownView<LegendPlacement>();
+        legendPlacementDropdown.OnSelectionChanged.ConnectTo(OnLegendPlacementChanged);
+
+        legendOrientationDropdown = new EnumDropDownView<LegendOrientation>();
+        legendOrientationDropdown.OnSelectionChanged.ConnectTo(OnLegendOrientationChanged);
+
+        legendBackgroundButton = new ColourChangeView();
+        legendBackgroundButton.OnChanged.ConnectTo(OnLegendBackgroundColourChanged);
+
+        legendBorderButton = new ColourChangeView();
+        legendBorderButton.OnChanged.ConnectTo(OnLegendBorderColourChanged);
+
         // A grid container for graph properties.
-        Grid graphProperties = new Grid();
+        graphProperties = new Grid();
         graphProperties.RowSpacing = propertySpacing;
         graphProperties.ColumnSpacing = propertySpacing;
         graphProperties.RowHomogeneous = true;
@@ -140,12 +183,14 @@ public class GraphView : ViewBase<Box>, IGraphView
         graphProperties.MarginStart = frameSpacing;
         graphProperties.MarginEnd = frameSpacing;
 
-        graphProperties.Attach(title, 0, 0, 1, 1);
-        graphProperties.Attach(titleEntry, 1, 0, 1, 1);
-        graphProperties.Attach(xaxisTitleTitle, 0, 1, 1, 1);
-        graphProperties.Attach(xaxisTitleEntry, 1, 1, 1, 1);
-        graphProperties.Attach(yaxisTitleTitle, 0, 2, 1, 1);
-        graphProperties.Attach(yaxisTitleEntry, 1, 2, 1, 1);
+        AddRow("Title", titleEntry);
+        AddRow("X-axis title", xaxisTitleEntry);
+        AddRow("Y-axis title", yaxisTitleEntry);
+        AddRow("Legend position", legendPositionDropdown.GetWidget());
+        AddRow("Legend placement", legendPlacementDropdown.GetWidget());
+        AddRow("Legend orientation", legendOrientationDropdown.GetWidget());
+        AddRow("Legend background", legendBackgroundButton.GetWidget());
+        AddRow("Legend border", legendBorderButton.GetWidget());
 
         Frame graphPropertiesFrame = new Frame();
         graphPropertiesFrame.Child = graphProperties;
@@ -198,17 +243,41 @@ public class GraphView : ViewBase<Box>, IGraphView
     public void UpdateProperties(
         string title,
         string? xaxisTitle,
-        string? yaxisTitle)
+        string? yaxisTitle,
+        LegendPosition position,
+        LegendPlacement placement,
+        LegendOrientation orientation,
+        Colour legendBackground,
+        Colour legendBorder)
     {
         titleEntry.SetText(title);
         xaxisTitleEntry.SetText(xaxisTitle ?? string.Empty);
         yaxisTitleEntry.SetText(yaxisTitle ?? string.Empty);
+        legendPositionDropdown.Select(position);
+        legendPlacementDropdown.Select(placement);
+        legendOrientationDropdown.Select(orientation);
+        legendBackgroundButton.Populate(legendBackground);
+        legendBorderButton.Populate(legendBorder);
     }
 
     /// <inheritdoc />
     public void PopulateEditors(IEnumerable<(ISeries, IView)> series)
     {
         seriesSidebar.Populate(series.Select(s => (s.Item1, s.Item2.GetWidget())));
+    }
+
+    /// <summary>
+    /// Add a row to the graph properties grid.
+    /// </summary>
+    /// <param name="name">The name of the property.</param>
+    /// <param name="widget">The widget to display for the property.</param>
+    private void AddRow(string name, Widget widget)
+    {
+        Label title = Label.New($"{name}:");
+        title.Halign = Align.Start;
+        graphProperties.Attach(title, 0, nrow, 1, 1);
+        graphProperties.Attach(widget, 1, nrow, 1, 1);
+        nrow++;
     }
 
     /// <summary>
@@ -257,7 +326,13 @@ public class GraphView : ViewBase<Box>, IGraphView
     {
         try
         {
-            OnTitleChanged.Invoke(sender.GetText());
+            OnGraphChanged.Invoke(
+                new ModelChangeEventArgs<Graph, string>(
+                    graph => graph.Title,
+                    (graph, title) => graph.Title = title,
+                    sender.GetText()
+                )
+            );
         }
         catch (Exception error)
         {
@@ -276,7 +351,13 @@ public class GraphView : ViewBase<Box>, IGraphView
     {
         try
         {
-            OnXAxisTitleChanged.Invoke(sender.GetText());
+            OnGraphChanged.Invoke(
+                new ModelChangeEventArgs<Graph, string?>(
+                    graph => graph.XAxisTitle,
+                    (graph, title) => graph.XAxisTitle = title,
+                    sender.GetText()
+                )
+            );
         }
         catch (Exception error)
         {
@@ -295,11 +376,92 @@ public class GraphView : ViewBase<Box>, IGraphView
     {
         try
         {
-            OnYAxisTitleChanged.Invoke(sender.GetText());
+            OnGraphChanged.Invoke(
+                new ModelChangeEventArgs<Graph, string?>(
+                    graph => graph.YAxisTitle,
+                    (graph, title) => graph.YAxisTitle = title,
+                    sender.GetText()
+                )
+            );
         }
         catch (Exception error)
         {
             MainView.Instance.ReportError(error);
         }
+    }
+
+    /// <summary>
+    /// Called when the user changes the legend border colour.
+    /// </summary>
+    /// <param name="colour">The new border colour.</param>
+    private void OnLegendBorderColourChanged(Colour colour)
+    {
+        OnGraphChanged.Invoke(
+            new ModelChangeEventArgs<Graph, Colour>(
+                graph => graph.Legend.BorderColour,
+                (graph, colour) => graph.Legend.BorderColour = colour,
+                colour
+            )
+        );
+    }
+
+    /// <summary>
+    /// Called when the user changes the legend background colour.
+    /// </summary>
+    /// <param name="colour">The new background colour.</param>
+    private void OnLegendBackgroundColourChanged(Colour colour)
+    {
+        OnGraphChanged.Invoke(
+            new ModelChangeEventArgs<Graph, Colour>(
+                graph => graph.Legend.BackgroundColour,
+                (graph, colour) => graph.Legend.BackgroundColour = colour,
+                colour
+            )
+        );
+    }
+
+    /// <summary>
+    /// Called when the user changes the legend orientation.
+    /// </summary>
+    /// <param name="orientation">The new orientation.</param>
+    private void OnLegendOrientationChanged(LegendOrientation orientation)
+    {
+        OnGraphChanged.Invoke(
+            new ModelChangeEventArgs<Graph, LegendOrientation>(
+                graph => graph.Legend.Orientation,
+                (graph, orientation) => graph.Legend.Orientation = orientation,
+                orientation
+            )
+        );
+    }
+
+    /// <summary>
+    /// Called when the user changes the legend placement.
+    /// </summary>
+    /// <param name="placement">The new placement.</param>
+    private void OnLegendPlacementChanged(LegendPlacement placement)
+    {
+        OnGraphChanged.Invoke(
+            new ModelChangeEventArgs<Graph, LegendPlacement>(
+                graph => graph.Legend.Placement,
+                (graph, placement) => graph.Legend.Placement = placement,
+                placement
+            )
+        );
+    }
+
+    /// <summary>
+    /// Called when the user changes the legend position.
+    /// </summary>
+    /// <param name="position">The new position.</param>
+    private void OnLegendPositionChanged(LegendPosition position)
+    {
+        OnGraphChanged.Invoke(
+            new ModelChangeEventArgs<Graph, LegendPosition>(
+                graph => graph.Legend.Position,
+                (graph, position) => graph.Legend.Position = position,
+                position
+            )
+        );
     }
 }

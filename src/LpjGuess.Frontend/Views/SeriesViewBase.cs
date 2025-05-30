@@ -201,7 +201,7 @@ public abstract class SeriesViewBase<T> : ViewBase<Box>, ISeriesView<T> where T 
     /// control.</param>
     protected void AddControl(string name, Widget control, Widget? valueControl = null)
     {
-        Label label = Label.New(name);
+        Label label = Label.New($"{name}:");
         label.Halign = Align.Start;
         container.Attach(label, 0, nrow, 1, 1);
         container.Attach(control, 1, nrow, valueControl == null ? 2 : 1, 1);
@@ -329,19 +329,9 @@ public abstract class SeriesViewBase<T> : ViewBase<Box>, ISeriesView<T> where T 
     /// <param name="strategy">The new colour strategy.</param>
     private void OnColourStrategyChanged(StyleVariationStrategy strategy)
     {
-        // if (strategy == StyleVariationStrategy.Fixed)
-        // {
-        //     OnEditSeries.Invoke(new ModelChangeEventArgs<T, IStyleProvider<Colour>>(
-        //         series => series.ColourProvider,
-        //         (series, provider) => series.ColourProvider = provider,
-        //         new FixedStyleProvider<Colour>(chooseColourButton.Rgba.ToColour())));
-        // }
-        // else
-        {
-            OnEditSeries.Invoke(new ColourProviderChangeEvent<T>(
-                strategy,
-                series => series.ColourProvider,
-                (series, provider) => series.ColourProvider = provider));
-        }
+        OnEditSeries.Invoke(new ColourProviderChangeEvent<T>(
+            strategy,
+            series => series.ColourProvider,
+            (series, provider) => series.ColourProvider = provider));
     }
 }
