@@ -147,12 +147,16 @@ public abstract class SeriesViewBase<T> : ViewBase<Box>, ISeriesView<T> where T 
         {
             chooseColourButton.Rgba = fixedProvider.Style.ToRgba();
             chooseColourButton.Show();
+            container.SetColumnSpan(colourStrategyDropdown.GetWidget(), 1);
         }
         else
         {
             // Not using a fixed colour, so hide the colour button.
             chooseColourButton.Hide();
+            container.SetColumnSpan(colourStrategyDropdown.GetWidget(), 2);
         }
+
+        colourStrategyDropdown.Select(series.ColourProvider.GetStrategy());
         xAxisPositionDropdown.Select(series.XAxisPosition);
         yAxisPositionDropdown.Select(series.YAxisPosition);
 
@@ -169,6 +173,22 @@ public abstract class SeriesViewBase<T> : ViewBase<Box>, ISeriesView<T> where T 
         dataSourceTypeDropdown.OnSelectionChanged.ConnectTo(OnDataSourceTypeChanged);
         foreach (INamedView namedView in view.CreateConfigurationViews())
             AddControl(namedView.Name, namedView.View.GetWidget());
+    }
+
+    /// <inheritdoc />
+    public virtual void SetAllowedStyleVariationStrategies(IEnumerable<StyleVariationStrategy> strategies)
+    {
+        colourStrategyDropdown.Populate(strategies);
+    }
+
+    /// <summary>
+    /// Set the column span of a widget.
+    /// </summary>
+    /// <param name="widget">The widget to set the column span of.</param>
+    /// <param name="span">The column span.</param>
+    protected void SetColumnSpan(Widget widget, int span)
+    {
+        container.SetColumnSpan(widget, span);
     }
 
     /// <summary>
@@ -309,9 +329,19 @@ public abstract class SeriesViewBase<T> : ViewBase<Box>, ISeriesView<T> where T 
     /// <param name="strategy">The new colour strategy.</param>
     private void OnColourStrategyChanged(StyleVariationStrategy strategy)
     {
-        OnEditSeries.Invoke(new ColourProviderChangeEvent<T>(
-            strategy,
-            series => series.ColourProvider,
-            (series, provider) => series.ColourProvider = provider));
+        // if (strategy == StyleVariationStrategy.Fixed)
+        // {
+        //     OnEditSeries.Invoke(new ModelChangeEventArgs<T, IStyleProvider<Colour>>(
+        //         series => series.ColourProvider,
+        //         (series, provider) => series.ColourProvider = provider,
+        //         new FixedStyleProvider<Colour>(chooseColourButton.Rgba.ToColour())));
+        // }
+        // else
+        {
+            OnEditSeries.Invoke(new ColourProviderChangeEvent<T>(
+                strategy,
+                series => series.ColourProvider,
+                (series, provider) => series.ColourProvider = provider));
+        }
     }
 }

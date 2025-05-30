@@ -17,6 +17,25 @@ namespace LpjGuess.Frontend.Extensions;
 public static class GtkExtensions
 {
 	/// <summary>
+	/// Change the column-span property of a child of a grid widget.
+	/// </summary>
+	/// <param name="grid">The grid widget.</param>
+	/// <param name="child">A child of the grid.</param>
+	/// <param name="span">The new column-span value.</param>
+	public static void SetColumnSpan(this Grid grid, Widget child, int span)
+	{
+		LayoutManager? layoutManager = grid.LayoutManager;
+		if (layoutManager == null)
+			throw new InvalidOperationException($"Grid {grid.Name} has no layout manager");
+
+		LayoutChild? layoutChild = layoutManager.GetLayoutChild(child);
+		if (layoutChild is GridLayoutChild gridLayout)
+			gridLayout.ColumnSpan = span;
+		else
+			throw new InvalidOperationException($"Child {child.Name} is not a grid layout child");
+	}
+
+	/// <summary>
 	/// Load style from a resource file embedded in the current assembly.
 	/// </summary>
 	/// <param name="provider">The style provider.</param>

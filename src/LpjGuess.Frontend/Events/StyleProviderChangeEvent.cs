@@ -1,7 +1,7 @@
 using LpjGuess.Frontend.Interfaces.Commands;
 using LpjGuess.Frontend.Interfaces.Events;
 using LpjGuess.Core.Interfaces.Graphing.Style;
-using LpjGuess.Frontend.Utility;
+using LpjGuess.Core.Models.Graphing.Style;
 
 namespace LpjGuess.Frontend.Events;
 

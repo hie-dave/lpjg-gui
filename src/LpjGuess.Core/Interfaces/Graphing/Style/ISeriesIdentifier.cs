@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using LpjGuess.Core.Models.Graphing.Style;
 
 namespace LpjGuess.Core.Interfaces.Graphing.Style;
 
@@ -14,4 +15,10 @@ public interface ISeriesIdentifier
     /// <returns>An object which uniquely identifies the series according to
     /// this strategy.</returns>
     SeriesIdentifierBase GetIdentifier(ISeriesData series);
+
+    /// <summary>
+    /// Get the strategy that this identifier uses to identify a series.
+    /// </summary>
+    /// <returns>The strategy used to identify a series.</returns>
+    StyleVariationStrategy GetStrategy();
 }

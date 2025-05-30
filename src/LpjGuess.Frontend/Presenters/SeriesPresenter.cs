@@ -1,4 +1,5 @@
 using LpjGuess.Core.Interfaces.Graphing;
+using LpjGuess.Core.Models.Graphing.Style;
 using LpjGuess.Frontend.Commands;
 using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.Events;
@@ -37,6 +38,7 @@ public class SeriesPresenter<T> : PresenterBase<ISeriesView<T>>, ISeriesPresente
     {
         Series = series;
         OnSeriesChanged = new Event<ICommand>();
+        view.SetAllowedStyleVariationStrategies(GetAllowedStyleVariationStrategies());
         view.Populate(series);
         view.OnEditSeries.ConnectTo(OnEditSeries);
         this.factory = factory;
@@ -67,6 +69,18 @@ public class SeriesPresenter<T> : PresenterBase<ISeriesView<T>>, ISeriesPresente
     {
         OnSeriesChanged.DisconnectAll();
         base.Dispose();
+    }
+
+    /// <summary>
+    /// Gets the allowed style variation strategies for the series.
+    /// </summary>
+    /// <returns>The allowed style variation strategies.</returns>
+    private IEnumerable<StyleVariationStrategy> GetAllowedStyleVariationStrategies()
+    {
+        var strategies = Series.DataSource.GetAllowedStyleVariationStrategies();
+        if (!strategies.Contains(StyleVariationStrategy.Fixed))
+            strategies = strategies.Append(StyleVariationStrategy.Fixed);
+        return strategies;
     }
 
     /// <summary>

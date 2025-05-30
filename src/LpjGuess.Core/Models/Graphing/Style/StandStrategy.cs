@@ -19,4 +19,7 @@ public class StandStrategy : ISeriesIdentifier
         // TODO: should this take the gridcell into account?
         return new NumericIdentifier(series.Context.Stand.Value);
     }
+
+    /// <inheritdoc />
+    public StyleVariationStrategy GetStrategy() => StyleVariationStrategy.ByStand;
 }

@@ -11,7 +11,7 @@ namespace LpjGuess.Frontend.Commands;
 /// </summary>
 /// <typeparam name="TObject">The model type.</typeparam>
 /// <typeparam name="TStyle">The style type.</typeparam>
-public abstract class StyleProviderChangeCommand<TObject, TStyle> : ICommand
+public abstract class StyleProviderChangeCommandBase<TObject, TStyle> : ICommand where TStyle : struct
 {
     /// <summary>
     /// The target object.
@@ -34,7 +34,7 @@ public abstract class StyleProviderChangeCommand<TObject, TStyle> : ICommand
     private readonly Action<TObject, IStyleProvider<TStyle>> setValue;
 
     /// <summary>
-    /// Create a new <see cref="StyleProviderChangeCommand{TObject, TStyle}"/>
+    /// Create a new <see cref="StyleProviderChangeCommandBase{TObject, TStyle}"/>
     /// instance.
     /// </summary>
     /// <param name="target">The target object.</param>
@@ -42,7 +42,7 @@ public abstract class StyleProviderChangeCommand<TObject, TStyle> : ICommand
     /// <param name="getValue">The function to get the current value.</param>
     /// <param name="setValue">The action to set the style provider to the new
     /// value.</param>
-    public StyleProviderChangeCommand(
+    public StyleProviderChangeCommandBase(
         TObject target,
         StyleVariationStrategy strategy,
         Func<TObject, IStyleProvider<TStyle>> getValue,
@@ -80,10 +80,22 @@ public abstract class StyleProviderChangeCommand<TObject, TStyle> : ICommand
     /// <returns>The style provider.</returns>
     private IStyleProvider<TStyle> CreateStyleProvider(StyleVariationStrategy strategy)
     {
+        // This class doesn't have the context (ie a TStyle instance) to create
+        // a fixed provider, so this will throw if strategy is fixed.
+        if (strategy == StyleVariationStrategy.Fixed)
+            return new FixedStyleProvider<TStyle>(DefaultStyle());
+
         ISeriesIdentifier identifier = CreateIdentifier(strategy);
         IStyleStrategy<TStyle> valueStrategy = CreateStrategy();
         return new DynamicStyleProvider<TStyle>(identifier, valueStrategy);
     }
+
+    /// <summary>
+    /// Get the default style value used when the user has changed the property
+    /// to a "fixed" strategy.
+    /// </summary>
+    /// <returns>The default style.</returns>
+    protected virtual TStyle DefaultStyle() => default;
 
     /// <summary>
     /// Create a series identifier corresponding to the specified style

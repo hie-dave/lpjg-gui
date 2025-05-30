@@ -1,4 +1,5 @@
 using LpjGuess.Core.Models.Graphing;
+using LpjGuess.Core.Models.Graphing.Style;
 
 namespace LpjGuess.Core.Interfaces;
 
@@ -36,4 +37,10 @@ public interface IDataSource
     /// </summary>
     /// <returns>The name of the data source.</returns>
     string GetName();
+
+    /// <summary>
+    /// Get the allowed style variation strategies for this data source.
+    /// </summary>
+    /// <returns>The allowed style variation strategies.</returns>
+    IEnumerable<StyleVariationStrategy> GetAllowedStyleVariationStrategies();
 }

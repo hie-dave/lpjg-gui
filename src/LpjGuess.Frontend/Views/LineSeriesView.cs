@@ -53,25 +53,44 @@ public class LineSeriesView : SeriesViewBase<LineSeries>
     }
 
     /// <inheritdoc />
+    public override void SetAllowedStyleVariationStrategies(IEnumerable<StyleVariationStrategy> strategies)
+    {
+        base.SetAllowedStyleVariationStrategies(strategies);
+        lineTypeStrategyDropdown.Populate(strategies);
+        lineThicknessStrategyDropdown.Populate(strategies);
+    }
+
+    /// <inheritdoc />
     protected override void PopulateView(LineSeries series)
     {
         DisconnectEvents();
+
+        lineThicknessStrategyDropdown.Select(series.Thickness.GetStrategy());
+        lineTypeStrategyDropdown.Select(series.Type.GetStrategy());
 
         if (series.Type is FixedStyleProvider<LineType> fixedLineType)
         {
             lineTypeDropdown.Select(fixedLineType.Style);
             lineTypeDropdown.GetWidget().Show();
+            SetColumnSpan(lineTypeStrategyDropdown.GetWidget(), 1);
         }
         else
+        {
             lineTypeDropdown.GetWidget().Hide();
+            SetColumnSpan(lineTypeStrategyDropdown.GetWidget(), 2);
+        }
 
         if (series.Thickness is FixedStyleProvider<LineThickness> thickness)
         {
             lineThicknessDropdown.Select(thickness.Style);
             lineThicknessDropdown.GetWidget().Show();
+            SetColumnSpan(lineThicknessStrategyDropdown.GetWidget(), 1);
         }
         else
+        {
             lineThicknessDropdown.GetWidget().Hide();
+            SetColumnSpan(lineThicknessStrategyDropdown.GetWidget(), 2);
+        }
 
         ConnectEvents();
     }

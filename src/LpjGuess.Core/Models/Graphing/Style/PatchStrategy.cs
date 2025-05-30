@@ -19,4 +19,7 @@ public class PatchStrategy : ISeriesIdentifier
         // TODO: should this take the gridcell/stand into account?
         return new NumericIdentifier(series.Context.Patch.Value);
     }
+
+    /// <inheritdoc />
+    public StyleVariationStrategy GetStrategy() => StyleVariationStrategy.ByPatch;
 }

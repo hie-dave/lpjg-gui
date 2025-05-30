@@ -38,6 +38,9 @@ public class DynamicStyleProvider<T> : IStyleProvider<T>
         return ValueStrategy.GetValue(index);
     }
 
+    /// <inheritdoc />
+    public StyleVariationStrategy GetStrategy() => Identifier.GetStrategy();
+
     /// <summary>
     /// Get the index for the given identifier. This index will be as unique as
     /// possible, but does not need to be globally unique.

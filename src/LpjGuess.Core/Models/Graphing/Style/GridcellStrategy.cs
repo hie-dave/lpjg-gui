@@ -16,4 +16,7 @@ public class GridcellStrategy : ISeriesIdentifier
             series.Context.Gridcell.Longitude,
             series.Context.Gridcell.Name);
     }
+
+    /// <inheritdoc />
+    public StyleVariationStrategy GetStrategy() => StyleVariationStrategy.ByGridcell;
 }

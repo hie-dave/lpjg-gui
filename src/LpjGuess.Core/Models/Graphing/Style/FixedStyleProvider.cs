@@ -21,4 +21,7 @@ public class FixedStyleProvider<T> : IStyleProvider<T>
 
     /// <inheritdoc />
     public T GetStyle(ISeriesData data) => Style;
+
+    /// <inheritdoc />
+    public StyleVariationStrategy GetStrategy() => StyleVariationStrategy.Fixed;
 }

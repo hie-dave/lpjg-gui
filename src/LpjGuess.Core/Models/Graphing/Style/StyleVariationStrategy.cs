@@ -1,4 +1,4 @@
-namespace LpjGuess.Frontend.Utility;
+namespace LpjGuess.Core.Models.Graphing.Style;
 
 /// <summary>
 /// The ways in which a visual property may vary.

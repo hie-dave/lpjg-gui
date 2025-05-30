@@ -1,14 +1,13 @@
 using LpjGuess.Core.Interfaces.Graphing.Style;
 using LpjGuess.Core.Models.Graphing;
 using LpjGuess.Core.Models.Graphing.Style;
-using LpjGuess.Frontend.Utility;
 
 namespace LpjGuess.Frontend.Commands;
 
 /// <summary>
 /// A command to change the style provider of a model's style property.
 /// </summary>
-public class ColourStyleProviderChangeCommand<TObject> : StyleProviderChangeCommand<TObject, Colour>
+public class ColourStyleProviderChangeCommand<TObject> : StyleProviderChangeCommandBase<TObject, Colour>
 {
     /// <summary>
     /// Create a new <see cref="ColourStyleProviderChangeCommand{TObject}"/>
@@ -25,6 +24,9 @@ public class ColourStyleProviderChangeCommand<TObject> : StyleProviderChangeComm
             setValue)
     {
     }
+
+    /// <inheritdoc />
+    protected override Colour DefaultStyle() => Colours.Palette.First();
 
     /// <inheritdoc />
     protected override IStyleStrategy<Colour> CreateStrategy()

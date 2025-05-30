@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using LpjGuess.Core.Models.Graphing.Style;
 
 namespace LpjGuess.Core.Interfaces.Graphing.Style;
 
@@ -16,4 +17,10 @@ public interface IStyleProvider<T>
     /// <param name="data">The series data.</param>
     /// <returns>The style.</returns>
     T GetStyle(ISeriesData data);
+
+    /// <summary>
+    /// Get the style variation strategy used by this style provider.
+    /// </summary>
+    /// <returns>The style variation strategy.</returns>
+    StyleVariationStrategy GetStrategy();
 }

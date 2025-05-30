@@ -18,4 +18,7 @@ public class SimulationStrategy : ISeriesIdentifier
 
         return new SimulationIdentifier(series.Context.SimulationName);
     }
+
+    /// <inheritdoc />
+    public StyleVariationStrategy GetStrategy() => StyleVariationStrategy.BySimulation;
 }

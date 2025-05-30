@@ -1,9 +1,8 @@
 using LpjGuess.Core.Interfaces.Graphing;
 using LpjGuess.Core.Models;
-using LpjGuess.Core.Models.Graphing;
+using LpjGuess.Core.Models.Graphing.Style;
 using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.Interfaces.Events;
-using LpjGuess.Frontend.Utility;
 
 namespace LpjGuess.Frontend.Interfaces.Views;
 
@@ -34,4 +33,10 @@ public interface ISeriesView<T> : IView where T : ISeries
     /// </summary>
     /// <param name="view">The view to show.</param>
     void ShowDataSourceView(IDataSourceView view);
+
+    /// <summary>
+    /// Set the allowed style variation strategies.
+    /// </summary>
+    /// <param name="strategies">The allowed strategies.</param>
+    void SetAllowedStyleVariationStrategies(IEnumerable<StyleVariationStrategy> strategies);
 }
