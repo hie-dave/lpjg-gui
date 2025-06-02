@@ -53,6 +53,7 @@ public static class OxyPlotConverter
     /// <returns>An OxyPlot PlotModel.</returns>
     public static async Task<PlotModel> ToPlotModelAsync(Graph graph)
     {
+        Console.WriteLine($"ToPlotModelAsync()");
         PlotModel plot = new PlotModel();
         plot.Title = GetPlotTitle(graph);
 
@@ -66,9 +67,26 @@ public static class OxyPlotConverter
             plot.Axes.Add(axis);
 
         // Add series.
+        int nseries = graph.Series.Sum(s => s.DataSource.GetNumSeries());
+        StyleContext context = new StyleContext(nseries);
         foreach (ISeries series in graph.Series)
-            foreach (OxySeries oxySeries in await ToOxySeriesAsync(series))
+        {
+            // Need to ensure the axis data is plotted on the correct axis,
+            // because different series can have different axis positions.
+            OxyAxis? xaxis = plot.Axes.FirstOrDefault(a => a.Position == series.XAxisPosition.ToOxyAxisPosition());
+            OxyAxis? yaxis = plot.Axes.FirstOrDefault(a => a.Position == series.YAxisPosition.ToOxyAxisPosition());
+            foreach (OxySeries oxySeries in await ToOxySeriesAsync(series, context))
+            {
+                if (oxySeries is XYAxisSeries xySeries)
+                {
+                    if (xaxis != null)
+                        xySeries.XAxisKey = xaxis.Key;
+                    if (yaxis != null)
+                        xySeries.YAxisKey = yaxis.Key;
+                }
                 plot.Series.Add(oxySeries);
+            }
+        }
 
         // Add legend.
         OxyLegend legend = new OxyLegend();
@@ -189,10 +207,11 @@ public static class OxyPlotConverter
         // group should have the same axis type.
         OxyAxis axis = CreateOxyAxis(group.First().Type);
         axis.Position = ToOxyAxisPosition(position);
+        axis.Key = Guid.NewGuid().ToString();
         return axis;
     }
 
-    private static OxyAxisPosition ToOxyAxisPosition(AxisPosition position)
+    private static OxyAxisPosition ToOxyAxisPosition(this AxisPosition position)
     {
         return position switch
         {
@@ -231,35 +250,39 @@ public static class OxyPlotConverter
     /// Convert an ISeries to an OxyPlot Series.
     /// </summary>
     /// <param name="series">The series to convert.</param>
+    /// <param name="context">The style context.</param>
     /// <returns>An OxyPlot Series.</returns>
-    public static async Task<IEnumerable<OxySeries>> ToOxySeriesAsync(ISeries series)
+    public static async Task<IEnumerable<OxySeries>> ToOxySeriesAsync(ISeries series, StyleContext context)
     {
         // FIXME - this probably doesn't work. Need to rethink the data provider API.
         IEnumerable<SeriesData> data = await DataProviderFactory.ReadAsync(series.DataSource);
 
-        return data.Select(seriesData => CreateOxySeries(series, seriesData));
+        return data.Select(seriesData => CreateOxySeries(series, seriesData, context));
     }
 
-    private static OxySeries CreateOxySeries(ISeries series, SeriesData data)
+    private static OxySeries CreateOxySeries(ISeries series, SeriesData data, StyleContext context)
     {
         // Create the appropriate series type
         if (series is LineSeries line)
-            return CreateLineSeries(line, data);
+            return CreateLineSeries(line, data, context);
         // else if (series is ScatterSeries scatterSeries)
         //     scatterSeries2.MarkerFill = ColorUtility.HexToOxyColor(series.Colour);
         else
             throw new NotImplementedException($"Unsupported series type: {series.GetType().Name}");
     }
 
-    private static OxyLineSeries CreateLineSeries(LineSeries series, SeriesData data)
+    private static OxyLineSeries CreateLineSeries(
+        LineSeries series,
+        SeriesData data,
+        StyleContext context)
     {
         OxyLineSeries lineSeries = new();
         lineSeries.Title = series.Title;
         if (string.IsNullOrWhiteSpace(series.Title))
             lineSeries.Title = data.Name;
 
-        lineSeries.Color = series.ColourProvider.GetStyle(data).ToOxyColor();
-        lineSeries.LineStyle = series.Type.GetStyle(data) switch
+        lineSeries.Color = context.GetStyle(series.ColourProvider, data).ToOxyColor();
+        lineSeries.LineStyle = context.GetStyle(series.Type, data) switch
         {
             LineType.Solid => LineStyle.Solid,
             LineType.Dashed => LineStyle.Dash,
@@ -267,7 +290,7 @@ public static class OxyPlotConverter
             _ => throw new InvalidOperationException($"Unknown line type: {series.Type}")
         };
 
-        lineSeries.StrokeThickness = series.Thickness.GetStyle(data) switch
+        lineSeries.StrokeThickness = context.GetStyle(series.Thickness, data) switch
         {
             LineThickness.Thin => 1,
             LineThickness.Regular => 2,

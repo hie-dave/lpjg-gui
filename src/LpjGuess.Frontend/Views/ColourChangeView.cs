@@ -36,7 +36,9 @@ public class ColourChangeView : ViewBase<ColorDialogButton>
     /// <param name="colour">The colour to populate the widget with.</param>
     public void Populate(Colour colour)
     {
+        widget.OnNotify -= OnWidgetNotify;
         widget.Rgba = colour.ToRgba();
+        widget.OnNotify += OnWidgetNotify;
     }
 
     /// <summary>

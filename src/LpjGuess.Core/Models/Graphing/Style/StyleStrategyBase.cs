@@ -14,7 +14,7 @@ public abstract class StyleStrategyBase<T> : IStyleStrategy<T>
     /// TODO: rethink serialization.
     /// </remarks>
     [NonSerialized]
-    private readonly IReadOnlyList<T> values;
+    protected readonly IReadOnlyList<T> values;
 
     /// <summary>
     /// Create a new <see cref="StyleStrategyBase{T}"/> instance.
@@ -26,12 +26,12 @@ public abstract class StyleStrategyBase<T> : IStyleStrategy<T>
     }
 
     /// <inheritdoc />
-    public T GetValue(uint index)
+    public virtual T GetValue(uint index)
     {
         return values[(int)(index % values.Count)];
     }
 
     /// <inheritdoc />
-    public int Count => values.Count;
+    public abstract void Initialise(int totalStylesCount);
 }
 

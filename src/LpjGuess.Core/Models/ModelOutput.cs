@@ -1,5 +1,6 @@
 using Dave.Benchmarks.Core.Models;
 using Dave.Benchmarks.Core.Models.Entities;
+using Dave.Benchmarks.Core.Models.Importer;
 using Dave.Benchmarks.Core.Services;
 using LpjGuess.Core.Interfaces;
 using LpjGuess.Core.Models.Graphing;
@@ -84,7 +85,9 @@ public class ModelOutput : IDataSource
     /// <inheritdoc />
     public string GetYAxisTitle()
     {
-        return YAxisColumn;
+        OutputFileMetadata metadata = OutputFileDefinitions.GetMetadata(OutputFileType);
+        Unit units = metadata.Layers.GetUnits(YAxisColumn);
+        return $"{metadata.Name} ({units.Name})";
     }
 
     /// <inheritdoc />
@@ -106,6 +109,12 @@ public class ModelOutput : IDataSource
     {
         OutputFileMetadata meta = OutputFileDefinitions.GetMetadata(OutputFileType);
         return GetAllowedStrategies(meta.Level);
+    }
+
+    /// <inheritdoc />
+    public int GetNumSeries()
+    {
+        return InstructionFiles.Count;
     }
 
     /// <summary>

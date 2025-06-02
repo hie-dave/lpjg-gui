@@ -24,4 +24,13 @@ public class FixedStyleProvider<T> : IStyleProvider<T>
 
     /// <inheritdoc />
     public StyleVariationStrategy GetStrategy() => StyleVariationStrategy.Fixed;
+
+    /// <inheritdoc />
+    /// <remarks>
+    /// This method does nothing for a fixed style provider.
+    /// </remarks>
+    public void Initialize(int totalSeriesCount) { }
+
+    /// <inheritdoc />
+    public void Reset() { }
 }

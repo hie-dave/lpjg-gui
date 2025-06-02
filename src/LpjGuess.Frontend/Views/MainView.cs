@@ -15,6 +15,7 @@ using Application = Adw.Application;
 using ApplicationWindow = Adw.ApplicationWindow;
 using MessageDialog = Adw.MessageDialog;
 using FileChooserDialog = LpjGuess.Frontend.Views.Dialogs.FileChooserDialog;
+using StyleContext = Gtk.StyleContext;
 
 namespace LpjGuess.Frontend.Views;
 
@@ -172,8 +173,8 @@ public class MainView : ApplicationWindow, IMainView
 		Maximized = true;
 	}
 
-    /// <inheritdoc />
-    public void SetChild(IView view)
+	/// <inheritdoc />
+	public void SetChild(IView view)
 	{
 		// Remove the old fileView.
 		if (childView != null)
@@ -290,9 +291,9 @@ public class MainView : ApplicationWindow, IMainView
 		}
 	}
 
-    private void OnNewWorkspace()
-    {
-        try
+	private void OnNewWorkspace()
+	{
+		try
 		{
 			var fileChooser = FileChooserDialog.Save(
 				"Save Workspace",
@@ -306,11 +307,11 @@ public class MainView : ApplicationWindow, IMainView
 		{
 			ReportError(error);
 		}
-    }
+	}
 
-    private void OnOpenWorkspace()
-    {
-        try
+	private void OnOpenWorkspace()
+	{
+		try
 		{
 			var fileChooser = FileChooserDialog.Open(
 				"Open Workspace",
@@ -325,7 +326,7 @@ public class MainView : ApplicationWindow, IMainView
 		{
 			ReportError(error);
 		}
-    }
+	}
 
 	/// <summary>
 	/// Called when the user wants to open a file. Opens a file chooser dialog.
@@ -355,8 +356,8 @@ public class MainView : ApplicationWindow, IMainView
 	/// <param name="sender">Sender object (this).</param>
 	/// <param name="args">Event data.</param>
 	/// <returns>false</returns>
-    private bool OnClosed(Gtk.Window sender, EventArgs args)
-    {
+	private bool OnClosed(Gtk.Window sender, EventArgs args)
+	{
 		try
 		{
 			OnClose.Invoke();
@@ -370,5 +371,5 @@ public class MainView : ApplicationWindow, IMainView
 		// Returning true prevents other callbacks from executing, which
 		// ultimately prevents the window from closing.
 		return false;
-    }
+	}
 }

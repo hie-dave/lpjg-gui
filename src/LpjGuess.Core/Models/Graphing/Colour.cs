@@ -75,6 +75,71 @@ public struct Colour
         return new Colour(r, g, b, a);
     }
 
+    /// <summary>
+    /// Create a new <see cref="Colour"/> from HSV (Hue, Saturation, Value) components.
+    /// </summary>
+    /// <param name="hue">The hue in degrees (0-360).</param>
+    /// <param name="saturation">The saturation (0-1).</param>
+    /// <param name="value">The value/brightness (0-1).</param>
+    /// <returns>A new <see cref="Colour"/> instance.</returns>
+    public static Colour FromHsv(double hue, double saturation, double value)
+    {
+        // Ensure inputs are in valid ranges
+        hue = ((hue % 360) + 360) % 360; // Normalize to [0, 360)
+        saturation = Math.Clamp(saturation, 0, 1);
+        value = Math.Clamp(value, 0, 1);
+
+        double chroma = value * saturation;
+        double huePrime = hue / 60.0;
+        double x = chroma * (1 - Math.Abs((huePrime % 2) - 1));
+        double m = value - chroma;
+
+        double r, g, b;
+        if (huePrime <= 1)
+        {
+            r = chroma;
+            g = x;
+            b = 0;
+        }
+        else if (huePrime <= 2)
+        {
+            r = x;
+            g = chroma;
+            b = 0;
+        }
+        else if (huePrime <= 3)
+        {
+            r = 0;
+            g = chroma;
+            b = x;
+        }
+        else if (huePrime <= 4)
+        {
+            r = 0;
+            g = x;
+            b = chroma;
+        }
+        else if (huePrime <= 5)
+        {
+            r = x;
+            g = 0;
+            b = chroma;
+        }
+        else
+        {
+            r = chroma;
+            g = 0;
+            b = x;
+        }
+
+        // Convert to bytes in [0, 255] range
+        byte rByte = (byte)Math.Round((r + m) * 255);
+        byte gByte = (byte)Math.Round((g + m) * 255);
+        byte bByte = (byte)Math.Round((b + m) * 255);
+
+        return new Colour(rByte, gByte, bByte);
+    }
+
     /// <inheritdoc/>
     public override string ToString()
     {

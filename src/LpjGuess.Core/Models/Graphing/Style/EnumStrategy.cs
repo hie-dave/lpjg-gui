@@ -12,5 +12,7 @@ public class EnumStrategy<T> : StyleStrategyBase<T> where T : struct, Enum
     /// Create a new <see cref="EnumStrategy{T}"/> instance.
     /// </summary>
     public EnumStrategy() : base(Enum.GetValues<T>()) { }
-}
 
+    /// <inheritdoc />
+    public override void Initialise(int totalStylesCount) { }
+}

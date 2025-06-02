@@ -1,5 +1,3 @@
-using System.Text.Json.Serialization;
-
 namespace LpjGuess.Core.Interfaces.Graphing.Style;
 
 /// <summary>
@@ -15,7 +13,8 @@ public interface IStyleStrategy<T>
     T GetValue(uint index);
 
     /// <summary>
-    /// Get the number of styles available.
+    /// Initialise the style strategy by telling it the total number of styles
+    /// which will be required.
     /// </summary>
-    int Count { get; }
+    void Initialise(int totalStylesCount);
 }

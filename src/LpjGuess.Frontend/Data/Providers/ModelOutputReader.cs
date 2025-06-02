@@ -1,4 +1,6 @@
+using System.Text;
 using Dave.Benchmarks.Core.Models;
+using Dave.Benchmarks.Core.Models.Entities;
 using Dave.Benchmarks.Core.Models.Importer;
 using Dave.Benchmarks.Core.Services;
 using LpjGuess.Core.Models;
@@ -71,24 +73,29 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
             // TBI: allow for plotting date on the y-axis.
             throw new InvalidOperationException($"Output {quantity.Name} does not have layer: {source.YAxisColumn}");
 
-        string name = GenerateSeriesName(simulation, layer);
-
         Func<DataPoint, double> xselector = GetSelector(source.XAxisColumn);
         Func<DataPoint, double> yselector = GetSelector(source.YAxisColumn);
-
-        Layer? xlayer = quantity.Layers.FirstOrDefault(l => l.Name == source.XAxisColumn);
-        if (xlayer != null)
-            return GenerateSeries(simulation, name, xlayer, layer, xselector, yselector);
 
         // "Date" is a valid layer name from the user's perspective, but it
         // doesn't correspond to an actual layer object. Rather, it corresponds
         // to the Timestamp property of the data points. Therefore, we can pass
         // in the same layer for both x and y, and the x selector will return
         // DateTimeAxis.ToDouble() for the timestamps.
-        if (source.XAxisColumn != "Date")
+        Layer? xlayer;
+        if (source.XAxisColumn == "Date")
+            xlayer = layer;
+        else
+            xlayer = quantity.Layers.FirstOrDefault(l => l.Name == source.XAxisColumn);
+        if (xlayer == null)
             throw new InvalidOperationException($"Unknown layer name: {source.XAxisColumn}");
 
-        return GenerateSeries(simulation, name, layer, layer, xselector, yselector);
+        return GenerateSeries(
+            source,
+            simulation,
+            xlayer,
+            layer,
+            xselector,
+            yselector);
     }
 
     /// <summary>
@@ -105,8 +112,8 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
     }
 
     private IEnumerable<SeriesData> GenerateSeries(
+        ModelOutput source,
         Simulation simulation,
-        string name,
         Layer xlayer,
         Layer ylayer,
         Func<DataPoint, double>? xselector,
@@ -115,8 +122,10 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
         // First group by context. Each group is a list of data points with the
         // same gridcell, stand, patch, and indiv id (where those properties are
         // applicable for this output file type).
-        var xgroups = xlayer.Data.GroupBy(d => GetContext(simulation, d));
-        var ygroups = ylayer.Data.GroupBy(d => GetContext(simulation, d));
+        var xgroups = xlayer.Data.GroupBy(d => GetContext(simulation, d)).ToList();
+        var ygroups = ylayer.Data.GroupBy(d => GetContext(simulation, d)).ToList();
+
+        IEnumerable<SeriesContext> contexts = xgroups.Select(g => g.Key).ToList();
 
         // Now we can zip the groups together.
         foreach (IGrouping<SeriesContext, DataPoint> xgroup in xgroups)
@@ -131,6 +140,8 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
                 // are coming from the same output file.
                 continue;
             }
+
+            string name = GenerateSeriesName(source, xgroup.Key, contexts);
 
             IEnumerable<OxyPlot.DataPoint> data = MergeOn(
                 xgroup,
@@ -162,15 +173,50 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
     }
 
     /// <summary>
-    /// Generate a series name for the given simulation and layer.
+    /// Generate a series name for the given series context.
     /// </summary>
-    /// <param name="simulation">The simulation.</param>
-    /// <param name="layer">The layer.</param>
+    /// <param name="source">The model output.</param>
+    /// <param name="context">The series context.</param>
+    /// <param name="contexts">The list of all series contexts.</param>
     /// <returns>The series name.</returns>
-    private static string GenerateSeriesName(Simulation simulation, Layer layer)
+    private static string GenerateSeriesName(ModelOutput source, SeriesContext context, IEnumerable<SeriesContext> contexts)
     {
-        string simulationName = Path.GetFileNameWithoutExtension(simulation.FileName);
-        return $"{simulationName}: {layer.Name}";
+        // We need to generate a name which will disambiguate each series.
+        OutputFileMetadata metadata = OutputFileDefinitions.GetMetadata(source.OutputFileType);
+        string name = metadata.Name;
+
+        // Gridcell name should be included if there are multiple gridcells.
+        if (metadata.Level >= AggregationLevel.Gridcell && contexts.Select(c => c.Gridcell).Distinct().Count() > 1)
+        {
+            // Gridcell.Name will be (lat,lon) if the gridcell is unnamed.
+            name = $"{context.Gridcell.Name}: {name}";
+        }
+
+        // Simulation name should be included if there are multiple simulations.
+        if (source.InstructionFiles.Count > 1)
+        {
+            if (context.SimulationName == null)
+                throw new InvalidOperationException("Simulation name is null");
+            name = $"{context.SimulationName}: {name}";
+        }
+
+        bool includeStand = metadata.Level >= AggregationLevel.Stand && contexts.Select(c => c.Stand).Distinct().Count() > 1;
+        bool includePatch = metadata.Level >= AggregationLevel.Patch && contexts.Select(c => c.Patch).Distinct().Count() > 1;
+        bool includeIndiv = metadata.Level >= AggregationLevel.Individual && contexts.Select(c => c.Individual).Distinct().Count() > 1;
+
+        if (includeStand || includePatch || includeIndiv)
+        {
+            StringBuilder sb = new();
+            if (includeStand)
+                sb.Append($"s{context.Stand}");
+            if (includePatch)
+                sb.Append($"p{context.Patch}");
+            if (includeIndiv)
+                sb.Append($"i{context.Individual}");
+            name = $"{name} ({sb})";
+        }
+
+        return name;
     }
 
     /// <summary>
