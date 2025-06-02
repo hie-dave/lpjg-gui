@@ -16,6 +16,11 @@ namespace LpjGuess.Frontend.Presenters;
 public class OutputsPresenter : PresenterBase<IOutputsView>, IOutputsPresenter
 {
     /// <summary>
+    /// The cancellation token source for the output file parsing task.
+    /// </summary>
+    private CancellationTokenSource cts;
+
+    /// <summary>
     /// Create a new <see cref="OutputsPresenter"/> instance.
     /// </summary>
     /// <param name="view">The view object.</param>
@@ -23,6 +28,7 @@ public class OutputsPresenter : PresenterBase<IOutputsView>, IOutputsPresenter
     {
         view.OnInstructionFileSelected.ConnectTo(OnInstructionFileSelected);
         view.OnOutputFileSelected.ConnectTo(OnOutputFileSelected);
+        cts = new CancellationTokenSource();
     }
 
     /// <inheritdoc />
@@ -97,7 +103,12 @@ public class OutputsPresenter : PresenterBase<IOutputsView>, IOutputsPresenter
             // Shouldn't happen, but best to be safe.
             return;
         Simulation simulation = ModelOutputReader.GetSimulation(instructionFile);
-        Task<Quantity> task = simulation.ReadOutputFileAsync(file.Path);
+
+        // Cancel any existing tasks.
+        cts.Cancel();
+        cts = new CancellationTokenSource();
+
+        Task<Quantity> task = simulation.ReadOutputFileAsync(file.Path, cts.Token);
         task.ContinueWith(q => q.Result.ToDataTable())
             .ContinueWithOnMainThread(view.PopulateData);
     }

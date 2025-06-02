@@ -119,14 +119,15 @@ public class Simulation
     /// Read a model output file.
     /// </summary>
     /// <param name="fileType">The output file *type* (e.g. "file_lai").</param>
+    /// <param name="ct">The cancellation token.</param>
     /// <returns>The parsed output file.</returns>
-    public Task<Quantity> ReadOutputFileTypeAsync(string fileType)
+    public Task<Quantity> ReadOutputFileTypeAsync(string fileType, CancellationToken ct)
     {
         string fileName = Resolver.GetFileName(fileType);
 
         string outputDirectory = Helper.GetOutputDirectory();
         string outputFile = Path.Combine(outputDirectory, fileName);
-        return ReadOutputFileAsync(outputFile);
+        return ReadOutputFileAsync(outputFile, ct);
     }
 
     /// <summary>
@@ -134,22 +135,24 @@ public class Simulation
     /// </summary>
     /// <param name="fileName">The output file name (e.g. "lai.out"). This must
     /// be absolute or relative to the current working directory.</param>
+    /// <param name="ct">The cancellation token.</param>
     /// <returns>The parsed output file.</returns>
-    public async Task<Quantity> ReadOutputFileAsync(string fileName)
+    public async Task<Quantity> ReadOutputFileAsync(string fileName, CancellationToken ct)
     {
-        return await outputParser.ParseOutputFileAsync(fileName);
+        return await outputParser.ParseOutputFileAsync(fileName, ct);
     }
 
     /// <summary>
     /// Read the metadata from a model output file.
     /// </summary>
     /// <param name="fileType">The output file type (e.g. "file_lai").</param>
+    /// <param name="ct">The cancellation token.</param>
     /// <returns>The metadata read from the file.</returns>
-    public Task<IEnumerable<LayerMetadata>> ReadOutputFileMetadataAsync(string fileType)
+    public Task<IEnumerable<LayerMetadata>> ReadOutputFileMetadataAsync(string fileType, CancellationToken ct = default)
     {
         string fileName = Resolver.GetFileName(fileType);
         string outputDirectory = Helper.GetOutputDirectory();
         string outputFile = Path.Combine(outputDirectory, fileName);
-        return outputParser.ParseOutputFileHeaderAsync(outputFile);
+        return outputParser.ParseOutputFileHeaderAsync(outputFile, ct);
     }
 }

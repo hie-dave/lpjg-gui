@@ -29,11 +29,11 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
     }
 
     /// <inheritdoc />
-    public async Task<IEnumerable<SeriesData>> ReadAsync(ModelOutput source)
+    public async Task<IEnumerable<SeriesData>> ReadAsync(ModelOutput source, CancellationToken ct)
     {
         return (await Task.WhenAll(
             source.InstructionFiles
-                  .Select(f => ReadSimulationAsync(source, GetSimulation(f)))))
+                  .Select(f => ReadSimulationAsync(source, GetSimulation(f), ct))))
             .SelectMany(x => x);
     }
 
@@ -60,13 +60,15 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
     /// </summary>
     /// <param name="source">The model output.</param>
     /// <param name="simulation">The simulation from which to read the data.</param>
+    /// <param name="ct">The cancellation token.</param>
     /// <returns>The data read from the simulation.</returns>
     private async Task<IEnumerable<SeriesData>> ReadSimulationAsync(
         ModelOutput source,
-        Simulation simulation)
+        Simulation simulation,
+        CancellationToken ct)
     {
         // TODO: async support.
-        Quantity quantity = await simulation.ReadOutputFileTypeAsync(source.OutputFileType);
+        Quantity quantity = await simulation.ReadOutputFileTypeAsync(source.OutputFileType, ct);
 
         Layer? layer = quantity.Layers.FirstOrDefault(l => l.Name == source.YAxisColumn);
         if (layer == null)

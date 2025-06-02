@@ -57,6 +57,11 @@ public class GraphPresenter : IGraphPresenter
     private List<ISeriesPresenter> seriesPresenters;
 
     /// <summary>
+    /// The cancellation token source.
+    /// </summary>
+    private CancellationTokenSource cts;
+
+    /// <summary>
     /// Event raised when the graph title is changed.
     /// </summary>
     public Event<string> OnTitleChanged { get; private init; }
@@ -86,6 +91,7 @@ public class GraphPresenter : IGraphPresenter
         plotModel = new();
         seriesPresenters = new();
 
+        cts = new();
         RefreshData();
     }
 
@@ -160,11 +166,15 @@ public class GraphPresenter : IGraphPresenter
     {
         try
         {
-            return await OxyPlotConverter.ToPlotModelAsync(graph);
+            // Cancel any existing plot conversion tasks.
+            cts.Cancel();
+            cts = new();
+            return await OxyPlotConverter.ToPlotModelAsync(graph, cts.Token);
         }
         catch (Exception ex)
         {
-            MainView.RunOnMainThread(() => MainView.Instance.ReportError(ex));
+            if (ex is not TaskCanceledException)
+                MainView.RunOnMainThread(() => MainView.Instance.ReportError(ex));
 
             // If plot generation fails, return an empty plot model. This will
             // be displayed as a blank plot, which is the best we can do in this

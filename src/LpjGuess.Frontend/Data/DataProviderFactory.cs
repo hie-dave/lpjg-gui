@@ -13,13 +13,14 @@ public static class DataProviderFactory
     /// Read data from the specified data source.
     /// </summary>
     /// <param name="source">The data source.</param>
+    /// <param name="ct">The cancellation token.</param>
     /// <returns>The data read from the data source.</returns>
     /// <exception cref="NotSupportedException">Thrown if the data source type is not supported.</exception>
-    public static async Task<IEnumerable<SeriesData>> ReadAsync(IDataSource source)
+    public static async Task<IEnumerable<SeriesData>> ReadAsync(IDataSource source, CancellationToken ct)
     {
         if (source is ModelOutput modelOutput)
         {
-            return await new ModelOutputReader().ReadAsync(modelOutput);
+            return await new ModelOutputReader().ReadAsync(modelOutput, ct);
         }
 
         throw new NotSupportedException($"Data provider not supported for {typeof(IDataSource).Name}");

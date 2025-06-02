@@ -38,6 +38,7 @@ using OxyLegendPlacement = OxyPlot.Legends.LegendPlacement;
 
 using LegendOrientation = LpjGuess.Core.Models.Graphing.LegendOrientation;
 using OxyLegendOrientation = OxyPlot.Legends.LegendOrientation;
+using System.Threading;
 
 namespace LpjGuess.Frontend.Utility;
 
@@ -50,8 +51,9 @@ public static class OxyPlotConverter
     /// Convert a Graph object to an OxyPlot PlotModel.
     /// </summary>
     /// <param name="graph">The graph to convert.</param>
+    /// <param name="ct">The cancellation token.</param>
     /// <returns>An OxyPlot PlotModel.</returns>
-    public static async Task<PlotModel> ToPlotModelAsync(Graph graph)
+    public static async Task<PlotModel> ToPlotModelAsync(Graph graph, CancellationToken ct)
     {
         Console.WriteLine($"ToPlotModelAsync()");
         PlotModel plot = new PlotModel();
@@ -75,7 +77,7 @@ public static class OxyPlotConverter
             // because different series can have different axis positions.
             OxyAxis? xaxis = plot.Axes.FirstOrDefault(a => a.Position == series.XAxisPosition.ToOxyAxisPosition());
             OxyAxis? yaxis = plot.Axes.FirstOrDefault(a => a.Position == series.YAxisPosition.ToOxyAxisPosition());
-            foreach (OxySeries oxySeries in await ToOxySeriesAsync(series, context))
+            foreach (OxySeries oxySeries in await ToOxySeriesAsync(series, context, ct))
             {
                 if (oxySeries is XYAxisSeries xySeries)
                 {
@@ -257,11 +259,12 @@ public static class OxyPlotConverter
     /// </summary>
     /// <param name="series">The series to convert.</param>
     /// <param name="context">The style context.</param>
+    /// <param name="ct">The cancellation token.</param>
     /// <returns>An OxyPlot Series.</returns>
-    public static async Task<IEnumerable<OxySeries>> ToOxySeriesAsync(ISeries series, StyleContext context)
+    public static async Task<IEnumerable<OxySeries>> ToOxySeriesAsync(ISeries series, StyleContext context, CancellationToken ct)
     {
         // FIXME - this probably doesn't work. Need to rethink the data provider API.
-        IEnumerable<SeriesData> data = await DataProviderFactory.ReadAsync(series.DataSource);
+        IEnumerable<SeriesData> data = await DataProviderFactory.ReadAsync(series.DataSource, ct);
 
         return data.Select(seriesData => CreateOxySeries(series, seriesData, context));
     }

@@ -112,6 +112,7 @@ public class ModelOutputPresenter : PresenterBase<IModelOutputView>, IDataSource
             return columns;
 
         // Partially parse output file to get columns.
+        // TODO: make this cancellable?
         IEnumerable<Task<IEnumerable<LayerMetadata>>> tasks = instructionFiles
             .Select(ModelOutputReader.GetSimulation)
             .Select(s => s.ReadOutputFileMetadataAsync(fileType));

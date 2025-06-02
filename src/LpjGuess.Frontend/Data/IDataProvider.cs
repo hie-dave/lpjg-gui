@@ -12,8 +12,9 @@ public interface IDataProvider<T> where T : IDataSource
     /// Read data from the data source.
     /// </summary>
     /// <param name="source">The data source.</param>
+    /// <param name="ct">The cancellation token.</param>
     /// <returns>The data read from the data source.</returns>
-    Task<IEnumerable<SeriesData>> ReadAsync(T source);
+    Task<IEnumerable<SeriesData>> ReadAsync(T source, CancellationToken ct);
 
     /// <summary>
     /// Generate a name for the data source which would be suitable for display
