@@ -23,6 +23,11 @@ namespace LpjGuess.Frontend.Views;
 public class GraphView : ViewBase<Box>, IGraphView
 {
     /// <summary>
+    /// Name of the GtkSwitch "active" property.
+    /// </summary>
+    const string activeProperty = "active";
+
+    /// <summary>
     /// Spacing between elements in the graph properties grid.
     /// </summary>
     private const int propertySpacing = 6;
@@ -166,7 +171,7 @@ public class GraphView : ViewBase<Box>, IGraphView
         legendVisibleSwitch = Switch.New();
         legendVisibleSwitch.Halign = Align.Start;
         legendVisibleSwitch.Valign = Align.Center;
-        legendVisibleSwitch.OnNotify += OnLegendVisibleToggled;
+        legendVisibleSwitch.OnNotify += OnLegendVisibleNotify;
 
         legendPositionDropdown = new EnumDropDownView<LegendPosition>();
         legendPositionDropdown.OnSelectionChanged.ConnectTo(OnLegendPositionChanged);
@@ -272,10 +277,10 @@ public class GraphView : ViewBase<Box>, IGraphView
         yaxisTitleEntry.SetText(yaxisTitle ?? string.Empty);
 
         // Temporarily disable signal propagation for the switch widget. (FIXME)
-        legendVisibleSwitch.OnNotify -= OnLegendVisibleToggled;
+        legendVisibleSwitch.OnNotify -= OnLegendVisibleNotify;
         legendVisibleSwitch.State = legendVisible;
         legendVisibleSwitch.Active = legendVisible;
-        legendVisibleSwitch.OnNotify += OnLegendVisibleToggled;
+        legendVisibleSwitch.OnNotify += OnLegendVisibleNotify;
 
         legendPositionDropdown.Select(position);
         legendPlacementDropdown.Select(placement);
@@ -419,10 +424,13 @@ public class GraphView : ViewBase<Box>, IGraphView
     /// </summary>
     /// <param name="sender">Sender object.</param>
     /// <param name="args">Event data.</param>
-    private void OnLegendVisibleToggled(GObject.Object sender, GObject.Object.NotifySignalArgs args)
+    private void OnLegendVisibleNotify(GObject.Object sender, GObject.Object.NotifySignalArgs args)
     {
         try
         {
+            if (args.Pspec.GetName() != activeProperty)
+                return;
+
             // Keep the switch's state in sync with its active status.
             legendVisibleSwitch.State = legendVisibleSwitch.Active;
             OnGraphChanged.Invoke(new ModelChangeEventArgs<Graph, bool>(

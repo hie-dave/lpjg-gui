@@ -121,6 +121,9 @@ public class GraphsPresenter : IGraphsPresenter
 
 		List<Graph> graphs = plots.Values.Select(p => p.GetGraph()).ToList();
 		graphs.Add(graph);
+
+		// FIXME: this will redraw all existing plots. Would be better to just
+		// add the new graph to the view.
 		Populate(graphs);
 	}
 

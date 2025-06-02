@@ -39,6 +39,7 @@ using OxyLegendPlacement = OxyPlot.Legends.LegendPlacement;
 using LegendOrientation = LpjGuess.Core.Models.Graphing.LegendOrientation;
 using OxyLegendOrientation = OxyPlot.Legends.LegendOrientation;
 using System.Threading;
+using System.Diagnostics;
 
 namespace LpjGuess.Frontend.Utility;
 
@@ -55,7 +56,10 @@ public static class OxyPlotConverter
     /// <returns>An OxyPlot PlotModel.</returns>
     public static async Task<PlotModel> ToPlotModelAsync(Graph graph, CancellationToken ct)
     {
+        // Leaving this here for now, as it's easy to get in here too often, and
+        // easy to fix.
         Console.WriteLine($"ToPlotModelAsync()");
+
         PlotModel plot = new PlotModel();
         plot.Title = GetPlotTitle(graph);
 

@@ -236,6 +236,9 @@ public class MainView : ApplicationWindow, IMainView
 	/// <param name="error"></param>
 	public void ReportError(Exception error)
 	{
+		if (error is TaskCanceledException || error is OperationCanceledException)
+			return;
+
 		Console.Error.WriteLine(error.ToString());
 
 		TextBuffer buffer = TextBuffer.New(null);
