@@ -79,9 +79,9 @@ public class WorkspaceView : Box, IWorkspaceView
 	private readonly ScrolledWindow logsScroller;
 
 	/// <summary>
-	/// Sidebar widget containing one tab per instruction file.
+	/// The instruction files view.
 	/// </summary>
-	private readonly DynamicStackSidebar<string> insFilesView;
+	private readonly IInstructionFilesView insFilesView;
 
 	/// <summary>
 	/// A view which allows the user to browse the raw outputs from the model.
@@ -104,19 +104,9 @@ public class WorkspaceView : Box, IWorkspaceView
 	private readonly ProgressBar progressBar;
 
 	/// <summary>
-	/// The views used to display instruction files.
-	/// </summary>
-	private readonly List<InstructionFileView> instructionFileViews;
-
-	/// <summary>
 	/// A blank widget used to fill the add instruction file stack.
 	/// </summary>
 	private readonly Widget addFileDummyWidget;
-
-	/// <summary>
-	/// The name of the previously visible instruction file.
-	/// </summary>
-	private string? previouslyVisibleInsFile = null;
 
 	/// <inheritdoc />
 	public Event<string?> OnRun { get; private init; }
@@ -127,12 +117,6 @@ public class WorkspaceView : Box, IWorkspaceView
 	/// <inheritdoc />
 	public Event OnAddRunOption { get; private init; }
 
-	/// <inheritdoc />
-	public Event<string> OnAddInsFile { get; private init; }
-
-	/// <inheritdoc />
-	public Event<string> OnRemoveInsFile { get; private init; }
-
 	/// <summary>
 	/// Create a new <see cref="WorkspaceView"/> instance for a particular .ins file.
 	/// </summary>
@@ -141,18 +125,9 @@ public class WorkspaceView : Box, IWorkspaceView
 		OnRun = new Event<string?>();
 		OnStop = new Event();
 		OnAddRunOption = new Event();
-		OnAddInsFile = new Event<string>();
-		OnRemoveInsFile = new Event<string>();
-		instructionFileViews = new List<InstructionFileView>();
 
 		SetOrientation(Orientation.Vertical);
 		Spacing = spacing;
-
-		insFilesView = new DynamicStackSidebar<string>(CreateInsFileSidebarLabel);
-		insFilesView.AddText = "Add File";
-		insFilesView.OnPageSelected.ConnectTo(OnInsFilesSidebarPageSelected);
-		insFilesView.OnRemove.ConnectTo(OnRemoveInsFile);
-		insFilesView.OnAdd.ConnectTo(OnAddFile);
 
 		addFileDummyWidget = new Box();
 		addFileDummyWidget.Name = addFileDummyWidgetName;
@@ -195,11 +170,12 @@ public class WorkspaceView : Box, IWorkspaceView
 		logsScroller = new ScrolledWindow();
 		logsScroller.Child = LogsView.GetWidget();
 
+		insFilesView = new InstructionFilesView();
 		outputsView = new OutputsView();
 		graphsView = new GraphsView();
 
 		notebook = new Notebook();
-		notebook.AppendPage(insFilesView, Label.New("Instruction Files"));
+		notebook.AppendPage(insFilesView.GetWidget(), Label.New("Instruction Files"));
 		notebook.AppendPage(logsScroller, Label.New("Logs"));
 		notebook.AppendPage(outputsView.GetWidget(), Label.New("Outputs"));
 		notebook.AppendPage(graphsView.GetWidget(), Label.New("Graphs"));
@@ -219,40 +195,6 @@ public class WorkspaceView : Box, IWorkspaceView
 		ConnectEvents();
 	}
 
-    private Widget CreateInsFileSidebarLabel(string instructionFile)
-    {
-        Label label = Label.New(Path.GetFileName(instructionFile));
-		label.Halign = Align.Start;
-		label.Hexpand = true;
-		return label;
-    }
-
-    /// <summary>
-    /// Called when the user wants to add an instruction file.
-    /// </summary>
-    private void OnAddFile()
-    {
-		FileChooserDialog fileChooser = FileChooserDialog.Open(
-			"Open Instruction File",
-			"Instruction Files",
-			"*.ins",
-			true,
-			false);
-		fileChooser.OnFileSelected.ConnectTo(OnAddInsFile);
-		fileChooser.Run();
-		return;
-    }
-
-    /// <summary>
-    /// Populate the view with the given instruction files.
-    /// </summary>
-    /// <param name="insFiles">The instruction files with which the view should be populated.</param>
-    public void Populate(IEnumerable<string> insFiles)
-	{
-		// Populate the stack with new views.
-		insFilesView.Populate(insFiles.Select(f => (f, (Widget)new InstructionFileView(f))));
-	}
-
     /// <summary>
     /// Currently-selected input module.
     /// </summary>
@@ -267,6 +209,9 @@ public class WorkspaceView : Box, IWorkspaceView
 			throw new Exception($"No input module is selected");
 		}
 	}
+
+	/// <inheritdoc />
+	public IInstructionFilesView InsFilesView => insFilesView;
 
 	/// <inheritdoc />
 	public IGraphsView GraphsView => graphsView;
@@ -385,16 +330,6 @@ public class WorkspaceView : Box, IWorkspaceView
 	}
 
 	/// <summary>
-	/// Get an appropriate name for a tab containing an instruction file.
-	/// </summary>
-	/// <param name="insFile">Path to an instruction file.</param>
-	/// <returns>A tab name.</returns>
-	private static string GetTabName(string insFile)
-	{
-		return Path.GetFileName(insFile);
-	}
-
-	/// <summary>
 	/// Called when the user wants to add a runner.
 	/// </summary>
 	private void OnAddRunoption()
@@ -402,30 +337,6 @@ public class WorkspaceView : Box, IWorkspaceView
 		try
 		{
 			OnAddRunOption.Invoke();
-		}
-		catch (Exception error)
-		{
-			MainView.Instance.ReportError(error);
-		}
-	}
-
-	/// <summary>
-	/// User wants to add an instruction file.
-	/// </summary>
-	/// <param name="sender">Sender object.</param>
-	/// <param name="args">Event data.</param>
-	private void OnAddInstructionFile(object sender, EventArgs args)
-	{
-		try
-		{
-			FileChooserDialog dialog = FileChooserDialog.Open(
-				"Open Instruction File",
-				"Instruction Files",
-				"*.ins",
-				true,
-				false);
-			dialog.OnFileSelected.ConnectTo(OnAddInsFile);
-			dialog.Run();
 		}
 		catch (Exception error)
 		{
@@ -492,46 +403,6 @@ public class WorkspaceView : Box, IWorkspaceView
 			MainView.Instance.ReportError(error);
 		}
 	}
-
-	/// <summary>
-	/// Callback for the instruction files' stack's "notify" signal.
-	/// </summary>
-	/// <param name="page">The page that was selected.</param>
-	private void OnInsFilesSidebarPageSelected(string page)
-	{
-		try
-		{
-			// The visible child of the stack has changed.
-			if (page == "Add File")
-			{
-				// The user has clicked the "Add File" button. This button
-				// is an entry in the sidebar with a corresponding blank
-				// widget in the stack. Therefore we try to reset the
-				// visible child to the previously-selected ins file.
-				if (previouslyVisibleInsFile == null)
-				{
-					// No ins file was previously selected. Try to select
-					// the last ins file (ie the one closest to the button).
-					if (instructionFileViews.Count > 0)
-						insFilesView.VisibleChildName = GetTabName(instructionFileViews.Last().File);
-					// else user has clicked Add File in a workspace with no
-					// instruction files - nothing we can do.
-				}
-				else
-					insFilesView.VisibleChildName = previouslyVisibleInsFile;
-
-				// Handle the "Add File" action by prompting the user to
-				// select an instruction file.
-				OnAddInstructionFile(this, EventArgs.Empty);
-			}
-			else
-				previouslyVisibleInsFile = insFilesView.VisibleChildName;
-		}
-		catch (Exception error)
-		{
-			MainView.Instance.ReportError(error);
-		}
-    }
 
     /// <summary>
     /// Show the progress of a currently-running simulation.

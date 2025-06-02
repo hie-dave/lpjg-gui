@@ -39,6 +39,11 @@ public class WorkspacePresenter : IPresenter<IWorkspaceView>
 	private Task? simulations;
 
 	/// <summary>
+	/// Presenter which manages the individual instruction files.
+	/// </summary>
+	private readonly IInstructionFilesPresenter insFilesPresenter;
+
+	/// <summary>
 	/// The graphs presenter.
 	/// </summary>
 	private readonly IGraphsPresenter graphsPresenter;
@@ -61,18 +66,23 @@ public class WorkspacePresenter : IPresenter<IWorkspaceView>
 	{
 		this.workspace = workspace;
 		view = new WorkspaceView();
-		view.Populate(workspace.InstructionFiles);
 
+		// Construct child presenters.
+		insFilesPresenter = new InstructionFilesPresenter(view.InsFilesView);
+		outputsPresenter = new OutputsPresenter(view.OutputsView);
+		graphsPresenter = new GraphsPresenter(view.GraphsView, workspace.Graphs, workspace.InstructionFiles);
+
+		// Populate views.
+		PopulateRunners();
+		insFilesPresenter.Populate(workspace.InstructionFiles);
+		outputsPresenter.Populate(workspace.InstructionFiles);
+
+		// Connect events.
 		view.OnRun.ConnectTo(OnRun);
 		view.OnStop.ConnectTo(OnStop);
 		view.OnAddRunOption.ConnectTo(OnConfigureRunners);
-		view.OnAddInsFile.ConnectTo(OnAddInsFile);
-		view.OnRemoveInsFile.ConnectTo(OnRemoveInsFile);
-
-		outputsPresenter = new OutputsPresenter(view.OutputsView);
-		graphsPresenter = new GraphsPresenter(view.GraphsView, workspace.Graphs, workspace.InstructionFiles);
-		PopulateRunners();
-		outputsPresenter.Populate(workspace.InstructionFiles);
+		insFilesPresenter.OnAddInsFile.ConnectTo(OnAddInsFile);
+		insFilesPresenter.OnRemoveInsFile.ConnectTo(OnRemoveInsFile);
 	}
 
 	/// <summary>
@@ -91,7 +101,7 @@ public class WorkspacePresenter : IPresenter<IWorkspaceView>
 		workspace.Save();
 
 		// Update the view.
-		view.Populate(workspace.InstructionFiles);
+		insFilesPresenter.Populate(workspace.InstructionFiles);
 
 		// Update the graphs view.
 		graphsPresenter.UpdateInstructionFiles(workspace.InstructionFiles);
@@ -114,7 +124,7 @@ public class WorkspacePresenter : IPresenter<IWorkspaceView>
 		workspace.Save();
 
 		// Update the view.
-		view.Populate(workspace.InstructionFiles);
+		insFilesPresenter.Populate(workspace.InstructionFiles);
 	}
 
     /// <summary>

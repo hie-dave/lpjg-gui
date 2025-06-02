@@ -1,3 +1,5 @@
+using LpjGuess.Frontend.Delegates;
+
 namespace LpjGuess.Frontend.Interfaces;
 
 /// <summary>
@@ -20,4 +22,14 @@ public interface IEditorView : IView
 	/// Empty all text from the output view.
 	/// </summary>
 	void Clear();
+
+	/// <summary>
+	/// Get the contents of the view.
+	/// </summary>
+	string? GetContents();
+
+	/// <summary>
+	/// Event raised when the user has changed the contents of the view.
+	/// </summary>
+	Event OnChanged { get; }
 }

@@ -56,10 +56,9 @@ public interface IWorkspaceView : IView
 	void SelectTab(FileTab tab);
 
 	/// <summary>
-	/// Populate the view with the given instruction files.
+	/// Get a reference to the instruction files view.
 	/// </summary>
-	/// <param name="insFiles">The instruction files with which the view should be populated.</param>
-	void Populate(IEnumerable<string> insFiles);
+	IInstructionFilesView InsFilesView { get; }
 
 	/// <summary>
 	/// Get a reference to the graphs view.
@@ -92,17 +91,4 @@ public interface IWorkspaceView : IView
 	/// Called when the user wants to add a new run method.
 	/// </summary>
 	Event OnAddRunOption { get; }
-
-	/// <summary>
-	/// Called when the user wants to add an instruction file to the workspace.
-	/// The event parameter is the path to the instruction file to be added.
-	/// </summary>
-	Event<string> OnAddInsFile { get; }
-
-	/// <summary>
-	/// Called when the user wants to remove an instruction file from the
-	/// workspace. The event parameter is the path to the instruction file to
-	/// be removed.
-	/// </summary>
-	Event<string> OnRemoveInsFile { get; }
 }
