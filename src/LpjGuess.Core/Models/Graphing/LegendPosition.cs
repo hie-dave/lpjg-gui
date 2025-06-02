@@ -6,32 +6,62 @@ namespace LpjGuess.Core.Models.Graphing;
 public enum LegendPosition
 {
     /// <summary>
-    /// The legend is placed in the top-left corner of the plot.
+    /// The legend is placed above the plot, starting from the left.
     /// </summary>
     TopLeft,
 
     /// <summary>
-    /// The legend is placed in the top-right corner of the plot.
-    /// </summary>
-    TopRight,
-
-    /// <summary>
-    /// The legend is placed in the bottom-left corner of the plot.
-    /// </summary>
-    BottomLeft,
-
-    /// <summary>
-    /// The legend is placed in the bottom-right corner of the plot.
-    /// </summary>
-    BottomRight,
-
-    /// <summary>
-    /// The legend is placed in the top-center of the plot.
+    /// The legend is placed above the plot, in the center.
     /// </summary>
     TopCenter,
 
     /// <summary>
-    /// The legend is placed in the bottom-center of the plot.
+    /// The legend is placed above the plot, starting from the right.
+    /// </summary>
+    TopRight,
+
+    /// <summary>
+    /// The legend is placed to the left of the plot, starting from the top.
+    /// </summary>
+    LeftTop,
+
+    /// <summary>
+    /// The legend is placed to the left of the plot, in the center.
+    /// </summary>
+    LeftCenter,
+
+    /// <summary>
+    /// The legend is placed to the left of the plot, starting from the bottom.
+    /// </summary>
+    LeftBottom,
+
+    /// <summary>
+    /// The legend is placed to the right of the plot, starting from the top.
+    /// </summary>
+    RightTop,
+
+    /// <summary>
+    /// The legend is placed to the right of the plot, in the center.
+    /// </summary>
+    RightCenter,
+
+    /// <summary>
+    /// The legend is placed to the right of the plot, starting from the bottom.
+    /// </summary>
+    RightBottom,
+
+    /// <summary>
+    /// The legend is placed below the plot, starting from the left.
+    /// </summary>
+    BottomLeft,
+
+    /// <summary>
+    /// The legend is placed below the plot, in the center.
     /// </summary>
     BottomCenter,
+
+    /// <summary>
+    /// The legend is placed below the plot, starting from the right.
+    /// </summary>
+    BottomRight,
 }

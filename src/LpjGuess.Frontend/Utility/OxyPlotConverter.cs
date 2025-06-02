@@ -95,7 +95,7 @@ public static class OxyPlotConverter
         legend.LegendPosition = ToOxyPosition(graph.Legend.Position);
         legend.LegendBackground = graph.Legend.BackgroundColour.ToOxyColor();
         legend.LegendBorder = graph.Legend.BorderColour.ToOxyColor();
-        legend.IsLegendVisible = plot.Series.Count > 1;
+        legend.IsLegendVisible = graph.Legend.Visible;
         plot.Legends.Add(legend);
 
         return plot;
@@ -108,6 +108,12 @@ public static class OxyPlotConverter
             LegendPosition.TopLeft => OxyLegendPosition.TopLeft,
             LegendPosition.TopCenter => OxyLegendPosition.TopCenter,
             LegendPosition.TopRight => OxyLegendPosition.TopRight,
+            LegendPosition.LeftTop => OxyLegendPosition.LeftTop,
+            LegendPosition.LeftCenter => OxyLegendPosition.LeftMiddle,
+            LegendPosition.LeftBottom => OxyLegendPosition.LeftBottom,
+            LegendPosition.RightTop => OxyLegendPosition.RightTop,
+            LegendPosition.RightCenter => OxyLegendPosition.RightMiddle,
+            LegendPosition.RightBottom => OxyLegendPosition.RightBottom,
             LegendPosition.BottomLeft => OxyLegendPosition.BottomLeft,
             LegendPosition.BottomCenter => OxyLegendPosition.BottomCenter,
             LegendPosition.BottomRight => OxyLegendPosition.BottomRight,

@@ -124,6 +124,7 @@ public class GraphPresenter : IGraphPresenter
             graph.Title,
             graph.XAxisTitle,
             graph.YAxisTitle,
+            graph.Legend.Visible,
             graph.Legend.Position,
             graph.Legend.Placement,
             graph.Legend.Orientation,

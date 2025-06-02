@@ -68,6 +68,11 @@ public class GraphView : ViewBase<Box>, IGraphView
     private readonly Entry yaxisTitleEntry;
 
     /// <summary>
+    /// Switch widget for toggling the legend visibility.
+    /// </summary>
+    private readonly Switch legendVisibleSwitch;
+
+    /// <summary>
     /// Dropdown widget for selecting the legend position.
     /// </summary>
     private readonly EnumDropDownView<LegendPosition> legendPositionDropdown;
@@ -158,6 +163,11 @@ public class GraphView : ViewBase<Box>, IGraphView
         yaxisTitleEntry.OnActivate += OnYAxisTitleEdited;
         yaxisTitleEntry.Hexpand = true;
 
+        legendVisibleSwitch = Switch.New();
+        legendVisibleSwitch.Halign = Align.Start;
+        legendVisibleSwitch.Valign = Align.Center;
+        legendVisibleSwitch.OnNotify += OnLegendVisibleToggled;
+
         legendPositionDropdown = new EnumDropDownView<LegendPosition>();
         legendPositionDropdown.OnSelectionChanged.ConnectTo(OnLegendPositionChanged);
 
@@ -186,6 +196,7 @@ public class GraphView : ViewBase<Box>, IGraphView
         AddRow("Title", titleEntry);
         AddRow("X-axis title", xaxisTitleEntry);
         AddRow("Y-axis title", yaxisTitleEntry);
+        AddRow("Legend visible", legendVisibleSwitch);
         AddRow("Legend position", legendPositionDropdown.GetWidget());
         AddRow("Legend placement", legendPlacementDropdown.GetWidget());
         AddRow("Legend orientation", legendOrientationDropdown.GetWidget());
@@ -201,13 +212,18 @@ public class GraphView : ViewBase<Box>, IGraphView
         editorBox.Append(graphPropertiesFrame);
         editorBox.Append(seriesPropertiesFrame);
 
+        ScrolledWindow editorScroller = new ScrolledWindow();
+        editorScroller.Child = editorBox;
+        editorScroller.HscrollbarPolicy = PolicyType.Never;
+        editorScroller.VscrollbarPolicy = PolicyType.Automatic;
+
         // Create the revealer for the sidebar.
         revealer = Revealer.New();
         revealer.TransitionType = RevealerTransitionType.SlideRight;
         revealer.TransitionDuration = 250; // milliseconds
         revealer.RevealChild = false;
         revealer.Hexpand = false;
-        revealer.SetChild(editorBox);
+        revealer.SetChild(editorScroller);
 
         // Create a header bar for the graph.
         Box header = Box.New(Orientation.Horizontal, 0);
@@ -244,6 +260,7 @@ public class GraphView : ViewBase<Box>, IGraphView
         string title,
         string? xaxisTitle,
         string? yaxisTitle,
+        bool legendVisible,
         LegendPosition position,
         LegendPlacement placement,
         LegendOrientation orientation,
@@ -253,6 +270,13 @@ public class GraphView : ViewBase<Box>, IGraphView
         titleEntry.SetText(title);
         xaxisTitleEntry.SetText(xaxisTitle ?? string.Empty);
         yaxisTitleEntry.SetText(yaxisTitle ?? string.Empty);
+
+        // Temporarily disable signal propagation for the switch widget. (FIXME)
+        legendVisibleSwitch.OnNotify -= OnLegendVisibleToggled;
+        legendVisibleSwitch.State = legendVisible;
+        legendVisibleSwitch.Active = legendVisible;
+        legendVisibleSwitch.OnNotify += OnLegendVisibleToggled;
+
         legendPositionDropdown.Select(position);
         legendPlacementDropdown.Select(placement);
         legendOrientationDropdown.Select(orientation);
@@ -387,6 +411,29 @@ public class GraphView : ViewBase<Box>, IGraphView
         catch (Exception error)
         {
             MainView.Instance.ReportError(error);
+        }
+    }
+
+    /// <summary>
+    /// Called when the user has toggled the legend visibility.
+    /// </summary>
+    /// <param name="sender">Sender object.</param>
+    /// <param name="args">Event data.</param>
+    private void OnLegendVisibleToggled(GObject.Object sender, GObject.Object.NotifySignalArgs args)
+    {
+        try
+        {
+            // Keep the switch's state in sync with its active status.
+            legendVisibleSwitch.State = legendVisibleSwitch.Active;
+            OnGraphChanged.Invoke(new ModelChangeEventArgs<Graph, bool>(
+                graph => graph.Legend.Visible,
+                (graph, visible) => graph.Legend.Visible = visible,
+                legendVisibleSwitch.Active
+            ));
+        }
+        catch (Exception ex)
+        {
+            MainView.Instance.ReportError(ex);
         }
     }
 

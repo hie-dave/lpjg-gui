@@ -43,6 +43,7 @@ public interface IGraphView : IView
     /// <param name="title">The title of the graph.</param>
     /// <param name="xaxisTitle">The X-axis title of the graph.</param>
     /// <param name="yaxisTitle">The Y-axis title of the graph.</param>
+    /// <param name="legendVisible">Whether the legend is visible.</param>
     /// <param name="position">The position of the legend.</param>
     /// <param name="placement">The placement of the legend.</param>
     /// <param name="orientation">The orientation of the legend.</param>
@@ -52,6 +53,7 @@ public interface IGraphView : IView
         string title,
         string? xaxisTitle,
         string? yaxisTitle,
+        bool legendVisible,
         LegendPosition position,
         LegendPlacement placement,
         LegendOrientation orientation,
