@@ -47,12 +47,15 @@ public class DynamicStyleProvider<T> : IStyleProvider<T>
     /// <inheritdoc />
     public T GetStyle(ISeriesData data)
     {
-        if (!styles.TryGetValue(Identifier.GetIdentifier(data), out T? style))
+        lock (styles)
         {
-            style = ValueStrategy.GetValue(index++);
-            styles.Add(Identifier.GetIdentifier(data), style);
+            if (!styles.TryGetValue(Identifier.GetIdentifier(data), out T? style))
+            {
+                style = ValueStrategy.GetValue(index++);
+                styles.Add(Identifier.GetIdentifier(data), style);
+            }
+            return style;
         }
-        return style;
     }
 
     /// <inheritdoc />
