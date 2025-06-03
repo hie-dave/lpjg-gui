@@ -126,9 +126,9 @@ public class MainView : ApplicationWindow, IMainView
 		menuButton.IconName = "open-menu-symbolic";
 
 		Menu openMenu = Menu.New();
-		openMenu.AddMenuItem(appDomain, "Open", OnOpenWorkspace, "<Ctrl>O");
-		openMenu.AddMenuItem(appDomain, "New", OnNewWorkspace, "<Ctrl>N");
-		openMenu.AddMenuItem(appDomain, "New from Instruction File", OnOpenInsFile, "<Ctrl><Shift>N");
+		openMenu.AddApplicationMenuItem(appDomain, "Open", OnOpenWorkspace, "<Ctrl>O");
+		openMenu.AddApplicationMenuItem(appDomain, "New", OnNewWorkspace, "<Ctrl>N");
+		openMenu.AddApplicationMenuItem(appDomain, "New from Instruction File", OnOpenInsFile, "<Ctrl><Shift>N");
 
 		MenuButton openInsFile = new MenuButton();
 		openInsFile.Label = "Open";
@@ -207,7 +207,7 @@ public class MainView : ApplicationWindow, IMainView
 	/// <inheritdoc />
 	public void AddMenuItem(string name, Action callback, string? hotkey = null)
 	{
-		menu.AddMenuItem(appDomain, name, callback, hotkey);
+		menu.AddApplicationMenuItem(appDomain, name, callback, hotkey);
 	}
 
 	/// <summary>

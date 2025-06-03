@@ -1,6 +1,8 @@
+using Gio;
 using Gtk;
 using GtkSource;
 using LpjGuess.Frontend.Delegates;
+using LpjGuess.Frontend.Extensions;
 using LpjGuess.Frontend.Interfaces;
 
 using SourceBuffer = GtkSource.Buffer;
@@ -19,14 +21,19 @@ namespace LpjGuess.Frontend.Views;
 public class EditorView : ViewBase<ScrolledWindow>, IEditorView
 {
 	/// <summary>
+	/// The domain for actions added to the editor menu.
+	/// </summary>
+	private const string domain = "editor";
+
+	/// <summary>
 	/// Fallback style in dark mode.
 	/// </summary>
-	private const string defaultDarkStyle = "oblivion";
+	private const string defaultDarkStyle = "classic-dark";
 
 	/// <summary>
 	/// Default fallback style.
 	/// </summary>
-	private const string defaultLightStyle = "Classic";
+	private const string defaultLightStyle = "classic";
 
 	/// <summary>
 	/// The internal text view object.
@@ -37,6 +44,11 @@ public class EditorView : ViewBase<ScrolledWindow>, IEditorView
 	/// The internal text buffer object.
 	/// </summary>
 	private readonly SourceBuffer buffer;
+
+	/// <summary>
+	/// Menu containing custom context options.
+	/// </summary>
+	private readonly Menu menu;
 
 	/// <inheritdoc />
 	public bool Editable
@@ -69,7 +81,70 @@ public class EditorView : ViewBase<ScrolledWindow>, IEditorView
 
 		widget.Child = sourceView;
 		ConnectEvents();
+
+		SimpleActionGroup group = new SimpleActionGroup();
+		menu = Menu.New();
+
+		menu.AddMenuItem(group, "Change Style", OnChangeStyle, domain, "<Ctrl>L");
+
+		sourceView.InsertActionGroup(domain, group);
+		sourceView.ExtraMenu = menu;
 	}
+
+	private void OnChangeStyle()
+	{
+		try
+		{
+			StyleSchemeChooserWidget styleChooser = new StyleSchemeChooserWidget();
+			StyleScheme? scheme = buffer.StyleScheme;
+			if (scheme != null)
+				styleChooser.StyleScheme = scheme;
+			styleChooser.OnNotify += OnStyleChooserNotify;
+
+			Window window = new Window();
+			window.Title = "Choose Style";
+			window.Child = styleChooser;
+			window.TransientFor = MainView.Instance;
+			window.Modal = true;
+			window.OnCloseRequest += (_, __) =>
+			{
+				window.Dispose();
+				return false;
+			};
+			window.Show();
+		}
+		catch (Exception error)
+		{
+			MainView.Instance.ReportError(error);
+		}
+    }
+
+	private void OnStyleChooserNotify(GObject.Object sender, GObject.Object.NotifySignalArgs args)
+	{
+		try
+		{
+			string property = args.Pspec.GetName();
+			const string styleSchemeProperty = "style-scheme";
+			if (args.Pspec.GetName() != styleSchemeProperty)
+				return;
+
+			StyleSchemeChooser? chooser = sender as StyleSchemeChooser;
+			if (chooser == null)
+				return;
+
+			StyleScheme? scheme = chooser.StyleScheme;
+			if (scheme == null)
+				return;
+
+			Configuration.Instance.EditorStyleName = scheme.Id;
+			Configuration.Instance.Save();
+			buffer.StyleScheme = scheme;
+		}
+		catch (Exception error)
+		{
+			MainView.Instance.ReportError(error);
+		}
+    }
 
     private StyleScheme? GetStyleScheme()
     {
@@ -83,7 +158,10 @@ public class EditorView : ViewBase<ScrolledWindow>, IEditorView
 		// Fallback to a default style scheme if the user's choice can't be
 		// loaded (or the user hasn't set a style scheme).
 		if (style == null)
+		{
+			Console.WriteLine($"Failed to load default style '{name}'. Available schemes: {string.Join(", ", StyleSchemeManager.GetDefault().GetSchemeIds() ?? [])}");
 			style = GetDefaultStyle();
+		}
 
 		return style;
     }

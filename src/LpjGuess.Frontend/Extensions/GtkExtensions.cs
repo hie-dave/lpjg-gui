@@ -75,17 +75,17 @@ public static class GtkExtensions
 	}
 
 	/// <inheritdoc />
-	public static void AddMenuItem(this Menu menu, string domain, string name, Action callback, string? hotkey = null)
+	public static void AddApplicationMenuItem(this Menu menu, string domain, string name, Action callback, string? hotkey = null)
 	{
-		menu.AddMenuItem(domain, name, (_, __) => callback(), hotkey);
+		menu.AddApplicationMenuItem(domain, name, (_, __) => callback(), hotkey);
 	}
 
 	/// <inheritdoc />
-	public static void AddMenuItem(this Menu menu, string domain, string name, SignalHandler<SimpleAction, SimpleAction.ActivateSignalArgs> callback, string? hotkey = null)
+	public static void AddApplicationMenuItem(this Menu menu, string domain, string name, SignalHandler<SimpleAction, SimpleAction.ActivateSignalArgs> callback, string? hotkey = null)
 	{
 		Application app = MainView.AppInstance;
 
-		string actionName = name.ToLower().Replace(" ", "-");
+		string actionName = name.SanitiseActionName();
 		string fullName = $"{domain}.{actionName}";
 
 		menu.Append($"_{name}", fullName);
@@ -95,5 +95,62 @@ public static class GtkExtensions
 			app.SetAccelsForAction(fullName, new[] { hotkey });
 		app.AddAction(action);
 		// action.Dispose();
+	}
+
+	/// <summary>
+	/// Add a menu item to the specified menu.
+	/// </summary>
+	/// <param name="menu">The menu to add the item to.</param>
+	/// <param name="map">The action map to add the action to.</param>
+	/// <param name="name">The name of the menu item.</param>
+	/// <param name="callback">The callback to be invoked when the menu item is activated.</param>
+	/// <param name="domain">The domain for the action.</param>
+	/// <param name="hotkey">The hotkey to be associated with the menu item.</param>
+	public static void AddMenuItem(
+		this Menu menu,
+		ActionMap map,
+		string name,
+		Action callback,
+		string? domain = null,
+		string? hotkey = null)
+	{
+		menu.AddMenuItem(map, name, (_, __) => callback(), domain, hotkey);
+	}
+
+	/// <summary>
+	/// Add a menu item to the specified menu.
+	/// </summary>
+	/// <param name="menu">The menu to add the item to.</param>
+	/// <param name="map">The action map to add the action to.</param>
+	/// <param name="name">The name of the menu item.</param>
+	/// <param name="callback">The callback to be invoked when the menu item is activated.</param>
+	/// <param name="domain">The domain for the action.</param>
+	/// <param name="hotkey">The hotkey to be associated with the menu item.</param>
+	public static void AddMenuItem(
+		this Menu menu,
+		ActionMap map,
+		string name,
+		SignalHandler<SimpleAction, SimpleAction.ActivateSignalArgs> callback,
+		string? domain = null,
+		string? hotkey = null)
+	{
+		string actionName = name.SanitiseActionName();
+		string fullName = domain != null ? $"{domain}.{actionName}" : actionName;
+		menu.Append($"_{name}", fullName);
+		var action = SimpleAction.New(actionName, null);
+		action.OnActivate += callback;
+		map.AddAction(action);
+		if (hotkey != null)
+			MainView.AppInstance.SetAccelsForAction(fullName, new[] { hotkey });
+	}
+
+	/// <summary>
+	/// Sanitise a string to be used as an action name.
+	/// </summary>
+	/// <param name="name">The string to sanitise.</param>
+	/// <returns>The sanitised string.</returns>
+	private static string SanitiseActionName(this string name)
+	{
+		return name.ToLower().Replace(" ", "-");
 	}
 }

@@ -325,8 +325,8 @@ public class WorkspaceView : Box, IWorkspaceView
 	{
 		ClearRunOptions();
 		foreach (string name in runners)
-			runMenu.AddMenuItem(actionDomain, name, OnRunWithRunner);
-		runMenu.AddMenuItem(actionDomain, addRunnerAction, OnAddRunoption);
+			runMenu.AddApplicationMenuItem(actionDomain, name, OnRunWithRunner);
+		runMenu.AddApplicationMenuItem(actionDomain, addRunnerAction, OnAddRunoption);
 	}
 
 	/// <summary>
