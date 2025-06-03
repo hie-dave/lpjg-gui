@@ -34,5 +34,6 @@ public interface IInstructionFileView : IView
     /// <summary>
     /// Remove visual indicators for all editors' unsaved changes.
     /// </summary>
-    void UnflagChanges();
+    /// <param name="editor">The editor view which has been saved.</param>
+    void UnflagChanges(IEditorView editor);
 }

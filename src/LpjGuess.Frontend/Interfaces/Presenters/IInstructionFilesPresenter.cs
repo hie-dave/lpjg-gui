@@ -15,6 +15,11 @@ public interface IInstructionFilesPresenter : IPresenter<IInstructionFilesView>
     void Populate(IEnumerable<string> insFiles);
 
     /// <summary>
+    /// Save any pending changes to the instruction files.
+    /// </summary>
+    void SaveChanges();
+
+    /// <summary>
     /// Called when the user wants to add an instruction file to the workspace.
     /// The event parameter is the path to the instruction file to be added.
     /// </summary>

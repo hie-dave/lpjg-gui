@@ -12,6 +12,7 @@ GLib.Functions.SetApplicationName(appName);
 PangoCairo.Module.Initialize();
 Pango.Module.Initialize();
 Cairo.Module.Initialize();
+GtkSource.Module.Initialize();
 
 app.OnStartup += OnStartup;
 app.OnActivate += OnActivated;

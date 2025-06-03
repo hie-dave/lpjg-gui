@@ -1,30 +1,48 @@
-using System.Text;
 using Gtk;
+using GtkSource;
 using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.Interfaces;
+
+using SourceBuffer = GtkSource.Buffer;
+using SourceView = GtkSource.View;
 
 namespace LpjGuess.Frontend.Views;
 
 /// <summary>
 /// A view which displays text in an optionally editable view.
 /// </summary>
+/// <remarks>
+/// This needs to be refactored by extracting a separate class for the log view.
+/// That class needs clear/appendline functionality, and shouldn't be editable,
+/// which doesn't really make sense for an "editor" view.
+/// </remarks>
 public class EditorView : ViewBase<ScrolledWindow>, IEditorView
 {
 	/// <summary>
-	/// The contents of the view.
+	/// Fallback style in dark mode.
 	/// </summary>
-	private readonly StringBuilder contents;
+	private const string defaultDarkStyle = "oblivion";
+
+	/// <summary>
+	/// Default fallback style.
+	/// </summary>
+	private const string defaultLightStyle = "Classic";
 
 	/// <summary>
 	/// The internal text view object.
 	/// </summary>
-	private readonly TextView textView;
+	private readonly SourceView sourceView;
+
+	/// <summary>
+	/// The internal text buffer object.
+	/// </summary>
+	private readonly SourceBuffer buffer;
 
 	/// <inheritdoc />
 	public bool Editable
 	{
-		get => textView.Editable;
-		set => textView.Editable = value;
+		get => sourceView.Editable;
+		set => sourceView.Editable = value;
 	}
 
 	/// <inheritdoc />
@@ -38,40 +56,94 @@ public class EditorView : ViewBase<ScrolledWindow>, IEditorView
 	{
 		OnChanged = new Event();
 
-		contents = new StringBuilder();
-		TextBuffer buffer = TextBuffer.New(null);
-		textView = TextView.NewWithBuffer(buffer);
-		textView.Vexpand = true;
-		textView.Monospace = true;
+		buffer = new SourceBuffer();
+		sourceView = SourceView.NewWithBuffer(buffer);
+		sourceView.Vexpand = true;
+		sourceView.Monospace = true;
+		sourceView.ShowLineNumbers = true;
 
-		widget.Child = textView;
+		// Attempt to load a style scheme from the user settings.
+		StyleScheme? style = GetStyleScheme();
+		if (style != null)
+			buffer.StyleScheme = style;
+
+		widget.Child = sourceView;
 		ConnectEvents();
 	}
 
-    /// <inheritdoc />
-    public void AppendLine(string line)
+    private StyleScheme? GetStyleScheme()
+    {
+		StyleScheme? style = null;
+
+		// Attempt to load a style scheme from the user settings.
+		string? name = Configuration.Instance.EditorStyleName;
+		if (name != null)
+			style = StyleSchemeManager.GetDefault().GetScheme(name);
+
+		// Fallback to a default style scheme if the user's choice can't be
+		// loaded (or the user hasn't set a style scheme).
+		if (style == null)
+			style = GetDefaultStyle();
+
+		return style;
+    }
+
+    /// <summary>
+    /// Get the a fallback style scheme to be used when a default is either not
+    /// set or can't be loaded.
+    /// </summary>
+    private static StyleScheme? GetDefaultStyle()
+	{
+		string name = GetDefaultStyleName();
+		return StyleSchemeManager.GetDefault().GetScheme(name);
+	}
+
+	/// <summary>
+	/// Get the default style name.
+	/// </summary>
+	private static string GetDefaultStyleName()
+	{
+#if LINUX
+		try
+		{
+			var styleManager = Adw.StyleManager.GetDefault();
+			if (styleManager != null && styleManager.Dark)
+				return defaultDarkStyle;
+		}
+		catch
+		{
+			// Ignore errors here and use fallback styles.
+		}
+#endif
+		return Configuration.Instance.PreferDarkMode ? defaultDarkStyle : defaultLightStyle;
+	}
+
+	/// <inheritdoc />
+	public void Populate(string text)
 	{
 		DisconnectEvents();
 
-		contents.AppendLine(line);
-		string text = contents.ToString();
-		TextBuffer buffer = textView.GetBuffer();
-		buffer.SetText(text, Encoding.UTF8.GetByteCount(text));
+		buffer.Text = text;
 
 		ConnectEvents();
 	}
 
 	/// <inheritdoc />
-	public string? GetContents()
+	public void AppendLine(string text)
 	{
-		return textView.GetBuffer().Text;
+		buffer.Text += text + Environment.NewLine;
 	}
 
 	/// <inheritdoc />
 	public void Clear()
 	{
-		textView.GetBuffer().SetText(string.Empty, 0);
-		contents.Clear();
+		buffer.Text = string.Empty;
+	}
+
+	/// <inheritdoc />
+	public string GetContents()
+	{
+		return buffer.Text ?? string.Empty;
 	}
 
 	/// <inheritdoc />
@@ -87,7 +159,7 @@ public class EditorView : ViewBase<ScrolledWindow>, IEditorView
 	/// </summary>
 	private void ConnectEvents()
 	{
-		textView.GetBuffer().OnChanged += OnTextBufferChanged;
+		buffer.OnChanged += OnTextBufferChanged;
 	}
 
 	/// <summary>
@@ -95,7 +167,7 @@ public class EditorView : ViewBase<ScrolledWindow>, IEditorView
 	/// </summary>
 	private void DisconnectEvents()
 	{
-		textView.GetBuffer().OnChanged -= OnTextBufferChanged;
+		buffer.OnChanged -= OnTextBufferChanged;
 	}
 
 	/// <summary>

@@ -93,6 +93,11 @@ public class Configuration
 	public string? PreviousDirectory { get; set; }
 
 	/// <summary>
+	/// The name of the style scheme to use in the editor.
+	/// </summary>
+	public string? EditorStyleName { get; set; }
+
+	/// <summary>
 	/// Save current configuration to disk in the default location.
 	/// </summary>
 	public void Save()

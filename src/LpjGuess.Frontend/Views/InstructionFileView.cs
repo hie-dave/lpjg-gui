@@ -55,6 +55,13 @@ public class InstructionFileView : ViewBase<Notebook>, IInstructionFileView
         tab.Label.SetMarkup($"<b>{tab.Name}</b>");
     }
 
+    /// <inheritdoc />
+    public void UnflagChanges(IEditorView view)
+    {
+        Tab tab = GetTab(view);
+        tab.Label.SetMarkup(tab.Name);
+    }
+
     /// <summary>
     /// Get the tab corresponding to the specified editor.
     /// </summary>
@@ -66,13 +73,6 @@ public class InstructionFileView : ViewBase<Notebook>, IInstructionFileView
         if (tab is null)
             throw new ArgumentException($"Editor widget not found");
         return tab;
-    }
-
-    /// <inheritdoc />
-    public void UnflagChanges()
-    {
-        foreach (Tab tab in editors)
-            tab.Label.SetMarkup(tab.Name);
     }
 
     /// <summary>

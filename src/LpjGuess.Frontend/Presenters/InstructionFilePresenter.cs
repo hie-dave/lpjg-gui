@@ -1,6 +1,5 @@
-using LpjGuess.Core.Extensions;
-using LpjGuess.Frontend.Classes;
-using LpjGuess.Frontend.Data.Providers;
+using LpjGuess.Frontend.Delegates;
+using LpjGuess.Frontend.Events;
 using LpjGuess.Frontend.Interfaces;
 using LpjGuess.Frontend.Interfaces.Presenters;
 using LpjGuess.Frontend.Interfaces.Views;
@@ -27,7 +26,18 @@ public class InstructionFilePresenter : PresenterBase<IInstructionFileView>, IIn
     /// <summary>
     /// The editor views.
     /// </summary>
-    private readonly List<IEditorView> editors;
+    private readonly List<Editor> editors;
+
+    /// <summary>
+    /// The files with pending changes.
+    /// </summary>
+    private readonly HashSet<string> changedFiles;
+
+    /// <inheritdoc />
+    public Event<FileChangedArgs> OnFileChanged { get; private init; }
+
+    /// <inheritdoc />
+    public Event<string> OnSaved { get; private init; }
 
     /// <summary>
     /// Create a new <see cref="InstructionFilePresenter"/> instance for the
@@ -47,12 +57,58 @@ public class InstructionFilePresenter : PresenterBase<IInstructionFileView>, IIn
     public InstructionFilePresenter(string insFile, IInstructionFileView view) : base(view)
     {
         this.insFile = insFile;
-        editors = new List<IEditorView>();
+        OnFileChanged = new Event<FileChangedArgs>();
+        OnSaved = new Event<string>();
+        editors = new List<Editor>();
+        changedFiles = new HashSet<string>();
 
         // Fire and forget. The CancellationTokenSource will be disposed of
         // when the presenter is disposed.
         cts = new CancellationTokenSource();
         Task _ = PopulateViewAsync(cts.Token);
+    }
+
+    /// <inheritdoc />
+    public void SaveChanges()
+    {
+        foreach (string file in changedFiles)
+        {
+            Editor editor = GetEditor(file);
+            File.WriteAllText(file, editor.View.GetContents());
+            view.UnflagChanges(editor.View);
+            changedFiles.Remove(file);
+            OnSaved.Invoke(file);
+        }
+    }
+
+    /// <inheritdoc />
+    public void NotifyFileSaved(string file)
+    {
+        if (changedFiles.Contains(file))
+        {
+            Editor editor = GetEditor(file);
+            view.UnflagChanges(editor.View);
+            changedFiles.Remove(file);
+        }
+    }
+
+    /// <inheritdoc />
+    /// <remarks>
+    /// This method is called when the contents of an editor view have been
+    /// changed by another presenter, which typically happen when the user makes
+    /// changes in an editor view managed by another presenter. If the file that
+    /// was edited is *also* managed by this presenter (ie if multiple
+    /// presenters manage the same file), then this method must apply those
+    /// changes to the appropriate editor.
+    /// </remarks>
+    public void NotifyFileChanged(FileChangedArgs args)
+    {
+        // This is currently redundant.
+        if (args.Presenter == this)
+            return;
+
+        Editor editor = GetEditor(args.File);
+        editor.View.Populate(args.Contents);
     }
 
     /// <inheritdoc />
@@ -69,13 +125,16 @@ public class InstructionFilePresenter : PresenterBase<IInstructionFileView>, IIn
     /// <param name="ct">The cancellation token.</param>
     private async Task PopulateViewAsync(CancellationToken ct)
     {
+        // If this is ever called from somewhere other than the constructor (ie
+        // more than once per presenter lifetime), we will need to ensure that
+        // the previously running task is correctly canceled before proceeding.
+        editors.ForEach(e => e.View.OnChanged.DisconnectAll());
         view.Clear();
-        editors.ForEach(e => e.OnChanged.DisconnectAll());
         editors.Clear();
 
         await AddViewAsync(insFile, ct);
         IEnumerable<string> imports = InstructionFileNormaliser.ResolveImportDirectives(insFile);
-        foreach (string imported in imports)
+        foreach (string imported in imports.Distinct())
             await AddViewAsync(imported, ct);
     }
 
@@ -88,26 +147,53 @@ public class InstructionFilePresenter : PresenterBase<IInstructionFileView>, IIn
     {
         string text = await File.ReadAllTextAsync(file, ct);
         EditorView child = new EditorView();
-        child.AppendLine(text);
+        child.Populate(text);
         view.AddView(Path.GetFileName(file), child);
-        child.OnChanged.ConnectTo(() => OnEditorChanged(child));
-        editors.Add(child);
+        Editor editor = new Editor(file, child);
+        child.OnChanged.ConnectTo(() => OnEditorChanged(editor));
+        editors.Add(editor);
     }
 
     /// <summary>
-    /// Called when the contents of an editor view change.
+    /// Called when the contents of an editor view have been changed by the
+    /// user.
     /// </summary>
     /// <param name="editor">The editor view which has changed.</param>
-    private void OnEditorChanged(IEditorView editor)
+    private void OnEditorChanged(Editor editor)
     {
-        try
+        changedFiles.Add(editor.File);
+        view.FlagChanged(editor.View);
+        OnFileChanged.Invoke(new FileChangedArgs(
+            editor.File,
+            editor.View.GetContents(),
+            this
+        ));
+    }
+
+    /// <summary>
+    /// Get the editor object corresponding to the specified file.
+    /// </summary>
+    /// <param name="file">The file.</param>
+    /// <returns>The editor object.</returns>
+    /// <exception cref="InvalidOperationException">Thrown if the file is not managed by this presenter.</exception>
+    private Editor GetEditor(string file)
+    {
+        Editor? editor = editors.FirstOrDefault(e => e.File == file);
+        if (editor is null)
+            // Bad accounting - this would indicate a bug.
+            throw new InvalidOperationException($"Could not find editor for file {file}");
+        return editor;
+    }
+
+    private class Editor
+    {
+        public string File { get; }
+        public IEditorView View { get; }
+
+        public Editor(string file, IEditorView view)
         {
-            // TODO: Implement this.
-            view.FlagChanged(editor);
-        }
-        catch (Exception error)
-        {
-            MainView.Instance.ReportError(error);
+            File = file;
+            View = view;
         }
     }
 }

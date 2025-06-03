@@ -170,6 +170,9 @@ public class WorkspacePresenter : IPresenter<IWorkspaceView>
 	/// </summary>
 	public void Dispose()
 	{
+		// Save changes to instruction files.
+		insFilesPresenter.SaveChanges();
+
 		// Save changes to the file.
 		workspace.Graphs = graphsPresenter.GetGraphs().ToList();
 		workspace.Save();
@@ -191,6 +194,9 @@ public class WorkspacePresenter : IPresenter<IWorkspaceView>
 	{
 		if (IsRunning())
 			throw new InvalidOperationException($"Simulation is already running. Please kill the previous process first.");
+
+		// Save any pending changes to the instruction files.
+		insFilesPresenter.SaveChanges();
 
 		// Clear output buffer from any previous runs.
 		view.ClearOutput();
