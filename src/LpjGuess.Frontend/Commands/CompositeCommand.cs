@@ -5,6 +5,9 @@ namespace LpjGuess.Frontend.Commands;
 /// <summary>
 /// A command which executes a sequence of other commands.
 /// </summary>
+/// <remarks>
+/// Commands are guaranteed to be executed in the order they are provided to the constructor.
+/// </remarks>
 public class CompositeCommand : ICommand
 {
     /// <summary>
@@ -31,7 +34,10 @@ public class CompositeCommand : ICommand
     /// <inheritdoc />
     public void Undo()
     {
-        foreach (ICommand command in commands)
-            command.Undo();
+        // Undo commands in reverse order
+        for (int i = commands.Count - 1; i >= 0; i--)
+        {
+            commands[i].Undo();
+        }
     }
 }

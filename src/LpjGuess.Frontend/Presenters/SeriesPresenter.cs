@@ -2,8 +2,6 @@ using LpjGuess.Core.Interfaces.Graphing;
 using LpjGuess.Core.Models.Graphing.Style;
 using LpjGuess.Frontend.Commands;
 using LpjGuess.Frontend.Delegates;
-using LpjGuess.Frontend.Events;
-using LpjGuess.Frontend.Factories;
 using LpjGuess.Frontend.Interfaces;
 using LpjGuess.Frontend.Interfaces.Commands;
 using LpjGuess.Frontend.Interfaces.Events;
@@ -27,6 +25,7 @@ public class SeriesPresenter<T> : PresenterBase<ISeriesView<T>>, ISeriesPresente
     /// The data source presenter factory.
     /// </summary>
     private readonly IDataSourcePresenterFactory factory;
+    private readonly SeriesValidationCommandFactory validationCommandFactory;
 
     /// <summary>
     /// Creates a new instance of SeriesPresenter.
@@ -42,6 +41,7 @@ public class SeriesPresenter<T> : PresenterBase<ISeriesView<T>>, ISeriesPresente
         view.Populate(series);
         view.OnEditSeries.ConnectTo(OnEditSeries);
         this.factory = factory;
+        this.validationCommandFactory = new SeriesValidationCommandFactory();
 
         IDataSourcePresenter dataSourcePresenter = this.factory.CreatePresenter(series.DataSource);
         dataSourcePresenter.OnDataSourceChanged.ConnectTo(OnDataSourceChanged);
@@ -84,14 +84,26 @@ public class SeriesPresenter<T> : PresenterBase<ISeriesView<T>>, ISeriesPresente
     }
 
     /// <summary>
+    /// Invoke a composite command containing the specified command and a
+    /// validation command for the series.
+    /// </summary>
+    /// <param name="command">The command to update the series with.</param>
+    private void UpdateSeries(ICommand command)
+    {
+        OnSeriesChanged.Invoke(new CompositeCommand([
+            command,
+            validationCommandFactory.CreateValidationCommand(Series)
+        ]));
+    }
+
+    /// <summary>
     /// Called when the series has been changed by the user. Generates a command
     /// object which encapsulates the change, and propagates it up to the owner.
     /// </summary>
     /// <param name="change">The action to perform on the series.</param>
     private void OnEditSeries(IModelChange<T> change)
     {
-        ICommand command = change.ToCommand(Series);
-        OnSeriesChanged.Invoke(command);
+        UpdateSeries(change.ToCommand(Series));
     }
 
     /// <summary>
@@ -100,6 +112,6 @@ public class SeriesPresenter<T> : PresenterBase<ISeriesView<T>>, ISeriesPresente
     /// <param name="command">The action to perform on the data source.</param>
     private void OnDataSourceChanged(ICommand command)
     {
-        OnSeriesChanged.Invoke(command);
+        UpdateSeries(command);
     }
 }
