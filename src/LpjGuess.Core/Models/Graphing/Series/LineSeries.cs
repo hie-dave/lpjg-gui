@@ -1,6 +1,6 @@
 using LpjGuess.Core.Interfaces;
 using LpjGuess.Core.Interfaces.Graphing.Style;
-using LpjGuess.Core.Models.Graphing.Style;
+using Newtonsoft.Json;
 
 namespace LpjGuess.Core.Models.Graphing.Series;
 
@@ -23,15 +23,6 @@ public class LineSeries : SeriesBase
     /// <summary>
     /// Create a new <see cref="LineSeries"/> instance.
     /// </summary>
-    public LineSeries()
-    {
-        Type = new FixedStyleProvider<LineType>(LineType.Solid);
-        Thickness = new FixedStyleProvider<LineThickness>(LineThickness.Regular);
-    }
-
-    /// <summary>
-    /// Create a new <see cref="LineSeries"/> instance.
-    /// </summary>
     /// <param name="title">The title of the series.</param>
     /// <param name="colourProvider">The colour provider.</param>
     /// <param name="dataSource">The data source for the series.</param>
@@ -39,6 +30,7 @@ public class LineSeries : SeriesBase
     /// <param name="yAxisPosition">The position of the Y axis for the series.</param>
     /// <param name="typeProvider">The line type provider.</param>
     /// <param name="thicknessProvider">The line thickness provider.</param>
+    [JsonConstructor]
     public LineSeries(
         string title,
         IStyleProvider<Colour> colourProvider,

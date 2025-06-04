@@ -2,6 +2,7 @@ using LpjGuess.Core.Interfaces;
 using LpjGuess.Core.Interfaces.Graphing;
 using LpjGuess.Core.Interfaces.Graphing.Style;
 using LpjGuess.Core.Models.Graphing.Style;
+using Newtonsoft.Json;
 
 namespace LpjGuess.Core.Models.Graphing.Series;
 
@@ -26,22 +27,6 @@ public abstract class SeriesBase : ISeries
     public AxisPosition YAxisPosition { get; set; }
 
     /// <summary>
-    /// Default constructor provided for serialisation purposes only. Don't use
-    /// this.
-    /// </summary>
-    /// <remarks>
-    /// TODO: refactor serialization and series init so this is not needed.
-    /// </remarks>
-    public SeriesBase()
-    {
-        Title = string.Empty;
-        ColourProvider = new FixedStyleProvider<Colour>(Colours.Black);
-        DataSource = null!;
-        XAxisPosition = AxisPosition.Bottom;
-        YAxisPosition = AxisPosition.Left;
-    }
-
-    /// <summary>
     /// Create a new <see cref="SeriesBase"/> instance.
     /// </summary>
     /// <param name="title">The title of the series.</param>
@@ -49,6 +34,7 @@ public abstract class SeriesBase : ISeries
     /// <param name="dataSource">The data source for the series.</param>
     /// <param name="xAxisPosition">The position of the X axis for the series.</param>
     /// <param name="yAxisPosition">The position of the Y axis for the series.</param>
+    [JsonConstructor]
     public SeriesBase(
         string title,
         IStyleProvider<Colour> colourProvider,

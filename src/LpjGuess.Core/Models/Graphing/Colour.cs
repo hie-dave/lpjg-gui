@@ -1,3 +1,5 @@
+using Newtonsoft.Json;
+
 namespace LpjGuess.Core.Models.Graphing;
 
 /// <summary>
@@ -33,6 +35,7 @@ public struct Colour
     /// <param name="g">The green component of the colour.</param>
     /// <param name="b">The blue component of the colour.</param>
     /// <param name="a">The alpha component of the colour.</param>
+    [JsonConstructor]
     public Colour(byte r, byte g, byte b, byte a)
     {
         R = r;

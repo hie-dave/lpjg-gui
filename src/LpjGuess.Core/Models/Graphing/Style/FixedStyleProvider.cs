@@ -1,5 +1,6 @@
 using LpjGuess.Core.Interfaces.Graphing;
 using LpjGuess.Core.Interfaces.Graphing.Style;
+using Newtonsoft.Json;
 
 namespace LpjGuess.Core.Models.Graphing.Style;
 
@@ -17,6 +18,7 @@ public class FixedStyleProvider<T> : IStyleProvider<T>
     /// Create a new <see cref="FixedStyleProvider{T}"/> instance.
     /// </summary>
     /// <param name="style">The style to return.</param>
+    [JsonConstructor]
     public FixedStyleProvider(T style) => Style = style;
 
     /// <inheritdoc />

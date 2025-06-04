@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using Gio;
 using Gtk;
 using GtkSource;
@@ -117,7 +118,7 @@ public class EditorView : ViewBase<ScrolledWindow>, IEditorView
 		{
 			MainView.Instance.ReportError(error);
 		}
-    }
+	}
 
 	private void OnStyleChooserNotify(GObject.Object sender, GObject.Object.NotifySignalArgs args)
 	{
@@ -144,10 +145,10 @@ public class EditorView : ViewBase<ScrolledWindow>, IEditorView
 		{
 			MainView.Instance.ReportError(error);
 		}
-    }
+	}
 
-    private StyleScheme? GetStyleScheme()
-    {
+	private StyleScheme? GetStyleScheme()
+	{
 		StyleScheme? style = null;
 
 		// Attempt to load a style scheme from the user settings.
@@ -164,13 +165,13 @@ public class EditorView : ViewBase<ScrolledWindow>, IEditorView
 		}
 
 		return style;
-    }
+	}
 
-    /// <summary>
-    /// Get the a fallback style scheme to be used when a default is either not
-    /// set or can't be loaded.
-    /// </summary>
-    private static StyleScheme? GetDefaultStyle()
+	/// <summary>
+	/// Get the a fallback style scheme to be used when a default is either not
+	/// set or can't be loaded.
+	/// </summary>
+	private static StyleScheme? GetDefaultStyle()
 	{
 		string name = GetDefaultStyleName();
 		return StyleSchemeManager.GetDefault().GetScheme(name);
@@ -209,6 +210,8 @@ public class EditorView : ViewBase<ScrolledWindow>, IEditorView
 	/// <inheritdoc />
 	public void AppendLine(string text)
 	{
+		// TODO: scroll to end.
+		// Depends on support for out parameters in gir.core
 		buffer.Text += text + Environment.NewLine;
 	}
 

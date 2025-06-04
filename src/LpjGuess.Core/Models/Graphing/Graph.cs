@@ -1,4 +1,5 @@
 using LpjGuess.Core.Interfaces.Graphing;
+using Newtonsoft.Json;
 
 namespace LpjGuess.Core.Models.Graphing;
 
@@ -42,6 +43,7 @@ public class Graph
 	/// <param name="legend">The legend for this graph.</param>
 	/// <param name="xAxisTitle">Optional axis title for the X axis. If null, a default title will be generated and used based on the data being displayed.</param>
 	/// <param name="yAxisTitle">Optional axis title for the Y axis. If null, a default title will be generated and used based on the data being displayed.</param>
+	[JsonConstructor]
 	public Graph(
 		string title,
 		IEnumerable<ISeries> series,
@@ -54,13 +56,6 @@ public class Graph
 		Legend = legend ?? new Legend();
 		XAxisTitle = xAxisTitle;
 		YAxisTitle = yAxisTitle;
-	}
-
-	/// <summary>
-	/// Default constructor provided for serialization purposes.
-	/// </summary>
-	public Graph() : this(string.Empty, [], new Legend())
-	{
 	}
 
 	/// <summary>

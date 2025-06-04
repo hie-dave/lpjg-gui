@@ -1,3 +1,4 @@
+using LpjGuess.Core.Interfaces.Graphing;
 using LpjGuess.Core.Models.Graphing;
 using LpjGuess.Core.Serialisation.Json;
 

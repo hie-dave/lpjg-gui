@@ -1,5 +1,6 @@
 using LpjGuess.Core.Interfaces.Graphing;
 using LpjGuess.Core.Interfaces.Graphing.Style;
+using Newtonsoft.Json;
 
 namespace LpjGuess.Core.Models.Graphing.Style;
 
@@ -36,6 +37,7 @@ public class DynamicStyleProvider<T> : IStyleProvider<T>
     /// </summary>
     /// <param name="identifier">The identifier strategy.</param>
     /// <param name="valueStrategy">The value strategy.</param>
+    [JsonConstructor]
     public DynamicStyleProvider(ISeriesIdentifier identifier, IStyleStrategy<T> valueStrategy)
     {
         Identifier = identifier;

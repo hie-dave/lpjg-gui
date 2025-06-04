@@ -191,14 +191,14 @@ public class GraphPresenter : IGraphPresenter
     {
         // TODO: ask user which type of series to add.
         // For now, create a model output series.
-        LineSeries series = new LineSeries
-        {
-            Title = "New Series",
-            Thickness = new FixedStyleProvider<LineThickness>(LineThickness.Regular),
-            Type = new FixedStyleProvider<LineType>(LineType.Solid),
-            DataSource = new ModelOutput("file_lai", "Date", "Total", instructionFiles),
-            ColourProvider = new DynamicStyleProvider<Colour>(new GridcellStrategy(), new ColourStrategy())
-        };
+        LineSeries series = new LineSeries(
+            string.Empty,
+            new DynamicStyleProvider<Colour>(new GridcellStrategy(), new ColourStrategy()),
+            new ModelOutput("file_lai", "Date", "Total", instructionFiles),
+            AxisPosition.Bottom,
+            AxisPosition.Left,
+            new FixedStyleProvider<LineType>(LineType.Solid),
+            new FixedStyleProvider<LineThickness>(LineThickness.Regular));
 
         // Add the series to the graph
         graph.Series.Add(series);
