@@ -80,12 +80,15 @@ public class Simulation
     {
         string outputDirectory = Helper.GetOutputDirectory();
         IEnumerable<string> outputFiles = Directory.EnumerateFiles(outputDirectory, "*.out");
-        var files = outputFiles.Select(CreateOutputFile)
+        var x = outputFiles.Select(CreateOutputFile).ToList();
+        var files = x
                           .Where(file => file != null)
                           .Cast<OutputFile>()
                           .ToList();
         return files;
     }
+
+    private readonly HashSet<string> unknownFiles = new();
 
     /// <summary>
     /// Create an output file object for file at the specified path.
@@ -94,25 +97,19 @@ public class Simulation
     /// <returns>The output file object.</returns>
     private OutputFile? CreateOutputFile(string outputFile)
     {
-        try
+        string fileName = Path.GetFileName(outputFile);
+        if (!Resolver.TryGetFileType(fileName, out string? fileType))
         {
-            string fileName = Path.GetFileName(outputFile);
-            string fileType = Resolver.GetFileType(fileName);
-            OutputFileMetadata metadata = OutputFileDefinitions.GetMetadata(fileType);
-            return new OutputFile(metadata, outputFile);
-        }
-        catch (KeyNotFoundException)
-        {
-            // This will happen if this function is called for an output file
-            // not defined in the instruction file. This occurs commonly, e.g.
-            // when someone runs the model, disables one of the output files by
-            // commenting it out in the instruction file, and then running the
-            // model again. When this happens, we have no robust way of knowing
-            // the output file type (though perhaps we could make some educated
-            // guesses). Nonetheless, we don't really want to clutter up stderr
-            // with repeated exceptions of this kind.
+            lock (unknownFiles)
+            {
+                if (!unknownFiles.Contains(outputFile))
+                    Console.WriteLine($"Output file not recognised: {outputFile}");
+                unknownFiles.Add(outputFile);
+            }
             return null;
         }
+        OutputFileMetadata metadata = OutputFileDefinitions.GetMetadata(fileType);
+        return new OutputFile(metadata, outputFile);
     }
 
     /// <summary>

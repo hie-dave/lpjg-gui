@@ -299,7 +299,7 @@ public class WorkspacePresenter : IPresenter<IWorkspaceView>
 		{
 			view.ShowRunButton(true);
 			outputsPresenter.Populate(workspace.InstructionFiles);
-			graphsPresenter.UpdateInstructionFiles(workspace.InstructionFiles);
+			graphsPresenter.RefreshAll();
 		}
 		catch (Exception error)
 		{

@@ -72,6 +72,14 @@ public class GraphsPresenter : IGraphsPresenter
 	public void UpdateInstructionFiles(IEnumerable<string> instructionFiles)
 	{
 		this.instructionFiles = instructionFiles;
+		RefreshAll();
+	}
+
+	/// <summary>
+	/// Refresh all graphs.
+	/// </summary>
+	public void RefreshAll()
+	{
 		Populate(GetGraphs());
 	}
 
@@ -81,6 +89,9 @@ public class GraphsPresenter : IGraphsPresenter
 	/// <param name="graphs"></param>
 	private void Populate(IEnumerable<Graph> graphs)
 	{
+		// Force evaluation, in case graphs depends on the plots collection.
+		graphs = graphs.ToList();
+
 		plots.Clear();
 
 		// Temporary list, to guarantee order.

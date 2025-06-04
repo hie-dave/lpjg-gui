@@ -17,4 +17,9 @@ public interface IGraphsPresenter : IPresenter<IGraphsView>
 	/// Update the instruction files for which data should be displayed.
 	/// </summary>
 	void UpdateInstructionFiles(IEnumerable<string> instructionFiles);
+
+	/// <summary>
+	/// Refresh all graphs.
+	/// </summary>
+	void RefreshAll();
 }
