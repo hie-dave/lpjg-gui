@@ -144,7 +144,8 @@ public class ModelOutput : IDataSource
     private IEnumerable<StyleVariationStrategy> GetAllowedStrategies(AggregationLevel level)
     {
         List<StyleVariationStrategy> strategies = [
-            StyleVariationStrategy.BySeries
+            StyleVariationStrategy.BySeries,
+            StyleVariationStrategy.ByLayer
         ];
 
         if (level >= AggregationLevel.Gridcell)

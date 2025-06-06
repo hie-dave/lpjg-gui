@@ -115,6 +115,7 @@ public abstract class StyleProviderChangeCommandBase<TObject, TStyle> : ICommand
             StyleVariationStrategy.ByIndividual => new IndividualIdentifier(),
             StyleVariationStrategy.ByPft => new PftIdentifier(),
             StyleVariationStrategy.BySeries => new SeriesIdentifier(),
+            StyleVariationStrategy.ByLayer => new LayerIdentifier(),
             _ => throw new ArgumentException($"Invalid style variation strategy: {variation}")
         };
     }

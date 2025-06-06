@@ -11,6 +11,16 @@ public enum StyleVariationStrategy
     Fixed,
 
     /// <summary>
+    /// The visual property varies by layer.
+    /// </summary>
+    ByLayer,
+
+    /// <summary>
+    /// The visual property is different for every series.
+    /// </summary>
+    BySeries,
+
+    /// <summary>
     /// The visual property varies by simulation.
     /// </summary>
     BySimulation,
@@ -39,9 +49,4 @@ public enum StyleVariationStrategy
     /// The visual property varies by PFT.
     /// </summary>
     ByPft,
-
-    /// <summary>
-    /// The visual property is different for every series.
-    /// </summary>
-    BySeries
 }

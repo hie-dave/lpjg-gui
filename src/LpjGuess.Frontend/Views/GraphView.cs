@@ -136,6 +136,14 @@ public class GraphView : ViewBase<Box>, IGraphView
 
         // Configure plot view.
         plot = new PlotView();
+
+        if (StyleHelper.UseDarkMode())
+        {
+            // TODO: choose better colours.
+            plot.TrackerBackground = OxyColors.Black;
+            plot.TrackerForeground = OxyColors.White;
+        }
+
         plot.Model = new();
         plot.Hexpand = true;
 
@@ -254,7 +262,7 @@ public class GraphView : ViewBase<Box>, IGraphView
     public void UpdatePlot(PlotModel model)
     {
         // Apply dark theme if needed
-        if (Settings.GetDefault()?.GtkApplicationPreferDarkTheme == true)
+        if (StyleHelper.UseDarkMode())
             model.TextColor = model.PlotAreaBorderColor = OxyColors.White;
 
         plot.Model = model;

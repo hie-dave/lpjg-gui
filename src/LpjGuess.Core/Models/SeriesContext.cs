@@ -14,6 +14,11 @@ public struct SeriesContext
     public Gridcell Gridcell { get; private init; }
 
     /// <summary>
+    /// The layer of the coordinate.
+    /// </summary>
+    public string Layer { get; private init; }
+
+    /// <summary>
     /// The stand of the coordinate.
     /// </summary>
     public int? Stand { get; private init; }
@@ -43,6 +48,7 @@ public struct SeriesContext
     /// Create a new <see cref="SeriesContext"/> instance.
     /// </summary>
     /// <param name="gridcell">The gridcell.</param>
+    /// <param name="layer">The layer.</param>
     /// <param name="stand">The stand.</param>
     /// <param name="patch">The patch.</param>
     /// <param name="individual">The individual.</param>
@@ -50,6 +56,7 @@ public struct SeriesContext
     /// <param name="pft">The PFT.</param>
     public SeriesContext(
         Gridcell gridcell,
+        string layer,
         int? stand = null,
         int? patch = null,
         int? individual = null,
@@ -57,6 +64,7 @@ public struct SeriesContext
         string? pft = null)
     {
         Gridcell = gridcell;
+        Layer = layer;
         Stand = stand;
         Patch = patch;
         Individual = individual;
@@ -71,6 +79,7 @@ public struct SeriesContext
             return false;
 
         return Gridcell.Equals(other.Gridcell) &&
+               Layer == other.Layer &&
                Stand == other.Stand &&
                Patch == other.Patch &&
                Individual == other.Individual &&
@@ -81,6 +90,6 @@ public struct SeriesContext
     /// <inheritdoc />
     public override int GetHashCode()
     {
-        return HashCode.Combine(Gridcell, Stand, Patch, Individual, SimulationName);
+        return HashCode.Combine(Gridcell, Layer, Stand, Patch, Individual, SimulationName);
     }
 }

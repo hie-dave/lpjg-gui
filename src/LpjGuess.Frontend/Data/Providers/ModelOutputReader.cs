@@ -129,8 +129,8 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
         // First group by context. Each group is a list of data points with the
         // same gridcell, stand, patch, and indiv id (where those properties are
         // applicable for this output file type).
-        var xgroups = xlayer.Data.GroupBy(d => GetContext(simulation, d, pftMappings)).ToList();
-        var ygroups = ylayer.Data.GroupBy(d => GetContext(simulation, d, pftMappings)).ToList();
+        var xgroups = xlayer.Data.GroupBy(d => GetContext(simulation, xlayer, d, pftMappings)).ToList();
+        var ygroups = ylayer.Data.GroupBy(d => GetContext(simulation, ylayer, d, pftMappings)).ToList();
 
         IEnumerable<SeriesContext> contexts = xgroups.Select(g => g.Key).ToList();
 
@@ -164,10 +164,11 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
     /// Get the context for the given data point.
     /// </summary>
     /// <param name="simulation">The simulation.</param>
+    /// <param name="layer">The layer.</param>
     /// <param name="datapoint">The data point.</param>
     /// <param name="pftMappings">The PFT mappings.</param>
     /// <returns>The context for the data point.</returns>
-    private static SeriesContext GetContext(Simulation simulation, DataPoint datapoint, IReadOnlyDictionary<int, string>? pftMappings)
+    private static SeriesContext GetContext(Simulation simulation, Layer layer, DataPoint datapoint, IReadOnlyDictionary<int, string>? pftMappings)
     {
         // FIXME: this will throw for coordinates not in the gridlist. Would it
         // be better to use the fallback name (lat, lon) in that case?
@@ -183,6 +184,7 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
         }
         return new SeriesContext(
             new Gridcell(datapoint.Latitude, datapoint.Longitude, name),
+            layer.Name,
             datapoint.Stand,
             datapoint.Patch,
             datapoint.Individual,
