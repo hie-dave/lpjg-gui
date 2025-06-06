@@ -1,11 +1,9 @@
-using System.Text;
 using Dave.Benchmarks.Core.Models;
 using Dave.Benchmarks.Core.Models.Entities;
 using Dave.Benchmarks.Core.Models.Importer;
 using Dave.Benchmarks.Core.Services;
 using LpjGuess.Core.Models;
 using LpjGuess.Frontend.Classes;
-using Microsoft.Extensions.Logging;
 using OxyPlot.Axes;
 
 namespace LpjGuess.Frontend.Data.Providers;
@@ -96,6 +94,7 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
             simulation,
             xlayer,
             layer,
+            quantity.IndividualPfts,
             xselector,
             yselector);
     }
@@ -118,14 +117,15 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
         Simulation simulation,
         Layer xlayer,
         Layer ylayer,
+        IReadOnlyDictionary<int, string>? pftMappings,
         Func<DataPoint, double>? xselector,
         Func<DataPoint, double>? yselector)
     {
         // First group by context. Each group is a list of data points with the
         // same gridcell, stand, patch, and indiv id (where those properties are
         // applicable for this output file type).
-        var xgroups = xlayer.Data.GroupBy(d => GetContext(simulation, d)).ToList();
-        var ygroups = ylayer.Data.GroupBy(d => GetContext(simulation, d)).ToList();
+        var xgroups = xlayer.Data.GroupBy(d => GetContext(simulation, d, pftMappings)).ToList();
+        var ygroups = ylayer.Data.GroupBy(d => GetContext(simulation, d, pftMappings)).ToList();
 
         IEnumerable<SeriesContext> contexts = xgroups.Select(g => g.Key).ToList();
 
@@ -160,18 +160,29 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
     /// </summary>
     /// <param name="simulation">The simulation.</param>
     /// <param name="datapoint">The data point.</param>
+    /// <param name="pftMappings">The PFT mappings.</param>
     /// <returns>The context for the data point.</returns>
-    private static SeriesContext GetContext(Simulation simulation, DataPoint datapoint)
+    private static SeriesContext GetContext(Simulation simulation, DataPoint datapoint, IReadOnlyDictionary<int, string>? pftMappings)
     {
         // FIXME: this will throw for coordinates not in the gridlist. Would it
         // be better to use the fallback name (lat, lon) in that case?
         string name = simulation.Gridlist.GetName(datapoint.Longitude, datapoint.Latitude);
+        string? pft = null;
+        if (datapoint.Individual != null)
+        {
+            if (pftMappings is null)
+                throw new InvalidOperationException($"Individual-level quantity does not have any individual <-> PFT mappings");
+            if (!pftMappings.TryGetValue(datapoint.Individual.Value, out string? pftValue))
+                throw new InvalidOperationException($"Individual {datapoint.Individual.Value} does not have a PFT mapping ({pftMappings.Count} mappings)");
+            pft = pftValue;
+        }
         return new SeriesContext(
             new Gridcell(datapoint.Latitude, datapoint.Longitude, name),
             datapoint.Stand,
             datapoint.Patch,
             datapoint.Individual,
-            Path.GetFileNameWithoutExtension(simulation.FileName));
+            Path.GetFileNameWithoutExtension(simulation.FileName),
+            pft);
     }
 
     /// <summary>
@@ -185,6 +196,9 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
     {
         // We need to generate a name which will disambiguate each series.
         OutputFileMetadata metadata = OutputFileDefinitions.GetMetadata(source.OutputFileType);
+
+        // TODO: do we need metadata name if all series on the plot use the same
+        // data source (and therefore the same output file type)?
         string name = metadata.Name;
 
         // Gridcell name should be included if there are multiple gridcells.
@@ -208,73 +222,19 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
 
         if (includeStand || includePatch || includeIndiv)
         {
-            StringBuilder sb = new();
+            List<string> contextSpecifiers = new List<string>();
             if (includeStand)
-                sb.Append($"s{context.Stand}");
+                contextSpecifiers.Add($"s{context.Stand}");
             if (includePatch)
-                sb.Append($"p{context.Patch}");
+                contextSpecifiers.Add($"p{context.Patch}");
             if (includeIndiv)
-                sb.Append($"i{context.Individual}");
-            name = $"{name} ({sb})";
+                // Pft should never be null in indiv-level outputs. This will
+                // get better once we do the coordinate/context refactor.
+                contextSpecifiers.Add(context.Pft!);
+            name = $"{name} ({string.Join(", ", contextSpecifiers)})";
         }
 
         return name;
-    }
-
-    /// <summary>
-    /// Merge the two layers on all coordinate values.
-    /// </summary>
-    /// <param name="xlayer">The layer to use for the x-axis.</param>
-    /// <param name="ylayer">The layer to use for the y-axis.</param>
-    /// <returns>The merged data points.</returns>
-    private IEnumerable<OxyPlot.DataPoint> MergeLayers(Layer xlayer, Layer ylayer)
-    {
-        if (!xlayer.Data.Any() || !ylayer.Data.Any())
-            return [];
-
-        DataPoint xfirst = xlayer.Data.First();
-        DataPoint yfirst = ylayer.Data.First();
-
-        List<Func<DataPoint, DataPoint, bool>> predicates = [
-            (x, y) => x.Timestamp == y.Timestamp,
-            (x, y) => x.Latitude == y.Latitude,
-            (x, y) => x.Longitude == y.Longitude,
-        ];
-
-        if (xfirst.Stand != null || yfirst.Stand != null)
-        {
-            if (xfirst.Stand == null || yfirst.Stand == null)
-                throw new InvalidOperationException("Stand values do not exist in both layers");
-            predicates.Add((x, y) => x.Stand == y.Stand);
-        }
-
-        if (xfirst.Patch != null || yfirst.Patch != null)
-        {
-            if (xfirst.Patch == null || yfirst.Patch == null)
-                throw new InvalidOperationException("Patch values do not exist in both layers");
-            predicates.Add((x, y) => x.Patch == y.Patch);
-        }
-
-        if (xfirst.Individual != null || yfirst.Individual != null)
-        {
-            if (xfirst.Individual == null || yfirst.Individual == null)
-                throw new InvalidOperationException("Indiv values do not exist in both layers");
-            predicates.Add((x, y) => x.Individual == y.Individual);
-        }
-
-        return MergeLayersOn(xlayer, ylayer, predicates);
-    }
-
-    /// <summary>
-    /// Zip the two layers together matching on the given coordinates.
-    /// </summary>
-    /// <param name="xlayer">The layer to use for the x-axis.</param>
-    /// <param name="ylayer">The layer to use for the y-axis.</param>
-    /// <param name="predicates">The matchers to use to match the layers.</param>
-    /// <returns>The merged data points.</returns>
-    private IEnumerable<OxyPlot.DataPoint> MergeLayersOn(Layer xlayer, Layer ylayer, IReadOnlyList<Func<DataPoint, DataPoint, bool>> predicates)
-    {
-        return MergeOn(xlayer.Data, ylayer.Data, null, null, predicates.ToArray());
     }
 
     /// <summary>
@@ -310,17 +270,6 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
         }
         // We can assume commutativity of the predicates, so there's no need for
         // double-iteration.
-    }
-
-    /// <summary>
-    /// Convert a model DataPoint to an OxyPlot DataPoint with the date on the
-    /// x-axis.
-    /// </summary>
-    /// <param name="point">The data point to convert.</param>
-    /// <returns>An OxyPlot DataPoint requiring a date x-axis.</returns>
-    private OxyPlot.DataPoint DataPointToOxyDateDataPoint(DataPoint point)
-    {
-        return new OxyPlot.DataPoint(DateTimeAxis.ToDouble(point.Timestamp), point.Value);
     }
 
     /// <inheritdoc />

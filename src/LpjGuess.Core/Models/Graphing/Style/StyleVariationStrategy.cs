@@ -33,5 +33,10 @@ public enum StyleVariationStrategy
     /// <summary>
     /// The visual property varies by individual.
     /// </summary>
-    ByIndividual
+    ByIndividual,
+
+    /// <summary>
+    /// The visual property varies by PFT.
+    /// </summary>
+    ByPft
 }

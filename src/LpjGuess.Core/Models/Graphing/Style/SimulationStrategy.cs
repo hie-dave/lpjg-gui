@@ -16,7 +16,7 @@ public class SimulationStrategy : ISeriesIdentifier
             // this strategy for series on which it is valid.
             throw new InvalidOperationException("Varying by simulation is only valid for model output series");
 
-        return new SimulationIdentifier(series.Context.SimulationName);
+        return new StringIdentifier(series.Context.SimulationName);
     }
 
     /// <inheritdoc />

@@ -35,6 +35,11 @@ public struct SeriesContext
     public string? SimulationName { get; private init; }
 
     /// <summary>
+    /// The PFT of the coordinate.
+    /// </summary>
+    public string? Pft { get; private init; }
+
+    /// <summary>
     /// Create a new <see cref="SeriesContext"/> instance.
     /// </summary>
     /// <param name="gridcell">The gridcell.</param>
@@ -42,18 +47,21 @@ public struct SeriesContext
     /// <param name="patch">The patch.</param>
     /// <param name="individual">The individual.</param>
     /// <param name="simulationName">The name of the simulation.</param>
+    /// <param name="pft">The PFT.</param>
     public SeriesContext(
         Gridcell gridcell,
         int? stand = null,
         int? patch = null,
         int? individual = null,
-        string? simulationName = null)
+        string? simulationName = null,
+        string? pft = null)
     {
         Gridcell = gridcell;
         Stand = stand;
         Patch = patch;
         Individual = individual;
         SimulationName = simulationName;
+        Pft = pft;
     }
 
     /// <inheritdoc />
@@ -66,7 +74,8 @@ public struct SeriesContext
                Stand == other.Stand &&
                Patch == other.Patch &&
                Individual == other.Individual &&
-               SimulationName == other.SimulationName;
+               SimulationName == other.SimulationName &&
+               Pft == other.Pft;
     }
 
     /// <inheritdoc />

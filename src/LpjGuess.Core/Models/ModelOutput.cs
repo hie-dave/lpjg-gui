@@ -136,7 +136,10 @@ public class ModelOutput : IDataSource
             strategies.Add(StyleVariationStrategy.ByPatch);
 
         if (level >= AggregationLevel.Individual)
+        {
             strategies.Add(StyleVariationStrategy.ByIndividual);
+            strategies.Add(StyleVariationStrategy.ByPft);
+        }
 
         return strategies;
     }
