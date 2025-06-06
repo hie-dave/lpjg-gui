@@ -2,7 +2,7 @@ using LpjGuess.Core.Interfaces.Graphing;
 using LpjGuess.Core.Interfaces.Graphing.Style;
 using Newtonsoft.Json;
 
-namespace LpjGuess.Core.Models.Graphing.Style;
+namespace LpjGuess.Core.Models.Graphing.Style.Providers;
 
 /// <summary>
 /// A style provider which always returns the same style.

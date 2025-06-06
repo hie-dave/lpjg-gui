@@ -1,5 +1,6 @@
 using LpjGuess.Core.Interfaces.Graphing.Style;
 using LpjGuess.Core.Models.Graphing.Style;
+using LpjGuess.Core.Models.Graphing.Style.Strategies;
 using LpjGuess.Frontend.Utility;
 
 namespace LpjGuess.Frontend.Commands;

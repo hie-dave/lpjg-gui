@@ -1,15 +1,16 @@
 using LpjGuess.Core.Interfaces.Graphing;
 using LpjGuess.Core.Interfaces.Graphing.Style;
 
-namespace LpjGuess.Core.Models.Graphing.Style;
+namespace LpjGuess.Core.Models.Graphing.Style.Identifiers;
 
 /// <summary>
-/// A strategy for identifying PFTs in a deterministic way.
+/// A series identifier which identifies a series by its PFT (only
+/// applicable for a series containing cohort-level data).
 /// </summary>
-public class PftStrategy : ISeriesIdentifier
+public class PftIdentifier : ISeriesIdentifier
 {
     /// <inheritdoc />
-    public SeriesIdentifierBase GetIdentifier(ISeriesData series)
+    public SeriesIdentityBase Identify(ISeriesData series)
     {
         if (series.Context.Pft is null)
             // This should never happen - users should only be able to select
@@ -17,7 +18,7 @@ public class PftStrategy : ISeriesIdentifier
             throw new InvalidOperationException("Varying by PFT is only valid for cohort-level model outputs");
 
         // TODO: should this take the gridcell/stand/patch into account?
-        return new StringIdentifier(series.Context.Pft);
+        return new StringIdentity(series.Context.Pft);
     }
 
     /// <inheritdoc />

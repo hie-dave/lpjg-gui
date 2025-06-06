@@ -38,5 +38,10 @@ public enum StyleVariationStrategy
     /// <summary>
     /// The visual property varies by PFT.
     /// </summary>
-    ByPft
+    ByPft,
+
+    /// <summary>
+    /// The visual property is different for every series.
+    /// </summary>
+    BySeries
 }

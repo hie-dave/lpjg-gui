@@ -5,7 +5,7 @@ namespace LpjGuess.Core.Models.Graphing.Style;
 /// <summary>
 /// A class which uniquely identifies a coordinate based on its name.
 /// </summary>
-public class StringIdentifier : SeriesIdentifierBase
+public class StringIdentity : SeriesIdentityBase
 {
     /// <summary>
     /// The name of the coordinate.
@@ -13,15 +13,15 @@ public class StringIdentifier : SeriesIdentifierBase
     public string Name { get; private init; }
 
     /// <summary>
-    /// Create a new <see cref="StringIdentifier"/> instance.
+    /// Create a new <see cref="StringIdentity"/> instance.
     /// </summary>
     /// <param name="name">The name of the coordinate.</param>
-    public StringIdentifier(string name) => Name = name;
+    public StringIdentity(string name) => Name = name;
 
     /// <inheritdoc />
-    public override bool Equals(SeriesIdentifierBase? other)
+    public override bool Equals(SeriesIdentityBase? other)
     {
-        if (other is not StringIdentifier otherIdentifier)
+        if (other is not StringIdentity otherIdentifier)
             return false;
 
         return Name == otherIdentifier.Name;

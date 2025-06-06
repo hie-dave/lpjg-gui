@@ -26,7 +26,7 @@ public class ModelOutputView : IModelOutputView
     /// <summary>
     /// The view for selecting the y-axis column.
     /// </summary>
-    private readonly StringDropDownView yAxisColumnView;
+    private readonly ColumnSelectionView yAxisColumnView;
 
     /// <inheritdoc/>
     public Event<IModelChange<ModelOutput>> OnEditDataSource { get; private init; }
@@ -50,7 +50,7 @@ public class ModelOutputView : IModelOutputView
         xAxisColumnView.GetWidget().Hexpand = true;
         xAxisColumnView.OnSelectionChanged.ConnectTo(OnXAxisColumnChanged);
 
-        yAxisColumnView = new StringDropDownView();
+        yAxisColumnView = new ColumnSelectionView();
         yAxisColumnView.GetWidget().Hexpand = true;
         yAxisColumnView.OnSelectionChanged.ConnectTo(OnYAxisColumnChanged);
     }
@@ -61,7 +61,7 @@ public class ModelOutputView : IModelOutputView
         return [
             new NamedView(fileTypeView, "Output file"),
             new NamedView(xAxisColumnView, "X-axis column"),
-            new NamedView(yAxisColumnView, "Y-axis column")
+            new NamedView(yAxisColumnView, "Y-axis columns")
         ];
     }
 
@@ -76,19 +76,20 @@ public class ModelOutputView : IModelOutputView
 
     /// <inheritdoc/>
     public void Populate(IEnumerable<OutputFile> fileTypes,
-                         IEnumerable<string> columns,
+                         IEnumerable<string> xcols,
+                         IEnumerable<string> ycols,
                          OutputFile fileType,
                          string xColumn,
-                         string yColumn)
+                         IEnumerable<string> selectedColumns)
     {
         fileTypeView.Populate(fileTypes);
-        xAxisColumnView.Populate(columns);
-        yAxisColumnView.Populate(columns);
+        xAxisColumnView.Populate(xcols);
+        yAxisColumnView.Populate(ycols);
 
         // This will fail if the collections don't contain the selected values.
         fileTypeView.Select(fileType);
         xAxisColumnView.Select(xColumn);
-        yAxisColumnView.Select(yColumn);
+        yAxisColumnView.Select(selectedColumns);
     }
 
     /// <summary>
@@ -116,15 +117,15 @@ public class ModelOutputView : IModelOutputView
     /// Called when the user changes the y-axis column. Propagates the event
     /// back up to the owner of this view.
     /// </summary>
-    /// <param name="obj">The new y-axis column.</param>
-    private void OnYAxisColumnChanged(string obj)
+    /// <param name="columns">The new y-axis columns.</param>
+    private void OnYAxisColumnChanged(IEnumerable<string> columns)
     {
         try
         {
-            var change = new ModelChangeEventArgs<ModelOutput, string>(
-                m => m.YAxisColumn,
-                (m, v) => m.YAxisColumn = v,
-                obj);
+            var change = new ModelChangeEventArgs<ModelOutput, IEnumerable<string>>(
+                m => m.YAxisColumns,
+                (m, v) => m.YAxisColumns = v,
+                columns);
             OnEditDataSource.Invoke(change);
         }
         catch (Exception error)

@@ -14,6 +14,13 @@ namespace LpjGuess.Core.Models;
 public class ModelOutput : IDataSource
 {
     /// <summary>
+    /// The columns used for the y-axis. This is stored as a list internally to
+    /// allow for easier serialisation.
+    /// </summary>
+    [NonSerialized]
+    private List<string> columns = new();
+
+    /// <summary>
     /// Output file type.
     /// </summary>
     public string OutputFileType { get; set; }
@@ -26,7 +33,11 @@ public class ModelOutput : IDataSource
     /// <summary>
     /// Name of the column used for the y-axis.
     /// </summary>
-    public string YAxisColumn { get; set; }
+    public IEnumerable<string> YAxisColumns
+    {
+        get => columns;
+        set => columns = value.ToList();
+    }
 
     /// <summary>
     /// Instruction files for which data should be displayed.
@@ -40,7 +51,7 @@ public class ModelOutput : IDataSource
     {
         OutputFileType = string.Empty;
         XAxisColumn = string.Empty;
-        YAxisColumn = string.Empty;
+        YAxisColumns = [];
         InstructionFiles = new List<string>();
     }
 
@@ -49,18 +60,18 @@ public class ModelOutput : IDataSource
     /// </summary>
     /// <param name="outputFileType">Output file type.</param>
     /// <param name="xAxisColumn">Name of the column used for the x-axis.</param>
-    /// <param name="yAxisColumn">Name of the column used for the y-axis.</param>
+    /// <param name="yAxisColumns">Names of the columns used for the y-axis.</param>
     /// <param name="instructionFiles">Instruction files for which data should be displayed.</param>
     public ModelOutput(
         string outputFileType,
         string xAxisColumn,
-        string yAxisColumn,
+        IEnumerable<string> yAxisColumns,
         IEnumerable<string> instructionFiles
     )
     {
         OutputFileType = outputFileType;
         XAxisColumn = xAxisColumn;
-        YAxisColumn = yAxisColumn;
+        YAxisColumns = yAxisColumns;
         InstructionFiles = instructionFiles.ToList();
     }
 
@@ -73,7 +84,8 @@ public class ModelOutput : IDataSource
     /// <inheritdoc />
     public AxisType GetYAxisType()
     {
-        return GetAxisType(YAxisColumn);
+        // FIXME: This is a hack.
+        return AxisType.Linear;
     }
 
     /// <inheritdoc />
@@ -86,8 +98,15 @@ public class ModelOutput : IDataSource
     public string GetYAxisTitle()
     {
         OutputFileMetadata metadata = OutputFileDefinitions.GetMetadata(OutputFileType);
-        Unit units = metadata.Layers.GetUnits(YAxisColumn);
-        return $"{metadata.Name} ({units.Name})";
+        IEnumerable<Unit> units = YAxisColumns.Select(metadata.Layers.GetUnits);
+        int nunits = units.Select(u => u.Name).Distinct().Count();
+        if (nunits > 1)
+            return metadata.Name;
+        else if (nunits == 1)
+            // Simplify if all selected layers have the same units.
+            return $"{metadata.Name} ({units.First().Name})";
+        else
+            return $"{metadata.Name} (various units)";
     }
 
     /// <inheritdoc />
@@ -114,7 +133,7 @@ public class ModelOutput : IDataSource
     /// <inheritdoc />
     public int GetNumSeries()
     {
-        return InstructionFiles.Count;
+        return InstructionFiles.Count * YAxisColumns.Count();
     }
 
     /// <summary>
@@ -124,7 +143,9 @@ public class ModelOutput : IDataSource
     /// <returns>The allowed style variation strategies.</returns>
     private IEnumerable<StyleVariationStrategy> GetAllowedStrategies(AggregationLevel level)
     {
-        List<StyleVariationStrategy> strategies = new();
+        List<StyleVariationStrategy> strategies = [
+            StyleVariationStrategy.BySeries
+        ];
 
         if (level >= AggregationLevel.Gridcell)
             strategies.Add(StyleVariationStrategy.ByGridcell);

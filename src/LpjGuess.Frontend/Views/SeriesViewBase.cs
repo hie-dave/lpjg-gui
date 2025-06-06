@@ -19,6 +19,7 @@ using LpjGuess.Frontend.Extensions;
 using LpjGuess.Core.Models.Graphing.Style;
 using LpjGuess.Core.Interfaces.Graphing.Style;
 using System.ComponentModel;
+using LpjGuess.Core.Models.Graphing.Style.Providers;
 
 namespace LpjGuess.Frontend.Views;
 

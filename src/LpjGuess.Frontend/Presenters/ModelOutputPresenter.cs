@@ -74,11 +74,11 @@ public class ModelOutputPresenter : PresenterBase<IModelOutputView>, IDataSource
 
         OutputFile? outputFileType = fileTypes
             .FirstOrDefault(o => o.Metadata.FileName == DataSource.OutputFileType);
+        OutputFileMetadata meta = outputFileType?.Metadata ?? OutputFileDefinitions.GetMetadata(DataSource.OutputFileType);
 
         if (outputFileType == null)
         {
             // TODO: think about exception handling (this can throw).
-            OutputFileMetadata meta = OutputFileDefinitions.GetMetadata(DataSource.OutputFileType);
             outputFileType = new OutputFile(meta, string.Empty);
             if (!fileTypes.Any(f => f.Metadata.FileName == meta.FileName))
                 fileTypes = fileTypes.Append(outputFileType);
@@ -86,15 +86,20 @@ public class ModelOutputPresenter : PresenterBase<IModelOutputView>, IDataSource
 
         IEnumerable<string> columns = GetColumns(DataSource.OutputFileType)
                 .Append(DataSource.XAxisColumn)
-                .Append(DataSource.YAxisColumn)
+                .Concat(DataSource.YAxisColumns)
                 .Distinct();
+
+        IEnumerable<string> ycols = columns
+            .Where(meta.Layers.IsDataLayer)
+            .Except(["Date"]);
 
         view.Populate(
             fileTypes,
             columns,
+            ycols,
             outputFileType,
             DataSource.XAxisColumn,
-            DataSource.YAxisColumn);
+            DataSource.YAxisColumns);
     }
 
     private IEnumerable<string> GetColumns(string fileType)
@@ -170,11 +175,11 @@ public class ModelOutputPresenter : PresenterBase<IModelOutputView>, IDataSource
                 xcol,
                 (m, v) => m.XAxisColumn = v),
             // A command to change the y-axis column.
-            new PropertyChangeCommand<ModelOutput, string>(
+            new PropertyChangeCommand<ModelOutput, IEnumerable<string>>(
                 DataSource,
-                DataSource.YAxisColumn,
-                ycol,
-                (m, v) => m.YAxisColumn = v)
+                DataSource.YAxisColumns,
+                [ycol],
+                (m, v) => m.YAxisColumns = v)
         ];
 
         ICommand command = new CompositeCommand(commands);

@@ -4,10 +4,10 @@ namespace LpjGuess.Core.Interfaces.Graphing.Style;
 /// An interface to a class which uniquely identifies a series according to a
 /// particular identification strategy.
 /// </summary>
-public abstract class SeriesIdentifierBase : IEquatable<SeriesIdentifierBase>
+public abstract class SeriesIdentityBase : IEquatable<SeriesIdentityBase>
 {
     /// <inheritdoc />
-    public abstract bool Equals(SeriesIdentifierBase? other);
+    public abstract bool Equals(SeriesIdentityBase? other);
 
     /// <inheritdoc />
     public abstract override int GetHashCode();

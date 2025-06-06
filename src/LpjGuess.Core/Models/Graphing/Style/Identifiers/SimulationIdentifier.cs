@@ -1,22 +1,23 @@
 using LpjGuess.Core.Interfaces.Graphing;
 using LpjGuess.Core.Interfaces.Graphing.Style;
 
-namespace LpjGuess.Core.Models.Graphing.Style;
+namespace LpjGuess.Core.Models.Graphing.Style.Identifiers;
 
 /// <summary>
-/// A strategy for identifying simulations in a deterministic way.
+/// A series identifier which identifies a series by its simulation (only
+/// applicable for series generated from model outputs).
 /// </summary>
-public class SimulationStrategy : ISeriesIdentifier
+public class SimulationIdentifier : ISeriesIdentifier
 {
     /// <inheritdoc />
-    public SeriesIdentifierBase GetIdentifier(ISeriesData series)
+    public SeriesIdentityBase Identify(ISeriesData series)
     {
         if (series.Context.SimulationName is null)
             // This should never happen - users should only be able to select
             // this strategy for series on which it is valid.
             throw new InvalidOperationException("Varying by simulation is only valid for model output series");
 
-        return new StringIdentifier(series.Context.SimulationName);
+        return new StringIdentity(series.Context.SimulationName);
     }
 
     /// <inheritdoc />

@@ -67,36 +67,41 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
     {
         // TODO: async support.
         Quantity quantity = await simulation.ReadOutputFileTypeAsync(source.OutputFileType, ct);
+        List<SeriesData> data = new List<SeriesData>();
 
-        Layer? layer = quantity.Layers.FirstOrDefault(l => l.Name == source.YAxisColumn);
-        if (layer == null)
-            // TBI: allow for plotting date on the y-axis.
-            throw new InvalidOperationException($"Output {quantity.Name} does not have layer: {source.YAxisColumn}");
+        foreach (string column in source.YAxisColumns)
+        {
+            Layer? layer = quantity.Layers.FirstOrDefault(l => l.Name == column);
+            if (layer == null)
+                // TBI: allow for plotting date on the y-axis.
+                throw new InvalidOperationException($"Output {quantity.Name} does not have layer: {column}");
 
-        Func<DataPoint, double> xselector = GetSelector(source.XAxisColumn);
-        Func<DataPoint, double> yselector = GetSelector(source.YAxisColumn);
+            Func<DataPoint, double> xselector = GetSelector(source.XAxisColumn);
+            Func<DataPoint, double> yselector = GetSelector(column);
 
-        // "Date" is a valid layer name from the user's perspective, but it
-        // doesn't correspond to an actual layer object. Rather, it corresponds
-        // to the Timestamp property of the data points. Therefore, we can pass
-        // in the same layer for both x and y, and the x selector will return
-        // DateTimeAxis.ToDouble() for the timestamps.
-        Layer? xlayer;
-        if (source.XAxisColumn == "Date")
-            xlayer = layer;
-        else
-            xlayer = quantity.Layers.FirstOrDefault(l => l.Name == source.XAxisColumn);
-        if (xlayer == null)
-            throw new InvalidOperationException($"Unknown layer name: {source.XAxisColumn}");
+            // "Date" is a valid layer name from the user's perspective, but it
+            // doesn't correspond to an actual layer object. Rather, it corresponds
+            // to the Timestamp property of the data points. Therefore, we can pass
+            // in the same layer for both x and y, and the x selector will return
+            // DateTimeAxis.ToDouble() for the timestamps.
+            Layer? xlayer;
+            if (source.XAxisColumn == "Date")
+                xlayer = layer;
+            else
+                xlayer = quantity.Layers.FirstOrDefault(l => l.Name == source.XAxisColumn);
+            if (xlayer == null)
+                throw new InvalidOperationException($"Unknown layer name: {source.XAxisColumn}");
 
-        return GenerateSeries(
-            source,
-            simulation,
-            xlayer,
-            layer,
-            quantity.IndividualPfts,
-            xselector,
-            yselector);
+            data.AddRange(GenerateSeries(
+                source,
+                simulation,
+                xlayer,
+                layer,
+                quantity.IndividualPfts,
+                xselector,
+                yselector));
+        }
+        return data;
     }
 
     /// <summary>
@@ -143,7 +148,7 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
                 continue;
             }
 
-            string name = GenerateSeriesName(source, xgroup.Key, contexts);
+            string name = GenerateSeriesName(source, xgroup.Key, contexts, ylayer);
 
             IEnumerable<OxyPlot.DataPoint> data = MergeOn(
                 xgroup,
@@ -191,8 +196,9 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
     /// <param name="source">The model output.</param>
     /// <param name="context">The series context.</param>
     /// <param name="contexts">The list of all series contexts.</param>
+    /// <param name="ylayer">The y-layer.</param>
     /// <returns>The series name.</returns>
-    private static string GenerateSeriesName(ModelOutput source, SeriesContext context, IEnumerable<SeriesContext> contexts)
+    private static string GenerateSeriesName(ModelOutput source, SeriesContext context, IEnumerable<SeriesContext> contexts, Layer ylayer)
     {
         // We need to generate a name which will disambiguate each series.
         OutputFileMetadata metadata = OutputFileDefinitions.GetMetadata(source.OutputFileType);
@@ -200,6 +206,8 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
         // TODO: do we need metadata name if all series on the plot use the same
         // data source (and therefore the same output file type)?
         string name = metadata.Name;
+        if (source.YAxisColumns.Count() > 1)
+            name = ylayer.Name;
 
         // Gridcell name should be included if there are multiple gridcells.
         if (metadata.Level >= AggregationLevel.Gridcell && contexts.Select(c => c.Gridcell).Distinct().Count() > 1)
