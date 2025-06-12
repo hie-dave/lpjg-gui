@@ -18,6 +18,13 @@
     <Using Include="Xunit" />
 
     <ProjectReference Include="../LpjGuess.Core/LpjGuess.Core.csproj" />
+    <ProjectReference Include="../LpjGuess.Runner/LpjGuess.Runner.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="TestFiles\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
 </Project>

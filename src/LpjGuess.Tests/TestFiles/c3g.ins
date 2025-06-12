@@ -1,0 +1,50 @@
+!///////////////////////////////////////////////////////////////////////////////
+! C3 grass PFT settings
+!///////////////////////////////////////////////////////////////////////////////
+
+group "test" (
+    message "Hello! World!"
+)
+
+group "C3G" (
+
+    ! Cool (C3) grass
+
+    include 1
+    grass
+    pathway "c3"
+    g0 0.161
+    g1 4.5
+    gcutic 0.0012
+    respcoeff 1.0
+    Ha_growth 63.3
+    T0_growth 30.6
+    A_growth 4.64411906e8
+    tcmin_surv -1000    ! no limit
+    tcmin_est -1000     ! no limit
+    tcmax_est 1000      ! no limit
+    twmin_est -1000     ! no limit
+    gdd5min_est 0       ! no limit
+    temp_dormancy 5.0
+    eps_iso 16.0
+    seas_iso 1
+    eps_mon 0.37 0.2 0.23 0.1 0.1 0.09 0.1 0.22 0.19
+    storfrac_mon 0.4 0.8 0.8 0.4 0.4 0.5 0.8 0.2 0.5
+    harv_eff 0.5
+    pstemp_min -5
+    pstemp_low 10
+)
+
+pft "C3G_annual" (
+    
+    C3G
+    
+    lifeform "grass_annual"
+    sla           53.1
+    cton_leaf_min 13.7
+    RGR_pot       0.3
+    reprfrac      0.6
+    crownfrac     0.02
+    culmfrac      0.2
+    extkn         0.23
+)
