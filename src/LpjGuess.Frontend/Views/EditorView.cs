@@ -5,7 +5,7 @@ using GtkSource;
 using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.Extensions;
 using LpjGuess.Frontend.Interfaces;
-
+using LpjGuess.Frontend.Utility;
 using SourceBuffer = GtkSource.Buffer;
 using SourceView = GtkSource.View;
 
@@ -182,19 +182,7 @@ public class EditorView : ViewBase<ScrolledWindow>, IEditorView
 	/// </summary>
 	private static string GetDefaultStyleName()
 	{
-#if LINUX
-		try
-		{
-			var styleManager = Adw.StyleManager.GetDefault();
-			if (styleManager != null && styleManager.Dark)
-				return defaultDarkStyle;
-		}
-		catch
-		{
-			// Ignore errors here and use fallback styles.
-		}
-#endif
-		return Configuration.Instance.PreferDarkMode ? defaultDarkStyle : defaultLightStyle;
+		return StyleHelper.UseDarkMode() ? defaultDarkStyle : defaultLightStyle;
 	}
 
 	/// <inheritdoc />

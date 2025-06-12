@@ -14,7 +14,7 @@ public interface ISeriesIdentifier
     /// <param name="series">The series.</param>
     /// <returns>An object which uniquely identifies the series according to
     /// this strategy.</returns>
-    SeriesIdentifierBase GetIdentifier(ISeriesData series);
+    SeriesIdentityBase Identify(ISeriesData series);
 
     /// <summary>
     /// Get the strategy that this identifier uses to identify a series.

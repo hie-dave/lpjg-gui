@@ -2,6 +2,7 @@ using LpjGuess.Core.Interfaces.Graphing.Style;
 using LpjGuess.Core.Models.Graphing;
 using LpjGuess.Core.Models.Graphing.Series;
 using LpjGuess.Core.Models.Graphing.Style;
+using LpjGuess.Core.Models.Graphing.Style.Providers;
 using LpjGuess.Frontend.Events;
 using LpjGuess.Frontend.Utility;
 

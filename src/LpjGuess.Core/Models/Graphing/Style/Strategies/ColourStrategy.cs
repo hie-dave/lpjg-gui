@@ -1,6 +1,6 @@
 using LpjGuess.Core.Interfaces.Graphing;
 
-namespace LpjGuess.Core.Models.Graphing.Style;
+namespace LpjGuess.Core.Models.Graphing.Style.Strategies;
 
 /// <summary>
 /// A strategy for selecting colours based on an index.

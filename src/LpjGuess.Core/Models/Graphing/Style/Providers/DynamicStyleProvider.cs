@@ -2,7 +2,7 @@ using LpjGuess.Core.Interfaces.Graphing;
 using LpjGuess.Core.Interfaces.Graphing.Style;
 using Newtonsoft.Json;
 
-namespace LpjGuess.Core.Models.Graphing.Style;
+namespace LpjGuess.Core.Models.Graphing.Style.Providers;
 
 /// <summary>
 /// A style provider which cycles between a finite number of style values for
@@ -25,7 +25,7 @@ public class DynamicStyleProvider<T> : IStyleProvider<T>
     /// <summary>
     /// The styles for each series.
     /// </summary>
-    private readonly Dictionary<SeriesIdentifierBase, T> styles;
+    private readonly Dictionary<SeriesIdentityBase, T> styles;
 
     /// <summary>
     /// The current index.
@@ -42,7 +42,7 @@ public class DynamicStyleProvider<T> : IStyleProvider<T>
     {
         Identifier = identifier;
         ValueStrategy = valueStrategy;
-        styles = new Dictionary<SeriesIdentifierBase, T>();
+        styles = new Dictionary<SeriesIdentityBase, T>();
         index = 0;
     }
 
@@ -51,10 +51,10 @@ public class DynamicStyleProvider<T> : IStyleProvider<T>
     {
         lock (styles)
         {
-            if (!styles.TryGetValue(Identifier.GetIdentifier(data), out T? style))
+            if (!styles.TryGetValue(Identifier.Identify(data), out T? style))
             {
                 style = ValueStrategy.GetValue(index++);
-                styles.Add(Identifier.GetIdentifier(data), style);
+                styles.Add(Identifier.Identify(data), style);
             }
             return style;
         }

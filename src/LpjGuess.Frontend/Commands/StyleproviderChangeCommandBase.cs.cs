@@ -1,8 +1,8 @@
 using LpjGuess.Core.Interfaces.Graphing.Style;
-using LpjGuess.Core.Models.Graphing;
 using LpjGuess.Core.Models.Graphing.Style;
+using LpjGuess.Core.Models.Graphing.Style.Identifiers;
+using LpjGuess.Core.Models.Graphing.Style.Providers;
 using LpjGuess.Frontend.Interfaces.Commands;
-using LpjGuess.Frontend.Utility;
 
 namespace LpjGuess.Frontend.Commands;
 
@@ -108,12 +108,14 @@ public abstract class StyleProviderChangeCommandBase<TObject, TStyle> : ICommand
     {
         return variation switch
         {
-            StyleVariationStrategy.ByGridcell => new GridcellStrategy(),
-            StyleVariationStrategy.BySimulation => new SimulationStrategy(),
-            StyleVariationStrategy.ByStand => new StandStrategy(),
-            StyleVariationStrategy.ByPatch => new PatchStrategy(),
-            StyleVariationStrategy.ByIndividual => new IndividualStrategy(),
-            StyleVariationStrategy.ByPft => new PftStrategy(),
+            StyleVariationStrategy.ByGridcell => new GridcellIdentifier(),
+            StyleVariationStrategy.BySimulation => new SimulationIdentifier(),
+            StyleVariationStrategy.ByStand => new StandIdentifier(),
+            StyleVariationStrategy.ByPatch => new PatchIdentifier(),
+            StyleVariationStrategy.ByIndividual => new IndividualIdentifier(),
+            StyleVariationStrategy.ByPft => new PftIdentifier(),
+            StyleVariationStrategy.BySeries => new SeriesIdentifier(),
+            StyleVariationStrategy.ByLayer => new LayerIdentifier(),
             _ => throw new ArgumentException($"Invalid style variation strategy: {variation}")
         };
     }

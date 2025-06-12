@@ -1,12 +1,13 @@
 using LpjGuess.Core.Interfaces.Graphing.Style;
 using LpjGuess.Runner.Utility;
 
-namespace LpjGuess.Core.Models.Graphing.Style;
+namespace LpjGuess.Core.Models.Graphing.Style.Identities;
 
 /// <summary>
-/// A class which uniquely identifies a gridcell based on its latitude and longitude.
+/// A class which uniquely identifies a gridcell based on its latitude and
+/// longitude.
 /// </summary>
-public class GridcellIdentifier : SeriesIdentifierBase
+public class GridcellIdentity : SeriesIdentityBase
 {
     /// <summary>
     /// The latitude of the gridcell.
@@ -24,12 +25,12 @@ public class GridcellIdentifier : SeriesIdentifierBase
     public string? Name { get; private init; }
 
     /// <summary>
-    /// Create a new <see cref="GridcellIdentifier"/> instance.
+    /// Create a new <see cref="GridcellIdentity"/> instance.
     /// </summary>
     /// <param name="latitude">The latitude of the gridcell.</param>
     /// <param name="longitude">The longitude of the gridcell.</param>
     /// <param name="name">The name of the gridcell.</param>
-    public GridcellIdentifier(double latitude, double longitude, string? name = null)
+    public GridcellIdentity(double latitude, double longitude, string? name = null)
     {
         Latitude = latitude;
         Longitude = longitude;
@@ -37,9 +38,9 @@ public class GridcellIdentifier : SeriesIdentifierBase
     }
 
     /// <inheritdoc />
-    public override bool Equals(SeriesIdentifierBase? other)
+    public override bool Equals(SeriesIdentityBase? other)
     {
-        if (other is not GridcellIdentifier otherIdentifier)
+        if (other is not GridcellIdentity otherIdentifier)
             return false;
 
         return MathUtility.AreEqual(Latitude, otherIdentifier.Latitude) &&

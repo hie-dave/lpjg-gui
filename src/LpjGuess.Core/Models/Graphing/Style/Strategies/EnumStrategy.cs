@@ -1,6 +1,4 @@
-using LpjGuess.Core.Interfaces.Graphing.Style;
-
-namespace LpjGuess.Core.Models.Graphing.Style;
+namespace LpjGuess.Core.Models.Graphing.Style.Strategies;
 
 /// <summary>
 /// A style value strategy which provides instances of a particular enum type.

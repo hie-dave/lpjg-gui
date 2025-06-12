@@ -19,14 +19,16 @@ public interface IModelOutputView : IDataSourceView<ModelOutput>
     /// Populate the view with the given data source.
     /// </summary>
     /// <param name="fileTypes">The file types to display in the file type dropdown.</param>
-    /// <param name="columns">The columns to display in the x-axis and y-axis dropdowns.</param>
+    /// <param name="xcols">The columns to display in the x-axis dropdown.</param>
+    /// <param name="ycols">The columns to display in the y-axis dropdown.</param>
     /// <param name="fileType">The selected file type.</param>
     /// <param name="xColumn">The selected x-axis column.</param>
-    /// <param name="yColumn">The selected y-axis column.</param>
+    /// <param name="selectedColumns">The selected y-axis columns.</param>
     public void Populate(
         IEnumerable<OutputFile> fileTypes,
-        IEnumerable<string> columns,
+        IEnumerable<string> xcols,
+        IEnumerable<string> ycols,
         OutputFile fileType,
         string xColumn,
-        string yColumn);
+        IEnumerable<string> selectedColumns);
 }

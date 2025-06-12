@@ -3,7 +3,9 @@ using LpjGuess.Core.Interfaces.Graphing;
 using LpjGuess.Core.Models;
 using LpjGuess.Core.Models.Graphing;
 using LpjGuess.Core.Models.Graphing.Series;
-using LpjGuess.Core.Models.Graphing.Style;
+using LpjGuess.Core.Models.Graphing.Style.Identifiers;
+using LpjGuess.Core.Models.Graphing.Style.Providers;
+using LpjGuess.Core.Models.Graphing.Style.Strategies;
 using LpjGuess.Frontend.Factories;
 using LpjGuess.Frontend.Interfaces.Factories;
 using LpjGuess.Frontend.Interfaces.Presenters;
@@ -136,12 +138,12 @@ public class GraphsPresenter : PresenterBase<IGraphsView>, IGraphsPresenter
 		IDataSource dataSource = new ModelOutput(
 			"file_lai",
 			"Date",
-			"Total",
+			["Total"],
 			instructionFiles);
 		ISeries series = new LineSeries(
 			// Empty series name will use data source as title.
 			string.Empty,
-			new DynamicStyleProvider<Colour>(new GridcellStrategy(), new ColourStrategy()),
+			new DynamicStyleProvider<Colour>(new GridcellIdentifier(), new ColourStrategy()),
 			dataSource,
 			AxisPosition.Bottom,
 			AxisPosition.Left,

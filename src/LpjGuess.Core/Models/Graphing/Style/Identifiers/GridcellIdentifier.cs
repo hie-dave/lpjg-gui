@@ -1,17 +1,18 @@
 using LpjGuess.Core.Interfaces.Graphing;
 using LpjGuess.Core.Interfaces.Graphing.Style;
+using LpjGuess.Core.Models.Graphing.Style.Identities;
 
-namespace LpjGuess.Core.Models.Graphing.Style;
+namespace LpjGuess.Core.Models.Graphing.Style.Identifiers;
 
 /// <summary>
-/// A strategy for identifying gridcells in a deterministic way.
+/// A series identifier which identifies a series by its gridcell.
 /// </summary>
-public class GridcellStrategy : ISeriesIdentifier
+public class GridcellIdentifier : ISeriesIdentifier
 {
     /// <inheritdoc />
-    public SeriesIdentifierBase GetIdentifier(ISeriesData series)
+    public SeriesIdentityBase Identify(ISeriesData series)
     {
-        return new GridcellIdentifier(
+        return new GridcellIdentity(
             series.Context.Gridcell.Latitude,
             series.Context.Gridcell.Longitude,
             series.Context.Gridcell.Name);

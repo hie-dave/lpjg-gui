@@ -1,11 +1,11 @@
 using LpjGuess.Core.Interfaces.Graphing.Style;
 
-namespace LpjGuess.Core.Models.Graphing.Style;
+namespace LpjGuess.Core.Models.Graphing.Style.Identities;
 
 /// <summary>
 /// A class which uniquely identifies a numeric value.
 /// </summary>
-public class NumericIdentifier : SeriesIdentifierBase
+public class NumericIdentity : SeriesIdentityBase
 {
     /// <summary>
     /// The numeric value.
@@ -13,18 +13,18 @@ public class NumericIdentifier : SeriesIdentifierBase
     public int Value { get; private init; }
 
     /// <summary>
-    /// Create a new <see cref="NumericIdentifier"/> instance.
+    /// Create a new <see cref="NumericIdentity"/> instance.
     /// </summary>
     /// <param name="value">The numeric value.</param>
-    public NumericIdentifier(int value)
+    public NumericIdentity(int value)
     {
         Value = value;
     }
 
     /// <inheritdoc />
-    public override bool Equals(SeriesIdentifierBase? other)
+    public override bool Equals(SeriesIdentityBase? other)
     {
-        if (other is not NumericIdentifier otherIdentifier)
+        if (other is not NumericIdentity otherIdentifier)
             return false;
 
         return Value == otherIdentifier.Value;
