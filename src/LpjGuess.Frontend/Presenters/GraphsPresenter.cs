@@ -85,10 +85,11 @@ public class GraphsPresenter : PresenterBase<IGraphsView>, IGraphsPresenter
 	/// <param name="graphs"></param>
 	private void Populate(IEnumerable<Graph> graphs)
 	{
+		plots.Values.ToList().ForEach(p => p.Dispose());
+		plots.Clear();
+
 		// Force evaluation, in case graphs depends on the plots collection.
 		graphs = graphs.ToList();
-
-		plots.Clear();
 
 		// Temporary list, to guarantee order.
 		foreach (Graph graph in graphs)
@@ -103,9 +104,6 @@ public class GraphsPresenter : PresenterBase<IGraphsView>, IGraphsPresenter
 
 		// This will remove any existing plots from the view.
 		view.Populate(plots.Keys);
-
-		foreach (IGraphPresenter presenter in plots.Values)
-			presenter.Dispose();
 	}
 
 	/// <summary>

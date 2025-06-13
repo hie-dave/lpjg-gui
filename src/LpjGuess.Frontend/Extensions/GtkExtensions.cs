@@ -1,6 +1,7 @@
 using Gio;
 using GObject;
 using Gtk;
+using LpjGuess.Core.Extensions;
 using LpjGuess.Frontend.Views;
 using System.Reflection;
 
@@ -52,8 +53,8 @@ public static class GtkExtensions
 				if (stream == null)
 					throw new InvalidOperationException($"Resource not found: '{resourceName}'");
 
-				using (Stream writer = System.IO.File.OpenWrite(tempFile))
-					await stream.CopyToAsync(writer);
+				using (Stream writer = File.OpenWrite(tempFile))
+					await stream.CopyToAsync(writer).ContinueOnMainThread(cancellationToken);
 				provider.LoadFromFile(FileHelper.NewForPath(tempFile));
 			}
 		}

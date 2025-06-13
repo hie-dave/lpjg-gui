@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Gtk;
 using LpjGuess.Frontend.Delegates;
+using LpjGuess.Frontend.Interfaces;
 
 namespace LpjGuess.Frontend.Views;
 
@@ -8,7 +9,7 @@ namespace LpjGuess.Frontend.Views;
 /// A StackSidebar which allows the caller to use custom widgets in the sidebar
 /// switcher for navigation (stock StackSidebar allows only labels).
 /// </summary>
-public class CustomStackSidebar<T> : Paned
+public class CustomStackSidebar<T> : Paned, IView
 {
     /// <summary>
     /// The stack which the sidebar manages.
@@ -117,6 +118,9 @@ public class CustomStackSidebar<T> : Paned
         EndChild.Hexpand = true;
         Position = 0;
     }
+
+    /// <inheritdoc/>
+    public Widget GetWidget() => this;
 
     /// <summary>
     /// Populate the sidebar with the given pages.

@@ -10,7 +10,7 @@ namespace LpjGuess.Frontend.Views;
 /// remove tabs from the stack.
 /// </summary>
 /// <remarks>
-/// The type parameter represent the type of object encapsulated by the stack.
+/// The type parameter represents the type of object encapsulated by the stack.
 /// Each page in the stack will represent an instance of this type.
 ///
 /// Generation of sidebar widgets is handled by an argument to the constructor.

@@ -66,6 +66,11 @@ public interface IWorkspaceView : IView
 	IGraphsView GraphsView { get; }
 
 	/// <summary>
+	/// Get a reference to the experiments view.
+	/// </summary>
+	IExperimentsView ExperimentsView { get; }
+
+	/// <summary>
 	/// A child view which displays console output from runs of the model.
 	/// </summary>
 	IEditorView LogsView { get; }

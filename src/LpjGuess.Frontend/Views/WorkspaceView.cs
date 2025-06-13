@@ -84,6 +84,11 @@ public class WorkspaceView : Box, IWorkspaceView
 	private readonly IInstructionFilesView insFilesView;
 
 	/// <summary>
+	/// The experiments view.
+	/// </summary>
+	private readonly ExperimentsView experimentsView;
+
+	/// <summary>
 	/// A view which allows the user to browse the raw outputs from the model.
 	/// </summary>
 	private readonly OutputsView outputsView;
@@ -171,11 +176,13 @@ public class WorkspaceView : Box, IWorkspaceView
 		logsScroller.Child = LogsView.GetWidget();
 
 		insFilesView = new InstructionFilesView();
+		experimentsView = new ExperimentsView();
 		outputsView = new OutputsView();
 		graphsView = new GraphsView();
 
 		notebook = new Notebook();
 		notebook.AppendPage(insFilesView.GetWidget(), Label.New("Instruction Files"));
+		notebook.AppendPage(experimentsView.GetWidget(), Label.New("Simulations"));
 		notebook.AppendPage(logsScroller, Label.New("Logs"));
 		notebook.AppendPage(outputsView.GetWidget(), Label.New("Outputs"));
 		notebook.AppendPage(graphsView.GetWidget(), Label.New("Graphs"));
@@ -218,6 +225,9 @@ public class WorkspaceView : Box, IWorkspaceView
 
 	/// <inheritdoc />
 	public IEditorView LogsView { get; private init; }
+
+	/// <inheritdoc />
+	public IExperimentsView ExperimentsView => experimentsView;
 
 	/// <summary>
 	/// A view which allows the user to browse the raw outputs from the model.

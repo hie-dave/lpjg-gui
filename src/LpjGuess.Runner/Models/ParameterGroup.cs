@@ -13,10 +13,10 @@ public class ParameterGroup
     public string Name { get; private init; }
 
     /// <summary>
-    /// Dictionary mapping parameter names to their possible values.
+    /// List of parameters in this group.
     /// All parameters in a group must have the same number of values.
     /// </summary>
-    public IReadOnlyDictionary<string, IReadOnlyList<string>> Parameters { get; private init; }
+    public IReadOnlyList<ParameterValues> Parameters { get; private init; }
 
     /// <summary>
     /// Create a new <see cref="ParameterGroup"/> instance.
@@ -24,18 +24,18 @@ public class ParameterGroup
     /// <param name="name">Name of the parameter group.</param>
     /// <param name="parameters">Dictionary of parameter names and their values.</param>
     /// <exception cref="InvalidOperationException">Thrown if parameters have different numbers of values.</exception>
-    public ParameterGroup(string name, IDictionary<string, IReadOnlyList<string>> parameters)
+    public ParameterGroup(string name, IReadOnlyList<ParameterValues> parameters)
     {
         ValidateParameters(parameters);
         Name = name;
-        Parameters = new Dictionary<string, IReadOnlyList<string>>(parameters);
+        Parameters = parameters;
     }
 
     /// <summary>
     /// Gets the number of values for each parameter in this group.
     /// All parameters in a group must have the same number of values.
     /// </summary>
-    public int ValueCount => Parameters.First().Value.Count;
+    public int ValueCount => Parameters.First().Values.Count;
 
     /// <summary>
     /// Get the factors for a specific value index across all parameters in the group.
@@ -49,25 +49,25 @@ public class ParameterGroup
             throw new ArgumentOutOfRangeException(nameof(valueIndex), "Value index must be within range of parameter values");
 
         return Parameters
-            .Select(kvp => new Factor(kvp.Key, kvp.Value[valueIndex]))
+            .Select(p => new Factor(p.Name, p.Values[valueIndex]))
             .ToList();
     }
 
-    private void ValidateParameters(IDictionary<string, IReadOnlyList<string>> parameters)
+    private void ValidateParameters(IReadOnlyList<ParameterValues> parameters)
     {
         if (parameters == null || parameters.Count == 0)
             throw new ArgumentException("Parameter group must contain at least one parameter", nameof(parameters));
 
-        int expectedCount = parameters.First().Value.Count;
+        int expectedCount = parameters.First().Values.Count;
         if (expectedCount == 0)
             throw new ArgumentException("Parameters must have at least one value", nameof(parameters));
 
         foreach (var param in parameters)
         {
-            if (param.Value.Count != expectedCount)
+            if (param.Values.Count != expectedCount)
                 throw new InvalidOperationException(
                     $"All parameters in a group must have the same number of values. " +
-                    $"Parameter '{param.Key}' has {param.Value.Count} values, expected {expectedCount}.");
+                    $"Parameter '{param.Name}' has {param.Values.Count} values, expected {expectedCount}.");
         }
     }
 }

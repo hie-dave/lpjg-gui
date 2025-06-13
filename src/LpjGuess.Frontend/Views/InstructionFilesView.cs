@@ -56,9 +56,6 @@ public class InstructionFilesView : DynamicStackSidebar<string>, IInstructionFil
         Populate(insFileViews.Select(f => (GetTabName(f.Name), f.GetWidget())));
 	}
 
-    /// <inheritdoc />
-    public Widget GetWidget() => this;
-
     /// <summary>
     /// Get an appropriate name for a tab containing an instruction file.
     /// </summary>
@@ -132,7 +129,7 @@ public class InstructionFilesView : DynamicStackSidebar<string>, IInstructionFil
 		try
 		{
 			// The visible child of the stack has changed.
-			if (page == "Add File")
+			if (page == AddText)
 			{
 				// The user has clicked the "Add File" button. This button
 				// is an entry in the sidebar with a corresponding blank

@@ -1,4 +1,5 @@
 using LpjGuess.Core.Interfaces.Graphing;
+using LpjGuess.Core.Models.Factorial;
 using LpjGuess.Core.Models.Graphing;
 using LpjGuess.Core.Serialisation.Json;
 
@@ -31,13 +32,19 @@ public class Workspace
 	public List<Graph> Graphs { get; set; }
 
 	/// <summary>
+	/// List of experiments configured by the user.
+	/// </summary>
+	public List<Experiment> Experiments { get; set; }
+
+	/// <summary>
 	/// Default constructor provided for deserialization purposes only.
 	/// </summary>
 	public Workspace()
 	{
 		InstructionFiles = [];
 		FilePath = string.Empty;
-		Graphs = new List<Graph>();
+		Graphs = [];
+		Experiments = [];
 	}
 
 	/// <summary>

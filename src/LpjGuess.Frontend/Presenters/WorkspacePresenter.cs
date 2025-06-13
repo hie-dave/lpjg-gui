@@ -44,14 +44,19 @@ public class WorkspacePresenter : IPresenter<IWorkspaceView>
 	private readonly IInstructionFilesPresenter insFilesPresenter;
 
 	/// <summary>
-	/// The graphs presenter.
+	/// Presenter which manages the experiments.
 	/// </summary>
-	private readonly IGraphsPresenter graphsPresenter;
+	private readonly IExperimentsPresenter experimentsPresenter;
 
 	/// <summary>
 	/// The outputs presenter.
 	/// </summary>
 	private readonly IOutputsPresenter outputsPresenter;
+
+	/// <summary>
+	/// The graphs presenter.
+	/// </summary>
+	private readonly IGraphsPresenter graphsPresenter;
 
 	/// <summary>
 	/// Cancellation token used to cancel running simulations.
@@ -71,11 +76,13 @@ public class WorkspacePresenter : IPresenter<IWorkspaceView>
 		insFilesPresenter = new InstructionFilesPresenter(view.InsFilesView);
 		outputsPresenter = new OutputsPresenter(view.OutputsView);
 		graphsPresenter = new GraphsPresenter(view.GraphsView, workspace.Graphs, workspace.InstructionFiles);
+		experimentsPresenter = new ExperimentsPresenter(view.ExperimentsView);
 
 		// Populate views.
 		PopulateRunners();
 		insFilesPresenter.Populate(workspace.InstructionFiles);
 		outputsPresenter.Populate(workspace.InstructionFiles);
+		experimentsPresenter.Populate(workspace.Experiments, workspace.InstructionFiles);
 
 		// Connect events.
 		view.OnRun.ConnectTo(OnRun);
