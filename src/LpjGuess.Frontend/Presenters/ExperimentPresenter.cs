@@ -1,5 +1,6 @@
 using LpjGuess.Core.Models.Factorial;
 using LpjGuess.Core.Models.Factorial.Generators;
+using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.Interfaces.Commands;
 using LpjGuess.Frontend.Interfaces.Events;
 using LpjGuess.Frontend.Interfaces.Presenters;
@@ -23,12 +24,26 @@ public class ExperimentPresenter : PresenterBase<IExperimentView>, IExperimentPr
     private readonly IFactorialPresenter factorialPresenter;
 
     /// <summary>
+    /// The available instruction files in the workspace.
+    /// </summary>
+    private IEnumerable<string> instructionFiles;
+
+    /// <inheritdoc />
+    public Event<string> OnRenamed { get; private init; }
+
+    /// <summary>
     /// Create a new <see cref="ExperimentPresenter"/> instance.
     /// </summary>
+    /// <param name="instructionFiles">The available instruction files in the workspace.</param>
     /// <param name="experiment">The experiment to present.</param>
     /// <param name="view">The view to present the experiment on.</param>
-    public ExperimentPresenter(Experiment experiment, IExperimentView view) : base(view)
+    public ExperimentPresenter(
+        IEnumerable<string> instructionFiles,
+        Experiment experiment,
+        IExperimentView view) : base(view)
     {
+        OnRenamed = new Event<string>();
+        this.instructionFiles = instructionFiles;
         this.experiment = experiment;
         view.OnChanged.ConnectTo(OnExperimentChanged);
         factorialPresenter = new FactorialPresenter(view.FactorialView);
@@ -42,7 +57,8 @@ public class ExperimentPresenter : PresenterBase<IExperimentView>, IExperimentPr
     /// <inheritdoc />
     public void UpdateInstructionFiles(IEnumerable<string> instructionFiles)
     {
-        view.UpdateInstructionFiles(instructionFiles);
+        this.instructionFiles = instructionFiles;
+        view.UpdateInstructionFiles(instructionFiles.Select(f => (f, experiment.InstructionFiles.Contains(f))));
     }
 
     /// <inheritdoc />
@@ -62,7 +78,7 @@ public class ExperimentPresenter : PresenterBase<IExperimentView>, IExperimentPr
             experiment.Name,
             experiment.Description,
             experiment.Runner,
-            experiment.InstructionFiles,
+            instructionFiles.Select(f => (f, experiment.InstructionFiles.Contains(f))),
             experiment.Pfts);
 
         factorialPresenter.Populate(GetFactorialGenerator());
@@ -92,7 +108,10 @@ public class ExperimentPresenter : PresenterBase<IExperimentView>, IExperimentPr
     {
         // This will become slightly less trivial once we have a command
         // history.
+        string oldName = experiment.Name;
         command.Execute();
+        if (experiment.Name != oldName)
+            OnRenamed.Invoke(experiment.Name);
     }
 
     /// <summary>

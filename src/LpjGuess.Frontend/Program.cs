@@ -25,10 +25,11 @@ void OnStartup(object sender, EventArgs args)
 	// Perform one-time application initialisation here.
 }
 
-void OnActivated(object sender, EventArgs args)
+async void OnActivated(object sender, EventArgs args)
 {
 	Application app = (Application)sender;
 	MainView window = new MainView(app);
+	await window.InitialiseAsync();
 	try
 	{
 		MainPresenter presenter = new MainPresenter(window);

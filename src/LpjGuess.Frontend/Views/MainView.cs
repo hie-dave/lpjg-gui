@@ -113,12 +113,6 @@ public class MainView : ApplicationWindow, IMainView
 
 		SetApplication(app);
 
-		CssProvider provider = CssProvider.New();
-		provider.LoadFromEmbeddedResource("LpjGuess.Frontend.css.style.css");
-		uint priority = Gtk.Constants.STYLE_PROVIDER_PRIORITY_APPLICATION;
-		if (Display != null)
-			StyleContext.AddProviderForDisplay(Display, provider, priority);
-
 		menu = Menu.New();
 
 		MenuButton menuButton = new MenuButton();
@@ -171,6 +165,19 @@ public class MainView : ApplicationWindow, IMainView
 		SetContent(contents);
 
 		Maximized = true;
+	}
+
+	/// <summary>
+	/// Initialise the view.
+	/// </summary>
+	/// <param name="ct">Cancellation token.</param>
+	public async System.Threading.Tasks.Task InitialiseAsync(CancellationToken ct = default)
+	{
+		CssProvider provider = CssProvider.New();
+		await provider.LoadFromEmbeddedResourceAsync("LpjGuess.Frontend.css.style.css", ct);
+		uint priority = Gtk.Constants.STYLE_PROVIDER_PRIORITY_APPLICATION;
+		if (Display != null)
+			StyleContext.AddProviderForDisplay(Display, provider, priority);
 	}
 
 	/// <inheritdoc />

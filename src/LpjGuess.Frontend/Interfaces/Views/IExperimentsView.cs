@@ -28,4 +28,11 @@ public interface IExperimentsView : IView
     /// </summary>
     /// <param name="experiments">The experiments to populate the view with.</param>
     void Populate(IEnumerable<(Experiment, IExperimentView)> experiments);
+
+    /// <summary>
+    /// Rename an experiment.
+    /// </summary>
+    /// <param name="experiment">The experiment to rename.</param>
+    /// <param name="newName">The new name for the experiment.</param>
+    void Rename(Experiment experiment, string newName);
 }

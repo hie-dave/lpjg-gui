@@ -177,12 +177,7 @@ public class WorkspacePresenter : IPresenter<IWorkspaceView>
 	/// </summary>
 	public void Dispose()
 	{
-		// Save changes to instruction files.
-		insFilesPresenter.SaveChanges();
-
-		// Save changes to the file.
-		workspace.Graphs = graphsPresenter.GetGraphs().ToList();
-		workspace.Save();
+		SaveWorkspace();
 
 		view.Dispose();
 		if (IsRunning())
@@ -190,8 +185,22 @@ public class WorkspacePresenter : IPresenter<IWorkspaceView>
 		simulations = null;
 	}
 
-	/// <inheritdoc />
-	public IWorkspaceView GetView() => view;
+	/// <summary>
+	/// Save all pending changes to the workspace.
+	/// </summary>
+    private void SaveWorkspace()
+    {
+		// Save changes to instruction files.
+		insFilesPresenter.SaveChanges();
+
+		// Save changes to the file.
+		workspace.Graphs = graphsPresenter.GetGraphs().ToList();
+		workspace.Experiments = experimentsPresenter.GetExperiments().ToList();
+		workspace.Save();
+    }
+
+    /// <inheritdoc />
+    public IWorkspaceView GetView() => view;
 
 	/// <summary>
 	/// Run the file with the specified runner configuration.

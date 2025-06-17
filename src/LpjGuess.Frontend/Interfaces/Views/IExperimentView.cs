@@ -22,15 +22,21 @@ public interface IExperimentView : IView
     /// <summary>
     /// Populate the view with the experiment.
     /// </summary>
+    /// <param name="name">The name of the experiment.</param>
+    /// <param name="description">The description of the experiment.</param>
+    /// <param name="runner">The runner to use.</param>
+    /// <param name="instructionFiles">The available instruction files, and whether they are selected in this experiment.</param>
+    /// <param name="pfts">The PFTs.</param>
     void Populate(
         string name,
         string description,
         string runner,
-        IEnumerable<string> instructionFiles,
+        IEnumerable<(string, bool)> instructionFiles,
         IEnumerable<string> pfts);
 
     /// <summary>
     /// Update the instruction files.
     /// </summary>
-    void UpdateInstructionFiles(IEnumerable<string> instructionFiles);
+    /// <param name="instructionFiles">The available instruction files, and whether they are selected in this experiment.</param>
+    void UpdateInstructionFiles(IEnumerable<(string, bool)> instructionFiles);
 }

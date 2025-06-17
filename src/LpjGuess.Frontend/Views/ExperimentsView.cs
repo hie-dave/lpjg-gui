@@ -10,11 +10,17 @@ namespace LpjGuess.Frontend.Views;
 public class ExperimentsView : DynamicStackSidebar<Experiment>, IExperimentsView
 {
     /// <summary>
+    /// Dictionary mapping experiment objects to their sidebar widgets.
+    /// </summary>
+    private readonly Dictionary<Experiment, Label> sidebarWidgets;
+
+    /// <summary>
     /// Create a new <see cref="ExperimentsView"/> instance.
     /// </summary>
     public ExperimentsView() : base(RenderLabel)
     {
         AddText = "Add Experiment";
+        sidebarWidgets = new Dictionary<Experiment, Label>();
     }
 
     /// <inheritdoc />
@@ -23,12 +29,26 @@ public class ExperimentsView : DynamicStackSidebar<Experiment>, IExperimentsView
         Populate(experiments.Select(e => (e.Item1, e.Item2.GetWidget())));
     }
 
+    /// <inheritdoc />
+    public void Rename(Experiment experiment, string newName)
+    {
+        sidebarWidgets[experiment].SetText(newName);
+    }
+
+    /// <inheritdoc />
+    protected override Widget CreateWidget(Experiment data)
+    {
+        Label label = RenderLabel(data);
+        sidebarWidgets[data] = label;
+        return label;
+    }
+
     /// <summary>
     /// Create a widget to be displayed in the sidebar for the given experiment.
     /// </summary>
     /// <param name="experiment">The experiment to render a widget for.</param>
     /// <returns>A widget to be displayed in the sidebar.</returns>
-    private static Widget RenderLabel(Experiment experiment)
+    private static Label RenderLabel(Experiment experiment)
     {
         return Label.New(experiment.Name);
     }

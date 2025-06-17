@@ -43,7 +43,7 @@ public static class GtkExtensions
 	/// <param name="resourceName">Name of the embedded resource.</param>
 	/// <param name="cancellationToken">A cancellation token.</param>
 	public static async Task LoadFromEmbeddedResourceAsync(this CssProvider provider, string resourceName
-		, CancellationToken cancellationToken = default(CancellationToken))
+		, CancellationToken cancellationToken = default)
 	{
 		string tempFile = Path.GetTempFileName();
 		try
@@ -63,16 +63,6 @@ public static class GtkExtensions
 			if (File.Exists(tempFile))
 				File.Delete(tempFile);
 		}
-	}
-
-	/// <summary>
-	/// Load style from a resource file embedded in the current assembly.
-	/// </summary>
-	/// <param name="provider">The style provider.</param>
-	/// <param name="resourceName">Name of the embedded resource.</param>
-	public static void LoadFromEmbeddedResource(this CssProvider provider, string resourceName)
-	{
-		provider.LoadFromEmbeddedResourceAsync(resourceName).Wait();
 	}
 
 	/// <inheritdoc />

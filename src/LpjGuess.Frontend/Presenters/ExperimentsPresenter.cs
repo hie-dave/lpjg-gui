@@ -64,7 +64,9 @@ public class ExperimentsPresenter : PresenterBase<IExperimentsView>, IExperiment
         foreach (Experiment experiment in experiments)
         {
             IExperimentView view = new ExperimentView();
-            presenters.Add(new ExperimentPresenter(experiment, view));
+            IExperimentPresenter presenter = new ExperimentPresenter(instructionFiles, experiment, view);
+            presenter.OnRenamed.ConnectTo(n => OnExperimentRenamed(experiment, n));
+            presenters.Add(presenter);
         }
 
         // Update the master experiments view with the new set of views.
@@ -106,5 +108,16 @@ public class ExperimentsPresenter : PresenterBase<IExperimentsView>, IExperiment
             throw new InvalidOperationException($"Experiment '{experiment}' not found in experiments");
 
         RefreshView(GetExperiments().Except([experiment]));
+    }
+
+
+    /// <summary>
+    /// Called when an experiment is renamed by the user.
+    /// </summary>
+    /// <param name="experiment">The experiment that was renamed.</param>
+    /// <param name="name">The new name of the experiment.</param>
+    private void OnExperimentRenamed(Experiment experiment, string name)
+    {
+        view.Rename(experiment, name);
     }
 }

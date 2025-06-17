@@ -1,4 +1,5 @@
 using LpjGuess.Core.Models.Factorial;
+using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.Interfaces.Views;
 
 namespace LpjGuess.Frontend.Interfaces.Presenters;
@@ -18,4 +19,9 @@ public interface IExperimentPresenter : IPresenter<IExperimentView>
     /// </summary>
     /// <param name="instructionFiles">The instruction files.</param>
     void UpdateInstructionFiles(IEnumerable<string> instructionFiles);
+
+    /// <summary>
+    /// Event raised when the experiment is renamed.
+    /// </summary>
+    Event<string> OnRenamed { get; }
 }

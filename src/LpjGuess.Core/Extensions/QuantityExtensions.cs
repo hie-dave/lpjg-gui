@@ -1,5 +1,4 @@
 using System.Data;
-using System.Runtime.Intrinsics.Arm;
 using Dave.Benchmarks.Core.Models.Entities;
 using Dave.Benchmarks.Core.Models.Importer;
 
