@@ -12,6 +12,11 @@ namespace LpjGuess.Frontend.Views;
 /// </summary>
 public class ExperimentView : ViewBase<Box>, IExperimentView
 {
+    /// <summary>
+    /// The view which displays the factorial data.
+    /// </summary>
+    public IFactorialView FactorialView { get; }
+
     /// <inheritdoc />
     public Event<IModelChange<Experiment>> OnChanged { get; }
 
@@ -20,8 +25,12 @@ public class ExperimentView : ViewBase<Box>, IExperimentView
     /// </summary>
     public ExperimentView() : base(new Box())
     {
+        FactorialView = new FactorialView();
         OnChanged = new Event<IModelChange<Experiment>>();
         widget.SetOrientation(Orientation.Vertical);
+
+        // Pack child widgets.
+        widget.Append(FactorialView.GetWidget());
     }
 
     /// <inheritdoc />
@@ -37,15 +46,14 @@ public class ExperimentView : ViewBase<Box>, IExperimentView
         string description,
         string runner,
         IEnumerable<string> instructionFiles,
-        IEnumerable<string> pfts,
-        IEnumerable<ParameterGroup> factorials)
+        IEnumerable<string> pfts)
     {
-        // TBI
+        throw new NotImplementedException();
     }
 
     /// <inheritdoc />
     public void UpdateInstructionFiles(IEnumerable<string> instructionFiles)
     {
-        // TBI
+        throw new NotImplementedException();
     }
 }

@@ -1,4 +1,5 @@
 using LpjGuess.Core.Models.Factorial;
+using LpjGuess.Core.Models.Factorial.Generators;
 using LpjGuess.Frontend.Extensions;
 using LpjGuess.Frontend.Interfaces.Presenters;
 using LpjGuess.Frontend.Interfaces.Views;
@@ -76,17 +77,14 @@ public class ExperimentsPresenter : PresenterBase<IExperimentsView>, IExperiment
     /// </summary>
     private Experiment CreateDefaultExperiment()
     {
-        Experiment experiment = new();
-        experiment.Name = "New Experiment";
-        experiment.InstructionFiles = instructionFiles;
-
-        // Configure the experiment to use the default runner, if one is
-        // configured.
-        IRunnerConfiguration? conf = Configuration.Instance.GetDefaultRunner();
-        if (conf != null)
-            experiment.Runner = conf.Name;
-
-        return experiment;
+        return new Experiment(
+            "New Experiment",
+            "Description",
+            Configuration.Instance.GetDefaultRunner()?.Name ?? string.Empty,
+            instructionFiles,
+            [],
+            new FactorialGenerator(true, [])
+        );
     }
 
     /// <summary>
