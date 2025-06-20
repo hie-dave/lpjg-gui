@@ -24,6 +24,43 @@ public class InstructionParameter
     }
 
     /// <summary>
+    /// Create a parameter from user input which may need to have quotes added.
+    /// This function uses a series of heuristics to attempt to detect whether
+    /// the input is a string or a number, and quotes the input if it's a
+    /// string.
+    /// </summary>
+    /// <param name="userInput">The user input from which to create a parameter.</param>
+    /// <returns>The created parameter.</returns>
+    public static InstructionParameter FromUserInput(string userInput)
+    {
+        // If user explicitly provided quotes, respect them.
+        if (userInput.StartsWith('"') && userInput.EndsWith('"'))
+        {
+            return new InstructionParameter(userInput);
+        }
+
+        // Check if it's a number. I *think* instruction files require a period
+        // as the decimal separator, so we use invariant culture.
+        if (double.TryParse(userInput, NumberStyles.Float, CultureInfo.InvariantCulture, out _))
+        {
+            // It's a number, so store it as-is.
+            return new InstructionParameter(userInput);
+        }
+
+        // If it's not a number and not pre-quoted, assume it's a string that
+        // needs quoting.
+        return new InstructionParameter($"\"{userInput}\"");
+    }
+
+    /// <summary>
+    /// Gets the string representation of the parameter value suitable for use
+    /// in an instruction file. This preserves quotes for string literals and
+    /// returns other types as their raw string representation.
+    /// </summary>
+    /// <returns>A string suitable for use in an instruction file.</returns>
+    public string ToInsFileString() => _rawValue;
+
+    /// <summary>
     /// Gets the raw string value of the parameter.
     /// </summary>
     public string AsString() => _rawValue.Trim('"');

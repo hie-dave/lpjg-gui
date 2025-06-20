@@ -45,7 +45,7 @@ public class InstructionFileParser
     }
 
     private readonly List<Block> _blocks;
-    private readonly Dictionary<string, InstructionParameter> _topLevelParams;
+    private readonly List<ParameterOccurrence> _topLevelParams;
     private List<string> _lines;
     private string _rawContent = string.Empty;
     private int _currentLine;
@@ -65,7 +65,7 @@ public class InstructionFileParser
         _rawContent = content;
         _lines = content.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None).ToList();
         _blocks = new List<Block>();
-        _topLevelParams = new Dictionary<string, InstructionParameter>();
+        _topLevelParams = new List<ParameterOccurrence>();
         _currentLine = 0;
 
         // Ensure we preserve the exact line endings from original content
@@ -150,7 +150,22 @@ public class InstructionFileParser
                 // Handle top-level parameters
                 if (TryParseParameter(trimmedCurrentLine, out string paramName, out string paramValue))
                 {
-                    _topLevelParams[paramName] = new InstructionParameter(paramValue);
+                    InstructionParameter parameter = new(paramValue);
+                    ParameterOccurrence? occurrence = GetTopLevelParameterOccurrence(paramName);
+                    if (occurrence is null)
+                    {
+                        _topLevelParams.Add(new ParameterOccurrence
+                        {
+                            Name = paramName,
+                            Value = parameter,
+                            LineNumber = _currentLine,
+                            OriginalLine = trimmedCurrentLine
+                        });
+                    }
+                    else
+                    {
+                        occurrence.Value = parameter;
+                    }
                 }
             }
         }
@@ -298,7 +313,7 @@ public class InstructionFileParser
     /// <returns>Parameter value if found, null otherwise</returns>
     public InstructionParameter? GetTopLevelParameter(string paramName)
     {
-        return _topLevelParams.GetValueOrDefault(paramName);
+        return _topLevelParams.FirstOrDefault(p => p.Name == paramName)?.Value;
     }
 
     /// <summary>
@@ -353,7 +368,7 @@ public class InstructionFileParser
             }
 
             // Create new parameter line
-            var newLine = $"{indent}{paramName} {newParam.AsString()}";
+            var newLine = $"{indent}{paramName} {newParam.ToInsFileString()}";
             
             // Add to RawLines just before closing parenthesis
             int insertPosition = block.RawLines.Count - 1;
@@ -415,10 +430,26 @@ public class InstructionFileParser
     /// <returns>True if parameter was found and updated, false otherwise</returns>
     public bool SetTopLevelParameterValue(string paramName, string value)
     {
-        if (!_topLevelParams.ContainsKey(paramName))
+        ParameterOccurrence? parameter = GetTopLevelParameterOccurrence(paramName);
+        if (parameter is null)
             return false;
 
-        _topLevelParams[paramName] = new InstructionParameter(value);
+        // Update parameter value.
+        parameter.Value = InstructionParameter.FromUserInput(value);
+
+        // Update raw line, preserving any comments.
+        string indent = parameter.OriginalLine[..parameter.OriginalLine.IndexOf(parameter.Name)];
+        string newLine = $"{indent}{parameter.Name} {parameter.Value.ToInsFileString()}";
+
+        // Preserve any comments.
+        int commentIndex = parameter.OriginalLine.IndexOf('!');
+        if (commentIndex >= 0)
+            newLine += parameter.OriginalLine[commentIndex..];
+
+        // Update the line. Note: this will completely override the original
+        // content). Need to rethink this.
+        parameter.OriginalLine = newLine;
+
         return true;
     }
 
@@ -460,24 +491,34 @@ public class InstructionFileParser
             return string.Empty;
 
         var content = new StringBuilder();
-        
-        // Handle case where there are no blocks (just top-level content)
-        if (_blocks.Count == 0)
-            return string.Join(_lineEnding, _lines) + (_rawContent.EndsWith(_lineEnding) ? _lineEnding : "");
 
         var currentLine = 0;
+        Queue<ParameterOccurrence> topLevel = new Queue<ParameterOccurrence>(_topLevelParams.OrderBy(p => p.LineNumber));
         
         foreach (var block in _blocks.OrderBy(b => b.StartLine))
         {
-            // Add content before block exactly as is
+            // Add content before block exactly as is.
             while (currentLine < block.StartLine)
             {
-                content.Append(_lines[currentLine]);
-                
+                // Add top-level parameters as needed.
+                bool addedParam = false;
+                while (topLevel.Count > 0 && topLevel.Peek().LineNumber == currentLine)
+                {
+                    if (addedParam)
+                        content.Append(_lineEnding);
+                    addedParam = true;
+                    content.Append(topLevel.Dequeue().OriginalLine);
+                }
+
+                if (!addedParam)
+                {
+                    content.Append(_lines[currentLine]);
+                }
+
                 // Add line ending unless it's the last line and original didn't end with one
                 if (currentLine < _lines.Count - 1 || _rawContent.EndsWith(_lineEnding))
                     content.Append(_lineEnding);
-                
+
                 currentLine++;
             }
 
@@ -485,7 +526,7 @@ public class InstructionFileParser
             for (int i = 0; i < block.RawLines.Count; i++)
             {
                 content.Append(block.RawLines[i]);
-                
+
                 // Add line ending.
                 // Note that we split on newline, so the implication is that
                 // every line in the block is a discrete line and must therefore
@@ -501,21 +542,21 @@ public class InstructionFileParser
                     continue;
                 content.Append(_lineEnding);
             }
-        
+
             // Move to first line after block
             currentLine = block.EndLine;
-        
+
             // Preserve all whitespace exactly as in original until next block starts
-            while (currentLine < _lines.Count && 
-                   (string.IsNullOrWhiteSpace(_lines[currentLine]) || 
+            while (currentLine < _lines.Count &&
+                   (string.IsNullOrWhiteSpace(_lines[currentLine]) ||
                     !_blocks.Any(b => b.StartLine == currentLine)))
             {
                 content.Append(_lines[currentLine]);
-                
+
                 // Add line ending unless it's the last line
                 if (currentLine < _lines.Count - 1)
                     content.Append(_lineEnding);
-                
+
                 currentLine++;
             }
         }
@@ -523,8 +564,19 @@ public class InstructionFileParser
         // Add remaining content exactly as is
         while (currentLine < _lines.Count)
         {
-            content.Append(_lines[currentLine]);
-            
+            // Add top-level parameters as needed.
+            bool addedParam = false;
+            while (topLevel.Count > 0 && topLevel.Peek().LineNumber == currentLine)
+            {
+                if (addedParam)
+                    content.Append(_lineEnding);
+                addedParam = true;
+                content.Append(topLevel.Dequeue().OriginalLine);
+            }
+
+            if (!addedParam)
+                content.Append(_lines[currentLine]);
+
             // Add line ending unless it's the last line and original didn't end with one
             if (currentLine < _lines.Count - 1 || _rawContent.EndsWith(_lineEnding))
                 content.Append(_lineEnding);
@@ -533,5 +585,15 @@ public class InstructionFileParser
         }
 
         return content.ToString();
+    }
+
+    /// <summary>
+    /// Gets a top-level parameter with the specified name.
+    /// </summary>
+    /// <param name="paramName">Name of the parameter.</param>
+    /// <returns>The parameter occurrence if found, null otherwise.</returns>
+    private ParameterOccurrence? GetTopLevelParameterOccurrence(string paramName)
+    {
+        return _topLevelParams.FirstOrDefault(p => p.Name == paramName);
     }
 }
