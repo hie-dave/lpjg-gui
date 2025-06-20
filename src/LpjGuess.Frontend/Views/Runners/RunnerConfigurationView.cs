@@ -171,6 +171,6 @@ public class RunnerConfigurationView : IRunnerView
 		{
 			MainView.Instance.ReportError(error);
 		}
-		return true;
+		return false;
 	}
 }
