@@ -118,7 +118,8 @@ pft ""C3G_annual"" (
 C3G
 lifeform ""grass_annual""
 sla 53.1
-)";
+)
+";
 
         string file = GetTestFilePath("test.ins");
         var parser = new InstructionFileParser(content, file);
@@ -260,13 +261,29 @@ sla 53.1     ! override value
     }
 
     [Fact]
+    public void Roundtrip_Reproduces_TopLevelParam_Spacing()
+    {
+        string content = @"not_indented_1space 0
+    indented_param 1
+nonindented        ""with_spaced_param""
+ somewhatindented                    ""with_param_spacing_too""
+param_with_comment ""xyz""! This is a comment
+param_with_spaces_before_comment ""abc""        ! Comment text
+";
+        InstructionFileParser parser = new(content, string.Empty);
+
+        string generatedContent = parser.GenerateContent();
+        Assert.Equal(content, generatedContent);
+    }
+
+    [Fact]
     public void Parse_StartBlock_DetectsComment()
     {
 
         string content = @"
 !st ""Urban"" (
 
-	common_stand
+	myparam 3.14159
 	stinclude 1
 	landcover ""urban""
 !)";

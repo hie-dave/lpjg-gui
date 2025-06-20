@@ -1,284 +1,76 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using LpjGuess.Runner.Extensions;
 using LpjGuess.Runner.Models;
-using Tomlyn.Syntax;
 
 namespace LpjGuess.Runner.Parsers;
 
 /// <summary>
 /// Parser for LPJ-GUESS instruction files that handles nested blocks, parameters, and comments.
 /// </summary>
-public class InstructionFileParser
+public partial class InstructionFileParser
 {
+    /// <summary>
+    /// The character used to mark a comment in an instruction file.
+    /// </summary>
+    private const char commentChar = '!';
+
+    /// <summary>
+    /// Type of blocks used to designate PFT blocks.
+    /// </summary>
     private const string blockPft = "pft";
+
+    /// <summary>
+    /// Name of the parameter used to define whether a particular PFT is
+    /// included in a simulation.
+    /// </summary>
     private const string includeParameter = "include";
 
-    private class ParameterOccurrence
-    {
-        public string Name { get; set; } = "";
-        public InstructionParameter Value { get; set; } = new("");
-        public int LineNumber { get; set; }
-        public string OriginalLine { get; set; } = "";
-    }
+    /// <summary>
+    /// The parsed items in the file.
+    /// </summary>
+    private readonly List<IFileContent> items;
 
-    private class Block
-    {
-        public string Type { get; }
-        public string Name { get; }
-        public int StartLine { get; }
-        /// <summary>
-        /// The index of the first line after this block, in the original text's
-        /// line count. This will not change if new parameters are added to the
-        /// block.
-        /// </summary>
-        public int EndLine { get; set; }
-        public List<string> RawLines { get; } = new();
-        public Dictionary<string, InstructionParameter> Parameters { get; } = new();
-        public List<ParameterOccurrence> ParameterOccurrences { get; } = new();
-
-        public Block(string type, string name, int startLine)
-        {
-            Type = type;
-            Name = name;
-            StartLine = startLine;
-        }
-    }
-
-    private readonly List<Block> _blocks;
-    private readonly List<ParameterOccurrence> _topLevelParams;
-    private List<string> _lines;
-    private string _rawContent = string.Empty;
-    private int _currentLine;
-    private string _lineEnding = "\n"; // Default
+    /// <summary>
+    /// The line endings used in the original file.
+    /// </summary>
+    private readonly string lineEnding;
 
     /// <summary>
     /// Path to the instruction file.
     /// </summary>
     public string FilePath { get; private init; }
 
+    /// <summary>
+    /// Create a new <see cref="InstructionFileParser"/> instance. This will not
+    /// resolve the import directives into the file. If that is required, use
+    /// <see cref="FromFile(string)"/>.
+    /// </summary>
+    /// <param name="content">The content of the instruction file.</param>
+    /// <param name="path">The path to the instruction file.</param>
+    /// <exception cref="ArgumentException">Thrown if <paramref name="content"/> is null or whitespace.</exception>
     public InstructionFileParser(string content, string path)
     {
         FilePath = path;
         if (string.IsNullOrWhiteSpace(content))
             throw new ArgumentException("Content cannot be empty", nameof(content));
 
-        _rawContent = content;
-        _lines = content.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None).ToList();
-        _blocks = new List<Block>();
-        _topLevelParams = new List<ParameterOccurrence>();
-        _currentLine = 0;
-
         // Ensure we preserve the exact line endings from original content
-        if (content.EndsWith("\r\n"))
-            _lineEnding = "\r\n";
-        else if (content.EndsWith("\n"))
-            _lineEnding = "\n";
-        else
-            _lineEnding = "\n"; // Default
-        
-        Parse();
+        lineEnding = GuessLineEnding(content);
+
+        items = Parse(content);
     }
 
+    /// <summary>
+    /// Create a new <see cref="InstructionFileParser"/> instance from a file,
+    /// recursively resolving all import directives in the file.
+    /// </summary>
+    /// <param name="path">The path to the instruction file.</param>
+    /// <returns>A new <see cref="InstructionFileParser"/> instance.</returns>
     public static InstructionFileParser FromFile(string path)
     {
         string contents = InstructionFileNormaliser.Normalise(path);
         return new InstructionFileParser(contents, path);
-    }
-
-    private void Parse()
-    {
-        // First, normalize line endings to \n
-        _lines = _lines.Select(line => line.TrimEnd('\r')).ToList();
-        _rawContent = string.Join("\n", _lines);
-
-        for (_currentLine = 0; _currentLine < _lines.Count; _currentLine++)
-        {
-            string currentLine = _lines[_currentLine];
-            string trimmedCurrentLine = currentLine.Trim();
-
-            if (IsBlockStart(trimmedCurrentLine, out string blockType, out string blockName))
-            {
-                var block = new Block(blockType, blockName, _currentLine);
-                var parenthesesCount = 1;
-                
-                block.RawLines.Add(currentLine);
-
-                while (++_currentLine < _lines.Count && parenthesesCount > 0)
-                {
-                    string blockLine = _lines[_currentLine];
-                    block.RawLines.Add(blockLine);
-
-                    // Skip comments
-                    if (blockLine.Trim().StartsWith('!'))
-                        continue;
-
-                    // Count parentheses, but ignore those in comments
-                    var commentIndex = blockLine.IndexOf('!');
-                    var lineToCheck = commentIndex >= 0 ? blockLine[..commentIndex] : blockLine;
-                    
-                    parenthesesCount += lineToCheck.Count(c => c == '(');
-                    parenthesesCount -= lineToCheck.Count(c => c == ')');
-
-                    // If we're still in the block, try to parse parameters
-                    if (parenthesesCount > 0)
-                    {
-                        string trimmedLine = blockLine.Trim();
-                        if (TryParseParameter(trimmedLine, out string paramName, out string paramValue))
-                        {
-                            var param = new InstructionParameter(paramValue);
-                            block.Parameters[paramName] = param;
-                            
-                            block.ParameterOccurrences.Add(new ParameterOccurrence
-                            {
-                                Name = paramName,
-                                Value = param,
-                                LineNumber = _currentLine - block.StartLine,
-                                OriginalLine = blockLine
-                            });
-                        }
-                    }
-                }
-
-                block.EndLine = _currentLine;
-                _blocks.Add(block);
-                
-                // Move back one line since the main loop will increment
-                _currentLine--;
-            }
-            else if (!string.IsNullOrWhiteSpace(trimmedCurrentLine) && !trimmedCurrentLine.StartsWith('!'))
-            {
-                // Handle top-level parameters
-                if (TryParseParameter(trimmedCurrentLine, out string paramName, out string paramValue))
-                {
-                    InstructionParameter parameter = new(paramValue);
-                    ParameterOccurrence? occurrence = GetTopLevelParameterOccurrence(paramName);
-                    if (occurrence is null)
-                    {
-                        _topLevelParams.Add(new ParameterOccurrence
-                        {
-                            Name = paramName,
-                            Value = parameter,
-                            LineNumber = _currentLine,
-                            OriginalLine = trimmedCurrentLine
-                        });
-                    }
-                    else
-                    {
-                        occurrence.Value = parameter;
-                    }
-                }
-            }
-        }
-    }
-
-    private bool IsBlockStart(string line, out string blockType, out string blockName)
-    {
-        blockType = string.Empty;
-        blockName = string.Empty;
-
-        // Replace everything after a comment character, if one is present.
-        line = line.SplitHonouringQuotes(['!']).First();
-
-        // Match patterns like: group "C3G" ( or pft "TeBE" (
-        var parts = line.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
-        if (parts.Length >= 3 && parts[^1] == "(" && parts[1].StartsWith('"') && parts[1].EndsWith('"'))
-        {
-            blockType = parts[0];
-            blockName = parts[1].Trim('"');
-            return true;
-        }
-
-        return false;
-    }
-
-
-    private class ParameterInfo
-    {
-        public string Name { get; set; } = "";
-        public string Value { get; set; } = "";
-        public string ValueSpacing { get; set; } = " "; // Space between name and value
-        public string CommentSpacing { get; set; } = "    "; // Space between value and comment
-    }
-
-    private bool TryParseParameter(string line, out string name, out string value)
-    {
-        name = string.Empty;
-        value = string.Empty;
-
-        if (string.IsNullOrWhiteSpace(line) || line.StartsWith('!'))
-            return false;
-
-        var info = ParseParameterLine(line);
-        if (info != null)
-        {
-            name = info.Name;
-            value = info.Value;
-            return true;
-        }
-
-        return false;
-    }
-
-    private ParameterInfo? ParseParameterLine(string line)
-    {
-        if (string.IsNullOrWhiteSpace(line))
-            return null;
-
-        // Check if this is a comment-only line
-        int commentStart = line.IndexOf('!');
-        if (commentStart == line.TrimStart().Length - line.Length)
-            return null;
-
-        // Find the first non-whitespace character
-        int nameStart = 0;
-        while (nameStart < line.Length && char.IsWhiteSpace(line[nameStart]))
-            nameStart++;
-
-        // Skip if this is a comment-only line
-        if (nameStart >= line.Length || line[nameStart] == '!')
-            return null;
-
-        // Find the end of the name (next whitespace)
-        int nameEnd = nameStart;
-        while (nameEnd < line.Length && !char.IsWhiteSpace(line[nameEnd]))
-            nameEnd++;
-
-        if (nameEnd >= line.Length) // No value found
-            return null;
-
-        string name = line[nameStart..nameEnd];
-
-        // Find the start of the value
-        int valueStart = nameEnd;
-        while (valueStart < line.Length && char.IsWhiteSpace(line[valueStart]))
-            valueStart++;
-
-        // Find the end of the value (at comment or end of line)
-        int valueEnd = valueStart;
-        bool inQuotes = false;
-        while (valueEnd < line.Length)
-        {
-            if (line[valueEnd] == '"')
-                inQuotes = !inQuotes;
-            else if (line[valueEnd] == '!' && !inQuotes)
-                break;
-            valueEnd++;
-        }
-
-        // Trim trailing whitespace from value
-        while (valueEnd > valueStart && char.IsWhiteSpace(line[valueEnd - 1]))
-            valueEnd--;
-
-        if (valueEnd <= valueStart) // No value found
-            return null;
-
-        return new ParameterInfo
-        {
-            Name = name,
-            Value = line[valueStart..valueEnd],
-            ValueSpacing = line[nameEnd..valueStart],
-            CommentSpacing = valueEnd < line.Length ? line[valueEnd..(line.IndexOf('!', valueEnd))] : ""
-        };
     }
 
     /// <summary>
@@ -290,7 +82,7 @@ public class InstructionFileParser
     /// <returns>Parameter value if found, null otherwise</returns>
     public InstructionParameter? GetBlockParameter(string blockType, string blockName, string paramName)
     {
-        var block = _blocks.FirstOrDefault(b => b.Type == blockType && b.Name == blockName);
+        Block? block = GetBlock(blockType, blockName);
         return block?.Parameters.GetValueOrDefault(paramName);
     }
 
@@ -307,13 +99,13 @@ public class InstructionFileParser
     }
 
     /// <summary>
-    /// Gets the value of a top-level parameter.
+    /// Gets the top-level parameter with the specified name.
     /// </summary>
-    /// <param name="paramName">Name of the parameter</param>
-    /// <returns>Parameter value if found, null otherwise</returns>
-    public InstructionParameter? GetTopLevelParameter(string paramName)
+    /// <param name="name">Name of the parameter</param>
+    /// <returns>The parameter if found, null otherwise.</returns>
+    public InstructionParameter? GetTopLevelParameter(string name)
     {
-        return _topLevelParams.FirstOrDefault(p => p.Name == paramName)?.Value;
+        return GetTopLevelParameterOccurrence(name)?.Value;
     }
 
     /// <summary>
@@ -343,67 +135,16 @@ public class InstructionFileParser
 				throw new ArgumentException($"If a parameter name contains a period, it must be of the form: block.param. E.g. TeBE.sla. Parameter name: {factor.Name}");
 			string blockName = parts[0];
 			string paramName = parts[1];
-			string? blockType = _blocks.FirstOrDefault(b => b.Name == blockName)?.Type;
-			if (blockType == null)
+			List<Block> blocks = items.OfType<Block>().Where(b => b.Name == blockName).ToList();
+			if (blocks.Count == 0)
 				throw new ArgumentException($"No block found with name: {blockName} for parameter '{factor.Name}'");
-			SetBlockParameterValue(blockType, blockName, paramName, factor.Value);
+
+            if (blocks.Count > 0)
+                throw new ArgumentException($"Ambiguous block reference: multiple blocks found with name: {blockName} for parameter '{factor.Name}'");
+
+            SetBlockParameterValue(blocks[0], paramName, factor.Value);
 		}
 	}
-
-    private void SetBlockParameterValue(Block block, string paramName, string value)
-    {
-        InstructionParameter newParam = new InstructionParameter(value);
-        bool isNewParameter = !block.Parameters.ContainsKey(paramName);
-        
-        // Update the parameter dictionary
-        block.Parameters[paramName] = newParam;
-
-        if (isNewParameter)
-        {
-            // For new parameters, add them at the end of the block
-            string indent = "    "; // Default indentation
-            if (block.ParameterOccurrences.Count > 0)
-            {
-                indent = block.ParameterOccurrences[0].OriginalLine[..block.ParameterOccurrences[0].OriginalLine.IndexOf(block.ParameterOccurrences[0].Name)];
-            }
-
-            // Create new parameter line
-            var newLine = $"{indent}{paramName} {newParam.ToInsFileString()}";
-            
-            // Add to RawLines just before closing parenthesis
-            int insertPosition = block.RawLines.Count - 1;
-            block.RawLines.Insert(insertPosition, newLine);
-
-            // Add new occurrence
-            block.ParameterOccurrences.Add(new ParameterOccurrence
-            {
-                Name = paramName,
-                Value = newParam,
-                LineNumber = insertPosition - 1, // -1 to account for block header
-                OriginalLine = newLine
-            });
-        }
-        else
-        {
-            // For existing parameters, update all occurrences
-            ParameterOccurrence occurrence = block.ParameterOccurrences.Last(p => p.Name == paramName);
-            occurrence.Value = newParam;
-
-            // Update the line in RawLines
-            string indent = occurrence.OriginalLine[..occurrence.OriginalLine.IndexOf(paramName)];
-            string newLine = $"{indent}{paramName} {newParam.AsString()}";
-
-            // Preserve any comment after the parameter
-            int commentIndex = occurrence.OriginalLine.IndexOf('!');
-            if (commentIndex >= 0)
-            {
-                newLine += occurrence.OriginalLine[commentIndex..];
-            }
-
-            // Update the line in RawLines
-            block.RawLines[occurrence.LineNumber] = newLine;
-        }
-    }
 
     /// <summary>
     /// Sets a parameter value within a specific block.
@@ -415,7 +156,7 @@ public class InstructionFileParser
     /// <returns>True if parameter was found and updated, false otherwise</returns>
     public void SetBlockParameterValue(string blockType, string blockName, string paramName, string value)
     {
-        var block = _blocks.FirstOrDefault(b => b.Type == blockType && b.Name == blockName);
+        Block? block = GetBlock(blockType, blockName);
         if (block == null)
             throw new InvalidOperationException($"No block found named '{blockName}' with type '{blockType}'");
 
@@ -430,25 +171,14 @@ public class InstructionFileParser
     /// <returns>True if parameter was found and updated, false otherwise</returns>
     public bool SetTopLevelParameterValue(string paramName, string value)
     {
+        // We could add a new top-level parameter if it doesn't exist. For now,
+        // let's just fail, under the assumption that this is a user error.
         ParameterOccurrence? parameter = GetTopLevelParameterOccurrence(paramName);
         if (parameter is null)
             return false;
 
         // Update parameter value.
         parameter.Value = InstructionParameter.FromUserInput(value);
-
-        // Update raw line, preserving any comments.
-        string indent = parameter.OriginalLine[..parameter.OriginalLine.IndexOf(parameter.Name)];
-        string newLine = $"{indent}{parameter.Name} {parameter.Value.ToInsFileString()}";
-
-        // Preserve any comments.
-        int commentIndex = parameter.OriginalLine.IndexOf('!');
-        if (commentIndex >= 0)
-            newLine += parameter.OriginalLine[commentIndex..];
-
-        // Update the line. Note: this will completely override the original
-        // content). Need to rethink this.
-        parameter.OriginalLine = newLine;
 
         return true;
     }
@@ -467,7 +197,7 @@ public class InstructionFileParser
     /// </summary>
     public void DisableAllPfts()
     {
-        foreach (var block in _blocks.Where(b => b.Type == blockPft))
+        foreach (Block block in GetPfts())
             SetBlockParameterValue(block, includeParameter, "0");
     }
 
@@ -478,7 +208,7 @@ public class InstructionFileParser
     /// <returns>True iff the PFT is defined.</returns>
     public bool IsPft(string name)
     {
-        return _blocks.Any(b => b.Type == blockPft && b.Name == name);
+        return GetPfts().Any(b => b.Name == name);
     }
 
     /// <summary>
@@ -487,113 +217,370 @@ public class InstructionFileParser
     /// <returns>The complete file content as a string</returns>
     public string GenerateContent()
     {
-        if (_lines == null || _lines.Count == 0)
+        if (items.Count == 0)
             return string.Empty;
 
         var content = new StringBuilder();
 
-        var currentLine = 0;
-        Queue<ParameterOccurrence> topLevel = new Queue<ParameterOccurrence>(_topLevelParams.OrderBy(p => p.LineNumber));
-        
-        foreach (var block in _blocks.OrderBy(b => b.StartLine))
-        {
-            // Add content before block exactly as is.
-            while (currentLine < block.StartLine)
-            {
-                // Add top-level parameters as needed.
-                bool addedParam = false;
-                while (topLevel.Count > 0 && topLevel.Peek().LineNumber == currentLine)
-                {
-                    if (addedParam)
-                        content.Append(_lineEnding);
-                    addedParam = true;
-                    content.Append(topLevel.Dequeue().OriginalLine);
-                }
+        foreach (IFileContent item in items)
+            content.Append(item.ToInsFileString(lineEnding));
 
-                if (!addedParam)
-                {
-                    content.Append(_lines[currentLine]);
-                }
-
-                // Add line ending unless it's the last line and original didn't end with one
-                if (currentLine < _lines.Count - 1 || _rawContent.EndsWith(_lineEnding))
-                    content.Append(_lineEnding);
-
-                currentLine++;
-            }
-
-            // Add block content exactly as parsed
-            for (int i = 0; i < block.RawLines.Count; i++)
-            {
-                content.Append(block.RawLines[i]);
-
-                // Add line ending.
-                // Note that we split on newline, so the implication is that
-                // every line in the block is a discrete line and must therefore
-                // end with a line ending. The only exception is if this is the
-                // last block in the file, and the file doesn't end with a
-                // newline character. That's actually not supported by lpj-guess
-                // (the model will crash), but we handle it here anyway, just
-                // for fun.
-                if (i == block.RawLines.Count - 1 && // Last line in block
-                block.StartLine == _blocks.Max(b => b.StartLine) && // Is last block
-                block.EndLine == _lines.Count && // Block ends at end of document
-                !_rawContent.EndsWith(_lineEnding)) // Document doesn't end with newline
-                    continue;
-                content.Append(_lineEnding);
-            }
-
-            // Move to first line after block
-            currentLine = block.EndLine;
-
-            // Preserve all whitespace exactly as in original until next block starts
-            while (currentLine < _lines.Count &&
-                   (string.IsNullOrWhiteSpace(_lines[currentLine]) ||
-                    !_blocks.Any(b => b.StartLine == currentLine)))
-            {
-                content.Append(_lines[currentLine]);
-
-                // Add line ending unless it's the last line
-                if (currentLine < _lines.Count - 1)
-                    content.Append(_lineEnding);
-
-                currentLine++;
-            }
-        }
-
-        // Add remaining content exactly as is
-        while (currentLine < _lines.Count)
-        {
-            // Add top-level parameters as needed.
-            bool addedParam = false;
-            while (topLevel.Count > 0 && topLevel.Peek().LineNumber == currentLine)
-            {
-                if (addedParam)
-                    content.Append(_lineEnding);
-                addedParam = true;
-                content.Append(topLevel.Dequeue().OriginalLine);
-            }
-
-            if (!addedParam)
-                content.Append(_lines[currentLine]);
-
-            // Add line ending unless it's the last line and original didn't end with one
-            if (currentLine < _lines.Count - 1 || _rawContent.EndsWith(_lineEnding))
-                content.Append(_lineEnding);
-            
-            currentLine++;
-        }
+        // Each item will insert a line ending after itself. Therefore, the
+        // document will end with one extra line ending that the original did
+        // not have. We need to remove this.
+        int nchar = lineEnding.Length;
+        content.Remove(content.Length - nchar, nchar);
 
         return content.ToString();
     }
 
     /// <summary>
-    /// Gets a top-level parameter with the specified name.
+    /// Guess the line ending used in the file.
     /// </summary>
-    /// <param name="paramName">Name of the parameter.</param>
-    /// <returns>The parameter occurrence if found, null otherwise.</returns>
-    private ParameterOccurrence? GetTopLevelParameterOccurrence(string paramName)
+    /// <param name="content">The content of the file.</param>
+    /// <returns>The line ending used in the file.</returns>
+    private static string GuessLineEnding(string content)
     {
-        return _topLevelParams.FirstOrDefault(p => p.Name == paramName);
+        if (content.EndsWith("\r\n") || content.Contains("\r\n"))
+            return "\r\n";
+        else if (content.EndsWith("\n"))
+            return "\n";
+        else
+            // Default
+            return "\n";
+    }
+
+    /// <summary>
+    /// Parse the instruction file content.
+    /// </summary>
+    /// <param name="content">The content to parse.</param>
+    private List<IFileContent> Parse(string content)
+    {
+        // First, normalize line endings to \n
+        List<string> lines = content
+            .Split(["\r\n", "\n"], StringSplitOptions.None)
+            .Select(line => line.TrimEnd('\r'))
+            .ToList();
+        content = string.Join("\n", lines);
+
+        List<IFileContent> items = [];
+        for (int lineNumber = 0; lineNumber < lines.Count; lineNumber++)
+            items.Add(ParseLine(lines, ref lineNumber));
+
+        return items;
+    }
+
+    /// <summary>
+    /// Parse a file content object form the current line in the instruction
+    /// file. Some content types (specifically, blocks) can span multiple lines,
+    /// so lineNumber may be incremented by the method. After returning though,
+    /// the next line that should be parsed will be lineNumber + 1.
+    /// </summary>
+    /// <param name="lines">The lines of the file.</param>
+    /// <param name="lineNumber">The current line number.</param>
+    /// <returns>
+    /// A <see cref="IFileContent"/> object representing the content of the
+    /// line.
+    /// </returns>
+    private IFileContent ParseLine(List<string> lines, ref int lineNumber)
+    {
+        string currentLine = lines[lineNumber];
+        string trimmedCurrentLine = currentLine.Trim();
+
+        if (string.IsNullOrWhiteSpace(trimmedCurrentLine) || trimmedCurrentLine.StartsWith(commentChar))
+            return new VerbatimLine(currentLine, lineNumber);
+
+        if (IsBlockStart(trimmedCurrentLine, out string? blockType, out string? blockName))
+            return ParseBlock(lines, currentLine, blockType, blockName, ref lineNumber);
+        else
+            return ParseTopLevelParameter(currentLine, lineNumber);
+    }
+
+    /// <summary>
+    /// Parse a block from the instruction file.
+    /// </summary>
+    /// <param name="lines">The lines of the file.</param>
+    /// <param name="currentLine">The current line.</param>
+    /// <param name="blockType">The type of the block.</param>
+    /// <param name="blockName">The name of the block.</param>
+    /// <param name="lineNumber">Line number at which the block starts. This will be incremented by the method if the block contains multiple lines.</param>
+    /// <returns>A <see cref="Block"/> object representing the block.</returns>
+    private Block ParseBlock(
+        IReadOnlyList<string> lines,
+        string currentLine,
+        string blockType,
+        string blockName,
+        ref int lineNumber)
+    {
+        Block block = new Block(blockType, blockName, lineNumber);
+        int parenthesesCount = 1;
+
+        block.RawLines.Add(currentLine);
+
+        while (++lineNumber < lines.Count && parenthesesCount > 0)
+        {
+            string blockLine = lines[lineNumber];
+            block.RawLines.Add(blockLine);
+
+            // Skip comments
+            if (blockLine.Trim().StartsWith(commentChar))
+                continue;
+
+            // Count parentheses, but ignore those in comments
+            int commentIndex = blockLine.IndexOf(commentChar);
+            string lineToCheck = commentIndex >= 0 ? blockLine[..commentIndex] : blockLine;
+
+            parenthesesCount += lineToCheck.Count(c => c == '(');
+            parenthesesCount -= lineToCheck.Count(c => c == ')');
+
+            // If we're still in the block, try to parse parameters.
+            if (parenthesesCount > 0)
+            {
+                string trimmedLine = blockLine.Trim();
+                if (TryParseParameter(trimmedLine, out ParameterInfo? info))
+                {
+                    InstructionParameter param = new(info.Value);
+                    block.Parameters[info.Name] = param;
+
+                    block.ParameterOccurrences.Add(new ParameterOccurrence(
+                        info.Name,
+                        param,
+                        lineNumber - block.StartLine,
+                        blockLine,
+                        info.PreNameSpacing,
+                        info.PreValueSpacing,
+                        info.PostValue
+                    ));
+                }
+            }
+        }
+
+        block.EndLine = lineNumber;
+
+        // Move back one line since the main loop will increment
+        lineNumber--;
+
+        return block;
+    }
+
+    /// <summary>
+    /// Parse a top-level parameter from the specified line.
+    /// </summary>
+    /// <param name="line">The line to parse.</param>
+    /// <param name="lineNumber">The line number.</param>
+    /// <returns>A <see cref="TopLevelParameter"/> object representing the parameter.</returns>
+    /// <exception cref="ArgumentException">Thrown if the line is invalid (e.g. a name without a value).</exception>
+    private ParameterOccurrence ParseTopLevelParameter(string line, int lineNumber)
+    {
+        if (!TryParseParameter(line.Trim(), out ParameterInfo? info))
+            throw new ArgumentException($"Invalid line: {line}");
+
+        return new ParameterOccurrence(
+            info.Name,
+            new InstructionParameter(info.Value),
+            lineNumber,
+            line,
+            info.PreNameSpacing,
+            info.PreValueSpacing,
+            info.PostValue);
+    }
+
+    /// <summary>
+    /// Determine if the specified line is the start of a block.
+    /// </summary>
+    /// <param name="line">The line to check.</param>
+    /// <param name="blockType">The type of the block.</param>
+    /// <param name="blockName">The name of the block.</param>
+    /// <returns></returns>
+    private bool IsBlockStart(string line, [NotNullWhen(true)] out string? blockType, [NotNullWhen(true)] out string? blockName)
+    {
+        // Replace everything after a comment character, if one is present.
+        line = line.SplitHonouringQuotes([commentChar]).First();
+
+        // Match patterns like: group "C3G" ( or pft "TeBE" (
+        var parts = line.Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length >= 3 && parts[^1] == "(" && parts[1].StartsWith('"') && parts[1].EndsWith('"'))
+        {
+            blockType = parts[0];
+            blockName = parts[1].Trim('"');
+            return true;
+        }
+
+        blockType = null;
+        blockName = null;
+        return false;
+    }
+
+    /// <summary>
+    /// Try to parse a parameter from the specified line.
+    /// </summary>
+    /// <param name="line">The line to parse.</param>
+    /// <param name="metadata">Parameter metadata.</param>
+    /// <returns>True if the line is a parameter, false otherwise.</returns>
+    private bool TryParseParameter(string line, [NotNullWhen(true)] out ParameterInfo? metadata)
+    {
+        metadata = null;
+
+        if (string.IsNullOrWhiteSpace(line) || line.StartsWith(commentChar))
+            return false;
+
+        metadata = ParseParameterLine(line);
+        return metadata != null;
+    }
+
+    /// <summary>
+    /// Parse a parameter from the specified line.
+    /// </summary>
+    /// <param name="line">The line to parse.</param>
+    /// <returns>The parsed parameter, or null if the line is not a parameter.</returns>
+    private ParameterInfo? ParseParameterLine(string line)
+    {
+        if (string.IsNullOrWhiteSpace(line))
+            return null;
+
+        // Check if this is a comment-only line
+        int commentStart = line.IndexOf(commentChar);
+        if (commentStart == line.TrimStart().Length - line.Length)
+            return null;
+
+        // Find the first non-whitespace character
+        int nameStart = 0;
+        while (nameStart < line.Length && char.IsWhiteSpace(line[nameStart]))
+            nameStart++;
+
+        // Skip if this is a comment-only line
+        if (nameStart >= line.Length || line[nameStart] == commentChar)
+            return null;
+
+        // Find the end of the name (next whitespace)
+        int nameEnd = nameStart;
+        while (nameEnd < line.Length && !char.IsWhiteSpace(line[nameEnd]))
+            nameEnd++;
+
+        if (nameEnd >= line.Length) // No value found
+            return null;
+
+        string name = line[nameStart..nameEnd];
+
+        // Find the start of the value
+        int valueStart = nameEnd;
+        while (valueStart < line.Length && char.IsWhiteSpace(line[valueStart]))
+            valueStart++;
+
+        // Find the end of the value (at comment or end of line)
+        int valueEnd = valueStart;
+        bool inQuotes = false;
+        while (valueEnd < line.Length)
+        {
+            if (line[valueEnd] == '"')
+                inQuotes = !inQuotes;
+            else if (line[valueEnd] == commentChar && !inQuotes)
+                break;
+            valueEnd++;
+        }
+
+        // Trim trailing whitespace from value
+        while (valueEnd > valueStart && char.IsWhiteSpace(line[valueEnd - 1]))
+            valueEnd--;
+
+        if (valueEnd <= valueStart) // No value found
+            return null;
+
+        string value = line[valueStart..valueEnd];
+        string preNameSpacing = line[..nameStart];
+        string preValueSpacing = line[nameEnd..valueStart];
+        string postValue = line[valueEnd..line.Length];
+        return new ParameterInfo(name, value, preNameSpacing, preValueSpacing, postValue);
+    }
+
+    private void SetBlockParameterValue(Block block, string paramName, string value)
+    {
+        InstructionParameter newParam = new InstructionParameter(value);
+        bool isNewParameter = !block.Parameters.ContainsKey(paramName);
+
+        // Update the parameter dictionary
+        block.Parameters[paramName] = newParam;
+
+        if (isNewParameter)
+        {
+            // For new parameters, add them at the end of the block
+            string indent = "    "; // Default indentation
+            if (block.ParameterOccurrences.Count > 0)
+            {
+                indent = block.ParameterOccurrences[0].OriginalLine[..block.ParameterOccurrences[0].OriginalLine.IndexOf(block.ParameterOccurrences[0].Name)];
+            }
+
+            // Create new parameter line
+            var newLine = $"{indent}{paramName} {newParam.ToInsFileString()}";
+
+            // Add to RawLines just before closing parenthesis
+            int insertPosition = block.RawLines.Count - 1;
+            block.RawLines.Insert(insertPosition, newLine);
+
+            // Add new occurrence
+            block.ParameterOccurrences.Add(new ParameterOccurrence(
+                paramName,
+                newParam,
+                insertPosition - 1, // -1 to account for block header
+                newLine,
+                "",  // No spacing before the name
+                " ", // One whitespace between the name and value
+                ""   // No spacing after the value
+            ));
+        }
+        else
+        {
+            // For existing parameters, update all occurrences
+            ParameterOccurrence occurrence = block.ParameterOccurrences.Last(p => p.Name == paramName);
+            occurrence.Value = newParam;
+
+            // Update the line in RawLines
+            string indent = occurrence.OriginalLine[..occurrence.OriginalLine.IndexOf(paramName)];
+            string newLine = $"{indent}{paramName} {newParam.AsString()}";
+
+            // Preserve any comment after the parameter
+            int commentIndex = occurrence.OriginalLine.IndexOf(commentChar);
+            if (commentIndex >= 0)
+            {
+                newLine += occurrence.OriginalLine[commentIndex..];
+            }
+
+            // Update the line in RawLines
+            block.RawLines[occurrence.LineNumber] = newLine;
+        }
+    }
+
+    /// <summary>
+    /// Get all PFT blocks.
+    /// </summary>
+    /// <returns>All blocks of type PFT.</returns>
+    private IEnumerable<Block> GetPfts()
+    {
+        return items.OfType<Block>().Where(b => b.Type == blockPft);
+    }
+
+    /// <summary>
+    /// Get the block with the specified name and type.
+    /// </summary>
+    /// <param name="type">Type of the block (e.g. "group", "pft").</param>
+    /// <param name="name">Name of the block (e.g. "tree" or "TeBE").</param>
+    /// <returns>The block if found, null otherwise</returns>
+    private Block? GetBlock(string type, string name)
+    {
+        return items
+            .OfType<Block>()
+            .FirstOrDefault(b => b.Type == type && b.Name == name);
+    }
+
+    /// <summary>
+    /// Get the top-level parameter with the specified name.
+    /// </summary>
+    /// <param name="name">Name of the top-level parameter (e.g. "wateruptake").</param>
+    /// <returns>The parameter if found, null otherwise.</returns>
+    private ParameterOccurrence? GetTopLevelParameterOccurrence(string name)
+    {
+        return items
+            .OfType<ParameterOccurrence>()
+            .FirstOrDefault(p => p.Name == name);
     }
 }
