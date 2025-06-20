@@ -46,7 +46,7 @@ public class ExperimentPresenter : PresenterBase<IExperimentView>, IExperimentPr
         this.instructionFiles = instructionFiles;
         this.experiment = experiment;
         view.OnChanged.ConnectTo(OnExperimentChanged);
-        factorialPresenter = new FactorialPresenter(view.FactorialView);
+        factorialPresenter = new FactorialPresenter(GetFactorialGenerator(), view.FactorialView);
         factorialPresenter.OnChanged.ConnectTo(OnSimulationGeneratorChanged);
         RefreshView();
     }
@@ -104,14 +104,15 @@ public class ExperimentPresenter : PresenterBase<IExperimentView>, IExperimentPr
     /// Invoke the specified command.
     /// </summary>
     /// <param name="command">The command to invoke.</param>
-    private void InvokeCommand(ICommand command)
+    protected override void InvokeCommand(ICommand command)
     {
         // This will become slightly less trivial once we have a command
         // history.
         string oldName = experiment.Name;
-        command.Execute();
+        base.InvokeCommand(command);
         if (experiment.Name != oldName)
             OnRenamed.Invoke(experiment.Name);
+        RefreshView();
     }
 
     /// <summary>

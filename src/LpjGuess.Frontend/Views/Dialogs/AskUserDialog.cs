@@ -4,6 +4,7 @@ using Window = Adw.Window;
 using HeaderBar = Adw.HeaderBar;
 using LpjGuess.Frontend.Utility.Gtk;
 using LpjGuess.Frontend.Delegates;
+using LpjGuess.Frontend.Classes;
 
 namespace LpjGuess.Frontend.Views.Dialogs;
 
@@ -44,7 +45,7 @@ internal class AskUserDialog : Window
 	/// <param name="prompt">Prompt to the user (displayed as window title).</param>
 	/// <param name="acceptButtonText">Text to go on the 'accept' button.</param>
 	/// <param name="options">Valid options.</param>
-	public AskUserDialog(string prompt, string acceptButtonText, IEnumerable<string> options)
+	public AskUserDialog(string prompt, string acceptButtonText, IEnumerable<NameAndDescription> options)
 	{
 		OnSelected = new Event<string>();
 		Modal = true;
@@ -62,11 +63,13 @@ internal class AskUserDialog : Window
 
 		ListBox choicesBox = new ListBox();
 		List<ActionRow> rows = new List<ActionRow>();
-		foreach (string option in options)
+		foreach (NameAndDescription option in options)
 		{
 			ActionRow row = new ActionRow();
 			row.Activatable = true;
-			row.Title = option;
+			row.Title = option.Name;
+			if (!string.IsNullOrWhiteSpace(option.Description))
+				row.Subtitle = option.Description;
 			choicesBox.Append(row);
 			rows.Add(row);
 		}
@@ -77,6 +80,7 @@ internal class AskUserDialog : Window
 		choices.MarginTop = margin;
 		choices.MarginStart = margin;
 		choices.MarginEnd = margin;
+		choices.Vexpand = true;
 		choices.Child = choicesBox;
 
 		Box main = new Box();
@@ -113,13 +117,19 @@ internal class AskUserDialog : Window
 	/// </summary>
 	/// <param name="options">User choices/options.</param>
 	/// <param name="nameSelector">Function which gets a string for an option.</param>
+	/// <param name="descriptionSelector">Function which gets a description for an option.</param>
 	/// <param name="prompt">Prompt text displayed to the user.</param>
 	/// <param name="acceptText">Text on the 'accept' button.</param>
 	/// <param name="itemSelected">Function to be called when an item is selected.</param>
-	public static void RunFor<T>(IEnumerable<T> options, Func<T, string> nameSelector, string prompt, string acceptText,
+	public static void RunFor<T>(
+		IEnumerable<T> options,
+		Func<T, string> nameSelector,
+		Func<T, string> descriptionSelector,
+		string prompt,
+		string acceptText,
 		Action<T> itemSelected)
 	{
-		IEnumerable<string> names = options.Select(nameSelector);
+		IEnumerable<NameAndDescription> names = options.Select(o => new NameAndDescription(nameSelector(o), descriptionSelector(o)));
 		AskUserDialog dialog = new AskUserDialog(prompt, acceptText, names);
 		dialog.OnSelected.ConnectTo(resp =>
 		{

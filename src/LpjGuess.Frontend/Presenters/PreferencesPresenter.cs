@@ -1,3 +1,4 @@
+using LpjGuess.Frontend.Classes;
 using LpjGuess.Frontend.Extensions;
 using LpjGuess.Frontend.Interfaces.Presenters;
 using LpjGuess.Frontend.Interfaces.Views;
@@ -190,7 +191,7 @@ public class PreferencesPresenter : IDialogPresenter
 	/// </summary>
 	private void OnAddRunner()
 	{
-		IEnumerable<string> runnerTypes = GetKnownRunnerTypes();
+		IEnumerable<NameAndDescription> runnerTypes = GetKnownRunnerTypes();
 		string prompt = "Select a runner type";
 		AskUserDialog dialog = new AskUserDialog(prompt, "Select", runnerTypes);
 		dialog.OnSelected.ConnectTo(OnRunnerAdded);
@@ -212,9 +213,9 @@ public class PreferencesPresenter : IDialogPresenter
 	/// <summary>
 	/// Enumerate the names of all known runners.
 	/// </summary>
-	private static IEnumerable<string> GetKnownRunnerTypes()
+	private static IEnumerable<NameAndDescription> GetKnownRunnerTypes()
 	{
-		yield return "Local";
+		yield return new NameAndDescription("Local", "Run simulations on this machine");
 	}
 
 	/// <summary>

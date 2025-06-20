@@ -15,8 +15,20 @@ public interface IFactorialView : IView
     Event<IModelChange<FactorialGenerator>> OnChanged { get; }
 
     /// <summary>
+    /// Event which is raised when the user wants to add a factor.
+    /// </summary>
+    Event OnAddFactor { get; }
+
+    /// <summary>
+    /// Event which is raised when the user wants to remove a factor. The event
+    /// parameter is the name of the factor to be removed.
+    /// </summary>
+    Event<string> OnRemoveFactor { get; }
+
+    /// <summary>
     /// Populate the view with the given factorial generator.
     /// </summary>
     /// <param name="fullFactorial">Whether to generate a full factorial.</param>
-    void Populate(bool fullFactorial);
+    /// <param name="factorViews">The views for the factors of this factorial.</param>
+    void Populate(bool fullFactorial, IEnumerable<INamedView> factorViews);
 }

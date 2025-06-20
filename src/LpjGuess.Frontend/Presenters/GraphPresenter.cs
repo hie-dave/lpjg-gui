@@ -27,13 +27,8 @@ namespace LpjGuess.Frontend.Presenters;
 /// A presenter which controls a graph view to allow the user to view and customize
 /// a single graph.
 /// </summary>
-public class GraphPresenter : IGraphPresenter
+public class GraphPresenter : PresenterBase<IGraphView>, IGraphPresenter
 {
-    /// <summary>
-    /// The view object.
-    /// </summary>
-    private readonly IGraphView view;
-
     /// <summary>
     /// The graph model.
     /// </summary>
@@ -77,8 +72,8 @@ public class GraphPresenter : IGraphPresenter
     /// <param name="instructionFiles">The instruction files for which data should be displayed.</param>
     /// <param name="seriesPresenterFactory">Factory for creating series views.</param>
     public GraphPresenter(IGraphView view, Graph graph, IEnumerable<string> instructionFiles, ISeriesPresenterFactory seriesPresenterFactory)
+        : base(view)
     {
-        this.view = view;
         this.graph = graph;
         this.instructionFiles = instructionFiles;
         this.seriesPresenterFactory = seriesPresenterFactory;
@@ -97,15 +92,6 @@ public class GraphPresenter : IGraphPresenter
         cts = new();
         RefreshData();
     }
-
-    /// <inheritdoc />
-    public void Dispose()
-    {
-        view.Dispose();
-    }
-
-    /// <inheritdoc />
-    public IGraphView GetView() => view;
 
     /// <inheritdoc />
     public Graph GetGraph() => graph;
@@ -234,9 +220,9 @@ public class GraphPresenter : IGraphPresenter
     /// Apply a change to the graph model and refresh the view.
     /// </summary>
     /// <param name="command"></param>
-    private void ApplyChange(ICommand command)
+    protected override void InvokeCommand(ICommand command)
     {
-        command.Execute();
+        base.InvokeCommand(command);
         RefreshData();
     }
 
@@ -248,7 +234,7 @@ public class GraphPresenter : IGraphPresenter
     {
         string title = graph.Title;
         ICommand command = change.ToCommand(graph);
-        ApplyChange(command);
+        InvokeCommand(command);
         if (graph.Title != title)
             OnTitleChanged.Invoke(graph.Title);
     }
@@ -259,7 +245,6 @@ public class GraphPresenter : IGraphPresenter
     /// <param name="command">A command which will apply the change.</param>
     private void OnSeriesChanged(ICommand command)
     {
-        command.Execute();
-        RefreshData();
+        InvokeCommand(command);
     }
 }

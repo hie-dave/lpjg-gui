@@ -13,7 +13,7 @@ namespace LpjGuess.Frontend.Views;
 /// <summary>
 /// A view which displays an experiment.
 /// </summary>
-public class ExperimentView : ViewBase<Box>, IExperimentView
+public class ExperimentView : ViewBase<ScrolledWindow>, IExperimentView
 {
     /// <summary>
     /// The spacing between widgets.
@@ -62,15 +62,15 @@ public class ExperimentView : ViewBase<Box>, IExperimentView
     /// <summary>
     /// Create a new <see cref="ExperimentView"/> instance.
     /// </summary>
-    public ExperimentView() : base(new Box())
+    public ExperimentView() : base(new ScrolledWindow())
     {
         nrow = 0;
         FactorialView = new FactorialView();
         OnChanged = new Event<IModelChange<Experiment>>();
-        widget.SetOrientation(Orientation.Vertical);
 
-        // Configure container.
-        widget.Spacing = spacing;
+        // Configure the scrolled window.
+        widget.HscrollbarPolicy = PolicyType.Never;
+        widget.VscrollbarPolicy = PolicyType.Automatic;
 
         // Initialise and configure child widgets.
         grid = new Grid();
@@ -93,18 +93,20 @@ public class ExperimentView : ViewBase<Box>, IExperimentView
         AddControl("Name", nameEntry);
         AddControl("Description", descriptionEntry);
         AddControl("Runner", runnerDropDown.GetWidget());
-
-        // Pack child widgets into the container.
-        widget.Append(grid);
-
-        // Label insFilesLabel = Label.New("Instruction Files");
-        // insFilesLabel.Halign = Align.Start;
-        // widget.Append(insFilesLabel);
-        // widget.Append(insFileView);
         AddControl("Instruction Files", insFileView);
 
-        // Pack child widgets.
-        widget.Append(FactorialView.GetWidget());
+        // Create and configure a container widget which will go inside the
+        // scrolled window.
+        Box container = new Box();
+        container.SetOrientation(Orientation.Vertical);
+        container.Spacing = spacing;
+
+        // Pack child widgets into the container.
+        container.Append(grid);
+        container.Append(FactorialView.GetWidget());
+
+        // Pack the container into the scrolled window.
+        widget.Child = container;
 
         // Connect event handlers.
         ConnectEvents();

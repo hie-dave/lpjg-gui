@@ -11,6 +11,11 @@ public enum FileTab
 	InsFile,
 
 	/// <summary>
+	/// The experiments tab.
+	/// </summary>
+	Experiments,
+
+	/// <summary>
 	/// The logs tab.
 	/// </summary>
 	Logs,

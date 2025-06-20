@@ -59,4 +59,14 @@ public static class Icons
 	/// A checkmark symbol.
 	/// </summary>
 	public static string Checkmark { get; } = "checkmark-symbolic";
+
+	/// <summary>
+	/// An icon for a "go next" forward arrow.
+	/// </summary>
+	public static string GoNext { get; } = "go-next-symbolic";
+
+	/// <summary>
+	/// An icon for a "go previous" back arrow.
+	/// </summary>
+	public static string GoPrevious { get; } = "go-previous-symbolic";
 }

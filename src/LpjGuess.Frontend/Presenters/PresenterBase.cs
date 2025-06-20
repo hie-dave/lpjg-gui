@@ -1,4 +1,5 @@
 using LpjGuess.Frontend.Interfaces;
+using LpjGuess.Frontend.Interfaces.Commands;
 
 namespace LpjGuess.Frontend.Presenters;
 
@@ -32,5 +33,14 @@ public abstract class PresenterBase<TView> : IPresenter<TView>
 	public virtual void Dispose()
 	{
 		view.Dispose();
+	}
+
+	/// <summary>
+	/// Invoke the given command.
+	/// </summary>
+	/// <param name="command">The command to invoke.</param>
+	protected virtual void InvokeCommand(ICommand command)
+	{
+		command.Execute();
 	}
 }

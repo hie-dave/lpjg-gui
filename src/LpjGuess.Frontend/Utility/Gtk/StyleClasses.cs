@@ -24,4 +24,9 @@ public static class StyleClasses
 	/// Name of the gtk 'destructive-action' css class.
 	/// </summary>
 	public static string DestructiveAction { get; } = "destructive-action";
+
+	/// <summary>
+	/// Name of the gtk 'heading' css class. May be applied to a GtkLabel.
+	/// </summary>
+	public static string Heading { get; } = "heading";
 }
