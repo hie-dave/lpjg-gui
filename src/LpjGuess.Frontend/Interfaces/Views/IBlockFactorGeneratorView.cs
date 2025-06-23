@@ -5,26 +5,23 @@ using LpjGuess.Frontend.Interfaces.Events;
 namespace LpjGuess.Frontend.Interfaces.Views;
 
 /// <summary>
-/// An interface to a top-level factor generator view.
+/// An interface to a block factor generator view.
 /// </summary>
-public interface IBlockFactorGeneratorView : IView
+public interface IBlockFactorGeneratorView : ITopLevelFactorGeneratorView
 {
     /// <summary>
-    /// Event which is raised when the top-level factor generator changes.
+    /// Event which is raised when the block factor generator changes.
     /// </summary>
-    Event<IModelChange<BlockFactorGenerator>> OnChanged { get; }
+    new Event<IModelChange<BlockFactorGenerator>> OnChanged { get; }
 
     /// <summary>
-    /// Event which is raised when the user has clicked the "Add Value" button.
+    /// Populate the view with the given block factor generator.
     /// </summary>
-    Event OnAddValue { get; }
-
-    /// <summary>
-    /// Populate the view with the given top-level factor generator.
-    /// </summary>
-    /// <param name="name">The name of the parameter.</param>
+    /// <remarks>
+    /// Note: the base class' populate method must be called *in addition* to
+    /// this method.
+    /// </remarks>
     /// <param name="blockType">The type of the block to which the parameter belongs.</param>
     /// <param name="blockName">The name of the block to which the parameter belongs.</param>
-    /// <param name="values">The values to be applied to the parameter.</param>
-    void Populate(string name, string blockType, string blockName, List<string> values);
+    void Populate(string blockType, string blockName);
 }

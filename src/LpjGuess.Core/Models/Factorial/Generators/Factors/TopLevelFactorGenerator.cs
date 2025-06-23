@@ -1,3 +1,4 @@
+using System.Globalization;
 using LpjGuess.Core.Interfaces.Factorial;
 using LpjGuess.Core.Models.Factorial.Factors;
 
@@ -17,22 +18,27 @@ public class TopLevelFactorGenerator : IFactorGenerator
     /// <summary>
     /// The values to be applied to the parameter.
     /// </summary>
-    public List<string> Values { get; set; }
+    public IValueGenerator Values { get; set; }
 
     /// <summary>
     /// Create a new <see cref="TopLevelFactorGenerator"/> instance.
     /// </summary>
     /// <param name="name">The name of the parameter.</param>
     /// <param name="values">The values to be applied to the parameter.</param>
-    public TopLevelFactorGenerator(string name, List<string> values)
+    public TopLevelFactorGenerator(string name, IValueGenerator values)
     {
         Name = name;
         Values = values;
     }
 
     /// <inheritdoc />
-    public IEnumerable<IFactor> Generate()
+    public virtual IEnumerable<IFactor> Generate()
     {
-        return Values.Select(v => new TopLevelParameter(Name, v));
+        // Need to use invariant culture for string conversions, to ensure that
+        // (for example) decimal places are rendered as periods, not commas, as
+        // required by LPJ-Guess.
+        return Values
+            .GenerateStrings(CultureInfo.InvariantCulture)
+            .Select(v => new TopLevelParameter(Name, v));
     }
 }

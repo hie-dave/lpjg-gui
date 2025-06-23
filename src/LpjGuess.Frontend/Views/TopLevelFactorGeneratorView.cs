@@ -1,7 +1,10 @@
 using Gtk;
+using LpjGuess.Core.Models.Factorial;
 using LpjGuess.Core.Models.Factorial.Generators.Factors;
 using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.Events;
+using LpjGuess.Frontend.Extensions;
+using LpjGuess.Frontend.Interfaces;
 using LpjGuess.Frontend.Interfaces.Events;
 using LpjGuess.Frontend.Interfaces.Views;
 
@@ -23,54 +26,64 @@ public class TopLevelFactorGeneratorView : ViewBase<ScrolledWindow>, ITopLevelFa
     private readonly Entry nameEntry;
 
     /// <summary>
-    /// The list box containing the factor values.
+    /// The dropdown for selecting the value generator type.
     /// </summary>
-    private readonly ListBox valuesListBox;
+    private readonly EnumDropDownView<ValueGeneratorType> valuesTypeView;
 
     /// <summary>
-    /// The button to add a new factor value.
+    /// The container for the value generator view.
     /// </summary>
-    private readonly Button addFactorButton;
+    private readonly Box valuesContainer;
 
     /// <summary>
-    /// The rows in the list box.
+    /// The grid containing the scalar input controls.
     /// </summary>
-    private List<ListBoxRow> rows;
+    private readonly Grid grid;
+
+    /// <summary>
+    /// The view for the value generator.
+    /// </summary>
+    private IView? valuesView;
+
+    /// <summary>
+    /// Number of rows in the grid.
+    /// </summary>
+    private int nrow;
 
     /// <inheritdoc />
     public Event<IModelChange<TopLevelFactorGenerator>> OnChanged { get; private init; }
 
     /// <inheritdoc />
-    public Event OnAddValue { get; private init; }
+    public Event<ValueGeneratorType> OnValuesTypeChanged { get; private init; }
 
     /// <summary>
     /// Create a new <see cref="TopLevelFactorGeneratorView"/> instance.
     /// </summary>
     public TopLevelFactorGeneratorView() : base(new ScrolledWindow())
     {
-        rows = [];
+        nrow = 0;
         OnChanged = new Event<IModelChange<TopLevelFactorGenerator>>();
-        OnAddValue = new Event();
+        OnValuesTypeChanged = new Event<ValueGeneratorType>();
 
         // Create an input widget for the factor name.
-        Label entryLabel = Label.New("Name:");
         nameEntry = new Entry();
-        Box entryBox = Box.New(Orientation.Horizontal, 6);
-        entryBox.Append(entryLabel);
-        entryBox.Append(nameEntry);
+        nameEntry.Hexpand = true;
 
-        // Create a list box to hold the factor values.
-        valuesListBox = new ListBox();
-        valuesListBox.Vexpand = true;
+        valuesTypeView = new EnumDropDownView<ValueGeneratorType>();
+        valuesTypeView.OnSelectionChanged.ConnectTo(OnValuesTypeChanged);
 
-        // Create an "add value" button.
-        addFactorButton = Button.NewWithLabel("Add Value");
+        grid = new Grid();
+        grid.RowSpacing = grid.ColumnSpacing = 6;
+        AddControl("Parameter", nameEntry);
+        AddControl("Values", valuesTypeView.GetWidget());
+
+        valuesContainer = new Box();
+        valuesView = null;
 
         // Pack child widgets into the container.
         container = Box.New(Orientation.Vertical, 6);
-        container.Append(entryBox);
-        container.Append(valuesListBox);
-        container.Append(addFactorButton);
+        container.Append(grid);
+        container.Append(valuesContainer);
 
         // Pack the container into the main widget.
         widget.Child = container;
@@ -80,35 +93,17 @@ public class TopLevelFactorGeneratorView : ViewBase<ScrolledWindow>, ITopLevelFa
     }
 
     /// <inheritdoc />
-    public void Populate(string name, List<string> values)
+    public void Populate(string name, IView valueGeneratorView)
     {
         // Populate the name entry.
         nameEntry.SetText(name);
 
         // ListBoxes don't own their contents.
-        valuesListBox.RemoveAll();
-        foreach (ListBoxRow row in rows)
-        {
-            if (row.Child is Entry entry)
-                entry.OnActivate -= OnFactorValueChanged;
-            row.Dispose();
-        }
-        rows.Clear();
+        if (valuesView != null)
+            valuesContainer.Remove(valuesView.GetWidget());
 
-        // Populate the values listbox.
-        foreach (string value in values)
-        {
-            Entry entry = new Entry();
-            entry.SetText(value);
-            entry.OnActivate += OnFactorValueChanged;
-            entry.Hexpand = true;
-
-            ListBoxRow row = new ListBoxRow();
-            row.Child = entry;
-            row.Vexpand = true;
-            valuesListBox.Append(row);
-            rows.Add(row);
-        }
+        valuesView = valueGeneratorView;
+        valuesContainer.Append(valuesView.GetWidget());
     }
 
     /// <inheritdoc />
@@ -119,12 +114,22 @@ public class TopLevelFactorGeneratorView : ViewBase<ScrolledWindow>, ITopLevelFa
     }
 
     /// <summary>
+    /// Add a widget to the grid containing the scalar input controls.
+    /// </summary>
+    protected void AddControl(string name, Widget widget)
+    {
+        Label label = Label.New($"{name}:");
+        grid.Attach(label, 0, nrow, 1, 1);
+        grid.Attach(widget, 1, nrow, 1, 1);
+        nrow++;
+    }
+
+    /// <summary>
     /// Connect all events.
     /// </summary>
     private void ConnectEvents()
     {
         nameEntry.OnActivate += OnNameChanged;
-        addFactorButton.OnClicked += OnAddFactorButtonClicked;
     }
 
     /// <summary>
@@ -133,7 +138,6 @@ public class TopLevelFactorGeneratorView : ViewBase<ScrolledWindow>, ITopLevelFa
     private void DisconnectEvents()
     {
         nameEntry.OnActivate -= OnNameChanged;
-        addFactorButton.OnClicked -= OnAddFactorButtonClicked;
     }
 
     /// <summary>
@@ -150,51 +154,6 @@ public class TopLevelFactorGeneratorView : ViewBase<ScrolledWindow>, ITopLevelFa
                 (f, name) => f.Name = name,
                 nameEntry.GetText()
             ));
-        }
-        catch (Exception error)
-        {
-            MainView.Instance.ReportError(error);
-        }
-    }
-
-    /// <summary>
-    /// Called when the user has changed a factor value.
-    /// </summary>
-    /// <param name="sender">The entry widget.</param>
-    /// <param name="args">The event arguments.</param>
-    private void OnFactorValueChanged(Entry sender, EventArgs args)
-    {
-        try
-        {
-            if (!(sender.Parent is ListBoxRow row))
-                throw new InvalidOperationException($"Entry is not a child of a GtkListBoxRow");
-
-            // TODO: is it safe to rely on indices like this?
-            int index = rows.IndexOf(row);
-            OnChanged.Invoke(new ModelChangeEventArgs<TopLevelFactorGenerator, string>(
-                f => f.Values[index],
-                (f, value) => f.Values[index] = value,
-                sender.GetText()
-            ));
-        }
-        catch (Exception error)
-        {
-            MainView.Instance.ReportError(error);
-        }
-    }
-
-    /// <summary>
-    /// Called when the user has clicked the "Add Factor" button.
-    /// </summary>
-    /// <param name="sender">The button widget.</param>
-    /// <param name="args">The event arguments.</param>
-    private void OnAddFactorButtonClicked(Button sender, EventArgs args)
-    {
-        try
-        {
-            // Using a separate event here - we wouldn't dare presume to tell
-            // the presenter which value should be added!
-            OnAddValue.Invoke();
         }
         catch (Exception error)
         {

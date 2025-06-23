@@ -1,4 +1,5 @@
 using LpjGuess.Core.Interfaces.Factorial;
+using LpjGuess.Frontend.Delegates;
 
 namespace LpjGuess.Frontend.Interfaces.Presenters;
 
@@ -21,4 +22,9 @@ public interface IFactorGeneratorPresenter : IPresenter
     /// Name of the factor.
     /// </summary>
     string Name { get; }
+
+    /// <summary>
+    /// Called when the name of the factor has been changed by the user.
+    /// </summary>
+    Event<string> OnRenamed { get; }
 }

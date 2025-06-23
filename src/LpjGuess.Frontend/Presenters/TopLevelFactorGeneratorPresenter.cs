@@ -1,12 +1,16 @@
 using LpjGuess.Core.Interfaces.Factorial;
+using LpjGuess.Core.Models.Factorial;
 using LpjGuess.Core.Models.Factorial.Generators.Factors;
+using LpjGuess.Core.Models.Factorial.Generators.Values;
 using LpjGuess.Frontend.Commands;
+using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.Events;
 using LpjGuess.Frontend.Interfaces;
 using LpjGuess.Frontend.Interfaces.Commands;
 using LpjGuess.Frontend.Interfaces.Events;
 using LpjGuess.Frontend.Interfaces.Presenters;
 using LpjGuess.Frontend.Interfaces.Views;
+using LpjGuess.Frontend.Views;
 
 namespace LpjGuess.Frontend.Presenters;
 
@@ -20,6 +24,12 @@ public class TopLevelFactorGeneratorPresenter : PresenterBase<ITopLevelFactorGen
     /// </summary>
     private readonly TopLevelFactorGenerator model;
 
+    /// <summary>
+    /// The presenter responsible for managing the values of the factor
+    /// generator.
+    /// </summary>
+    private IValueGeneratorPresenter? valuesPresenter;
+
     /// <inheritdoc />
     public IFactorGenerator Model => model;
 
@@ -29,6 +39,9 @@ public class TopLevelFactorGeneratorPresenter : PresenterBase<ITopLevelFactorGen
     /// <inheritdoc />
     public string Name => model.Name;
 
+    /// <inheritdoc />
+    public Event<string> OnRenamed { get; private init; }
+
     /// <summary>
     /// Create a new <see cref="TopLevelFactorGeneratorPresenter"/> instance.
     /// </summary>
@@ -37,29 +50,89 @@ public class TopLevelFactorGeneratorPresenter : PresenterBase<ITopLevelFactorGen
     public TopLevelFactorGeneratorPresenter(TopLevelFactorGenerator model, ITopLevelFactorGeneratorView view) : base(view)
     {
         this.model = model;
+        OnRenamed = new Event<string>();
+        valuesPresenter = null;
         view.OnChanged.ConnectTo(OnChanged);
-        view.OnAddValue.ConnectTo(OnAddValue);
+        view.OnValuesTypeChanged.ConnectTo(OnValuesTypeChanged);
         RefreshView();
+    }
+
+    /// <inheritdoc />
+    protected override void InvokeCommand(ICommand command)
+    {
+        string oldName = model.Name;
+        base.InvokeCommand(command);
+        RefreshView();
+        if (oldName != model.Name)
+            OnRenamed.Invoke(model.Name);
     }
 
     /// <summary>
     /// Populate the contents of the view with the current model state.
     /// </summary>
-    private void RefreshView()
+    protected virtual void RefreshView()
     {
-        view.Populate(model.Name, model.Values);
+        IValueGeneratorPresenter presenter = CreateValuesPresenter(model.Values);
+        presenter.OnTypeChanged.ConnectTo(OnGeneratorTypeChanged);
+        view.Populate(model.Name, presenter.View);
+
+        if (valuesPresenter != null)
+            valuesPresenter.Dispose();
+        valuesPresenter = presenter;
     }
 
     /// <summary>
-    /// Handle the user clicking the "Add Value" button.
+    /// Handle a change to the value generator type.
     /// </summary>
-    private void OnAddValue()
+    /// <param name="generator">The new value generator.</param>
+    private void OnGeneratorTypeChanged(IValueGenerator generator)
     {
-        // Just add a new empty value to the end of the list.
-        OnChanged(new ModelChangeEventArgs<TopLevelFactorGenerator, List<string>>(
-            m => m.Values,
-            (f, values) => f.Values = values,
-            model.Values.Append(string.Empty).ToList()));
+        PropertyChangeCommand<TopLevelFactorGenerator, IValueGenerator> command = new(
+            model,
+            model.Values,
+            generator,
+            (m, v) => m.Values = v
+        );
+        InvokeCommand(command);
+    }
+
+    /// <summary>
+    /// Create a value generator presenter for the given value generator.
+    /// </summary>
+    /// <param name="values">The value generator to create a presenter for.</param>
+    /// <returns>The presenter.</returns>
+    /// <exception cref="NotImplementedException">Thrown if the value generator type is not supported.</exception>
+    private IValueGeneratorPresenter CreateValuesPresenter(IValueGenerator values)
+    {
+        // Handle discrete value generators.
+        IDiscreteValuesView view = new DiscreteValuesView();
+        if (values is DiscreteValues<string> stringValues)
+            return new DiscreteValuesPresenter(stringValues, view);
+        else if (values is DiscreteValues<double> doubleValues)
+            return new DiscreteValuesPresenter(doubleValues, view);
+        else if (values is DiscreteValues<int> intValues)
+            return new DiscreteValuesPresenter(intValues, view);
+
+        throw new NotImplementedException($"Unknown value generator type: {values.GetType()}");
+    }
+
+    /// <summary>
+    /// Create a default value generator for the given type.
+    /// </summary>
+    /// <param name="type">The type of value generator to create.</param>
+    /// <returns>The default value generator.</returns>
+    /// <exception cref="ArgumentException">Thrown if the type is not supported.</exception>
+    private static IValueGenerator CreateDefaultGenerator(ValueGeneratorType type)
+    {
+        switch (type)
+        {
+            case ValueGeneratorType.Discrete:
+                return new DiscreteValues<string>([]);
+            case ValueGeneratorType.Range:
+                return new RangeGenerator<int>(0, 5, 1);
+            default:
+                throw new ArgumentException("Invalid value generator type.");
+        }
     }
 
     /// <summary>
@@ -71,6 +144,21 @@ public class TopLevelFactorGeneratorPresenter : PresenterBase<ITopLevelFactorGen
         // Apply the command and refresh the view.
         ICommand command = change.ToCommand(model);
         InvokeCommand(command);
-        RefreshView();
+    }
+
+    /// <summary>
+    /// Handle a change to the value generator type.
+    /// </summary>
+    /// <param name="type">The new value generator type.</param>
+    private void OnValuesTypeChanged(ValueGeneratorType type)
+    {
+        IValueGenerator generator = CreateDefaultGenerator(type);
+        PropertyChangeCommand<TopLevelFactorGenerator, IValueGenerator> command = new(
+            model,
+            model.Values,
+            generator,
+            (m, v) => m.Values = v
+        );
+        InvokeCommand(command);
     }
 }

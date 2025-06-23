@@ -36,7 +36,7 @@ public class TopLevelParameter : IFactor
     }
 
     /// <inheritdoc />
-    public void Apply(InstructionFileParser instructionFile)
+    public virtual void Apply(InstructionFileParser instructionFile)
     {
         instructionFile.SetTopLevelParameterValue(Name, Value);
     }

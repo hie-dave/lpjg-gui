@@ -14,6 +14,103 @@ namespace LpjGuess.Frontend.Views;
 /// </summary>
 public class FactorialView : ViewBase<Box>, IFactorialView
 {
+    private class RowWrapper : ViewBase<ListBoxRow>
+    {
+        /// <summary>
+        /// The spacing between widgets in the row.
+        /// </summary>
+        private const int spacing = 6;
+
+        /// <summary>
+        /// The label containing the factor name.
+        /// </summary>
+        private readonly Label label;
+
+        /// <summary>
+        /// The button which deletes the factor.
+        /// </summary>
+        private readonly Button deleteButton;
+
+        /// <summary>
+        /// The view displaying the widget in the stack.
+        /// </summary>
+        public IView FactorView { get; }
+
+        /// <summary>
+        /// Event which is raised when the user wants to remove the factor.
+        /// </summary>
+        public Event OnRemove { get; private init; }
+
+        /// <summary>
+        /// Create a new <see cref="RowWrapper"/> instance.
+        /// </summary>
+        /// <param name="name">The name of the factor.</param>
+        /// <param name="view">The view to add.</param>
+        /// <param name="id">The ID of the row.</param>
+        public RowWrapper(string name, IView view, Guid id) : base(new ListBoxRow())
+        {
+            OnRemove = new Event();
+            FactorView = view;
+            label = Label.New(name);
+            label.Halign = Align.Start;
+            label.Hexpand = true;
+
+            deleteButton = Button.NewFromIconName(Icons.Delete);
+            deleteButton.AddCssClass(StyleClasses.DestructiveAction);
+            deleteButton.Name = name;
+            deleteButton.OnClicked += OnDeleteFactor;
+
+            Image icon = Image.NewFromIconName(Icons.GoNext);
+            icon.Halign = Align.End;
+            icon.Valign = Align.Center;
+
+            Box rowBox = Box.New(Orientation.Horizontal, spacing);
+            rowBox.Append(label);
+            rowBox.Append(deleteButton);
+            rowBox.Append(icon);
+
+            // We can safely use the ID for the title as well, because the title is
+            // not (necessarily) rendered anywhere in the UI.
+            this.widget.Child = rowBox;
+            this.widget.Name = id.ToString();
+
+            // Note that the ListBox has Hexpand = false, so this will not cause the
+            // row widgets to grow beyond the width of the sidebar.
+            this.widget.Hexpand = true;
+        }
+
+        /// <summary>
+        /// Change the name of the factor.
+        /// </summary>
+        /// <param name="name"></param>
+        public void SetName(string name) => label.SetText(name);
+
+        /// <inheritdoc />
+        public override void Dispose()
+        {
+            deleteButton.OnClicked -= OnDeleteFactor;
+            OnRemove.Dispose();
+            base.Dispose();
+        }
+
+        /// <summary>
+        /// Called when the user wants to delete a factor.
+        /// </summary>
+        /// <param name="sender">The sender object.</param>
+        /// <param name="args">Event data.</param>
+        private void OnDeleteFactor(Button sender, EventArgs args)
+        {
+            try
+            {
+                OnRemove.Invoke();
+            }
+            catch (Exception error)
+            {
+                MainView.Instance.ReportError(error);
+            }
+        }
+    }
+
     /// <summary>
     /// Widget spacing.
     /// </summary>
@@ -53,7 +150,7 @@ public class FactorialView : ViewBase<Box>, IFactorialView
     /// <summary>
     /// The rows in the list box.
     /// </summary>
-    private List<ListBoxRow> rows;
+    private List<RowWrapper> rows;
 
     /// <summary>
     /// Number of rows currently in the grid.
@@ -106,7 +203,7 @@ public class FactorialView : ViewBase<Box>, IFactorialView
         stack = new Stack();
         stack.Vexpand = true;
         AddToStack(factorsListBox);
-        stack.TransitionType = StackTransitionType.SlideLeft;
+        stack.TransitionType = StackTransitionType.SlideLeftRight;
         stack.VisibleChild = factorsListBox;
 
         addFactorButton = Button.NewWithLabel("Add Factor");
@@ -133,13 +230,21 @@ public class FactorialView : ViewBase<Box>, IFactorialView
 
         // Remove the existing contents of the listbox.
         factorsListBox.RemoveAll();
-        foreach (ListBoxRow row in rows)
+        foreach (RowWrapper row in rows)
             row.Dispose();
         rows.Clear();
 
         // Populate the listbox with the given factor views.
         foreach (INamedView view in factorViews)
-            AddFactorView(view.Name, view.View.GetWidget());
+            AddFactorView(view.Name, view.View);
+    }
+
+    /// <inheritdoc />
+    public void RenameFactor(IView view, string name)
+    {
+        foreach (RowWrapper existingView in rows)
+            if (existingView.FactorView == view)
+                existingView.SetName(name);
     }
 
     /// <inheritdoc />
@@ -153,70 +258,23 @@ public class FactorialView : ViewBase<Box>, IFactorialView
     /// Add a row to the list box for the given widget.
     /// </summary>
     /// <param name="name">The name of the factor.</param>
-    /// <param name="widget">The widget to add.</param>
-    private void AddFactorView(string name, Widget widget)
+    /// <param name="view">The widget to add.</param>
+    private void AddFactorView(string name, IView view)
     {
         Button button = Button.NewFromIconName(Icons.GoPrevious);
         button.Halign = Align.Start;
-        button.OnActivate += OnHideFactorView;
-        Box hbox = Box.New(Orientation.Horizontal, 0);
-        hbox.Append(button);
+        button.OnClicked += OnHideFactorView;
 
         Box container = Box.New(Orientation.Vertical, spacing);
-        container.Append(hbox);
-        container.Append(widget);
+        container.Append(button);
+        container.Append(view.GetWidget());
 
         Guid id = AddToStack(container);
 
-        Label label = Label.New(name);
-        label.Hexpand = true;
-
-        Button deleteButton = Button.NewFromIconName(Icons.Delete);
-        deleteButton.AddCssClass(StyleClasses.DestructiveAction);
-        deleteButton.Name = name;
-        deleteButton.OnClicked += OnDeleteFactor;
-
-        Image icon = Image.NewFromIconName(Icons.GoNext);
-        icon.Halign = Align.End;
-        icon.Valign = Align.Center;
-
-        Box rowBox = Box.New(Orientation.Horizontal, spacing);
-        rowBox.Append(label);
-        rowBox.Append(deleteButton);
-        rowBox.Append(icon);
-
-        // We can safely use the ID for the title as well, because the title is
-        // not (necessarily) rendered anywhere in the UI.
-        ListBoxRow row = new ListBoxRow();
-        row.Child = rowBox;
-        row.Name = id.ToString();
-
-        // Note that the ListBox has Hexpand = false, so this will not cause the
-        // row widgets to grow beyond the width of the sidebar.
-        row.Hexpand = true;
-        factorsListBox.Append(row);
+        RowWrapper row = new RowWrapper(name, view, id);
+        row.OnRemove.ConnectTo(() => OnRemoveFactor.Invoke(name));
+        factorsListBox.Append(row.GetWidget());
         rows.Add(row);
-    }
-
-    /// <summary>
-    /// Called when the user wants to delete a factor.
-    /// </summary>
-    /// <param name="sender">The sender object.</param>
-    /// <param name="args">Event data.</param>
-    private void OnDeleteFactor(Button sender, EventArgs args)
-    {
-        try
-        {
-            string? name = sender.Name;
-            if (name == null)
-                return;
-
-            OnRemoveFactor.Invoke(name);
-        }
-        catch (Exception error)
-        {
-            MainView.Instance.ReportError(error);
-        }
     }
 
     /// <summary>

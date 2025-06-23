@@ -1,3 +1,4 @@
+using LpjGuess.Core.Models.Factorial;
 using LpjGuess.Core.Models.Factorial.Generators.Factors;
 using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.Interfaces.Events;
@@ -15,14 +16,14 @@ public interface ITopLevelFactorGeneratorView : IView
     Event<IModelChange<TopLevelFactorGenerator>> OnChanged { get; }
 
     /// <summary>
-    /// Event which is raised when the user has clicked the "Add Value" button.
+    /// Event which is raised when the value generator type changes.
     /// </summary>
-    Event OnAddValue { get; }
+    Event<ValueGeneratorType> OnValuesTypeChanged { get; }
 
     /// <summary>
     /// Populate the view with the given top-level factor generator.
     /// </summary>
     /// <param name="name">The name of the parameter.</param>
-    /// <param name="values">The values to be applied to the parameter.</param>
-    void Populate(string name, List<string> values);
+    /// <param name="valueGeneratorView">The view to be used to display the values generator.</param>
+    void Populate(string name, IView valueGeneratorView);
 }

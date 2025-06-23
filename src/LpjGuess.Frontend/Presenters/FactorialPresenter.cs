@@ -2,6 +2,7 @@ using LpjGuess.Core.Interfaces.Factorial;
 using LpjGuess.Core.Models.Factorial.Factors;
 using LpjGuess.Core.Models.Factorial.Generators;
 using LpjGuess.Core.Models.Factorial.Generators.Factors;
+using LpjGuess.Core.Models.Factorial.Generators.Values;
 using LpjGuess.Frontend.Classes;
 using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.Events;
@@ -59,9 +60,27 @@ public class FactorialPresenter : PresenterBase<IFactorialView>, IFactorialPrese
     public void Populate(FactorialGenerator factorial)
     {
         model = factorial;
-        presenters = factorial.Factors.Select(CreateFactorPresenter).ToList();
-        var views = presenters.Select(p => new NamedView(p.View, p.Name)).ToList();
+        var newPresenters = factorial.Factors.Select(CreateFactorPresenter).ToList();
+        var views = newPresenters.Select(p => new NamedView(p.View, p.Name)).ToList();
         view.Populate(factorial.FullFactorial, views);
+
+        foreach (IFactorGeneratorPresenter presenter in presenters)
+            presenter.Dispose();
+
+        presenters = newPresenters;
+        foreach (IFactorGeneratorPresenter presenter in presenters)
+            presenter.OnRenamed.ConnectTo(n => OnFactorRenamed(n, presenter.View));
+    }
+
+    /// <summary>
+    /// Called when the name of a factor has been changed by the user.
+    /// </summary>
+    /// <param name="name">The new name of the factor.</param>
+    /// <param name="view">The view of the factor generator being renamed.</param>
+    private void OnFactorRenamed(string name, IView view)
+    {
+        // Inform the view of the change in this model's name.
+        this.view.RenameFactor(view, name);
     }
 
     /// <summary>
@@ -71,13 +90,6 @@ public class FactorialPresenter : PresenterBase<IFactorialView>, IFactorialPrese
     /// <returns>A tuple containing the presenter and view.</returns>
     private IFactorGeneratorPresenter CreateFactorPresenter(IFactorGenerator factor)
     {
-        if (factor is TopLevelFactorGenerator topLevelFactorGenerator)
-        {
-            TopLevelFactorGeneratorView view = new TopLevelFactorGeneratorView();
-            TopLevelFactorGeneratorPresenter presenter = new TopLevelFactorGeneratorPresenter(topLevelFactorGenerator, view);
-            return presenter;
-        }
-
         if (factor is BlockFactorGenerator blockFactorGenerator)
         {
             BlockFactorGeneratorView view = new BlockFactorGeneratorView();
@@ -85,6 +97,12 @@ public class FactorialPresenter : PresenterBase<IFactorialView>, IFactorialPrese
             return presenter;
         }
 
+        if (factor is TopLevelFactorGenerator topLevelFactorGenerator)
+        {
+            TopLevelFactorGeneratorView view = new TopLevelFactorGeneratorView();
+            TopLevelFactorGeneratorPresenter presenter = new TopLevelFactorGeneratorPresenter(topLevelFactorGenerator, view);
+            return presenter;
+        }
         if (factor is CompositeFactor compositeFactor)
         {
             throw new NotImplementedException("CompositeFactor is TBI");
@@ -103,10 +121,11 @@ public class FactorialPresenter : PresenterBase<IFactorialView>, IFactorialPrese
     /// <exception cref="InvalidOperationException">Thrown if the factor type is unknown.</exception>
     private IFactorGenerator CreateFactor(string factorType)
     {
+        IValueGenerator generator = new DiscreteValues<string>([]);
         if (factorType == topLevelFactorDescription)
-            return new TopLevelFactorGenerator(string.Empty, []);
+            return new TopLevelFactorGenerator("wateruptake", generator);
         if (factorType == blockFactorDescription)
-            return new BlockFactorGenerator(string.Empty, string.Empty, string.Empty, []);
+            return new BlockFactorGenerator("pft", "TeBE", "sla", generator);
 
         // TBI: CompositeFactor.
         throw new InvalidOperationException($"Unknown factor type: {factorType}");

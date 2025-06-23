@@ -1,4 +1,3 @@
-using LpjGuess.Core.Interfaces.Factorial;
 using LpjGuess.Runner.Parsers;
 
 namespace LpjGuess.Core.Models.Factorial.Factors;
@@ -6,13 +5,8 @@ namespace LpjGuess.Core.Models.Factorial.Factors;
 /// <summary>
 /// A block parameter which may be applied to an instruction file.
 /// </summary>
-public class BlockParameter : IFactor
+public class BlockParameter : TopLevelParameter
 {
-    /// <summary>
-    /// Name of the modified parameter.
-    /// </summary>
-    public string Name { get; private init; }
-
     /// <summary>
     /// Type of the block to which the parameter belongs.
     /// </summary>
@@ -24,11 +18,6 @@ public class BlockParameter : IFactor
     public string BlockName { get; private init; }
 
     /// <summary>
-    /// The value to be applied to the parameter.
-    /// </summary>
-    public string Value { get; private init; }
-
-    /// <summary>
     /// Create a new <see cref="BlockParameter"/> instance.
     /// </summary>
     /// <param name="name">The name of the parameter.</param>
@@ -36,11 +25,10 @@ public class BlockParameter : IFactor
     /// <param name="blockName">The name of the block to which the parameter belongs.</param>
     /// <param name="value">The value to be applied to the parameter.</param>
     public BlockParameter(string name, string blockType, string blockName, string value)
+        : base(name, value)
     {
-        Name = name;
         BlockType = blockType;
         BlockName = blockName;
-        Value = value;
     }
 
     /// <summary>
@@ -54,13 +42,7 @@ public class BlockParameter : IFactor
         => new(parameter, "pft", pft, value);
 
     /// <inheritdoc />
-    public string GetName()
-    {
-        return $"{BlockName}.{Name}-{Value}";
-    }
-
-    /// <inheritdoc />
-    public void Apply(InstructionFileParser instructionFile)
+    public override void Apply(InstructionFileParser instructionFile)
     {
         // TODO: check string handling.
         instructionFile.SetBlockParameterValue(BlockType, BlockName, Name, Value);
