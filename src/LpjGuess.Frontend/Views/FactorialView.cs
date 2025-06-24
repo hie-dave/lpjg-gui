@@ -32,7 +32,7 @@ public class FactorialView : ViewBase<Box>, IFactorialView
     /// <summary>
     /// The list box which displays the factors.
     /// </summary>
-    private readonly ListBoxStackView factorsContainer;
+    private readonly ListBoxRevealerView factorsContainer;
 
     /// <summary>
     /// Number of rows currently in the grid.
@@ -56,7 +56,7 @@ public class FactorialView : ViewBase<Box>, IFactorialView
         nrow = 0;
         OnChanged = new Event<IModelChange<FactorialGenerator>>();
 
-        factorsContainer = new ListBoxStackView();
+        factorsContainer = new ListBoxRevealerView();
         factorsContainer.AddText = "Add Factor";
 
         // Configure container.
@@ -88,8 +88,9 @@ public class FactorialView : ViewBase<Box>, IFactorialView
     }
 
     /// <inheritdoc />
-    public void Populate(bool fullFactorial, IEnumerable<INamedView> factorViews)
+    public void Populate(bool fullFactorial, IEnumerable<IValueGeneratorView> factorViews)
     {
+        // TODO: include factor levels in list box as a hint to the user?
         fullFactorialSwitch.SetActive(fullFactorial);
         factorsContainer.Populate(factorViews);
     }

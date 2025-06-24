@@ -11,7 +11,7 @@ public class CompositeFactor : IFactor
     /// <summary>
     /// List of factors in this composite factor.
     /// </summary>
-    public IEnumerable<IFactor> Factors { get; private init; }
+    public IEnumerable<IFactor> Factors { get; set; }
 
     /// <summary>
     /// Create a new <see cref="CompositeFactor"/> instance.
@@ -28,6 +28,8 @@ public class CompositeFactor : IFactor
     /// <inheritdoc />
     public string GetName()
     {
+        if (!Factors.Any())
+            return string.Empty;
         return Factors.Select(f => f.GetName()).Aggregate((x, y) => $"{x}_{y}");
     }
 

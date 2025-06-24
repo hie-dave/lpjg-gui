@@ -100,6 +100,9 @@ public class TopLevelFactorGeneratorView : ViewBase<ScrolledWindow>, ITopLevelFa
         widget.Child = container;
         widget.Vexpand = true;
 
+        widget.PropagateNaturalHeight = true;
+        widget.PropagateNaturalWidth = true;
+
         ConnectEvents();
     }
 

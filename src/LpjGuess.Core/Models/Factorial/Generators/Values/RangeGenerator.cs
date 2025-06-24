@@ -46,4 +46,7 @@ public class RangeGenerator<T> : GenericValueGenerator<T>, IRangeGenerator where
             value += Step;
         }
     }
+
+    /// <inheritdoc />
+    public override int NumValues() => N;
 }

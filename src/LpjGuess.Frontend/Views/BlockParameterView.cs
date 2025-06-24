@@ -37,13 +37,15 @@ public class BlockParameterView : TopLevelParameterView, IBlockParameterView
 
         AddControl("Block Type", blockTypeEntry);
         AddControl("Block Name", blockNameEntry);
+
+        ConnectBlockEvents();
     }
 
     /// <inheritdoc />
     public override void Dispose()
     {
         OnChanged.Dispose();
-        // DisconnectEvents() is called from the base class' Dispose().
+        DisconnectBlockEvents();
         base.Dispose();
     }
 
@@ -55,18 +57,20 @@ public class BlockParameterView : TopLevelParameterView, IBlockParameterView
         blockNameEntry.SetText(blockName);
     }
 
-    /// <inheritdoc />
-    protected override void ConnectEvents()
+    /// <summary>
+    /// Connect the block type and block name events.
+    /// </summary>
+    private void ConnectBlockEvents()
     {
-        base.ConnectEvents();
         blockTypeEntry.OnActivate += OnBlockTypeChanged;
         blockNameEntry.OnActivate += OnBlockNameChanged;
     }
 
-    /// <inheritdoc />
-    protected override void DisconnectEvents()
+    /// <summary>
+    /// Disconnect the block type and block name events.
+    /// </summary>
+    private void DisconnectBlockEvents()
     {
-        base.DisconnectEvents();
         blockTypeEntry.OnActivate -= OnBlockTypeChanged;
         blockNameEntry.OnActivate -= OnBlockNameChanged;
     }

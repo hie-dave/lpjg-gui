@@ -30,7 +30,7 @@ public interface IFactorialView : IView
     /// </summary>
     /// <param name="fullFactorial">Whether to generate a full factorial.</param>
     /// <param name="factorViews">The views for the factors of this factorial.</param>
-    void Populate(bool fullFactorial, IEnumerable<INamedView> factorViews);
+    void Populate(bool fullFactorial, IEnumerable<IValueGeneratorView> factorViews);
 
     /// <summary>
     /// Rename a factor in the view.

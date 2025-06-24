@@ -25,4 +25,7 @@ public abstract class GenericValueGenerator<T> : IValueGenerator<T>
                 yield return value?.ToString() ?? string.Empty;
         }
     }
+
+    /// <inheritdoc />
+    public abstract int NumValues();
 }

@@ -41,4 +41,7 @@ public class TopLevelFactorGenerator : IFactorGenerator
             .GenerateStrings(CultureInfo.InvariantCulture)
             .Select(v => new TopLevelParameter(Name, v));
     }
+
+    /// <inheritdoc />
+    public int NumFactors() => Values.NumValues();
 }

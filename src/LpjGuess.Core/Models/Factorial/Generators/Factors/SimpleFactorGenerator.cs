@@ -33,4 +33,7 @@ public class SimpleFactorGenerator : IFactorGenerator
     {
         return Levels;
     }
+
+    /// <inheritdoc />
+    public int NumFactors() => Levels.Count();
 }

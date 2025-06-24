@@ -18,4 +18,7 @@ public class DiscreteValues<T> : GenericValueGenerator<T>
 
     /// <inheritdoc />
     public override IEnumerable<T> Generate() => Values;
+
+    /// <inheritdoc />
+    public override int NumValues() => Values.Count;
 }

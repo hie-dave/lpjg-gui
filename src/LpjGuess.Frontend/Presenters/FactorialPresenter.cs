@@ -1,3 +1,4 @@
+using System.Globalization;
 using LpjGuess.Core.Interfaces.Factorial;
 using LpjGuess.Core.Models.Factorial.Factors;
 using LpjGuess.Core.Models.Factorial.Generators;
@@ -66,7 +67,7 @@ public class FactorialPresenter : PresenterBase<IFactorialView>, IFactorialPrese
     {
         model = factorial;
         var newPresenters = factorial.Factors.Select(CreateFactorPresenter).ToList();
-        var views = newPresenters.Select(p => new NamedView(p.View, p.Name)).ToList();
+        var views = newPresenters.Select(CreateValueView).ToList();
         view.Populate(factorial.FullFactorial, views);
 
         foreach (IFactorGeneratorPresenter presenter in presenters)
@@ -75,6 +76,13 @@ public class FactorialPresenter : PresenterBase<IFactorialView>, IFactorialPrese
         presenters = newPresenters;
         foreach (IFactorGeneratorPresenter presenter in presenters)
             presenter.OnRenamed.ConnectTo(n => OnFactorRenamed(n, presenter.View));
+    }
+
+    private IValueGeneratorView CreateValueView(IFactorGeneratorPresenter presenter)
+    {
+        const int maxValues = 1000;
+        IEnumerable<string> values = presenter.Model.Generate().Take(maxValues).Select(f => f.GetName());
+        return new ValueGeneratorView(presenter.Model.Name, presenter.Model.NumFactors() > maxValues, values, presenter.View);
     }
 
     /// <summary>
