@@ -74,7 +74,7 @@ public class TopLevelFactorGeneratorPresenter : PresenterBase<ITopLevelFactorGen
     {
         IValueGeneratorPresenter presenter = CreateValuesPresenter(model.Values);
         presenter.OnTypeChanged.ConnectTo(OnGeneratorTypeChanged);
-        view.Populate(model.Name, presenter.View);
+        view.Populate(model.Name, GetGeneratorType(model.Values), presenter.View);
 
         if (valuesPresenter != null)
             valuesPresenter.Dispose();
@@ -105,13 +105,18 @@ public class TopLevelFactorGeneratorPresenter : PresenterBase<ITopLevelFactorGen
     private IValueGeneratorPresenter CreateValuesPresenter(IValueGenerator values)
     {
         // Handle discrete value generators.
-        IDiscreteValuesView view = new DiscreteValuesView();
         if (values is DiscreteValues<string> stringValues)
-            return new DiscreteValuesPresenter(stringValues, view);
-        else if (values is DiscreteValues<double> doubleValues)
-            return new DiscreteValuesPresenter(doubleValues, view);
-        else if (values is DiscreteValues<int> intValues)
-            return new DiscreteValuesPresenter(intValues, view);
+            return new DiscreteValuesPresenter(stringValues, new DiscreteValuesView());
+        if (values is DiscreteValues<double> doubleValues)
+            return new DiscreteValuesPresenter(doubleValues, new DiscreteValuesView());
+        if (values is DiscreteValues<int> intValues)
+            return new DiscreteValuesPresenter(intValues, new DiscreteValuesView());
+
+        // Handle range-based value generators.
+        if (values is RangeGenerator<double> doubleRange)
+            return new RangeValuesPresenter(doubleRange, new RangeValuesView());
+        if (values is RangeGenerator<int> intRange)
+            return new RangeValuesPresenter(intRange, new RangeValuesView());
 
         throw new NotImplementedException($"Unknown value generator type: {values.GetType()}");
     }
@@ -133,6 +138,26 @@ public class TopLevelFactorGeneratorPresenter : PresenterBase<ITopLevelFactorGen
             default:
                 throw new ArgumentException("Invalid value generator type.");
         }
+    }
+
+    /// <summary>
+    /// Get the type of value generator.
+    /// </summary>
+    /// <param name="generator">The value generator.</param>
+    /// <returns>The type of value generator.</returns>
+    /// <exception cref="ArgumentException">Thrown if the generator type is not supported.</exception>
+    private static ValueGeneratorType GetGeneratorType(IValueGenerator generator)
+    {
+        Type type = generator.GetType();
+        if (type.IsGenericType)
+        {
+            Type genericType = type.GetGenericTypeDefinition();
+            if (genericType == typeof(DiscreteValues<>))
+                return ValueGeneratorType.Discrete;
+            if (genericType == typeof(RangeGenerator<>))
+                return ValueGeneratorType.Range;
+        }
+        throw new ArgumentException("Invalid value generator type.");
     }
 
     /// <summary>

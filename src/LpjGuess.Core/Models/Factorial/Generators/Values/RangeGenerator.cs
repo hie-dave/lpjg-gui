@@ -1,11 +1,12 @@
 using System.Numerics;
+using LpjGuess.Core.Interfaces.Factorial;
 
 namespace LpjGuess.Core.Models.Factorial.Generators.Values;
 
 /// <summary>
 /// A value generator which generates a range of values.
 /// </summary>
-public class RangeGenerator<T> : GenericValueGenerator<T> where T : INumber<T>
+public class RangeGenerator<T> : GenericValueGenerator<T>, IRangeGenerator where T : INumber<T>
 {
     /// <summary>
     /// The start of the range.

@@ -24,6 +24,7 @@ public interface ITopLevelFactorGeneratorView : IView
     /// Populate the view with the given top-level factor generator.
     /// </summary>
     /// <param name="name">The name of the parameter.</param>
+    /// <param name="valueGeneratorType">The type of value generator.</param>
     /// <param name="valueGeneratorView">The view to be used to display the values generator.</param>
-    void Populate(string name, IView valueGeneratorView);
+    void Populate(string name, ValueGeneratorType valueGeneratorType, IView valueGeneratorView);
 }

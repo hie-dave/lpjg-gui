@@ -28,12 +28,12 @@ public class FactorialPresenter : PresenterBase<IFactorialView>, IFactorialPrese
     /// <summary>
     /// User-facing description of a top-level factor.
     /// </summary>
-    private const string topLevelFactorDescription = "Top-Level";
+    private const string topLevelFactorTitle = "Top-Level";
 
     /// <summary>
     /// User-facing description of a block factor.
     /// </summary>
-    private const string blockFactorDescription = "Block";
+    private const string blockFactorTitle = "Block";
 
     /// <summary>
     /// The presenters responsible for managing the factors of the factorial.
@@ -122,9 +122,9 @@ public class FactorialPresenter : PresenterBase<IFactorialView>, IFactorialPrese
     private IFactorGenerator CreateFactor(string factorType)
     {
         IValueGenerator generator = new DiscreteValues<string>([]);
-        if (factorType == topLevelFactorDescription)
+        if (factorType == topLevelFactorTitle)
             return new TopLevelFactorGenerator("wateruptake", generator);
-        if (factorType == blockFactorDescription)
+        if (factorType == blockFactorTitle)
             return new BlockFactorGenerator("pft", "TeBE", "sla", generator);
 
         // TBI: CompositeFactor.
@@ -156,8 +156,8 @@ public class FactorialPresenter : PresenterBase<IFactorialView>, IFactorialPrese
     private void OnAddFactor()
     {
 		NameAndDescription[] factorTypes = [
-			new NameAndDescription(topLevelFactorDescription, "Override a Top-level parameter (e.g. npatch)"),
-			new NameAndDescription(blockFactorDescription, "Override a block (e.g. PFT)-level parameter (e.g. sla)")
+			new NameAndDescription(topLevelFactorTitle, "Override a single top-level parameter (e.g. wateruptake)"),
+			new NameAndDescription(blockFactorTitle, "Override a single block (e.g. PFT)-level parameter (e.g. sla)")
 		];
 		string prompt = "Select a factor type";
 		AskUserDialog dialog = new AskUserDialog(prompt, "Select", factorTypes);

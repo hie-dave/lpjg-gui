@@ -7,6 +7,7 @@ using LpjGuess.Frontend.Extensions;
 using LpjGuess.Frontend.Interfaces;
 using LpjGuess.Frontend.Interfaces.Events;
 using LpjGuess.Frontend.Interfaces.Views;
+using Pomelo.EntityFrameworkCore.MySql.Query.Internal;
 
 namespace LpjGuess.Frontend.Views;
 
@@ -24,6 +25,11 @@ public class TopLevelFactorGeneratorView : ViewBase<ScrolledWindow>, ITopLevelFa
     /// The entry containing the factor name.
     /// </summary>
     private readonly Entry nameEntry;
+
+    /// <summary>
+    /// The label for the value generator.
+    /// </summary>
+    private readonly Label valuesLabel;
 
     /// <summary>
     /// The dropdown for selecting the value generator type.
@@ -74,8 +80,13 @@ public class TopLevelFactorGeneratorView : ViewBase<ScrolledWindow>, ITopLevelFa
 
         grid = new Grid();
         grid.RowSpacing = grid.ColumnSpacing = 6;
-        AddControl("Parameter", nameEntry);
-        AddControl("Values", valuesTypeView.GetWidget());
+
+        valuesLabel = Label.New("Values:");
+        valuesLabel.Halign = Align.Start;
+        grid.Attach(valuesLabel, 0, nrow, 1, 1);
+        grid.Attach(valuesTypeView.GetWidget(), 1, nrow, 1, 1);
+
+        AddControl("Parameter Name", nameEntry);
 
         valuesContainer = new Box();
         valuesView = null;
@@ -93,10 +104,12 @@ public class TopLevelFactorGeneratorView : ViewBase<ScrolledWindow>, ITopLevelFa
     }
 
     /// <inheritdoc />
-    public void Populate(string name, IView valueGeneratorView)
+    public void Populate(string name, ValueGeneratorType valueGeneratorType, IView valueGeneratorView)
     {
         // Populate the name entry.
         nameEntry.SetText(name);
+
+        valuesTypeView.Select(valueGeneratorType);
 
         // ListBoxes don't own their contents.
         if (valuesView != null)
@@ -118,10 +131,18 @@ public class TopLevelFactorGeneratorView : ViewBase<ScrolledWindow>, ITopLevelFa
     /// </summary>
     protected void AddControl(string name, Widget widget)
     {
+        grid.Remove(valuesLabel);
+        grid.Remove(valuesTypeView.GetWidget());
+
         Label label = Label.New($"{name}:");
+        label.Halign = Align.Start;
         grid.Attach(label, 0, nrow, 1, 1);
         grid.Attach(widget, 1, nrow, 1, 1);
         nrow++;
+
+        // Ensure the values label is always at the bottom of the grid.
+        grid.Attach(valuesLabel, 0, nrow, 1, 1);
+        grid.Attach(valuesTypeView.GetWidget(), 1, nrow, 1, 1);
     }
 
     /// <summary>
