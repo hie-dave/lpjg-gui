@@ -135,6 +135,7 @@ internal class AskUserDialog : Window
 		{
 			itemSelected(options.First(o => string.Equals(nameSelector(o), resp)));
 		});
+		dialog.Run();
 	}
 
 	/// <summary>

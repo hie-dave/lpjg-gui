@@ -11,12 +11,12 @@ public class TopLevelParameter : IFactor
     /// <summary>
     /// Name of the modified parameter.
     /// </summary>
-    public string Name { get; private init; }
+    public string Name { get; set; }
 
     /// <summary>
     /// The value to be applied to the parameter.
     /// </summary>
-    public string Value { get; private init; }
+    public string Value { get; set; }
 
     /// <summary>
     /// Create a new <see cref="TopLevelParameter"/> instance.

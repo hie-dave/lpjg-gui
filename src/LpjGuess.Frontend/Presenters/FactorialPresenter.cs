@@ -36,6 +36,11 @@ public class FactorialPresenter : PresenterBase<IFactorialView>, IFactorialPrese
     private const string blockFactorTitle = "Block";
 
     /// <summary>
+    /// User-facing description of a simple factor.
+    /// </summary>
+    private const string simpleFactorTitle = "Manual";
+
+    /// <summary>
     /// The presenters responsible for managing the factors of the factorial.
     /// </summary>
     private List<IFactorGeneratorPresenter> presenters;
@@ -93,21 +98,21 @@ public class FactorialPresenter : PresenterBase<IFactorialView>, IFactorialPrese
         if (factor is BlockFactorGenerator blockFactorGenerator)
         {
             BlockFactorGeneratorView view = new BlockFactorGeneratorView();
-            BlockFactorGeneratorPresenter presenter = new BlockFactorGeneratorPresenter(blockFactorGenerator, view);
+            BlockFactorGeneratorPresenter presenter = new(blockFactorGenerator, view);
             return presenter;
         }
 
         if (factor is TopLevelFactorGenerator topLevelFactorGenerator)
         {
             TopLevelFactorGeneratorView view = new TopLevelFactorGeneratorView();
-            TopLevelFactorGeneratorPresenter presenter = new TopLevelFactorGeneratorPresenter(topLevelFactorGenerator, view);
+            TopLevelFactorGeneratorPresenter presenter = new(topLevelFactorGenerator, view);
             return presenter;
         }
-        if (factor is CompositeFactor compositeFactor)
+        if (factor is SimpleFactorGenerator simpleGenerator)
         {
-            throw new NotImplementedException("CompositeFactor is TBI");
-            // CompositeFactorPresenter presenter = new CompositeFactorPresenter(compositeFactor);
-            // return (presenter, presenter.View);
+            SimpleFactorGeneratorView view = new SimpleFactorGeneratorView();
+            SimpleFactorGeneratorPresenter presenter = new(simpleGenerator, view);
+            return presenter;
         }
 
         throw new InvalidOperationException($"Unknown factor type: {factor.GetType().Name}");
@@ -126,8 +131,9 @@ public class FactorialPresenter : PresenterBase<IFactorialView>, IFactorialPrese
             return new TopLevelFactorGenerator("wateruptake", generator);
         if (factorType == blockFactorTitle)
             return new BlockFactorGenerator("pft", "TeBE", "sla", generator);
+        if (factorType == simpleFactorTitle)
+            return new SimpleFactorGenerator("TODO: think of a better default name here", []);
 
-        // TBI: CompositeFactor.
         throw new InvalidOperationException($"Unknown factor type: {factorType}");
     }
 
@@ -156,8 +162,9 @@ public class FactorialPresenter : PresenterBase<IFactorialView>, IFactorialPrese
     private void OnAddFactor()
     {
 		NameAndDescription[] factorTypes = [
-			new NameAndDescription(topLevelFactorTitle, "Override a single top-level parameter (e.g. wateruptake)"),
-			new NameAndDescription(blockFactorTitle, "Override a single block (e.g. PFT)-level parameter (e.g. sla)")
+            new NameAndDescription(topLevelFactorTitle, "Override a single top-level parameter (e.g. wateruptake)"),
+            new NameAndDescription(blockFactorTitle, "Override a single block (e.g. PFT)-level parameter (e.g. sla)"),
+            new NameAndDescription(simpleFactorTitle, "Manually configure factors consisting of one or more parameters")
 		];
 		string prompt = "Select a factor type";
 		AskUserDialog dialog = new AskUserDialog(prompt, "Select", factorTypes);

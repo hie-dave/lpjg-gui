@@ -10,12 +10,12 @@ public class BlockParameter : TopLevelParameter
     /// <summary>
     /// Type of the block to which the parameter belongs.
     /// </summary>
-    public string BlockType { get; private init; }
+    public string BlockType { get; set; }
 
     /// <summary>
     /// Name of the block to which the parameter belongs.
     /// </summary>
-    public string BlockName { get; private init; }
+    public string BlockName { get; set; }
 
     /// <summary>
     /// Create a new <see cref="BlockParameter"/> instance.
