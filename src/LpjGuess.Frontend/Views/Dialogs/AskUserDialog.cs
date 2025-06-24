@@ -24,6 +24,11 @@ internal class AskUserDialog : Window
 	private const int margin = 12;
 
 	/// <summary>
+	/// The scrolled window housing the user's choices.
+	/// </summary>
+	private readonly ScrolledWindow choices;
+
+	/// <summary>
 	/// The cancel button.
 	/// </summary>
 	private readonly Button cancelButton;
@@ -38,6 +43,24 @@ internal class AskUserDialog : Window
 	/// option will be returned.
 	/// </summary>
 	public Event<string> OnSelected { get; private init; }
+
+	/// <summary>
+	/// The minimum width of the dialog.
+	/// </summary>
+	public int MinWidth
+	{
+		get => choices.MinContentWidth;
+		set => choices.MinContentWidth = value;
+	}
+
+	/// <summary>
+	/// The minimum height of the dialog.
+	/// </summary>
+	public int MinHeight
+	{
+		get => choices.MinContentHeight;
+		set => choices.MinContentHeight = value;
+	}
 
 	/// <summary>
 	/// Create a new <see cref="AskUserDialog"/> instance.
@@ -75,13 +98,15 @@ internal class AskUserDialog : Window
 		}
 		actionRows = rows;
 
-		ScrolledWindow choices = new ScrolledWindow();
+		choices = new ScrolledWindow();
 		choices.MarginBottom = margin;
 		choices.MarginTop = margin;
 		choices.MarginStart = margin;
 		choices.MarginEnd = margin;
 		choices.Vexpand = true;
 		choices.Child = choicesBox;
+		choices.PropagateNaturalHeight = true;
+		choices.PropagateNaturalWidth = true;
 
 		Box main = new Box();
 		main.SetOrientation(Orientation.Vertical);
