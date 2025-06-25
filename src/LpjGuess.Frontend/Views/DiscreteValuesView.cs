@@ -56,7 +56,7 @@ public class DiscreteValuesView : ViewBase<Box>, IDiscreteValuesView
             entry.Hexpand = true;
 
             removeButton = Button.NewFromIconName(Icons.Delete);
-            // removeButton.AddCssClass(StyleClasses.DestructiveAction);
+            removeButton.AddCssClass(StyleClasses.DestructiveAction);
             removeButton.OnClicked += OnRemoveClicked;
             removeButton.Halign = Align.End;
             removeButton.Hexpand = false;

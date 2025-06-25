@@ -75,6 +75,7 @@ public class SimpleFactorGeneratorPresenter : PresenterBase<ISimpleFactorGenerat
     {
         List<IFactorPresenter> presenters = model.Levels.Select(CreateFactorPresenter).ToList();
         view.Populate(model.Name, presenters.Select(p => new NamedView(p.View, p.Model.GetName())));
+        presenters.ForEach(p => p.OnRenamed.ConnectTo(n => view.Rename(p.View, n)));
 
         factorPresenters.ForEach(p => p.Dispose());
         factorPresenters = presenters;

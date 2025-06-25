@@ -2,6 +2,7 @@ using Gtk;
 using LpjGuess.Core.Models.Factorial.Generators.Factors;
 using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.Events;
+using LpjGuess.Frontend.Interfaces;
 using LpjGuess.Frontend.Interfaces.Events;
 using LpjGuess.Frontend.Interfaces.Views;
 
@@ -79,6 +80,12 @@ public class SimpleFactorGeneratorView : ViewBase<Box>, ISimpleFactorGeneratorVi
     {
         nameEntry.SetText(name);
         container.Populate(factorLevelViews);
+    }
+
+    /// <inheritdoc />
+    public void Rename(IView view, string name)
+    {
+        container.Rename(view, name);
     }
 
     /// <inheritdoc />

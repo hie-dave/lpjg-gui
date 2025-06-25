@@ -43,13 +43,21 @@ public class TopLevelParameterPresenter : PresenterBase<ITopLevelParameterView>,
     }
 
     /// <inheritdoc />
+    public override void Dispose()
+    {
+        OnRenamed.Dispose();
+        base.Dispose();
+    }
+
+    /// <inheritdoc />
     protected override void InvokeCommand(ICommand command)
     {
-        string oldName = model.Name;
+        string oldName = model.GetName();
         base.InvokeCommand(command);
         RefreshView();
-        if (oldName != model.Name)
-            OnRenamed.Invoke(model.Name);
+        string newName = model.GetName();
+        if (oldName != newName)
+            OnRenamed.Invoke(newName);
     }
 
     /// <summary>

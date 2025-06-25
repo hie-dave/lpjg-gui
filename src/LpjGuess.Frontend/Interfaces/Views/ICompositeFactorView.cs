@@ -32,4 +32,10 @@ public interface ICompositeFactorView : IView
     /// <param name="name">The name of the generated factor.</param>
     /// <param name="factorViews">The views to be used to display the factors.</param>
     void Populate(string name, IEnumerable<INamedView> factorViews);
+
+    /// <summary>
+    /// Change the factor name displayed for this composite factor.
+    /// </summary>
+    /// <param name="name">The new name.</param>
+    void Rename(string name);
 }

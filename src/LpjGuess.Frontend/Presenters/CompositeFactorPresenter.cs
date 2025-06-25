@@ -55,6 +55,13 @@ public class CompositeFactorPresenter : PresenterBase<ICompositeFactorView>, IFa
     }
 
     /// <inheritdoc />
+    public override void Dispose()
+    {
+        OnRenamed.Dispose();
+        base.Dispose();
+    }
+
+    /// <inheritdoc />
     protected override void InvokeCommand(ICommand command)
     {
         string oldName = model.GetName();
@@ -71,6 +78,7 @@ public class CompositeFactorPresenter : PresenterBase<ICompositeFactorView>, IFa
     {
         List<IFactorPresenter> presenters = model.Factors.Select(CreateFactorPresenter).ToList();
         view.Populate(model.GetName(), presenters.Select(p => new NamedView(p.View, p.Model.GetName())));
+        presenters.ForEach(p => p.OnRenamed.ConnectTo(_ => OnPresenterRenamed()));
 
         factorPresenters.ForEach(p => p.Dispose());
         factorPresenters = presenters;
@@ -134,5 +142,14 @@ public class CompositeFactorPresenter : PresenterBase<ICompositeFactorView>, IFa
                 (f, factors) => f.Factors = factors
             );
         InvokeCommand(command);
+    }
+
+    /// <summary>
+    /// Called when a factor presenter's name changes.
+    /// </summary>
+    private void OnPresenterRenamed()
+    {
+        view.Rename(model.GetName());
+        OnRenamed.Invoke(model.GetName());
     }
 }

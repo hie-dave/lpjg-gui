@@ -32,4 +32,11 @@ public interface ISimpleFactorGeneratorView : IView
     /// <param name="name">The name of the parameter.</param>
     /// <param name="factorLevelViews">The views to be used to display the factor levels.</param>
     void Populate(string name, IEnumerable<INamedView> factorLevelViews);
+
+    /// <summary>
+    /// Rename the specified factor view.
+    /// </summary>
+    /// <param name="view">The view to rename.</param>
+    /// <param name="newName">The new name for the view.</param>
+    void Rename(IView view, string newName);
 }
