@@ -170,11 +170,12 @@ public abstract class ListBoxNavigatorView : ViewBase<Box>
         OnRemove = new Event<string>();
 
         listBox = new ListBox();
-        listBox.Vexpand = true;
         listBox.AddCssClass("navigation-sidebar");
 
         addButton = Button.NewWithLabel("Add Item");
         mainPage = Box.New(Orientation.Vertical, 6);
+        // Without hexpand = true, the box will be narrow when empty.
+        mainPage.Hexpand = true;
         mainPage.Append(listBox);
         mainPage.Append(addButton);
 
