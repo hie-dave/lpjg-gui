@@ -31,7 +31,7 @@ public partial class InstructionFileParser
     /// A regular expression for detecting the start of a block.
     /// </summary>
     private static readonly Regex blockStartRegex = new Regex(
-        @"^\s*(\w+)\s+\""([^\""]+)\""\s*\(\s*$", RegexOptions.Compiled);
+        @"^\s*(\w+)\s+\""([^\""]+)\""\s*\((.*)", RegexOptions.Compiled);
 
     /// <summary>
     /// The parsed items in the file.
@@ -313,8 +313,8 @@ public partial class InstructionFileParser
         if (string.IsNullOrWhiteSpace(trimmedCurrentLine) || trimmedCurrentLine.StartsWith(commentChar))
             return new VerbatimLine(currentLine, lineNumber);
 
-        if (IsBlockStart(trimmedCurrentLine, out string? blockType, out string? blockName))
-            return ParseBlock(lines, currentLine, blockType, blockName, ref lineNumber);
+        if (IsBlockStart(trimmedCurrentLine, out string? blockType, out string? blockName, out string? inlineContent))
+            return ParseBlock(lines, currentLine, blockType, blockName, inlineContent, ref lineNumber);
         else
             return ParseTopLevelParameter(currentLine, lineNumber);
     }
@@ -333,55 +333,59 @@ public partial class InstructionFileParser
         string currentLine,
         string blockType,
         string blockName,
+        string inlineContent,
         ref int lineNumber)
     {
         Block block = new Block(blockType, blockName, lineNumber);
-        int parenthesesCount = 1;
-
         block.RawLines.Add(currentLine);
 
-        while (++lineNumber < lines.Count && parenthesesCount > 0)
+        // A list of all lines inside the block's parentheses, starting with any inline content.
+        List<string> contentLines = [inlineContent];
+
+        // First, check parenthesis balance on the inline content.
+        int parenthesesCount = 1;
+        string lineToCheck = inlineContent.SplitHonouringQuotes([commentChar]).First();
+        parenthesesCount += lineToCheck.Count(c => c == '(');
+        parenthesesCount -= lineToCheck.Count(c => c == ')');
+
+        // Gather subsequent lines until the block is closed.
+        int currentBlockLine = lineNumber;
+        while (++currentBlockLine < lines.Count && parenthesesCount > 0)
         {
-            string blockLine = lines[lineNumber];
+            string blockLine = lines[currentBlockLine];
             block.RawLines.Add(blockLine);
+            contentLines.Add(blockLine);
 
-            // Skip comments
-            if (blockLine.Trim().StartsWith(commentChar))
-                continue;
-
-            // Count parentheses, but ignore those in comments
-            int commentIndex = blockLine.IndexOf(commentChar);
-            string lineToCheck = commentIndex >= 0 ? blockLine[..commentIndex] : blockLine;
-
+            lineToCheck = blockLine.SplitHonouringQuotes([commentChar]).First();
             parenthesesCount += lineToCheck.Count(c => c == '(');
             parenthesesCount -= lineToCheck.Count(c => c == ')');
+        }
 
-            // If we're still in the block, try to parse parameters.
-            if (parenthesesCount > 0)
+        // Parse all the parameters from the collected content.
+        for (int i = 0; i < contentLines.Count; i++)
+        {
+            string contentLine = contentLines[i];
+            string contentToParse = contentLine.SplitHonouringQuotes([commentChar]).First();
+
+            if (TryParseParameter(contentToParse, out ParameterInfo? info))
             {
-                string trimmedLine = blockLine.Trim();
-                if (TryParseParameter(trimmedLine, out ParameterInfo? info))
-                {
-                    InstructionParameter param = new(info.Value);
-                    block.Parameters[info.Name] = param;
+                InstructionParameter param = new(info.Value);
+                block.Parameters[info.Name] = param;
 
-                    block.ParameterOccurrences.Add(new ParameterOccurrence(
-                        info.Name,
-                        param,
-                        lineNumber - block.StartLine,
-                        blockLine,
-                        info.PreNameSpacing,
-                        info.PreValueSpacing,
-                        info.PostValue
-                    ));
-                }
+                block.ParameterOccurrences.Add(new ParameterOccurrence(
+                    info.Name,
+                    param,
+                    i, // Relative line number in block content
+                    contentToParse, // The exact substring that was parsed
+                    info.PreNameSpacing,
+                    info.PreValueSpacing,
+                    info.PostValue
+                ));
             }
         }
 
-        block.EndLine = lineNumber;
-
-        // Move back one line since the main loop will increment
-        lineNumber--;
+        block.EndLine = currentBlockLine - 1;
+        lineNumber = block.EndLine;
 
         return block;
     }
@@ -415,7 +419,7 @@ public partial class InstructionFileParser
     /// <param name="blockType">The type of the block.</param>
     /// <param name="blockName">The name of the block.</param>
     /// <returns></returns>
-    private bool IsBlockStart(string line, [NotNullWhen(true)] out string? blockType, [NotNullWhen(true)] out string? blockName)
+    private bool IsBlockStart(string line, [NotNullWhen(true)] out string? blockType, [NotNullWhen(true)] out string? blockName, [NotNullWhen(true)] out string? inlineContent)
     {
         // Replace everything after a comment character, if one is present.
         line = line.SplitHonouringQuotes([commentChar]).First();
@@ -428,11 +432,15 @@ public partial class InstructionFileParser
 
             // Group 2 captures the content of the quotes, e.g., "shrub"
             blockName = match.Groups[2].Value;
+
+            // Group 3 captures any content within the parentheses on the same line.
+            inlineContent = match.Groups[3].Value;
             return true;
         }
 
         blockType = null;
         blockName = null;
+        inlineContent = null;
         return false;
     }
 
@@ -499,7 +507,7 @@ public partial class InstructionFileParser
         {
             if (line[valueEnd] == '"')
                 inQuotes = !inQuotes;
-            else if (line[valueEnd] == commentChar && !inQuotes)
+            else if (!inQuotes && (line[valueEnd] == commentChar || line[valueEnd] == ')'))
                 break;
             valueEnd++;
         }
@@ -555,23 +563,25 @@ public partial class InstructionFileParser
         }
         else
         {
-            // For existing parameters, update all occurrences
+            // For existing parameters, update the last occurrence.
             ParameterOccurrence occurrence = block.ParameterOccurrences.Last(p => p.Name == paramName);
-            occurrence.Value = newParam;
+            string oldParameterLine = occurrence.OriginalLine;
 
-            // Update the line in RawLines
-            string indent = occurrence.OriginalLine[..occurrence.OriginalLine.IndexOf(paramName)];
-            string newLine = $"{indent}{paramName} {newParam.AsString()}";
+            // Create the new parameter line string.
+            occurrence.Value = new InstructionParameter(value);
+            string newValueString = occurrence.Value.ToInsFileString();
+            string newParameterLine = $"{occurrence.PreNameSpacing}{occurrence.Name}{occurrence.PreValueSpacing}{newValueString}{occurrence.PostValue}";
 
-            // Preserve any comment after the parameter
-            int commentIndex = occurrence.OriginalLine.IndexOf(commentChar);
-            if (commentIndex >= 0)
+            // Find the raw line containing the old parameter text and replace it.
+            // This is more robust than relying on indices, especially for inline blocks.
+            for (int i = 0; i < block.RawLines.Count; i++)
             {
-                newLine += occurrence.OriginalLine[commentIndex..];
+                if (block.RawLines[i].Contains(oldParameterLine))
+                {
+                    block.RawLines[i] = block.RawLines[i].Replace(oldParameterLine, newParameterLine);
+                    break; // Assume the first match is the correct one.
+                }
             }
-
-            // Update the line in RawLines
-            block.RawLines[occurrence.LineNumber] = newLine;
         }
     }
 

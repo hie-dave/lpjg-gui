@@ -368,12 +368,35 @@ sla 53.1
         string content = "param \"test_param\" (str \"old_value\")";
         var parser = new InstructionFileParser(content, string.Empty);
 
-        // parser.SetBlockParameterValue("param", "test_param", "str", "new_value");
-        // string newContent = parser.GenerateContent();
+        parser.SetBlockParameterValue("param", "test_param", "str", "\"new_value\"");
 
-        // Assert.True(success);
-        // Assert.Contains("param \"test_param\" (str \"new_value\")", newContent);
-        // Assert.DoesNotContain("old_value", newContent);
+        string? value = parser.GetBlockParameter("param", "test_param", "str")?.AsString();
+        Assert.Equal("new_value", value);
+    }
+
+    [Fact]
+    public void TestGenerateInlineBlockParameter()
+    {
+        // Round-trip the content.
+        string content = "param \"test_param\" (str \"old_value\")";
+        var parser = new InstructionFileParser(content, string.Empty);
+        string newContent = parser.GenerateContent();
+
+        Assert.Equal(content, newContent);
+    }
+
+    [Fact]
+    public void TestGenerateModifiedInlineBlockParameter()
+    {
+        string content = "param \"test_param\" (str \"old_value\")";
+        var parser = new InstructionFileParser(content, string.Empty);
+
+        // Modify the parameter value and verify the emitted content.
+        parser.SetBlockParameterValue("param", "test_param", "str", "\"new_value\"");
+        string newContent = parser.GenerateContent();
+
+        Assert.Equal("param \"test_param\" (str \"new_value\")", newContent);
+        Assert.DoesNotContain("old_value", newContent);
     }
 
     [Fact]
@@ -388,5 +411,14 @@ sla 53.1
         double? g0 = parser.GetBlockParameter("group", "shrub", "g0")?.AsDouble();
         Assert.NotNull(g0);
         Assert.Equal(0.161, (double)g0, 1e-6);
+    }
+
+    [Fact]
+    public void TestInlineBlockDefinition()
+    {
+        string content = "param \"test\" (str \"asdf\")";
+        var parser = new InstructionFileParser(content, string.Empty);
+        string? str = parser.GetBlockParameter("param", "test", "str")?.UnquotedString;
+        Assert.Equal("asdf", str);
     }
 }
