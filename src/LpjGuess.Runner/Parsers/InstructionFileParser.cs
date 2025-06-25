@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
+using System.Text.RegularExpressions;
 using LpjGuess.Runner.Extensions;
 using LpjGuess.Runner.Models;
 
@@ -25,6 +26,12 @@ public partial class InstructionFileParser
     /// included in a simulation.
     /// </summary>
     private const string includeParameter = "include";
+
+    /// <summary>
+    /// A regular expression for detecting the start of a block.
+    /// </summary>
+    private static readonly Regex blockStartRegex = new Regex(
+        @"^\s*(\w+)\s+\""([^\""]+)\""\s*\(\s*$", RegexOptions.Compiled);
 
     /// <summary>
     /// The parsed items in the file.
@@ -58,7 +65,14 @@ public partial class InstructionFileParser
         // Ensure we preserve the exact line endings from original content
         lineEnding = GuessLineEnding(content);
 
-        items = Parse(content);
+        try
+        {
+            items = Parse(content);
+        }
+        catch (Exception error)
+        {
+            throw new Exception($"Unable to parse instruction file '{path}'", error);
+        }
     }
 
     /// <summary>
@@ -265,7 +279,16 @@ public partial class InstructionFileParser
 
         List<IFileContent> items = [];
         for (int lineNumber = 0; lineNumber < lines.Count; lineNumber++)
-            items.Add(ParseLine(lines, ref lineNumber));
+        {
+            try
+            {
+                items.Add(ParseLine(lines, ref lineNumber));
+            }
+            catch (Exception error)
+            {
+                throw new Exception($"Parser error on line {lineNumber + 1}", error);
+            }
+        }
 
         return items;
     }
@@ -397,12 +420,14 @@ public partial class InstructionFileParser
         // Replace everything after a comment character, if one is present.
         line = line.SplitHonouringQuotes([commentChar]).First();
 
-        // Match patterns like: group "C3G" ( or pft "TeBE" (
-        var parts = line.Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries);
-        if (parts.Length >= 3 && parts[^1] == "(" && parts[1].StartsWith('"') && parts[1].EndsWith('"'))
+        Match match = blockStartRegex.Match(line);
+        if (match.Success)
         {
-            blockType = parts[0];
-            blockName = parts[1].Trim('"');
+            // Group 1 captures the block type, e.g., "group"
+            blockType = match.Groups[1].Value;
+
+            // Group 2 captures the content of the quotes, e.g., "shrub"
+            blockName = match.Groups[2].Value;
             return true;
         }
 

@@ -375,4 +375,18 @@ sla 53.1
         // Assert.Contains("param \"test_param\" (str \"new_value\")", newContent);
         // Assert.DoesNotContain("old_value", newContent);
     }
+
+    [Fact]
+    public void TestBlockStartWithNoWhitespace()
+    {
+        // A line like `group "lowshrub"(` is a valid block header.
+        string content = @"group ""shrub""(
+    g0 0.161
+)
+";
+        var parser = new InstructionFileParser(content, string.Empty);
+        double? g0 = parser.GetBlockParameter("group", "shrub", "g0")?.AsDouble();
+        Assert.NotNull(g0);
+        Assert.Equal(0.161, (double)g0, 1e-6);
+    }
 }
