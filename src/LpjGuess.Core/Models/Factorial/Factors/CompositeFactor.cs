@@ -39,4 +39,10 @@ public class CompositeFactor : IFactor
         foreach (IFactor factor in Factors)
             factor.Apply(instructionFile);
     }
+
+    /// <inheritdoc />
+    public IEnumerable<(string, string)> GetChanges()
+    {
+        return Factors.SelectMany(f => f.GetChanges());
+    }
 }

@@ -9,7 +9,7 @@ namespace LpjGuess.Frontend.Events;
 /// <summary>
 /// Encapsulates a change to a model's colour provider.
 /// </summary>
-public class ColourProviderChangeEvent<TObject> : StyleProviderChangeEvent<TObject, Colour>
+public class ColourProviderChangeEvent<TObject> : StyleProviderChangeEvent<TObject, Colour> where TObject : notnull
 {
     /// <summary>
     /// Create a new <see cref="ColourProviderChangeEvent{TObject}"/> instance.

@@ -1,3 +1,4 @@
+using LpjGuess.Frontend.Commands;
 using LpjGuess.Frontend.Interfaces;
 using LpjGuess.Frontend.Interfaces.Commands;
 
@@ -16,12 +17,18 @@ public abstract class PresenterBase<TView> : IPresenter<TView>
 	protected readonly TView view;
 
 	/// <summary>
+	/// The command registry.
+	/// </summary>
+	protected readonly ICommandRegistry registry;
+
+	/// <summary>
 	/// Create a new <see cref="PresenterBase{TView}"/> instance.
 	/// </summary>
 	/// <param name="view">The view.</param>
 	public PresenterBase(TView view)
 	{
 		this.view = view;
+		registry = CommandRegistry.Instance;
 	}
 
 	/// <inheritdoc />
@@ -41,6 +48,6 @@ public abstract class PresenterBase<TView> : IPresenter<TView>
 	/// <param name="command">The command to invoke.</param>
 	protected virtual void InvokeCommand(ICommand command)
 	{
-		command.Execute();
+		registry.Execute(command);
 	}
 }

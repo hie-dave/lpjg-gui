@@ -11,7 +11,7 @@ namespace LpjGuess.Frontend.Commands;
 /// </summary>
 /// <typeparam name="TObject">The model type.</typeparam>
 /// <typeparam name="TStyle">The style type.</typeparam>
-public abstract class StyleProviderChangeCommandBase<TObject, TStyle> : ICommand where TStyle : struct
+public abstract class StyleProviderChangeCommandBase<TObject, TStyle> : ICommand where TStyle : struct where TObject : notnull
 {
     /// <summary>
     /// The target object.
@@ -64,6 +64,12 @@ public abstract class StyleProviderChangeCommandBase<TObject, TStyle> : ICommand
     public void Undo()
     {
         setValue(target, oldValue);
+    }
+
+    /// <inheritdoc />
+    public string GetDescription()
+    {
+        return $"Change style provider of {target.GetType().Name} to {newValue}";
     }
 
     /// <summary>

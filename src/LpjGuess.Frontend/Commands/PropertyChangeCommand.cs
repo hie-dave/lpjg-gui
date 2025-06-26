@@ -57,4 +57,10 @@ public class PropertyChangeCommand<TObject, TValue> : ICommand
     {
         setValue(target, oldValue);
     }
+
+    /// <inheritdoc />
+    public string GetDescription()
+    {
+        return $"Change property {oldValue} to {newValue}";
+    }
 }

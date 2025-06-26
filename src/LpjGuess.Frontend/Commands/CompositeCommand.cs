@@ -40,4 +40,10 @@ public class CompositeCommand : ICommand
             commands[i].Undo();
         }
     }
+
+    /// <inheritdoc />
+    public string GetDescription()
+    {
+        return $"Composite Command of {commands.Count} commands";
+    }
 }

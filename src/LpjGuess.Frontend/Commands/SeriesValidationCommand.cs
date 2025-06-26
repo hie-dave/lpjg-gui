@@ -52,6 +52,12 @@ public abstract class SeriesValidationCommand<T> : ICommand where T : ISeries
             generatedCommands[i].Undo();
     }
 
+    /// <inheritdoc />
+    public string GetDescription()
+    {
+        return $"Validate {series.GetType().Name} series '{series.Title}'";
+    }
+
     /// <summary>
     /// Validates the series and generates commands to fix any inconsistencies.
     /// </summary>

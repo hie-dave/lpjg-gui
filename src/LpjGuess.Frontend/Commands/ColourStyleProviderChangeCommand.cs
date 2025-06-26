@@ -8,7 +8,7 @@ namespace LpjGuess.Frontend.Commands;
 /// <summary>
 /// A command to change the style provider of a model's style property.
 /// </summary>
-public class ColourStyleProviderChangeCommand<TObject> : StyleProviderChangeCommandBase<TObject, Colour>
+public class ColourStyleProviderChangeCommand<TObject> : StyleProviderChangeCommandBase<TObject, Colour> where TObject : notnull
 {
     /// <summary>
     /// Create a new <see cref="ColourStyleProviderChangeCommand{TObject}"/>

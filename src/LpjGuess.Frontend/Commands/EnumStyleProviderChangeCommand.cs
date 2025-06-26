@@ -8,7 +8,7 @@ namespace LpjGuess.Frontend.Commands;
 /// <summary>
 /// A command to change the style provider of a model's style property.
 /// </summary>
-public class EnumStyleProviderChangeCommand<TObject, TStyle> : StyleProviderChangeCommandBase<TObject, TStyle> where TStyle : struct, Enum
+public class EnumStyleProviderChangeCommand<TObject, TStyle> : StyleProviderChangeCommandBase<TObject, TStyle> where TStyle : struct, Enum where TObject : notnull
 {
     /// <summary>
     /// Create a new <see cref="EnumStyleProviderChangeCommand{TObject, TStyle}"/> instance.

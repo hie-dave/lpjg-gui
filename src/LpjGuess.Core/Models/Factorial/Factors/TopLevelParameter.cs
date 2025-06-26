@@ -40,4 +40,10 @@ public class TopLevelParameter : IFactor
     {
         instructionFile.SetTopLevelParameterValue(Name, Value);
     }
+
+    /// <inheritdoc />
+    public IEnumerable<(string, string)> GetChanges()
+    {
+        return [(Name, Value)];
+    }
 }

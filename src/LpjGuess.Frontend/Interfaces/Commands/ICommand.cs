@@ -14,4 +14,10 @@ public interface ICommand
     /// Undo the command.
     /// </summary>
     void Undo();
+
+    /// <summary>
+    /// Get a description of the command.
+    /// </summary>
+    /// <returns>The description of the command.</returns>
+    string GetDescription();
 }

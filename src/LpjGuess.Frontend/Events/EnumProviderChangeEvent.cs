@@ -8,7 +8,7 @@ namespace LpjGuess.Frontend.Events;
 /// <summary>
 /// Encapsulates a change to the style provider for an enum property.
 /// </summary>
-public class EnumProviderChangeEvent<TObject, TStyle> : StyleProviderChangeEvent<TObject, TStyle> where TStyle : struct, Enum
+public class EnumProviderChangeEvent<TObject, TStyle> : StyleProviderChangeEvent<TObject, TStyle> where TStyle : struct, Enum where TObject : notnull
 {
     /// <summary>
     /// Create a new <see cref="EnumProviderChangeEvent{TObject, TStyle}"/> instance.
