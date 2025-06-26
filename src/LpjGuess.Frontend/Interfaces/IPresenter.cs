@@ -1,3 +1,5 @@
+using LpjGuess.Frontend.Interfaces.Presenters;
+
 namespace LpjGuess.Frontend.Interfaces;
 
 /// <summary>
@@ -6,7 +8,7 @@ namespace LpjGuess.Frontend.Interfaces;
 /// <remarks>
 /// Could make this type generic on the view type.
 /// </remarks>
-public interface IPresenter<out T> : IDisposable where T : IView
+public interface IPresenter<out T> : IPresenter where T : IView
 {
 	/// <summary>
 	/// Get the view owned by this presenter.

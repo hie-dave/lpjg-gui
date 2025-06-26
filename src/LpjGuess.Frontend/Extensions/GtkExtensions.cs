@@ -74,7 +74,7 @@ public static class GtkExtensions
 	/// <inheritdoc />
 	public static void AddApplicationMenuItem(this Menu menu, string domain, string name, SignalHandler<SimpleAction, SimpleAction.ActivateSignalArgs> callback, string? hotkey = null)
 	{
-		Application app = MainView.AppInstance;
+		Application? app = Gio.Application.GetDefault() as Application;
 
 		string actionName = name.SanitiseActionName();
 		string fullName = $"{domain}.{actionName}";
@@ -82,9 +82,16 @@ public static class GtkExtensions
 		menu.Append($"_{name}", fullName);
 		var action = SimpleAction.New(actionName, null);
 		action.OnActivate += callback;
-		if (hotkey != null)
-			app.SetAccelsForAction(fullName, new[] { hotkey });
-		app.AddAction(action);
+		if (app != null)
+		{
+			if (hotkey != null)
+				app.SetAccelsForAction(fullName, new[] { hotkey });
+			app.AddAction(action);
+		}
+		else
+		{
+			Console.Error.WriteLine($"Failed to add menu item '{fullName}' because application is null");
+		}
 		// action.Dispose();
 	}
 
@@ -131,8 +138,9 @@ public static class GtkExtensions
 		var action = SimpleAction.New(actionName, null);
 		action.OnActivate += callback;
 		map.AddAction(action);
-		if (hotkey != null)
-			MainView.AppInstance.SetAccelsForAction(fullName, new[] { hotkey });
+		Gio.Application? app = Gio.Application.GetDefault();
+		if (hotkey != null && app is Application gtkApp)
+			gtkApp.SetAccelsForAction(fullName, [hotkey]);
 	}
 
 	/// <summary>

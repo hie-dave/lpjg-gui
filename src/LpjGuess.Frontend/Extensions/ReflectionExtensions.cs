@@ -7,6 +7,43 @@ namespace LpjGuess.Frontend.Extensions;
 /// </summary>
 public static class ReflectionExtensions
 {
+	private static readonly Dictionary<Type, string> typeCache = new()
+	{
+		{ typeof(string), "string" },
+		{ typeof(short), "short" },
+		{ typeof(ushort), "ushort" },
+		{ typeof(int), "int" },
+		{ typeof(uint), "uint" },
+		{ typeof(long), "long" },
+		{ typeof(ulong), "ulong" },
+		{ typeof(float), "float" },
+		{ typeof(double), "double" },
+		{ typeof(bool), "bool" },
+		{ typeof(char), "char" },
+		{ typeof(byte), "byte" },
+		{ typeof(sbyte), "sbyte" },
+		{ typeof(decimal), "decimal" },
+	};
+
+	/// <summary>
+	/// Get a friendly name for the type.
+	/// </summary>
+	/// <param name="type">The type.</param>
+	/// <returns>A friendly name for the type.</returns>
+	public static string ToFriendlyName(this Type type)
+	{
+		if (typeCache.TryGetValue(type, out string? name))
+			return name;
+		if (type.IsGenericType)
+		{
+			Type[] typeArguments = type.GetGenericArguments();
+			string baseName = type.Name.Remove(type.Name.IndexOf('`'));
+			string args = string.Join(", ", typeArguments.Select(t => t.ToFriendlyName()));
+			return $"{baseName}<{args}>";
+		}
+		return type.Name;
+	}
+
 	/// <summary>
 	/// Find all implementations of an interface.
 	/// </summary>

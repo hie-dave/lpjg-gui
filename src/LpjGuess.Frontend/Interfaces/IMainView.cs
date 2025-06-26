@@ -70,4 +70,15 @@ public interface IMainView : IView
 	/// <param name="title">The new window title.</param>
 	/// <param name="subtitle">The (optional) new window subtitle. Will be hidden if null.</param>
 	void SetTitle(string title, string? subtitle = null);
+
+	/// <summary>
+	/// Initialise the view.
+	/// </summary>
+	/// <param name="ct">Cancellation token.</param>
+	Task InitialiseAsync(CancellationToken ct = default);
+
+	/// <summary>
+	/// Show the main window.
+	/// </summary>
+	void Show();
 }

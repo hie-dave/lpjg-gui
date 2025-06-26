@@ -14,6 +14,7 @@
     <!-- fixme: libadwaita is not portable -->
     <PackageReference Include="GirCore.Adw-1" Version="0.6.3" />
     <PackageReference Include="GirCore.GtkSource-5" Version="0.6.3" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.6" />
 
     <ProjectReference Include="../LpjGuess.Core/LpjGuess.Core.csproj" />
     <ProjectReference Include="../LpjGuess.Runner/LpjGuess.Runner.csproj" />

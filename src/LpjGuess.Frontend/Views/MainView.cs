@@ -39,17 +39,7 @@ public class MainView : ApplicationWindow, IMainView
 	/// </summary>
 	private const int spacing = 5;
 
-	/// <summary>
-	/// The application instance.
-	/// </summary>
-	/// <remarks>
-	/// Technically this will be null between the invocation of the static
-	/// constructor, and the invocation of the instance constructor. In
-	/// practice, this property is never accessed during that (brief) window.
-	/// </remarks>
 #pragma warning disable CS8618
-	public static Application AppInstance { get; private set; }
-
 	/// <summary>
 	/// The main window instance.
 	/// </summary>
@@ -98,10 +88,8 @@ public class MainView : ApplicationWindow, IMainView
 	/// <summary>
 	/// Constructor.
 	/// </summary>
-	/// <param name="app"></param>
-	public MainView(Application app) : base()
+	public MainView() : base()
 	{
-		AppInstance = app;
 		Instance = this;
 
 		OnOpen = new Event<string>();
@@ -111,7 +99,8 @@ public class MainView : ApplicationWindow, IMainView
 
 		OnCloseRequest += OnClosed;
 
-		SetApplication(app);
+		if (Gio.Application.GetDefault() is Gtk.Application gtkApp)
+			SetApplication(gtkApp);
 
 		menu = Menu.New();
 
