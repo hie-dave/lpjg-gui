@@ -1,5 +1,6 @@
 using LpjGuess.Frontend.Interfaces;
 using LpjGuess.Frontend.Interfaces.Presenters;
+using LpjGuess.Frontend.Presenters;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace LpjGuess.Frontend.DependencyInjection;
@@ -27,5 +28,14 @@ public class PresenterFactory : IPresenterFactory
     public TPresenter CreatePresenter<TPresenter>() where TPresenter : IPresenter
     {
         return serviceProvider.GetRequiredService<TPresenter>();
+    }
+
+    /// <inheritdoc />
+    public TPresenter CreatePresenter<TPresenter, TView, TModel>(TModel model)
+        where TPresenter : IPresenter<TView, TModel>
+        where TView : IView
+        where TModel : notnull
+    {
+        return ActivatorUtilities.CreateInstance<TPresenter>(serviceProvider, model);
     }
 }

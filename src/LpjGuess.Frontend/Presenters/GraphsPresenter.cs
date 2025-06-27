@@ -7,6 +7,7 @@ using LpjGuess.Core.Models.Graphing.Style.Identifiers;
 using LpjGuess.Core.Models.Graphing.Style.Providers;
 using LpjGuess.Core.Models.Graphing.Style.Strategies;
 using LpjGuess.Frontend.Factories;
+using LpjGuess.Frontend.Interfaces.Commands;
 using LpjGuess.Frontend.Interfaces.Factories;
 using LpjGuess.Frontend.Interfaces.Presenters;
 using LpjGuess.Frontend.Interfaces.Views;
@@ -18,7 +19,7 @@ namespace LpjGuess.Frontend.Presenters;
 /// A presenter which controls a graphs view to allow the user to navigate
 /// between and view multiple graphs.
 /// </summary>
-public class GraphsPresenter : PresenterBase<IGraphsView>, IGraphsPresenter
+public class GraphsPresenter : PresenterBase<IGraphsView, IReadOnlyList<Graph>>, IGraphsPresenter
 {
 	/// <summary>
 	/// Dictionary mapping plot models to graph objects.
@@ -42,10 +43,12 @@ public class GraphsPresenter : PresenterBase<IGraphsView>, IGraphsPresenter
 	/// <param name="view">The view object.</param>
 	/// <param name="graphs">The graphs to be displayed.</param>
 	/// <param name="instructionFiles">The instruction files for which data should be displayed.</param>
+	/// <param name="registry">The command registry to use for command execution.</param>
 	public GraphsPresenter(
 		IGraphsView view,
 		IReadOnlyList<Graph> graphs,
-		IEnumerable<string> instructionFiles) : base(view)
+		IEnumerable<string> instructionFiles,
+		ICommandRegistry registry) : base(view, graphs, registry)
 	{
 		plots = new Dictionary<IGraphView, IGraphPresenter>();
 		this.view.OnAddGraph.ConnectTo(OnAddGraph);
@@ -96,7 +99,7 @@ public class GraphsPresenter : PresenterBase<IGraphsView>, IGraphsPresenter
 		{
 			// Construct new child presenter/view to display the oxyplot model.
 			IGraphView graphView = new GraphView();
-			IGraphPresenter presenter = new GraphPresenter(graphView, graph, instructionFiles, seriesPresenterFactory);
+			IGraphPresenter presenter = new GraphPresenter(graphView, graph, instructionFiles, seriesPresenterFactory, registry);
 			presenter.OnTitleChanged.ConnectTo(t => OnGraphRenamed(t, graphView));
 
 			plots.Add(graphView, presenter);

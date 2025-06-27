@@ -15,13 +15,8 @@ namespace LpjGuess.Frontend.Presenters;
 /// <summary>
 /// A presenter for a discrete values view.
 /// </summary>
-public class DiscreteValuesPresenter : PresenterBase<IDiscreteValuesView>, IValueGeneratorPresenter
+public class DiscreteValuesPresenter : PresenterBase<IDiscreteValuesView, IValueGenerator>, IValueGeneratorPresenter
 {
-    /// <summary>
-    /// The model object.
-    /// </summary>
-    private IValueGenerator model;
-
     /// <summary>
     /// Called when the data type has been changed by the user. The event
     /// parameter is the new value generator instance.
@@ -39,9 +34,12 @@ public class DiscreteValuesPresenter : PresenterBase<IDiscreteValuesView>, IValu
     /// </summary>
     /// <param name="model">The model to present.</param>
     /// <param name="view">The view to present the model on.</param>
-    public DiscreteValuesPresenter(IValueGenerator model, IDiscreteValuesView view) : base(view)
+    /// <param name="registry">The command registry to use for command execution.</param>
+    public DiscreteValuesPresenter(
+        IValueGenerator model,
+        IDiscreteValuesView view,
+        ICommandRegistry registry) : base(view, model, registry)
     {
-        this.model = model;
         OnTypeChanged = new Event<IValueGenerator>();
 
         view.OnAddValue.ConnectTo(OnAddValue);

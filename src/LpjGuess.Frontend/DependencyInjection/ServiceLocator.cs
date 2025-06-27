@@ -37,6 +37,7 @@ public class ServiceLocator : IServiceLocator
         // Register services.
         services.AddSingleton<ICommandRegistry, CommandRegistry>();
         services.AddSingleton<IPresenterFactory, PresenterFactory>();
+        services.AddSingleton<IViewFactory, ViewFactory>();
         services.AddSingleton(Configuration.Instance);
 
         // Register views.

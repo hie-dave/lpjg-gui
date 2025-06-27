@@ -17,13 +17,8 @@ namespace LpjGuess.Frontend.Presenters;
 /// <summary>
 /// A presenter for a composite factor.
 /// </summary>
-public class CompositeFactorPresenter : PresenterBase<ICompositeFactorView>, IFactorPresenter
+public class CompositeFactorPresenter : PresenterBase<ICompositeFactorView, CompositeFactor>, IFactorPresenter
 {
-    /// <summary>
-    /// The model to present.
-    /// </summary>
-    private readonly CompositeFactor model;
-
     /// <summary>
     /// The presenters responsible for managing the individual factors.
     /// </summary>
@@ -33,9 +28,6 @@ public class CompositeFactorPresenter : PresenterBase<ICompositeFactorView>, IFa
     public IFactor Model => model;
 
     /// <inheritdoc />
-    public IView View => view;
-
-    /// <inheritdoc />
     public Event<string> OnRenamed { get; private init; }
 
     /// <summary>
@@ -43,9 +35,12 @@ public class CompositeFactorPresenter : PresenterBase<ICompositeFactorView>, IFa
     /// </summary>
     /// <param name="model">The model to present.</param>
     /// <param name="view">The view to present the model on.</param>
-    public CompositeFactorPresenter(CompositeFactor model, ICompositeFactorView view) : base(view)
+    /// <param name="registry">The command registry to use for command execution.</param>
+    public CompositeFactorPresenter(
+        CompositeFactor model,
+        ICompositeFactorView view,
+        ICommandRegistry registry) : base(view, model, registry)
     {
-        this.model = model;
         factorPresenters = new List<IFactorPresenter>();
         OnRenamed = new Event<string>();
         view.OnChanged.ConnectTo(OnChanged);
@@ -77,7 +72,7 @@ public class CompositeFactorPresenter : PresenterBase<ICompositeFactorView>, IFa
     private void RefreshView()
     {
         List<IFactorPresenter> presenters = model.Factors.Select(CreateFactorPresenter).ToList();
-        view.Populate(model.GetName(), presenters.Select(p => new NamedView(p.View, p.Model.GetName())));
+        view.Populate(model.GetName(), presenters.Select(p => new NamedView(p.GetView(), p.Model.GetName())));
         presenters.ForEach(p => p.OnRenamed.ConnectTo(_ => OnPresenterRenamed()));
 
         factorPresenters.ForEach(p => p.Dispose());

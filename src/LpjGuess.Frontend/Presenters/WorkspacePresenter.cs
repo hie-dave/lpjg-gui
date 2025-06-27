@@ -2,9 +2,11 @@ using System.Linq.Expressions;
 using LpjGuess.Core.Extensions;
 using LpjGuess.Core.Models;
 using LpjGuess.Frontend.Delegates;
+using LpjGuess.Frontend.DependencyInjection;
 using LpjGuess.Frontend.Enumerations;
 using LpjGuess.Frontend.Extensions;
 using LpjGuess.Frontend.Interfaces;
+using LpjGuess.Frontend.Interfaces.Commands;
 using LpjGuess.Frontend.Interfaces.Presenters;
 using LpjGuess.Frontend.Views;
 using LpjGuess.Runner.Models;
@@ -15,23 +17,13 @@ namespace LpjGuess.Frontend.Presenters;
 /// A presenter for a view which displays an instruction file. This presenter
 /// handles logic for running the file or aborting an ongoing run.
 /// </summary>
-public class WorkspacePresenter : IPresenter<IWorkspaceView>
+public class WorkspacePresenter : PresenterBase<IWorkspaceView, Workspace>, IWorkspacePresenter
 {
-	/// <summary>
-	/// The current workspace metadata.
-	/// </summary>
-	private readonly Workspace workspace;
-
-	/// <summary>
-	/// The view object.
-	/// </summary>
-	private readonly IWorkspaceView view;
-
 	/// <summary>
 	/// A preferences presenter which will be displayed if no runners exist
 	/// when the user clicks run.
 	/// </summary>
-	private PreferencesPresenter? propertiesPresenter;
+	private IPreferencesPresenter? propertiesPresenter;
 
 	/// <summary>
 	/// The task representing the currently-running simulations.
@@ -59,6 +51,11 @@ public class WorkspacePresenter : IPresenter<IWorkspaceView>
 	private readonly IGraphsPresenter graphsPresenter;
 
 	/// <summary>
+	/// The presenter factory.
+	/// </summary>
+	private readonly IPresenterFactory presenterFactory;
+
+	/// <summary>
 	/// Cancellation token used to cancel running simulations.
 	/// </summary>
 	private CancellationTokenSource cancellationTokenSource = new();
@@ -67,15 +64,20 @@ public class WorkspacePresenter : IPresenter<IWorkspaceView>
 	/// Create a new <see cref="WorkspacePresenter"/> instance for the given file.
 	/// </summary>
 	/// <param name="workspace">The instruction file.</param>
-	public WorkspacePresenter(Workspace workspace)
+	/// <param name="view">The view object.</param>
+	/// <param name="registry">The command registry to use for command execution.</param>
+	/// <param name="presenterFactory">The presenter factory.</param>
+	public WorkspacePresenter(
+		Workspace workspace,
+		IWorkspaceView view,
+		ICommandRegistry registry,
+		IPresenterFactory presenterFactory) : base(view, workspace, registry)
 	{
-		this.workspace = workspace;
-		view = new WorkspaceView();
-
+		this.presenterFactory = presenterFactory;
 		// Construct child presenters.
 		insFilesPresenter = new InstructionFilesPresenter(view.InsFilesView);
 		outputsPresenter = new OutputsPresenter(view.OutputsView);
-		graphsPresenter = new GraphsPresenter(view.GraphsView, workspace.Graphs, workspace.InstructionFiles);
+		graphsPresenter = new GraphsPresenter(view.GraphsView, workspace.Graphs, workspace.InstructionFiles, registry);
 		experimentsPresenter = new ExperimentsPresenter(view.ExperimentsView);
 
 		// Populate views.
@@ -102,16 +104,16 @@ public class WorkspacePresenter : IPresenter<IWorkspaceView>
 		// either directly, or indirectly (ie imported by another ins file).
 
 		// Add the instruction file to the workspace.
-        workspace.InstructionFiles.Add(file);
+        model.InstructionFiles.Add(file);
 
 		// Save the changes to the workspace.
-		workspace.Save();
+		model.Save();
 
 		// Update the view.
-		insFilesPresenter.Populate(workspace.InstructionFiles);
+		insFilesPresenter.Populate(model.InstructionFiles);
 
 		// Update the graphs view.
-		graphsPresenter.UpdateInstructionFiles(workspace.InstructionFiles);
+		graphsPresenter.UpdateInstructionFiles(model.InstructionFiles);
     }
 
 	/// <summary>
@@ -121,17 +123,17 @@ public class WorkspacePresenter : IPresenter<IWorkspaceView>
 	/// <exception cref="ArgumentException">Thrown if the specified file is not found in the workspace.</exception>
 	private void OnRemoveInsFile(string file)
 	{
-		if (!workspace.InstructionFiles.Contains(file))
+		if (!model.InstructionFiles.Contains(file))
 			throw new ArgumentException($"File '{file}' not found in workspace");
 
 		// Remove the instruction file from the workspace.
-		workspace.InstructionFiles.Remove(file);
+		model.InstructionFiles.Remove(file);
 
 		// Save the changes to the workspace.
-		workspace.Save();
+		model.Save();
 
 		// Update the view.
-		insFilesPresenter.Populate(workspace.InstructionFiles);
+		insFilesPresenter.Populate(model.InstructionFiles);
 	}
 
     /// <summary>
@@ -143,7 +145,8 @@ public class WorkspacePresenter : IPresenter<IWorkspaceView>
 		{
 			if (propertiesPresenter == null)
 			{
-				propertiesPresenter = new PreferencesPresenter(Configuration.Instance, OnPreferencesClosed);
+				propertiesPresenter = presenterFactory.CreatePresenter<IPreferencesPresenter>();
+				propertiesPresenter.OnClosed.ConnectTo(OnPreferencesClosed);
 				propertiesPresenter.Show();
 			}
 			else
@@ -175,14 +178,14 @@ public class WorkspacePresenter : IPresenter<IWorkspaceView>
 	/// <summary>
 	/// Dispose of native resources.
 	/// </summary>
-	public void Dispose()
+	public override void Dispose()
 	{
 		SaveWorkspace();
 
-		view.Dispose();
 		if (IsRunning())
 			cancellationTokenSource.Cancel();
 		simulations = null;
+		base.Dispose();
 	}
 
 	/// <summary>
@@ -194,13 +197,10 @@ public class WorkspacePresenter : IPresenter<IWorkspaceView>
 		insFilesPresenter.SaveChanges();
 
 		// Save changes to the file.
-		workspace.Graphs = graphsPresenter.GetGraphs().ToList();
-		workspace.Experiments = experimentsPresenter.GetExperiments().ToList();
-		workspace.Save();
+		model.Graphs = graphsPresenter.GetGraphs().ToList();
+		model.Experiments = experimentsPresenter.GetExperiments().ToList();
+		model.Save();
     }
-
-    /// <inheritdoc />
-    public IWorkspaceView GetView() => view;
 
 	/// <summary>
 	/// Run the file with the specified runner configuration.
@@ -221,7 +221,7 @@ public class WorkspacePresenter : IPresenter<IWorkspaceView>
 			cancellationTokenSource = new CancellationTokenSource();
 
 		// var simulations = workspace.InstructionFiles.Select(i => new SimulationConfiguration(i, view.InputModule));
-		IEnumerable<Job> jobs = workspace.InstructionFiles.Select(i => new Job(GetJobName(i), i));
+		IEnumerable<Job> jobs = model.InstructionFiles.Select(i => new Job(GetJobName(i), i));
 		int cpuCount = Environment.ProcessorCount;
 		var progress = new CustomProgressReporter(ProgressCallback);
 		IOutputHelper outputHandler = new CustomOutputHelper(StdoutCallback, StderrCallback);
@@ -302,7 +302,7 @@ public class WorkspacePresenter : IPresenter<IWorkspaceView>
 		}
 		catch (Exception error)
 		{
-			throw new Exception($"Unable to abort execution of file '{workspace.InstructionFiles}'", error);
+			throw new Exception($"Unable to abort execution of file '{model.InstructionFiles}'", error);
 		}
 	}
 
@@ -314,7 +314,7 @@ public class WorkspacePresenter : IPresenter<IWorkspaceView>
 		try
 		{
 			view.ShowRunButton(true);
-			outputsPresenter.Populate(workspace.InstructionFiles);
+			outputsPresenter.Populate(model.InstructionFiles);
 			graphsPresenter.RefreshAll();
 		}
 		catch (Exception error)

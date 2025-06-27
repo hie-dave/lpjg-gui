@@ -9,16 +9,15 @@ namespace LpjGuess.Frontend.Interfaces.Presenters;
 /// An interface to a presenter which controls a factorial view to display the
 /// contents of a factorial generator.
 /// </summary>
-public interface IFactorialPresenter : IPresenter<IFactorialView>
+public interface IFactorialPresenter : IPresenter<IFactorialView, FactorialGenerator>
 {
     /// <summary>
     /// Event which is raised when the factorial generator changes.
     /// </summary>
-    Event<IModelChange<FactorialGenerator>> OnChanged { get; }
+    Event OnChanged { get; }
 
     /// <summary>
     /// Populate the presenter with the given factorial generator.
     /// </summary>
-    /// <param name="factorial">The factorial generator with which to populate the presenter.</param>
-    void Populate(FactorialGenerator factorial);
+    void Refresh();
 }

@@ -1,5 +1,7 @@
 using LpjGuess.Frontend.Classes;
+using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.Extensions;
+using LpjGuess.Frontend.Interfaces;
 using LpjGuess.Frontend.Interfaces.Presenters;
 using LpjGuess.Frontend.Interfaces.Views;
 using LpjGuess.Frontend.Presenters.Runners;
@@ -13,17 +15,12 @@ namespace LpjGuess.Frontend.Presenters;
 /// <summary>
 /// Presenter for a <see cref="Configuration"/> instance.
 /// </summary>
-public class PreferencesPresenter : IDialogPresenter
+public class PreferencesPresenter : IPreferencesPresenter
 {
 	/// <summary>
 	/// The preferences object.
 	/// </summary>
 	private readonly Configuration preferences;
-
-	/// <summary>
-	/// Action to be invoked when the dialog is closed.
-	/// </summary>
-	private readonly Action onClose;
 
 	/// <summary>
 	/// The view object.
@@ -35,15 +32,17 @@ public class PreferencesPresenter : IDialogPresenter
 	/// </summary>
 	private IEnumerable<IRunnerPresenter> runnerPresenters;
 
+	/// <inheritdoc />
+	public Event OnClosed => view.OnClose;
+
 	/// <summary>
 	/// Create a new <see cref="PreferencesPresenter"/> instance.
 	/// </summary>
 	/// <param name="preferences">The preferences object.</param>
-	/// <param name="onClose">Function to be called when the dialog is closed.</param>
-	public PreferencesPresenter(Configuration preferences, Action onClose)
+	public PreferencesPresenter(Configuration preferences)
 	{
 		this.preferences = preferences;
-		this.onClose = onClose;
+
 		runnerPresenters = GetRunnerPresenters().ToList();
 		view = new PreferencesView(preferences.PreferDarkMode, preferences.GoToLogsTabOnRun, runnerPresenters.Select(p => p.GetMetadata()).ToList());
 		view.DarkModeChanged.ConnectTo(OnToggleDarkMode);
@@ -52,8 +51,10 @@ public class PreferencesPresenter : IDialogPresenter
 		view.OnDeleteRunner.ConnectTo(OnDeleteRunner);
 		view.OnEditRunner.ConnectTo(OnEditRunner);
 		view.OnToggleDefaultRunner.ConnectTo(OnToggleDefaultRunner);
-		view.OnClose.ConnectTo(onClose);
 	}
+
+	/// <inheritdoc />
+	public IView GetView() => view;
 
 	private IEnumerable<IRunnerPresenter> GetRunnerPresenters()
 	{

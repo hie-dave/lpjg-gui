@@ -6,7 +6,6 @@ using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.Interfaces.Views;
 using LpjGuess.Frontend.Utility.Gtk;
 using LpjGuess.Frontend.Enumerations;
-using FileChooserDialog = LpjGuess.Frontend.Views.Dialogs.FileChooserDialog;
 
 namespace LpjGuess.Frontend.Views;
 
@@ -14,7 +13,7 @@ namespace LpjGuess.Frontend.Views;
 /// A view which displays the contents of an workspace file to the user, along
 /// with controls for running the file.
 /// </summary>
-public class WorkspaceView : Box, IWorkspaceView
+public class WorkspaceView : ViewBase<Box>, IWorkspaceView
 {
 	/// <summary>
 	/// Spacing between internal widgets (in px).
@@ -125,14 +124,11 @@ public class WorkspaceView : Box, IWorkspaceView
 	/// <summary>
 	/// Create a new <see cref="WorkspaceView"/> instance for a particular .ins file.
 	/// </summary>
-	public WorkspaceView() : base()
+	public WorkspaceView() : base(Box.New(Orientation.Vertical, spacing))
 	{
 		OnRun = new Event<string?>();
 		OnStop = new Event();
 		OnAddRunOption = new Event();
-
-		SetOrientation(Orientation.Vertical);
-		Spacing = spacing;
 
 		addFileDummyWidget = new Box();
 		addFileDummyWidget.Name = addFileDummyWidgetName;
@@ -193,11 +189,11 @@ public class WorkspaceView : Box, IWorkspaceView
 		progressBar.Halign = Align.Fill;
 		progressBar.Valign = Align.End;
 		progressBar.Visible = false;
-		Append(notebook);
-		Append(inputModuleBox);
-		Append(runBox);
-		Append(stop);
-		Append(progressBar);
+		widget.Append(notebook);
+		widget.Append(inputModuleBox);
+		widget.Append(runBox);
+		widget.Append(stop);
+		widget.Append(progressBar);
 
 		ConnectEvents();
 	}
@@ -233,9 +229,6 @@ public class WorkspaceView : Box, IWorkspaceView
 	/// A view which allows the user to browse the raw outputs from the model.
 	/// </summary>
 	public IOutputsView OutputsView => outputsView;
-
-	/// <inheritdoc />
-	public Widget GetWidget() => this;
 
 	/// <summary>
 	/// Dispose of native resources.

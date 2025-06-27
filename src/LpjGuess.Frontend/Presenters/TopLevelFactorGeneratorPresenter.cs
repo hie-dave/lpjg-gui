@@ -17,13 +17,10 @@ namespace LpjGuess.Frontend.Presenters;
 /// <summary>
 /// A presenter for a top-level factor generator.
 /// </summary>
-public class TopLevelFactorGeneratorPresenter : PresenterBase<ITopLevelFactorGeneratorView>, IFactorGeneratorPresenter
+public class TopLevelFactorGeneratorPresenter : 
+    PresenterBase<ITopLevelFactorGeneratorView, TopLevelFactorGenerator>,
+    IFactorGeneratorPresenter<ITopLevelFactorGeneratorView, TopLevelFactorGenerator>
 {
-    /// <summary>
-    /// The model instance managed by this presenter.
-    /// </summary>
-    private readonly TopLevelFactorGenerator model;
-
     /// <summary>
     /// The presenter responsible for managing the values of the factor
     /// generator.
@@ -31,7 +28,7 @@ public class TopLevelFactorGeneratorPresenter : PresenterBase<ITopLevelFactorGen
     private IValueGeneratorPresenter? valuesPresenter;
 
     /// <inheritdoc />
-    public IFactorGenerator Model => model;
+    public TopLevelFactorGenerator Model => model;
 
     /// <inheritdoc />
     public IView View => view;
@@ -47,9 +44,12 @@ public class TopLevelFactorGeneratorPresenter : PresenterBase<ITopLevelFactorGen
     /// </summary>
     /// <param name="model">The model to present.</param>
     /// <param name="view">The view to present the model on.</param>
-    public TopLevelFactorGeneratorPresenter(TopLevelFactorGenerator model, ITopLevelFactorGeneratorView view) : base(view)
+    /// <param name="registry">The command registry to use for command execution.</param>
+    public TopLevelFactorGeneratorPresenter(
+        TopLevelFactorGenerator model,
+        ITopLevelFactorGeneratorView view,
+        ICommandRegistry registry) : base(view, model, registry)
     {
-        this.model = model;
         OnRenamed = new Event<string>();
         valuesPresenter = null;
         view.OnChanged.ConnectTo(OnChanged);

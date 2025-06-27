@@ -13,13 +13,8 @@ namespace LpjGuess.Frontend.Presenters;
 /// <summary>
 /// A presenter for an experiment view.
 /// </summary>
-public class ExperimentPresenter : PresenterBase<IExperimentView>, IExperimentPresenter
+public class ExperimentPresenter : PresenterBase<IExperimentView, Experiment>, IExperimentPresenter
 {
-    /// <summary>
-    /// The experiment being presented.
-    /// </summary>
-    private readonly Experiment experiment;
-
     /// <summary>
     /// The factorial presenter.
     /// </summary>
@@ -39,34 +34,34 @@ public class ExperimentPresenter : PresenterBase<IExperimentView>, IExperimentPr
     /// <param name="instructionFiles">The available instruction files in the workspace.</param>
     /// <param name="experiment">The experiment to present.</param>
     /// <param name="view">The view to present the experiment on.</param>
+    /// <param name="registry">The command registry to use for command execution.</param>
     public ExperimentPresenter(
         IEnumerable<string> instructionFiles,
         Experiment experiment,
-        IExperimentView view) : base(view)
+        IExperimentView view,
+        ICommandRegistry registry) : base(view, experiment, registry)
     {
         OnRenamed = new Event<string>();
         this.instructionFiles = instructionFiles;
-        this.experiment = experiment;
         view.OnChanged.ConnectTo(OnExperimentChanged);
-        factorialPresenter = new FactorialPresenter(GetFactorialGenerator(), view.FactorialView);
+        factorialPresenter = new FactorialPresenter(GetFactorialGenerator(), view.FactorialView, registry);
         factorialPresenter.OnChanged.ConnectTo(OnSimulationGeneratorChanged);
         RefreshView();
     }
 
     /// <inheritdoc />
-    public Experiment GetExperiment() => experiment;
+    public Experiment GetExperiment() => model;
 
     /// <inheritdoc />
     public void UpdateInstructionFiles(IEnumerable<string> instructionFiles)
     {
         this.instructionFiles = instructionFiles;
-        view.UpdateInstructionFiles(instructionFiles.Select(f => (f, experiment.InstructionFiles.Contains(f))));
+        view.UpdateInstructionFiles(instructionFiles.Select(f => (f, model.InstructionFiles.Contains(f))));
     }
 
     /// <inheritdoc />
     public override void Dispose()
     {
-        view.OnChanged.DisconnectFrom(OnExperimentChanged);
         factorialPresenter.Dispose();
         base.Dispose();
     }
@@ -77,14 +72,14 @@ public class ExperimentPresenter : PresenterBase<IExperimentView>, IExperimentPr
     private void RefreshView()
     {
         view.Populate(
-            experiment.Name,
-            experiment.Description,
-            experiment.Runner,
-            instructionFiles.Select(f => (f, experiment.InstructionFiles.Contains(f))),
-            experiment.Pfts);
+            model.Name,
+            model.Description,
+            model.Runner,
+            instructionFiles.Select(f => (f, model.InstructionFiles.Contains(f))),
+            model.Pfts);
         UpdateSimulations();
 
-        factorialPresenter.Populate(GetFactorialGenerator());
+        // Do we need to refresh the factorial presenter here? I think not.
     }
 
     /// <summary>
@@ -102,7 +97,7 @@ public class ExperimentPresenter : PresenterBase<IExperimentView>, IExperimentPr
     private List<SimulationDescription> GetSimulationDescriptions()
     {
         List<SimulationDescription> descriptions = new List<SimulationDescription>();
-        IEnumerable<IFactors> simulations = experiment.SimulationGenerator.Generate();
+        IEnumerable<IFactors> simulations = model.SimulationGenerator.Generate();
 
         foreach (IFactors simulation in simulations)
         {
@@ -131,8 +126,8 @@ public class ExperimentPresenter : PresenterBase<IExperimentView>, IExperimentPr
     /// </remarks>
     private FactorialGenerator GetFactorialGenerator()
     {
-        if (experiment.SimulationGenerator is not FactorialGenerator generator)
-            throw new NotImplementedException($"{experiment.SimulationGenerator.GetType().Name} is not yet supported.");
+        if (model.SimulationGenerator is not FactorialGenerator generator)
+            throw new NotImplementedException($"{model.SimulationGenerator.GetType().Name} is not yet supported.");
         return generator;
     }
 
@@ -144,10 +139,10 @@ public class ExperimentPresenter : PresenterBase<IExperimentView>, IExperimentPr
     {
         // This will become slightly less trivial once we have a command
         // history.
-        string oldName = experiment.Name;
+        string oldName = model.Name;
         base.InvokeCommand(command);
-        if (experiment.Name != oldName)
-            OnRenamed.Invoke(experiment.Name);
+        if (model.Name != oldName)
+            OnRenamed.Invoke(model.Name);
         RefreshView();
     }
 
@@ -157,18 +152,15 @@ public class ExperimentPresenter : PresenterBase<IExperimentView>, IExperimentPr
     /// <param name="change">The change to apply.</param>
     private void OnExperimentChanged(IModelChange<Experiment> change)
     {
-        ICommand command = change.ToCommand(experiment);
+        ICommand command = change.ToCommand(model);
         InvokeCommand(command);
-        RefreshView();
     }
 
     /// <summary>
     /// Called when the simulation generator changes.
     /// </summary>
-    /// <param name="change">The change to apply.</param>
-    private void OnSimulationGeneratorChanged(IModelChange<FactorialGenerator> change)
+    private void OnSimulationGeneratorChanged()
     {
-        ICommand command = change.ToCommand(GetFactorialGenerator());
-        InvokeCommand(command);
+        RefreshView();
     }
 }

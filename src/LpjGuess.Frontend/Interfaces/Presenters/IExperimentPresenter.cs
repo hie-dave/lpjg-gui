@@ -7,7 +7,7 @@ namespace LpjGuess.Frontend.Interfaces.Presenters;
 /// <summary>
 /// An interface to a presenter which controls an experiment view.
 /// </summary>
-public interface IExperimentPresenter : IPresenter<IExperimentView>
+public interface IExperimentPresenter : IPresenter<IExperimentView, Experiment>
 {
     /// <summary>
     /// Get the experiment as it is currently configured.

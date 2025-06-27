@@ -18,13 +18,8 @@ namespace LpjGuess.Frontend.Presenters;
 /// <summary>
 /// A presenter for a simple factor generator.
 /// </summary>
-public class SimpleFactorGeneratorPresenter : PresenterBase<ISimpleFactorGeneratorView>, IFactorGeneratorPresenter
+public class SimpleFactorGeneratorPresenter : PresenterBase<ISimpleFactorGeneratorView, SimpleFactorGenerator>, IFactorGeneratorPresenter
 {
-    /// <summary>
-    /// The model to present.
-    /// </summary>
-    private readonly SimpleFactorGenerator model;
-
     /// <summary>
     /// The presenters responsible for managing the factor levels.
     /// </summary>
@@ -37,9 +32,6 @@ public class SimpleFactorGeneratorPresenter : PresenterBase<ISimpleFactorGenerat
     public string Name => model.Name;
 
     /// <inheritdoc />
-    public IView View => view;
-
-    /// <inheritdoc />
     public Event<string> OnRenamed { get; private init; }
 
     /// <summary>
@@ -47,9 +39,12 @@ public class SimpleFactorGeneratorPresenter : PresenterBase<ISimpleFactorGenerat
     /// </summary>
     /// <param name="model">The model to present.</param>
     /// <param name="view">The view to present the model on.</param>
-    public SimpleFactorGeneratorPresenter(SimpleFactorGenerator model, ISimpleFactorGeneratorView view) : base(view)
+    /// <param name="registry">The command registry to use for command execution.</param>
+    public SimpleFactorGeneratorPresenter(
+        SimpleFactorGenerator model,
+        ISimpleFactorGeneratorView view,
+        ICommandRegistry registry) : base(view, model, registry)
     {
-        this.model = model;
         factorPresenters = new List<IFactorPresenter>();
         OnRenamed = new Event<string>();
         view.OnChanged.ConnectTo(OnChanged);
@@ -74,8 +69,8 @@ public class SimpleFactorGeneratorPresenter : PresenterBase<ISimpleFactorGenerat
     private void RefreshView()
     {
         List<IFactorPresenter> presenters = model.Levels.Select(CreateFactorPresenter).ToList();
-        view.Populate(model.Name, presenters.Select(p => new NamedView(p.View, p.Model.GetName())));
-        presenters.ForEach(p => p.OnRenamed.ConnectTo(n => view.Rename(p.View, n)));
+        view.Populate(model.Name, presenters.Select(p => new NamedView(p.GetView(), p.Model.GetName())));
+        presenters.ForEach(p => p.OnRenamed.ConnectTo(n => view.Rename(p.GetView(), n)));
 
         factorPresenters.ForEach(p => p.Dispose());
         factorPresenters = presenters;

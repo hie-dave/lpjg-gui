@@ -8,6 +8,7 @@ using LpjGuess.Frontend.Classes;
 using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.Events;
 using LpjGuess.Frontend.Interfaces;
+using LpjGuess.Frontend.Interfaces.Commands;
 using LpjGuess.Frontend.Interfaces.Events;
 using LpjGuess.Frontend.Interfaces.Presenters;
 using LpjGuess.Frontend.Interfaces.Views;
@@ -19,13 +20,8 @@ namespace LpjGuess.Frontend.Presenters;
 /// <summary>
 /// A presenter for a factorial view.
 /// </summary>
-public class FactorialPresenter : PresenterBase<IFactorialView>, IFactorialPresenter
+public class FactorialPresenter : PresenterBase<IFactorialView, FactorialGenerator>, IFactorialPresenter
 {
-    /// <summary>
-    /// The model object.
-    /// </summary>
-    private FactorialGenerator model;
-
     /// <summary>
     /// User-facing description of a top-level factor.
     /// </summary>
@@ -47,42 +43,60 @@ public class FactorialPresenter : PresenterBase<IFactorialView>, IFactorialPrese
     private List<IFactorGeneratorPresenter> presenters;
 
     /// <inheritdoc />
-    public Event<IModelChange<FactorialGenerator>> OnChanged => view.OnChanged;
+    public Event OnChanged { get; private init; }
 
     /// <summary>
     /// Create a new <see cref="FactorialPresenter"/> instance.
     /// </summary>
     /// <param name="model">The model to present the factorial on.</param>
     /// <param name="view">The view to present the factorial on.</param>
-    public FactorialPresenter(FactorialGenerator model, IFactorialView view) : base(view)
+    /// <param name="registry">The command registry to use for command execution.</param>
+    public FactorialPresenter(
+        FactorialGenerator model,
+        IFactorialView view,
+        ICommandRegistry registry) : base(view, model, registry)
     {
-        this.model = model;
         presenters = [];
         view.OnAddFactor.ConnectTo(OnAddFactor);
         view.OnRemoveFactor.ConnectTo(OnRemoveFactor);
+        OnChanged = new Event();
+        view.OnChanged.ConnectTo(OnViewChanged);
     }
 
     /// <inheritdoc />
-    public void Populate(FactorialGenerator factorial)
+    public void Refresh()
     {
-        model = factorial;
-        var newPresenters = factorial.Factors.Select(CreateFactorPresenter).ToList();
+        var newPresenters = model.Factors.Select(CreateFactorPresenter).ToList();
         var views = newPresenters.Select(CreateValueView).ToList();
-        view.Populate(factorial.FullFactorial, views);
+        view.Populate(model.FullFactorial, views);
 
         foreach (IFactorGeneratorPresenter presenter in presenters)
             presenter.Dispose();
 
         presenters = newPresenters;
         foreach (IFactorGeneratorPresenter presenter in presenters)
-            presenter.OnRenamed.ConnectTo(n => OnFactorRenamed(n, presenter.View));
+            presenter.OnRenamed.ConnectTo(n => OnFactorRenamed(n, presenter.GetView()));
+    }
+
+    /// <inheritdoc />
+    public override void Dispose()
+    {
+        OnChanged.Dispose();
+        base.Dispose();
+    }
+
+    /// <inheritdoc />
+    protected override void InvokeCommand(ICommand command)
+    {
+        base.InvokeCommand(command);
+        OnChanged.Invoke();
     }
 
     private IValueGeneratorView CreateValueView(IFactorGeneratorPresenter presenter)
     {
         const int maxValues = 1000;
         IEnumerable<string> values = presenter.Model.Generate().Take(maxValues).Select(f => f.GetName());
-        return new ValueGeneratorView(presenter.Model.Name, presenter.Model.NumFactors() > maxValues, values, presenter.View);
+        return new ValueGeneratorView(presenter.Model.Name, presenter.Model.NumFactors() > maxValues, values, presenter.GetView());
     }
 
     /// <summary>
@@ -119,7 +133,7 @@ public class FactorialPresenter : PresenterBase<IFactorialView>, IFactorialPrese
         if (factor is SimpleFactorGenerator simpleGenerator)
         {
             SimpleFactorGeneratorView view = new SimpleFactorGeneratorView();
-            SimpleFactorGeneratorPresenter presenter = new(simpleGenerator, view);
+            SimpleFactorGeneratorPresenter presenter = new(simpleGenerator, view, registry);
             return presenter;
         }
 
@@ -161,7 +175,8 @@ public class FactorialPresenter : PresenterBase<IFactorialView>, IFactorialPrese
             (m, v) => m.Factors = v,
             filtered
         );
-        OnChanged.Invoke(change);
+        ICommand command = change.ToCommand(model);
+        InvokeCommand(command);
     }
 
     /// <summary>
@@ -192,6 +207,13 @@ public class FactorialPresenter : PresenterBase<IFactorialView>, IFactorialPrese
             (m, v) => m.Factors = v,
             model.Factors.Append(factor).ToList()
         );
-        OnChanged.Invoke(change);
+        ICommand command = change.ToCommand(model);
+        InvokeCommand(command);
+    }
+
+    private void OnViewChanged(IModelChange<FactorialGenerator> change)
+    {
+        ICommand command = change.ToCommand(model);
+        InvokeCommand(command);
     }
 }

@@ -12,7 +12,12 @@ public class AboutView : IAboutView
 	/// <summary>
 	/// The internal window widget.
 	/// </summary>
-	private readonly AboutWindow dialog;
+	private readonly AboutDialog dialog;
+
+	/// <summary>
+	/// The parent window.
+	/// </summary>
+	private readonly IMainView parent;
 
 	/// <summary>
 	/// Github repository URL.
@@ -30,7 +35,9 @@ public class AboutView : IAboutView
 	/// <param name="view">The main window.</param>
 	public AboutView(IMainView view)
 	{
-		dialog = new AboutWindow();
+		parent = view;
+
+		dialog = new AboutDialog();
 		dialog.ApplicationName = "LPJ-Guess";
 		dialog.DeveloperName = "A graphical frontend for LPJ-Guess.";
 		dialog.IssueUrl = issueUrl;
@@ -38,13 +45,9 @@ public class AboutView : IAboutView
 		Version? version = Assembly.GetExecutingAssembly().GetName().Version;
 		if (version != null)
 			dialog.Version = version.ToString();
-		if (view is MainView main)
-			dialog.TransientFor = main;
-		dialog.OnCloseRequest += (_, __) =>
-		{
-			dialog.Dispose();
-			return true;
-		};
+		// if (view is MainView main)
+		// 	dialog.TransientFor = main;
+		ConnectEventHandlers();
 		// Other metadata we could set:
 		// string[] Artists
 		// string? Comments
@@ -68,32 +71,26 @@ public class AboutView : IAboutView
 	/// </summary>
 	private void ConnectEventHandlers()
 	{
-		dialog.OnCloseRequest += OnClose;
+		dialog.OnClosed += OnClosed;
 	}
 
-	/// <summary>
-	/// Disconnect all event callbacks.
-	/// </summary>
-	private void DisconnectEventHandlers()
+    /// <summary>
+    /// Disconnect all event callbacks.
+    /// </summary>
+    private void DisconnectEventHandlers()
 	{
-		dialog.OnCloseRequest -= OnClose;
+		dialog.OnClosed -= OnClosed;
 	}
 
-	/// <summary>
-	/// Called when the user closes the dialog.
-	/// </summary>
-	/// <param name="sender">Sender object.</param>
-	/// <param name="args">Event data.</param>
-	private bool OnClose(Gtk.Window sender, EventArgs args)
-	{
+    private void OnClosed(Dialog sender, EventArgs args)
+    {
 		DisconnectEventHandlers();
 		dialog.Dispose();
-		return true;
-	}
+    }
 
 	/// <inheritdoc />
 	public void Show()
 	{
-		dialog.Present();
+		dialog.Present(parent.GetWidget());
 	}
 }

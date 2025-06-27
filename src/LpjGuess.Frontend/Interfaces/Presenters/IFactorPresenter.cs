@@ -14,11 +14,6 @@ public interface IFactorPresenter : IPresenter
     IFactor Model { get; }
 
     /// <summary>
-    /// The view being presented.
-    /// </summary>
-    IView View { get; }
-
-    /// <summary>
     /// Event which is raised when the name of the factor has been changed by the user.
     /// </summary>
     Event<string> OnRenamed { get; }

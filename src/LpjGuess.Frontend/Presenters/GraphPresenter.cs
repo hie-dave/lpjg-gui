@@ -27,7 +27,7 @@ namespace LpjGuess.Frontend.Presenters;
 /// A presenter which controls a graph view to allow the user to view and customize
 /// a single graph.
 /// </summary>
-public class GraphPresenter : PresenterBase<IGraphView>, IGraphPresenter
+public class GraphPresenter : PresenterBase<IGraphView, Graph>, IGraphPresenter
 {
     /// <summary>
     /// The graph model.
@@ -71,8 +71,14 @@ public class GraphPresenter : PresenterBase<IGraphView>, IGraphPresenter
     /// <param name="graph">The graph model.</param>
     /// <param name="instructionFiles">The instruction files for which data should be displayed.</param>
     /// <param name="seriesPresenterFactory">Factory for creating series views.</param>
-    public GraphPresenter(IGraphView view, Graph graph, IEnumerable<string> instructionFiles, ISeriesPresenterFactory seriesPresenterFactory)
-        : base(view)
+    /// <param name="registry">The command registry to use for command execution.</param>
+    public GraphPresenter(
+        IGraphView view,
+        Graph graph,
+        IEnumerable<string> instructionFiles,
+        ISeriesPresenterFactory seriesPresenterFactory,
+        ICommandRegistry registry)
+        : base(view, graph, registry)
     {
         this.graph = graph;
         this.instructionFiles = instructionFiles;

@@ -142,6 +142,7 @@ public class PreferencesView : IPreferencesView
 	public void Dispose()
 	{
 		DisconnectEvents();
+		OnClose.Dispose();
 		runnersPage.Dispose();
 		window.Dispose();
 	}

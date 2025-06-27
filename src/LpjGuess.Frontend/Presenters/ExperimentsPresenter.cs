@@ -1,6 +1,8 @@
 using LpjGuess.Core.Models.Factorial;
 using LpjGuess.Core.Models.Factorial.Generators;
+using LpjGuess.Frontend.DependencyInjection;
 using LpjGuess.Frontend.Extensions;
+using LpjGuess.Frontend.Interfaces.Commands;
 using LpjGuess.Frontend.Interfaces.Presenters;
 using LpjGuess.Frontend.Interfaces.Views;
 using LpjGuess.Frontend.Views;
@@ -11,20 +13,43 @@ namespace LpjGuess.Frontend.Presenters;
 /// <summary>
 /// A presenter which manages the experiments.
 /// </summary>
-public class ExperimentsPresenter : PresenterBase<IExperimentsView>, IExperimentsPresenter
+public class ExperimentsPresenter : PresenterBase<IExperimentsView, IEnumerable<Experiment>>, IExperimentsPresenter
 {
-    private List<IExperimentPresenter> presenters = [];
-    private List<string> instructionFiles = [];
+    /// <summary>
+    /// The presenter factory to use for creating experiment presenters.
+    /// </summary>
+    private readonly IPresenterFactory presenterFactory;
+
+    /// <summary>
+    /// The list of experiment presenters.
+    /// </summary>
+    private List<IExperimentPresenter> presenters;
+
+    /// <summary>
+    /// The list of instruction files in the workspace.
+    /// </summary>
+    private List<string> instructionFiles;
 
     /// <summary>
     /// Create a new <see cref="ExperimentsPresenter"/> instance.
     /// </summary>
+    /// <param name="experiments">The experiments to present.</param>
     /// <param name="view">The view to present.</param>
-    public ExperimentsPresenter(IExperimentsView view) : base(view)
+    /// <param name="registry">The command registry to use for command execution.</param>
+    /// <param name="presenterFactory">The presenter factory to use for creating experiment presenters.</param>
+    public ExperimentsPresenter(
+        IEnumerable<Experiment> experiments,
+        IExperimentsView view,
+        ICommandRegistry registry,
+        IPresenterFactory presenterFactory) : base(view, experiments, registry)
     {
+        this.presenterFactory = presenterFactory;
         view.AddText = "Add Experiment";
         view.OnAdd.ConnectTo(OnAdd);
         view.OnRemove.ConnectTo(OnRemove);
+
+        presenters = [];
+        instructionFiles = [];
     }
 
     /// <inheritdoc />
@@ -34,10 +59,10 @@ public class ExperimentsPresenter : PresenterBase<IExperimentsView>, IExperiment
     }
 
     /// <inheritdoc />
-    public void Populate(IEnumerable<Experiment> experiments, IEnumerable<string> instructionFiles)
+    public void Populate(IEnumerable<string> instructionFiles)
     {
         this.instructionFiles = instructionFiles.ToList();
-        RefreshView(experiments);
+        RefreshView(model);
     }
 
     /// <inheritdoc />
@@ -63,8 +88,7 @@ public class ExperimentsPresenter : PresenterBase<IExperimentsView>, IExperiment
         // Create a new set of views.
         foreach (Experiment experiment in experiments)
         {
-            IExperimentView view = new ExperimentView();
-            IExperimentPresenter presenter = new ExperimentPresenter(instructionFiles, experiment, view);
+            IExperimentPresenter presenter = presenterFactory.CreatePresenter<IExperimentPresenter, IExperimentView, Experiment>(experiment);
             presenter.OnRenamed.ConnectTo(n => OnExperimentRenamed(experiment, n));
             presenters.Add(presenter);
         }

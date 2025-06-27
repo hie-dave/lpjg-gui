@@ -14,7 +14,7 @@ namespace LpjGuess.Frontend.Presenters;
 /// <summary>
 /// Presenter for managing series editing.
 /// </summary>
-public class SeriesPresenter<T> : PresenterBase<ISeriesView<T>>, ISeriesPresenter<T> where T : ISeries
+public class SeriesPresenter<T> : PresenterBase<ISeriesView<T>, T>, ISeriesPresenter<T> where T : ISeries
 {
     /// <summary>
     /// The series being edited.
@@ -33,7 +33,12 @@ public class SeriesPresenter<T> : PresenterBase<ISeriesView<T>>, ISeriesPresente
     /// <param name="view">The view to present to.</param>
     /// <param name="series">The series being edited.</param>
     /// <param name="factory">The data source presenter factory.</param>
-    public SeriesPresenter(ISeriesView<T> view, T series, IDataSourcePresenterFactory factory) : base(view)
+    /// <param name="registry">The command registry.</param>
+    public SeriesPresenter(
+        ISeriesView<T> view,
+        T series,
+        IDataSourcePresenterFactory factory,
+        ICommandRegistry registry) : base(view, series, registry)
     {
         Series = series;
         OnSeriesChanged = new Event<ICommand>();

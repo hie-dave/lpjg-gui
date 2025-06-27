@@ -14,11 +14,6 @@ public interface IFactorGeneratorPresenter : IPresenter
     IFactorGenerator Model { get; }
 
     /// <summary>
-    /// The view being presented.
-    /// </summary>
-    IView View { get; }
-
-    /// <summary>
     /// Name of the factor.
     /// </summary>
     string Name { get; }
@@ -27,4 +22,17 @@ public interface IFactorGeneratorPresenter : IPresenter
     /// Called when the name of the factor has been changed by the user.
     /// </summary>
     Event<string> OnRenamed { get; }
+}
+
+/// <summary>
+/// An interface for a presenter which manages a factor generator.
+/// </summary>
+public interface IFactorGeneratorPresenter<TView, TModel> : IPresenter<TView, TModel>, IFactorGeneratorPresenter
+    where TView : IView
+    where TModel : IFactorGenerator
+{
+    /// <summary>
+    /// The factor generator being presented.
+    /// </summary>
+    new TModel Model { get; }
 }

@@ -6,7 +6,7 @@ namespace LpjGuess.Frontend.Interfaces.Presenters;
 /// <summary>
 /// Interface for a recent files presenter.
 /// </summary>
-public interface IRecentFilesPresenter : IPresenter<IRecentFilesView>
+public interface IRecentFilesPresenter : IPresenter<IRecentFilesView, Configuration>
 {
 	/// <summary>
 	/// Event raised when a recent file is selected.

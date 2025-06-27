@@ -6,7 +6,7 @@ namespace LpjGuess.Frontend.Interfaces.Presenters;
 /// <summary>
 /// An interface to a presenter which controls an experiments view.
 /// </summary>
-public interface IExperimentsPresenter : IPresenter<IExperimentsView>
+public interface IExperimentsPresenter : IPresenter<IExperimentsView, IEnumerable<Experiment>>
 {
     /// <summary>
     /// Get the experiments as they are currently configured.
@@ -16,9 +16,8 @@ public interface IExperimentsPresenter : IPresenter<IExperimentsView>
     /// <summary>
     /// Populate the view with the given experiments.
     /// </summary>
-    /// <param name="experiments">The experiments to populate the view with.</param>
     /// <param name="instructionFiles">The instruction files in the workspace.</param>
-    void Populate(IEnumerable<Experiment> experiments, IEnumerable<string> instructionFiles);
+    void Populate(IEnumerable<string> instructionFiles);
 
 	/// <summary>
 	/// Update the instruction files in the workspace.

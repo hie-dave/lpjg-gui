@@ -8,7 +8,7 @@ namespace LpjGuess.Frontend.Interfaces.Presenters;
 /// An interface to a presenter which controls a graph view to allow the user to
 /// view and customize a single graph.
 /// </summary>
-public interface IGraphPresenter : IPresenter<IGraphView>
+public interface IGraphPresenter : IPresenter<IGraphView, Graph>
 {
     /// <summary>
     /// Get the graph model managed by this presenter.

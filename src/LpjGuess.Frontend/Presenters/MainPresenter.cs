@@ -1,6 +1,7 @@
 using LpjGuess.Core.Models;
 using LpjGuess.Frontend.DependencyInjection;
 using LpjGuess.Frontend.Interfaces;
+using LpjGuess.Frontend.Interfaces.Commands;
 using LpjGuess.Frontend.Interfaces.Presenters;
 using LpjGuess.Frontend.Views;
 
@@ -11,7 +12,7 @@ namespace LpjGuess.Frontend.Presenters;
 /// because it doesn't have a model object, so it's not quite a presenter in
 /// that sense.
 /// </summary>
-public class MainPresenter : PresenterBase<IMainView>, IMainPresenter
+public class MainPresenter : PresenterBase<IMainView, IApplication>, IMainPresenter
 {
 	/// <summary>
 	/// Default window title when no files are open.
@@ -19,14 +20,14 @@ public class MainPresenter : PresenterBase<IMainView>, IMainPresenter
 	private const string defaultTitle = "LPJ-Guess";
 
 	/// <summary>
-	/// The presenter factory.
+	/// A factory for instantiating presenters.
 	/// </summary>
-	private readonly IPresenterFactory factory;
+	private readonly IPresenterFactory presenterFactory;
 
-	/// <summary>
-	/// The current child presenter.
-	/// </summary>
-	private IPresenter<IView> child;
+    /// <summary>
+    /// The current child presenter.
+    /// </summary>
+    private IPresenter child;
 
 	/// <summary>
 	/// Presenter for the preferences dialog.
@@ -38,10 +39,18 @@ public class MainPresenter : PresenterBase<IMainView>, IMainPresenter
 	/// specified view object.
 	/// </summary>
 	/// <param name="view">The view object.</param>
-	/// <param name="factory">The presenter factory.</param>
-	public MainPresenter(IMainView view, IPresenterFactory factory) : base(view)
+	/// <param name="app">The application object.</param>
+	/// <param name="presenterFactory">The presenter factory.</param>
+	/// <param name="registry">The command registry.</param>
+	public MainPresenter(
+		IMainView view,
+		IApplication app,
+		IPresenterFactory presenterFactory,
+		ICommandRegistry registry)
+		: base(view, app, registry)
 	{
-		this.factory = factory;
+		this.presenterFactory = presenterFactory;
+
 		view.AddMenuItem("Preferences", OnPreferences);
 		view.AddMenuItem("About", OnAbout);
 		view.AddMenuItem("Quit", OnClose, "<Ctrl>Q");
@@ -50,7 +59,7 @@ public class MainPresenter : PresenterBase<IMainView>, IMainPresenter
 		view.OnNew.ConnectTo(OnNew);
 		view.OnClose.ConnectTo(OnClose);
 
-		IRecentFilesPresenter recent = factory.CreatePresenter<IRecentFilesPresenter>();
+		IRecentFilesPresenter recent = presenterFactory.CreatePresenter<IRecentFilesPresenter>();
 		recent.OnOpenFile.ConnectTo(OpenFile);
 		child = recent;
 		view.SetChild(child.GetView());
@@ -75,6 +84,11 @@ public class MainPresenter : PresenterBase<IMainView>, IMainPresenter
 		view.Show();
 	}
 
+	/// <summary>
+	/// Called when the user wants to create a new workspace containing the
+	/// given instruction file.
+	/// </summary>
+	/// <param name="path">Path to the instruction file.</param>
 	private void OnNew(string path)
 	{
 		Workspace workspace = new Workspace();
@@ -102,6 +116,10 @@ public class MainPresenter : PresenterBase<IMainView>, IMainPresenter
 		OpenWorkspace(workspace);
 	}
 
+	/// <summary>
+	/// Open the specified workspace in the GUI.
+	/// </summary>
+	/// <param name="workspace">The workspace to open.</param>
 	private void OpenWorkspace(Workspace workspace)
 	{
 		// Update recent files list.
@@ -111,7 +129,7 @@ public class MainPresenter : PresenterBase<IMainView>, IMainPresenter
 			Configuration.Instance.Save();
 		}
 
-		child = new WorkspacePresenter(workspace);
+		child = presenterFactory.CreatePresenter<IWorkspacePresenter, IWorkspaceView, Workspace>(workspace);
 		view.SetChild(child.GetView());
 
 		// Update window title.
@@ -119,7 +137,13 @@ public class MainPresenter : PresenterBase<IMainView>, IMainPresenter
 		view.SetTitle(Path.GetFileName(file), Path.GetDirectoryName(file));
 	}
 
-	private Workspace CreateWorkspace(string file)
+	/// <summary>
+	/// Create a new workspace from the specified file if it's an instruction
+	/// file. Otherwise, open the file as a workspace.
+	/// </summary>
+	/// <param name="file">The file to create a workspace from.</param>
+	/// <returns>The created workspace.</returns>
+	private static Workspace CreateWorkspace(string file)
 	{
 		if (Path.GetExtension(file).ToLower() == ".ins")
 		{
@@ -135,7 +159,7 @@ public class MainPresenter : PresenterBase<IMainView>, IMainPresenter
 	{
 		try
 		{
-			propertiesPresenter = factory.CreatePresenter<IPreferencesPresenter>();
+			propertiesPresenter = presenterFactory.CreatePresenter<IPreferencesPresenter>();
 			propertiesPresenter.OnClosed.ConnectTo(OnPreferencesClosed);
 			propertiesPresenter.Show();
 		}
