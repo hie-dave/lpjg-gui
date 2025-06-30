@@ -6,9 +6,8 @@ using LpjGuess.Core.Models.Graphing.Series;
 using LpjGuess.Core.Models.Graphing.Style.Identifiers;
 using LpjGuess.Core.Models.Graphing.Style.Providers;
 using LpjGuess.Core.Models.Graphing.Style.Strategies;
-using LpjGuess.Frontend.Factories;
+using LpjGuess.Frontend.DependencyInjection;
 using LpjGuess.Frontend.Interfaces.Commands;
-using LpjGuess.Frontend.Interfaces.Factories;
 using LpjGuess.Frontend.Interfaces.Presenters;
 using LpjGuess.Frontend.Interfaces.Views;
 using LpjGuess.Frontend.Views;
@@ -27,14 +26,14 @@ public class GraphsPresenter : PresenterBase<IGraphsView, IReadOnlyList<Graph>>,
 	private readonly Dictionary<IGraphView, IGraphPresenter> plots;
 
 	/// <summary>
-	/// The list of instruction files.
+	/// Instruction files provider.
 	/// </summary>
-	private IEnumerable<string> instructionFiles;
+	private readonly IInstructionFilesProvider insFilesProvider;
 
 	/// <summary>
 	/// Factory for creating series presenters.
 	/// </summary>
-	private readonly ISeriesPresenterFactory seriesPresenterFactory;
+	private readonly IPresenterFactory presenterFactory;
 
 	/// <summary>
 	/// Create a new <see cref="GraphsPresenter"/> instance which displays the
@@ -43,31 +42,25 @@ public class GraphsPresenter : PresenterBase<IGraphsView, IReadOnlyList<Graph>>,
 	/// <param name="view">The view object.</param>
 	/// <param name="graphs">The graphs to be displayed.</param>
 	/// <param name="instructionFiles">The instruction files for which data should be displayed.</param>
+	/// <param name="presenterFactory">The presenter factory to use for creating series presenters.</param>
 	/// <param name="registry">The command registry to use for command execution.</param>
 	public GraphsPresenter(
 		IGraphsView view,
 		IReadOnlyList<Graph> graphs,
-		IEnumerable<string> instructionFiles,
+		IInstructionFilesProvider instructionFiles,
+		IPresenterFactory presenterFactory,
 		ICommandRegistry registry) : base(view, graphs, registry)
 	{
 		plots = new Dictionary<IGraphView, IGraphPresenter>();
+
+		this.insFilesProvider = instructionFiles;
+		this.presenterFactory = presenterFactory;
+
 		this.view.OnAddGraph.ConnectTo(OnAddGraph);
 		this.view.OnRemoveGraph.ConnectTo(OnRemoveGraph);
-		this.instructionFiles = instructionFiles;
-		// TODO: consider dependency injection.
-		seriesPresenterFactory = new SeriesPresenterFactory(
-			new DataSourcePresenterFactory(instructionFiles));
-		Populate(graphs);
-	}
+		instructionFiles.OnInstructionFilesChanged.ConnectTo(UpdateInstructionFiles);
 
-	/// <summary>
-	/// Update the instruction files for which data should be displayed.
-	/// </summary>
-	/// <param name="instructionFiles">The instruction files for which data should be displayed.</param>
-	public void UpdateInstructionFiles(IEnumerable<string> instructionFiles)
-	{
-		this.instructionFiles = instructionFiles;
-		RefreshAll();
+		Populate(graphs);
 	}
 
 	/// <inheritdoc />
@@ -99,7 +92,7 @@ public class GraphsPresenter : PresenterBase<IGraphsView, IReadOnlyList<Graph>>,
 		{
 			// Construct new child presenter/view to display the oxyplot model.
 			IGraphView graphView = new GraphView();
-			IGraphPresenter presenter = new GraphPresenter(graphView, graph, instructionFiles, seriesPresenterFactory, registry);
+			IGraphPresenter presenter = new GraphPresenter(graphView, graph, insFilesProvider.GetInstructionFiles(), presenterFactory, registry);
 			presenter.OnTitleChanged.ConnectTo(t => OnGraphRenamed(t, graphView));
 
 			plots.Add(graphView, presenter);
@@ -140,7 +133,7 @@ public class GraphsPresenter : PresenterBase<IGraphsView, IReadOnlyList<Graph>>,
 			"file_lai",
 			"Date",
 			["Total"],
-			instructionFiles);
+			insFilesProvider.GetInstructionFiles());
 		ISeries series = new LineSeries(
 			// Empty series name will use data source as title.
 			string.Empty,
@@ -174,5 +167,14 @@ public class GraphsPresenter : PresenterBase<IGraphsView, IReadOnlyList<Graph>>,
 	private void OnGraphRenamed(string title, IGraphView view)
 	{
 		this.view.Rename(view, title);
+	}
+
+	/// <summary>
+	/// Update the instruction files for which data should be displayed.
+	/// </summary>
+	/// <param name="instructionFiles">The instruction files for which data should be displayed.</param>
+	private void UpdateInstructionFiles(IEnumerable<string> instructionFiles)
+	{
+		RefreshAll();
 	}
 }

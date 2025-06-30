@@ -2,6 +2,7 @@ using LpjGuess.Core.Extensions;
 using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.Events;
 using LpjGuess.Frontend.Interfaces;
+using LpjGuess.Frontend.Interfaces.Commands;
 using LpjGuess.Frontend.Interfaces.Presenters;
 using LpjGuess.Frontend.Interfaces.Views;
 using LpjGuess.Frontend.Utility;
@@ -13,7 +14,7 @@ namespace LpjGuess.Frontend.Presenters;
 /// <summary>
 /// A presenter for an instruction file view.
 /// </summary>
-public class InstructionFilePresenter : PresenterBase<IInstructionFileView>, IInstructionFilePresenter
+public class InstructionFilePresenter : PresenterBase<IInstructionFileView, string>, IInstructionFilePresenter
 {
     /// <summary>
     /// The instruction file being displayed.
@@ -43,26 +44,23 @@ public class InstructionFilePresenter : PresenterBase<IInstructionFileView>, IIn
 
     /// <summary>
     /// Create a new <see cref="InstructionFilePresenter"/> instance for the
-    /// specified file.
-    /// </summary>
-    /// <param name="insFile">The instruction file to display.</param>
-    public InstructionFilePresenter(string insFile) : this(insFile, new InstructionFileView(Path.GetFileName(insFile)))
-    {
-    }
-
-    /// <summary>
-    /// Create a new <see cref="InstructionFilePresenter"/> instance for the
     /// specified view.
     /// </summary>
     /// <param name="view">The view to be controlled by this presenter.</param>
     /// <param name="insFile">The instruction file to display.</param>
-    public InstructionFilePresenter(string insFile, IInstructionFileView view) : base(view)
+    /// <param name="commandRegistry">The command registry.</param>
+    public InstructionFilePresenter(
+        string insFile,
+        IInstructionFileView view,
+        ICommandRegistry commandRegistry) : base(view, insFile, commandRegistry)
     {
         this.insFile = insFile;
         OnFileChanged = new Event<FileChangedArgs>();
         OnSaved = new Event<string>();
         editors = new List<Editor>();
         changedFiles = new HashSet<string>();
+
+        view.Name = Path.GetFileName(insFile);
 
         // Fire and forget. The CancellationTokenSource will be disposed of
         // when the presenter is disposed.

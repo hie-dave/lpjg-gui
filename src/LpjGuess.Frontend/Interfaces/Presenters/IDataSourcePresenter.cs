@@ -8,7 +8,7 @@ namespace LpjGuess.Frontend.Interfaces.Presenters;
 /// <summary>
 /// Base interface for presenters that manage data source editing.
 /// </summary>
-public interface IDataSourcePresenter : IDisposable
+public interface IDataSourcePresenter : IPresenter
 {
     /// <summary>
     /// The data source being edited.
@@ -23,5 +23,18 @@ public interface IDataSourcePresenter : IDisposable
     /// <summary>
     /// Get the view being managed by this presenter.
     /// </summary>
-    IDataSourceView GetView();
+    new IDataSourceView GetView();
+}
+
+/// <summary>
+/// Interface for presenters that manage data sources.
+/// </summary>
+/// <typeparam name="TModel"></typeparam>
+public interface IDataSourcePresenter<TModel> : IDataSourcePresenter
+    where TModel : IDataSource
+{
+    /// <summary>
+    /// The data source being edited.
+    /// </summary>
+    new TModel DataSource { get; }
 }

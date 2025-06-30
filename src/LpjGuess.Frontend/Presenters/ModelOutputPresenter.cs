@@ -23,7 +23,7 @@ namespace LpjGuess.Frontend.Presenters;
 /// A presenter which controls a data source view to allow the user to view and
 /// customize a single data source.
 /// </summary>
-public class ModelOutputPresenter : PresenterBase<IModelOutputView>, IDataSourcePresenter
+public class ModelOutputPresenter : PresenterBase<IModelOutputView, ModelOutput>, IDataSourcePresenter<ModelOutput>
 {
     /// <summary>
     /// The instruction files in the workspace.
@@ -46,14 +46,16 @@ public class ModelOutputPresenter : PresenterBase<IModelOutputView>, IDataSource
     /// Create a new <see cref="ModelOutputPresenter"/> instance.
     /// </summary>
     /// <param name="view">The view to present to.</param>
-    /// <param name="dataSource">The data source being edited.</param>
+    /// <param name="model">The data source being edited.</param>
     /// <param name="instructionFiles">The instruction files in the workspace.</param>
+    /// <param name="registry">The command registry to use for command execution.</param>
     public ModelOutputPresenter(
         IModelOutputView view,
-        ModelOutput dataSource,
-        IEnumerable<string> instructionFiles) : base(view)
+        ModelOutput model,
+        IEnumerable<string> instructionFiles,
+        ICommandRegistry registry) : base(view, model, registry)
     {
-        DataSource = dataSource;
+        DataSource = model;
         OnDataSourceChanged = new Event<ICommand>();
         view.OnEditDataSource.ConnectTo(OnEditDataSource);
         view.OnFileTypeChanged.ConnectTo(OnFileTypeChanged);

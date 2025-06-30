@@ -29,7 +29,7 @@ public interface ISeriesPresenter : IDisposable
 /// <summary>
 /// Generic interface for presenters that manage series editing.
 /// </summary>
-public interface ISeriesPresenter<T> : ISeriesPresenter, IPresenter<ISeriesView<T>> where T : ISeries
+public interface ISeriesPresenter<T> : ISeriesPresenter, IPresenter<ISeriesView<T>, T> where T : ISeries
 {
     // TODO: do we need a generic series property here? Maybe not, in which case
     // we don't even need this interface.

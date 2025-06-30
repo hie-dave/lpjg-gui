@@ -14,7 +14,7 @@ public class BlockFactorGeneratorPresenter : TopLevelFactorGeneratorPresenter
     /// <summary>
     /// The model instance managed by this presenter.
     /// </summary>
-    private readonly BlockFactorGenerator model;
+    private readonly BlockFactorGenerator block;
 
     /// <summary>
     /// The view managed by this presenter.
@@ -26,10 +26,14 @@ public class BlockFactorGeneratorPresenter : TopLevelFactorGeneratorPresenter
     /// </summary>
     /// <param name="model">The model to present.</param>
     /// <param name="view">The view to present the model on.</param>
-    public BlockFactorGeneratorPresenter(BlockFactorGenerator model, IBlockFactorGeneratorView view) : base(model, view)
+    /// <param name="registry">The command registry to use for command execution.</param>
+    public BlockFactorGeneratorPresenter(
+        BlockFactorGenerator model,
+        IBlockFactorGeneratorView view,
+        ICommandRegistry registry) : base(model, view, registry)
     {
         this.view = view;
-        this.model = model;
+        block = model;
         view.OnChanged.ConnectTo(OnChanged);
         RefreshView();
     }
@@ -41,10 +45,10 @@ public class BlockFactorGeneratorPresenter : TopLevelFactorGeneratorPresenter
     {
         // This will happen once, when this is called from the base class
         // constructor.
-        if (view is null || model is null)
+        if (view is null || block is null)
             return;
         base.RefreshView();
-        view.Populate(model.BlockType, model.BlockName);
+        view.Populate(block.BlockType, block.BlockName);
     }
 
     /// <summary>
@@ -54,7 +58,7 @@ public class BlockFactorGeneratorPresenter : TopLevelFactorGeneratorPresenter
     private void OnChanged(IModelChange<BlockFactorGenerator> change)
     {
         // Apply the command and refresh the view.
-        ICommand command = change.ToCommand(model);
+        ICommand command = change.ToCommand(block);
         InvokeCommand(command);
     }
 }

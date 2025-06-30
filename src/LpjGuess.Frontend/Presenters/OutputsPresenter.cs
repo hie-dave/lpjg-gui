@@ -4,6 +4,7 @@ using LpjGuess.Core.Extensions;
 using LpjGuess.Core.Models;
 using LpjGuess.Frontend.Classes;
 using LpjGuess.Frontend.Data.Providers;
+using LpjGuess.Frontend.Interfaces.Commands;
 using LpjGuess.Frontend.Interfaces.Presenters;
 using LpjGuess.Frontend.Interfaces.Views;
 
@@ -13,7 +14,7 @@ namespace LpjGuess.Frontend.Presenters;
 /// A presenter which controls an outputs view to display the raw outputs from a
 /// model run.
 /// </summary>
-public class OutputsPresenter : PresenterBase<IOutputsView>, IOutputsPresenter
+public class OutputsPresenter : PresenterBase<IOutputsView, IEnumerable<string>>, IOutputsPresenter
 {
     /// <summary>
     /// The cancellation token source for the output file parsing task.
@@ -24,7 +25,12 @@ public class OutputsPresenter : PresenterBase<IOutputsView>, IOutputsPresenter
     /// Create a new <see cref="OutputsPresenter"/> instance.
     /// </summary>
     /// <param name="view">The view object.</param>
-    public OutputsPresenter(IOutputsView view) : base(view)
+    /// <param name="instructionFiles">The instruction files in the workspace.</param>
+    /// <param name="registry">The command registry to use for command execution.</param>
+    public OutputsPresenter(
+        IOutputsView view,
+        IEnumerable<string> instructionFiles,
+        ICommandRegistry registry) : base(view, instructionFiles, registry)
     {
         view.OnInstructionFileSelected.ConnectTo(OnInstructionFileSelected);
         view.OnOutputFileSelected.ConnectTo(OnOutputFileSelected);
@@ -32,17 +38,17 @@ public class OutputsPresenter : PresenterBase<IOutputsView>, IOutputsPresenter
     }
 
     /// <inheritdoc />
-    public void Populate(IEnumerable<string> instructionFiles)
+    public void Refresh()
     {
         // Get the previously selected instruction file (if there is one).
         string? insFile = view.InstructionFile;
 
         // Populate the view. This will not fire an instruction file selected
         // event.
-        view.PopulateInstructionFiles(instructionFiles);
+        view.PopulateInstructionFiles(model);
 
         string? outputFileType;
-        if (insFile != null && instructionFiles.Contains(insFile))
+        if (insFile != null && model.Contains(insFile))
         {
             // Select the previously-selected instruction file.
             view.SelectInstructionFile(insFile);
@@ -51,7 +57,7 @@ public class OutputsPresenter : PresenterBase<IOutputsView>, IOutputsPresenter
         else
         {
             // First item is selected by default.
-            insFile = instructionFiles.FirstOrDefault();
+            insFile = model.FirstOrDefault();
             outputFileType = null;
         }
 

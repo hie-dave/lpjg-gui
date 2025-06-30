@@ -6,17 +6,12 @@ namespace LpjGuess.Frontend.Interfaces.Presenters;
 /// <summary>
 /// An interface to a presenter which controls a graph view.
 /// </summary>
-public interface IGraphsPresenter : IPresenter<IGraphsView>
+public interface IGraphsPresenter : IPresenter<IGraphsView, IEnumerable<Graph>>
 {
 	/// <summary>
 	/// Get the graphs as they are currently configured.
 	/// </summary>
 	IEnumerable<Graph> GetGraphs();
-
-	/// <summary>
-	/// Update the instruction files for which data should be displayed.
-	/// </summary>
-	void UpdateInstructionFiles(IEnumerable<string> instructionFiles);
 
 	/// <summary>
 	/// Refresh all graphs.

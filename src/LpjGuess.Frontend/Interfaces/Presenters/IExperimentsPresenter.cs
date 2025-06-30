@@ -12,20 +12,4 @@ public interface IExperimentsPresenter : IPresenter<IExperimentsView, IEnumerabl
     /// Get the experiments as they are currently configured.
     /// </summary>
     IEnumerable<Experiment> GetExperiments();
-
-    /// <summary>
-    /// Populate the view with the given experiments.
-    /// </summary>
-    /// <param name="instructionFiles">The instruction files in the workspace.</param>
-    void Populate(IEnumerable<string> instructionFiles);
-
-	/// <summary>
-	/// Update the instruction files in the workspace.
-	/// </summary>
-    /// <remarks>
-    /// This will typically be called after the user adds or removes instruction
-	/// files from the workspace.
-    /// </remarks>
-	/// <param name="instructionFiles">The instruction files in the workspace.</param>
-	void UpdateInstructionFiles(IEnumerable<string> instructionFiles);
 }

@@ -6,12 +6,11 @@ namespace LpjGuess.Frontend.Interfaces.Presenters;
 /// Interface to a presenter which controls an outputs view to display the raw
 /// outputs from a model run.
 /// </summary>
-public interface IOutputsPresenter : IPresenter<IOutputsView>
+public interface IOutputsPresenter : IPresenter<IOutputsView, IEnumerable<string>>
 {
     /// <summary>
-    /// Populate the outputs view with the outputs from the given instruction
+    /// Refresh the contents of the view with the currently-available output
     /// files.
     /// </summary>
-    /// <param name="instructionFiles">A list of instruction files.</param>
-    void Populate(IEnumerable<string> instructionFiles);
+    void Refresh();
 }

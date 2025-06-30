@@ -7,7 +7,7 @@ namespace LpjGuess.Frontend.Interfaces.Presenters;
 /// <summary>
 /// An interface to a presenter which controls an instruction file view.
 /// </summary>
-public interface IInstructionFilePresenter : IPresenter<IInstructionFileView>
+public interface IInstructionFilePresenter : IPresenter<IInstructionFileView, string>
 {
     /// <summary>
     /// Save all changes to the instruction file, and all recursively imported

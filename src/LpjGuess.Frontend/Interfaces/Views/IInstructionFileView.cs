@@ -10,7 +10,7 @@ public interface IInstructionFileView : IView
     /// <summary>
     /// The name of the instruction file.
     /// </summary>
-    string Name { get; }
+    string Name { get; set;}
 
     /// <summary>
     /// Remove all child views.

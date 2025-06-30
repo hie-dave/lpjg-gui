@@ -1,3 +1,4 @@
+using LpjGuess.Core.Interfaces.Graphing;
 using LpjGuess.Frontend.Interfaces;
 using LpjGuess.Frontend.Interfaces.Presenters;
 
@@ -27,4 +28,14 @@ public interface IPresenterFactory
         where TPresenter : IPresenter<TView, TModel>
         where TView : IView
         where TModel : notnull;
+
+    /// <summary>
+    /// Create a series presenter for the given series.
+    /// </summary>
+    /// <typeparam name="TSeries">The type of the series.</typeparam>
+    /// <param name="series">The series to present.</param>
+    /// <param name="instructionFiles">The instruction files in the workspace.</param>
+    /// <returns>The series presenter.</returns>
+    public ISeriesPresenter CreateSeriesPresenter<TSeries>(TSeries series, IEnumerable<string> instructionFiles)
+        where TSeries : ISeries;
 }

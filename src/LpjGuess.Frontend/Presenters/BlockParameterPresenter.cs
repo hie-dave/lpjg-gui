@@ -12,25 +12,29 @@ namespace LpjGuess.Frontend.Presenters;
 public class BlockParameterPresenter : TopLevelParameterPresenter, IFactorPresenter
 {
     /// <summary>
-    /// The view instance managed by this presenter.
-    /// </summary>
-    private new readonly IBlockParameterView view;
-
-    /// <summary>
     /// The model instance managed by this presenter.
     /// </summary>
-    private readonly BlockParameter model;
+    private readonly BlockParameter block;
+
+    /// <summary>
+    /// The view instance managed by this presenter.
+    /// </summary>
+    private readonly IBlockParameterView blockView;
 
     /// <summary>
     /// Create a new <see cref="BlockParameterPresenter"/> instance.
     /// </summary>
     /// <param name="model">The model to present.</param>
     /// <param name="view">The view to present the model on.</param>
-    public BlockParameterPresenter(BlockParameter model, IBlockParameterView view)
-        : base(model, view)
+    /// <param name="registry">The command registry to use for command execution.</param>
+    public BlockParameterPresenter(
+        BlockParameter model,
+        IBlockParameterView view,
+        ICommandRegistry registry)
+        : base(model, view, registry)
     {
-        this.model = model;
-        this.view = view;
+        block = model;
+        blockView = view;
         view.OnChanged.ConnectTo(OnBlockParameterChanged);
         RefreshView();
     }
@@ -40,9 +44,9 @@ public class BlockParameterPresenter : TopLevelParameterPresenter, IFactorPresen
     {
         // This is called from the base class constructor, at which point the
         // model and view will be null.
-        if (model == null || view == null)
+        if (block == null || blockView == null)
             return;
-        view.Populate(model.Name, model.BlockType, model.BlockName, model.Value);
+        blockView.Populate(block.Name, block.BlockType, block.BlockName, block.Value);
     }
 
     /// <summary>
@@ -51,7 +55,7 @@ public class BlockParameterPresenter : TopLevelParameterPresenter, IFactorPresen
     /// <param name="change">The change to the model.</param>
     private void OnBlockParameterChanged(IModelChange<BlockParameter> change)
     {
-        ICommand command = change.ToCommand(model);
+        ICommand command = change.ToCommand(block);
         InvokeCommand(command);
     }
 }

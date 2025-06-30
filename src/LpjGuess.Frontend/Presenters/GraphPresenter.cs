@@ -10,9 +10,9 @@ using LpjGuess.Core.Models.Graphing.Style.Providers;
 using LpjGuess.Core.Models.Graphing.Style.Strategies;
 using LpjGuess.Frontend.Commands;
 using LpjGuess.Frontend.Delegates;
+using LpjGuess.Frontend.DependencyInjection;
 using LpjGuess.Frontend.Interfaces.Commands;
 using LpjGuess.Frontend.Interfaces.Events;
-using LpjGuess.Frontend.Interfaces.Factories;
 using LpjGuess.Frontend.Interfaces.Presenters;
 using LpjGuess.Frontend.Interfaces.Views;
 using LpjGuess.Frontend.Utility;
@@ -37,7 +37,7 @@ public class GraphPresenter : PresenterBase<IGraphView, Graph>, IGraphPresenter
     /// <summary>
     /// Factory for creating series views.
     /// </summary>
-    private readonly ISeriesPresenterFactory seriesPresenterFactory;
+    private readonly IPresenterFactory presenterFactory;
 
     /// <summary>
     /// The plot model.
@@ -70,19 +70,19 @@ public class GraphPresenter : PresenterBase<IGraphView, Graph>, IGraphPresenter
     /// <param name="view">The view object.</param>
     /// <param name="graph">The graph model.</param>
     /// <param name="instructionFiles">The instruction files for which data should be displayed.</param>
-    /// <param name="seriesPresenterFactory">Factory for creating series views.</param>
+    /// <param name="presenterFactory">Presenter factory for creating series views.</param>
     /// <param name="registry">The command registry to use for command execution.</param>
     public GraphPresenter(
         IGraphView view,
         Graph graph,
         IEnumerable<string> instructionFiles,
-        ISeriesPresenterFactory seriesPresenterFactory,
+        IPresenterFactory presenterFactory,
         ICommandRegistry registry)
         : base(view, graph, registry)
     {
         this.graph = graph;
         this.instructionFiles = instructionFiles;
-        this.seriesPresenterFactory = seriesPresenterFactory;
+        this.presenterFactory = presenterFactory;
         OnTitleChanged = new Event<string>();
 
         // Connect event handlers
@@ -135,7 +135,7 @@ public class GraphPresenter : PresenterBase<IGraphView, Graph>, IGraphPresenter
         List<ISeriesPresenter> presenters = new();
         foreach (ISeries series in graph.Series)
         {
-            ISeriesPresenter seriesPresenter = seriesPresenterFactory.CreatePresenter(series);
+            ISeriesPresenter seriesPresenter = presenterFactory.CreateSeriesPresenter(series, instructionFiles);
             seriesPresenter.OnSeriesChanged.ConnectTo(OnSeriesChanged);
             presenters.Add(seriesPresenter);
         }

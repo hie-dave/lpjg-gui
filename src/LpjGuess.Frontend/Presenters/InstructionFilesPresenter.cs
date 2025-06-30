@@ -1,5 +1,9 @@
+using ExtendedXmlSerializer;
 using LpjGuess.Frontend.Delegates;
+using LpjGuess.Frontend.DependencyInjection;
 using LpjGuess.Frontend.Events;
+using LpjGuess.Frontend.Interfaces;
+using LpjGuess.Frontend.Interfaces.Commands;
 using LpjGuess.Frontend.Interfaces.Presenters;
 using LpjGuess.Frontend.Interfaces.Views;
 
@@ -8,8 +12,23 @@ namespace LpjGuess.Frontend.Presenters;
 /// <summary>
 /// A presenter for an instruction files view.
 /// </summary>
-public class InstructionFilesPresenter : PresenterBase<IInstructionFilesView>, IInstructionFilesPresenter
+public class InstructionFilesPresenter : IInstructionFilesPresenter
 {
+    /// <summary>
+    /// The view to present.
+    /// </summary>
+    private readonly IInstructionFilesView view;
+
+    /// <summary>
+    /// The presenter factory.
+    /// </summary>
+    private readonly IPresenterFactory presenterFactory;
+
+    /// <summary>
+    /// The instruction files provider.
+    /// </summary>
+    private readonly IInstructionFilesProvider insFilesProvider;
+
     /// <summary>
     /// The instruction file presenters.
     /// </summary>
@@ -25,22 +44,32 @@ public class InstructionFilesPresenter : PresenterBase<IInstructionFilesView>, I
     /// Create a new <see cref="InstructionFilesPresenter"/> instance.
     /// </summary>
     /// <param name="view">The view to present.</param>
-    public InstructionFilesPresenter(IInstructionFilesView view) : base(view)
+    /// <param name="presenterFactory">The presenter factory.</param>
+    /// <param name="insFilesProvider">The instruction files provider.</param>
+    public InstructionFilesPresenter(
+        IInstructionFilesView view,
+        IPresenterFactory presenterFactory,
+        IInstructionFilesProvider insFilesProvider)
     {
+        this.view = view;
+        this.presenterFactory = presenterFactory;
+        this.insFilesProvider = insFilesProvider;
         presenters = new List<IInstructionFilePresenter>();
+
+        Refresh();
     }
 
     /// <inheritdoc />
-    public void Populate(IEnumerable<string> insFiles)
+    public void Refresh()
     {
         // Remove existing presenters.
         presenters.ForEach(p => p.OnFileChanged.DisconnectAll());
         presenters.ForEach(p => p.OnSaved.DisconnectAll());
         presenters = new List<IInstructionFilePresenter>();
 
-        foreach (string file in insFiles)
+        foreach (string file in insFilesProvider.GetInstructionFiles())
         {
-            InstructionFilePresenter presenter = new(file);
+            IInstructionFilePresenter presenter = presenterFactory.CreatePresenter<IInstructionFilePresenter, IInstructionFileView, string>(file);
             presenter.OnFileChanged.ConnectTo(OnFileChanged);
             presenter.OnSaved.ConnectTo(f => OnFileSaved(presenter, f));
             presenters.Add(presenter);
@@ -54,6 +83,17 @@ public class InstructionFilesPresenter : PresenterBase<IInstructionFilesView>, I
     public void SaveChanges()
     {
         presenters.ForEach(p => p.SaveChanges());
+    }
+
+    /// <inheritdoc />
+    public IView GetView() => view;
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        presenters.ForEach(p => p.Dispose());
+        presenters.Clear();
+        view.Dispose();
     }
 
     /// <summary>

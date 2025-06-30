@@ -19,15 +19,15 @@ public class InstructionFileView : ViewBase<Notebook>, IInstructionFileView
     private readonly List<Tab> editors;
 
     /// <inheritdoc />
-    public string Name { get; private init; }
+    public string Name { get; set; }
 
     /// <summary>
     /// Create a new <see cref="InstructionFileView"/> instance for the
     /// specified file.
     /// </summary>
-    public InstructionFileView(string name) : base(new Notebook())
+    public InstructionFileView() : base(new Notebook())
     {
-        Name = name;
+        Name = string.Empty;
         editors = new List<Tab>();
     }
 

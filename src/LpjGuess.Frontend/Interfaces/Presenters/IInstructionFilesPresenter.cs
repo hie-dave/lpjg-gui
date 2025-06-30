@@ -1,18 +1,16 @@
 using LpjGuess.Frontend.Delegates;
-using LpjGuess.Frontend.Interfaces.Views;
 
 namespace LpjGuess.Frontend.Interfaces.Presenters;
 
 /// <summary>
 /// An interface to a presenter which controls a collection of instruction file views.
 /// </summary>
-public interface IInstructionFilesPresenter : IPresenter<IInstructionFilesView>
+public interface IInstructionFilesPresenter : IPresenter
 {
     /// <summary>
     /// Populate the view with the given instruction files.
     /// </summary>
-    /// <param name="insFiles">The instruction files with which the view should be populated.</param>
-    void Populate(IEnumerable<string> insFiles);
+    void Refresh();
 
     /// <summary>
     /// Save any pending changes to the instruction files.

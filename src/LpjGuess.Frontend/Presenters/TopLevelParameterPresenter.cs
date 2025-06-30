@@ -12,13 +12,8 @@ namespace LpjGuess.Frontend.Presenters;
 /// <summary>
 /// A presenter for a concrete top-level parameter.
 /// </summary>
-public class TopLevelParameterPresenter : PresenterBase<ITopLevelParameterView>, IFactorPresenter
+public class TopLevelParameterPresenter : PresenterBase<ITopLevelParameterView, TopLevelParameter>, IFactorPresenter
 {
-    /// <summary>
-    /// The model instance managed by this presenter.
-    /// </summary>
-    private readonly TopLevelParameter model;
-
     /// <inheritdoc />
     public IFactor Model => model;
 
@@ -33,10 +28,13 @@ public class TopLevelParameterPresenter : PresenterBase<ITopLevelParameterView>,
     /// </summary>
     /// <param name="model">The model to present.</param>
     /// <param name="view">The view to present the model on.</param>
-    public TopLevelParameterPresenter(TopLevelParameter model, ITopLevelParameterView view)
-        : base(view)
+    /// <param name="registry">The command registry to use for command execution.</param>
+    public TopLevelParameterPresenter(
+        TopLevelParameter model,
+        ITopLevelParameterView view,
+        ICommandRegistry registry)
+        : base(view, model, registry)
     {
-        this.model = model;
         OnRenamed = new Event<string>();
         view.OnChanged.ConnectTo(OnChanged);
         RefreshView();

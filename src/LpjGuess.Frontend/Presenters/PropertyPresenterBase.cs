@@ -1,5 +1,6 @@
 using System.Reflection;
 using LpjGuess.Frontend.Interfaces;
+using LpjGuess.Frontend.Interfaces.Presenters;
 
 namespace LpjGuess.Frontend.Presenters;
 
@@ -46,6 +47,9 @@ public abstract class PropertyPresenterBase<T> : IPropertyPresenter
 
 	/// <inheritdoc />
 	public abstract IPropertyView GetView();
+
+	/// <inheritdoc />
+	IView IPresenter.GetView() => GetView();
 
 	/// <summary>
 	/// Get a description of the specified property.

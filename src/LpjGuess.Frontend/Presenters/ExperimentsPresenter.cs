@@ -21,35 +21,39 @@ public class ExperimentsPresenter : PresenterBase<IExperimentsView, IEnumerable<
     private readonly IPresenterFactory presenterFactory;
 
     /// <summary>
+    /// The instruction files provider.
+    /// </summary>
+    private readonly IInstructionFilesProvider insFilesProvider;
+
+    /// <summary>
     /// The list of experiment presenters.
     /// </summary>
     private List<IExperimentPresenter> presenters;
 
     /// <summary>
-    /// The list of instruction files in the workspace.
-    /// </summary>
-    private List<string> instructionFiles;
-
-    /// <summary>
     /// Create a new <see cref="ExperimentsPresenter"/> instance.
     /// </summary>
     /// <param name="experiments">The experiments to present.</param>
+    /// <param name="insFilesProvider">The instruction files provider.</param>
     /// <param name="view">The view to present.</param>
     /// <param name="registry">The command registry to use for command execution.</param>
     /// <param name="presenterFactory">The presenter factory to use for creating experiment presenters.</param>
     public ExperimentsPresenter(
         IEnumerable<Experiment> experiments,
+        IInstructionFilesProvider insFilesProvider,
         IExperimentsView view,
         ICommandRegistry registry,
         IPresenterFactory presenterFactory) : base(view, experiments, registry)
     {
         this.presenterFactory = presenterFactory;
+        this.insFilesProvider = insFilesProvider;
+
         view.AddText = "Add Experiment";
+
         view.OnAdd.ConnectTo(OnAdd);
         view.OnRemove.ConnectTo(OnRemove);
 
         presenters = [];
-        instructionFiles = [];
     }
 
     /// <inheritdoc />
@@ -59,17 +63,9 @@ public class ExperimentsPresenter : PresenterBase<IExperimentsView, IEnumerable<
     }
 
     /// <inheritdoc />
-    public void Populate(IEnumerable<string> instructionFiles)
+    public void Refresh()
     {
-        this.instructionFiles = instructionFiles.ToList();
         RefreshView(model);
-    }
-
-    /// <inheritdoc />
-    public void UpdateInstructionFiles(IEnumerable<string> instructionFiles)
-    {
-        this.instructionFiles = instructionFiles.ToList();
-        presenters.ForEach(p => p.UpdateInstructionFiles(instructionFiles));
     }
 
     /// <summary>
@@ -107,7 +103,7 @@ public class ExperimentsPresenter : PresenterBase<IExperimentsView, IEnumerable<
             "New Experiment",
             "Description",
             Configuration.Instance.GetDefaultRunner()?.Name ?? string.Empty,
-            instructionFiles,
+            insFilesProvider.GetInstructionFiles().ToList(),
             [],
             new FactorialGenerator(true, [])
         );

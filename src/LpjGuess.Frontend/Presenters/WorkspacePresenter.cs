@@ -1,6 +1,7 @@
-using System.Linq.Expressions;
 using LpjGuess.Core.Extensions;
 using LpjGuess.Core.Models;
+using LpjGuess.Core.Models.Factorial;
+using LpjGuess.Core.Models.Graphing;
 using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.DependencyInjection;
 using LpjGuess.Frontend.Enumerations;
@@ -8,6 +9,7 @@ using LpjGuess.Frontend.Extensions;
 using LpjGuess.Frontend.Interfaces;
 using LpjGuess.Frontend.Interfaces.Commands;
 using LpjGuess.Frontend.Interfaces.Presenters;
+using LpjGuess.Frontend.Interfaces.Views;
 using LpjGuess.Frontend.Views;
 using LpjGuess.Runner.Models;
 
@@ -53,12 +55,17 @@ public class WorkspacePresenter : PresenterBase<IWorkspaceView, Workspace>, IWor
 	/// <summary>
 	/// The presenter factory.
 	/// </summary>
-	private readonly IPresenterFactory presenterFactory;
+	private readonly WorkspacePresenterFactory presenterFactory;
 
 	/// <summary>
-	/// Cancellation token used to cancel running simulations.
+	/// The instruction files provider.
 	/// </summary>
-	private CancellationTokenSource cancellationTokenSource = new();
+    private readonly InstructionFilesProvider insFilesProvider;
+
+    /// <summary>
+    /// Cancellation token used to cancel running simulations.
+    /// </summary>
+    private CancellationTokenSource cancellationTokenSource = new();
 
 	/// <summary>
 	/// Create a new <see cref="WorkspacePresenter"/> instance for the given file.
@@ -71,20 +78,22 @@ public class WorkspacePresenter : PresenterBase<IWorkspaceView, Workspace>, IWor
 		Workspace workspace,
 		IWorkspaceView view,
 		ICommandRegistry registry,
-		IPresenterFactory presenterFactory) : base(view, workspace, registry)
+		WorkspacePresenterFactory presenterFactory) : base(view, workspace, registry)
 	{
 		this.presenterFactory = presenterFactory;
+
+		insFilesProvider = presenterFactory.Initialise(workspace.InstructionFiles);
+
 		// Construct child presenters.
-		insFilesPresenter = new InstructionFilesPresenter(view.InsFilesView);
-		outputsPresenter = new OutputsPresenter(view.OutputsView);
-		graphsPresenter = new GraphsPresenter(view.GraphsView, workspace.Graphs, workspace.InstructionFiles, registry);
-		experimentsPresenter = new ExperimentsPresenter(view.ExperimentsView);
+		insFilesPresenter = presenterFactory.CreatePresenter<IInstructionFilesPresenter>();
+		outputsPresenter = presenterFactory.CreatePresenter<IOutputsPresenter, IOutputsView, IEnumerable<string>>(workspace.InstructionFiles);
+		graphsPresenter = presenterFactory.CreatePresenter<IGraphsPresenter, IGraphsView, IEnumerable<Graph>>(workspace.Graphs);
+		experimentsPresenter = presenterFactory.CreatePresenter<IExperimentsPresenter, IExperimentsView, IEnumerable<Experiment>>(workspace.Experiments);
 
 		// Populate views.
 		PopulateRunners();
-		insFilesPresenter.Populate(workspace.InstructionFiles);
-		outputsPresenter.Populate(workspace.InstructionFiles);
-		experimentsPresenter.Populate(workspace.Experiments, workspace.InstructionFiles);
+		insFilesPresenter.Refresh();
+		outputsPresenter.Refresh();
 
 		// Connect events.
 		view.OnRun.ConnectTo(OnRun);
@@ -109,11 +118,9 @@ public class WorkspacePresenter : PresenterBase<IWorkspaceView, Workspace>, IWor
 		// Save the changes to the workspace.
 		model.Save();
 
-		// Update the view.
-		insFilesPresenter.Populate(model.InstructionFiles);
-
-		// Update the graphs view.
-		graphsPresenter.UpdateInstructionFiles(model.InstructionFiles);
+		// Update the instruction files provider. This will propagate the change
+		// to any presenters which now need to be updated.
+		insFilesProvider.UpdateInstructionFiles(model.InstructionFiles);
     }
 
 	/// <summary>
@@ -132,8 +139,9 @@ public class WorkspacePresenter : PresenterBase<IWorkspaceView, Workspace>, IWor
 		// Save the changes to the workspace.
 		model.Save();
 
-		// Update the view.
-		insFilesPresenter.Populate(model.InstructionFiles);
+		// Update the instruction files provider. This will propagate the change
+		// to any presenters which now need to be updated.
+		insFilesProvider.UpdateInstructionFiles(model.InstructionFiles);
 	}
 
     /// <summary>
@@ -314,7 +322,7 @@ public class WorkspacePresenter : PresenterBase<IWorkspaceView, Workspace>, IWor
 		try
 		{
 			view.ShowRunButton(true);
-			outputsPresenter.Populate(model.InstructionFiles);
+			outputsPresenter.Refresh();
 			graphsPresenter.RefreshAll();
 		}
 		catch (Exception error)

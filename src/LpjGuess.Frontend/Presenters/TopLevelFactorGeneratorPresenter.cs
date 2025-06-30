@@ -31,6 +31,9 @@ public class TopLevelFactorGeneratorPresenter :
     public TopLevelFactorGenerator Model => model;
 
     /// <inheritdoc />
+    IFactorGenerator IFactorGeneratorPresenter.Model => model;
+
+    /// <inheritdoc />
     public IView View => view;
 
     /// <inheritdoc />
@@ -106,17 +109,17 @@ public class TopLevelFactorGeneratorPresenter :
     {
         // Handle discrete value generators.
         if (values is DiscreteValues<string> stringValues)
-            return new DiscreteValuesPresenter(stringValues, new DiscreteValuesView());
+            return new DiscreteValuesPresenter(stringValues, new DiscreteValuesView(), registry);
         if (values is DiscreteValues<double> doubleValues)
-            return new DiscreteValuesPresenter(doubleValues, new DiscreteValuesView());
+            return new DiscreteValuesPresenter(doubleValues, new DiscreteValuesView(), registry);
         if (values is DiscreteValues<int> intValues)
-            return new DiscreteValuesPresenter(intValues, new DiscreteValuesView());
+            return new DiscreteValuesPresenter(intValues, new DiscreteValuesView(), registry);
 
         // Handle range-based value generators.
         if (values is RangeGenerator<double> doubleRange)
-            return new RangeValuesPresenter(doubleRange, new RangeValuesView());
+            return new RangeValuesPresenter<double>(doubleRange, new RangeValuesView(), registry);
         if (values is RangeGenerator<int> intRange)
-            return new RangeValuesPresenter(intRange, new RangeValuesView());
+            return new RangeValuesPresenter<int>(intRange, new RangeValuesView(), registry);
 
         throw new NotImplementedException($"Unknown value generator type: {values.GetType()}");
     }

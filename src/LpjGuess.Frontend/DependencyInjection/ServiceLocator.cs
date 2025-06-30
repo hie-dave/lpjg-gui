@@ -37,8 +37,12 @@ public class ServiceLocator : IServiceLocator
         // Register services.
         services.AddSingleton<ICommandRegistry, CommandRegistry>();
         services.AddSingleton<IPresenterFactory, PresenterFactory>();
-        services.AddSingleton<IViewFactory, ViewFactory>();
         services.AddSingleton(Configuration.Instance);
+
+        // Add scoped services.
+        services.AddScoped<IInstructionFilesProvider, InstructionFilesProvider>();
+
+        services.AddTransient<WorkspacePresenterFactory>();
 
         // Register views.
         // TODO: make this configurable.

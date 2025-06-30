@@ -5,7 +5,6 @@ using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.Interfaces;
 using LpjGuess.Frontend.Interfaces.Commands;
 using LpjGuess.Frontend.Interfaces.Events;
-using LpjGuess.Frontend.Interfaces.Factories;
 using LpjGuess.Frontend.Interfaces.Presenters;
 using LpjGuess.Frontend.Interfaces.Views;
 
@@ -22,9 +21,9 @@ public class SeriesPresenter<T> : PresenterBase<ISeriesView<T>, T>, ISeriesPrese
     public T Series { get; private init; }
 
     /// <summary>
-    /// The data source presenter factory.
+    /// The data source presenter.
     /// </summary>
-    private readonly IDataSourcePresenterFactory factory;
+    private readonly IDataSourcePresenter dataSourcePresenter;
     private readonly SeriesValidationCommandFactory validationCommandFactory;
 
     /// <summary>
@@ -32,12 +31,12 @@ public class SeriesPresenter<T> : PresenterBase<ISeriesView<T>, T>, ISeriesPrese
     /// </summary>
     /// <param name="view">The view to present to.</param>
     /// <param name="series">The series being edited.</param>
-    /// <param name="factory">The data source presenter factory.</param>
+    /// <param name="dataSourcePresenter">The data source presenter.</param>
     /// <param name="registry">The command registry.</param>
     public SeriesPresenter(
         ISeriesView<T> view,
         T series,
-        IDataSourcePresenterFactory factory,
+        IDataSourcePresenter dataSourcePresenter,
         ICommandRegistry registry) : base(view, series, registry)
     {
         Series = series;
@@ -45,10 +44,9 @@ public class SeriesPresenter<T> : PresenterBase<ISeriesView<T>, T>, ISeriesPrese
         view.SetAllowedStyleVariationStrategies(GetAllowedStyleVariationStrategies());
         view.Populate(series);
         view.OnEditSeries.ConnectTo(OnEditSeries);
-        this.factory = factory;
-        this.validationCommandFactory = new SeriesValidationCommandFactory();
+        validationCommandFactory = new SeriesValidationCommandFactory();
 
-        IDataSourcePresenter dataSourcePresenter = this.factory.CreatePresenter(series.DataSource);
+        this.dataSourcePresenter = dataSourcePresenter;
         dataSourcePresenter.OnDataSourceChanged.ConnectTo(OnDataSourceChanged);
         view.ShowDataSourceView(dataSourcePresenter.GetView());
     }

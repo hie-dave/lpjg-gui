@@ -15,10 +15,11 @@ namespace LpjGuess.Frontend.Presenters;
 /// <summary>
 /// A presenter for a range values view.
 /// </summary>
-public class RangeValuesPresenter : PresenterBase<IRangeValuesView>, IValueGeneratorPresenter
+public class RangeValuesPresenter<T> : PresenterBase<IRangeValuesView, RangeGenerator<T>>, IValueGeneratorPresenter
+    where T : struct, INumber<T>
 {
     /// <inheritdoc />
-    public IValueGenerator Model { get; private init; }
+    public IValueGenerator Model => model;
 
     /// <inheritdoc />
     public IView View => view;
@@ -27,14 +28,17 @@ public class RangeValuesPresenter : PresenterBase<IRangeValuesView>, IValueGener
     public Event<IValueGenerator> OnTypeChanged { get; private init; }
 
     /// <summary>
-    /// Create a new <see cref="RangeValuesPresenter"/> instance.
+    /// Create a new <see cref="RangeValuesPresenter{T}"/> instance.
     /// </summary>
     /// <param name="model">The model to present.</param>
     /// <param name="view">The view to present the model on.</param>
-    public RangeValuesPresenter(IValueGenerator model, IRangeValuesView view)
-        : base(view)
+    /// <param name="registry">The command registry to use for command execution.</param>
+    public RangeValuesPresenter(
+        RangeGenerator<T> model,
+        IRangeValuesView view,
+        ICommandRegistry registry)
+        : base(view, model, registry)
     {
-        Model = model;
         OnTypeChanged = new Event<IValueGenerator>();
 
         view.OnStartChanged.ConnectTo(OnStartChanged);
@@ -114,14 +118,13 @@ public class RangeValuesPresenter : PresenterBase<IRangeValuesView>, IValueGener
     /// <summary>
     /// Get the current start value, or a default value if none is set.
     /// </summary>
-    /// <typeparam name="T">The type of the value.</typeparam>
     /// <returns>The start value.</returns>
-    private T GetStart<T>() where T : struct, INumber<T>
+    private TValue GetStart<TValue>() where TValue : struct, INumber<TValue>
     {
         if (Model is RangeGenerator<double> dblModel)
-            return (T)Convert.ChangeType(dblModel.Start, typeof(T));
+            return (TValue)Convert.ChangeType(dblModel.Start, typeof(TValue));
         else if (Model is RangeGenerator<int> intModel)
-            return (T)Convert.ChangeType(intModel.Start, typeof(T));
+            return (TValue)Convert.ChangeType(intModel.Start, typeof(TValue));
         return default;
     }
 
@@ -140,33 +143,32 @@ public class RangeValuesPresenter : PresenterBase<IRangeValuesView>, IValueGener
     /// <summary>
     /// Get the current step value, or a default value if none is set.
     /// </summary>
-    /// <typeparam name="T">The type of the value.</typeparam>
     /// <returns>The step value.</returns>
-    private T GetStep<T>() where T : struct, INumber<T>
+    private TValue GetStep<TValue>() where TValue : struct, INumber<TValue>
     {
         if (Model is RangeGenerator<double> dblModel)
-            return (T)Convert.ChangeType(dblModel.Step, typeof(T));
+            return (TValue)Convert.ChangeType(dblModel.Step, typeof(TValue));
         else if (Model is RangeGenerator<int> intModel)
-            return (T)Convert.ChangeType(intModel.Step, typeof(T));
+            return (TValue)Convert.ChangeType(intModel.Step, typeof(TValue));
         return default;
     }
 
     /// <summary>
     /// Handle the user changing a value.
     /// </summary>
-    /// <typeparam name="T">The type of the value.</typeparam>
+    /// <typeparam name="TValue">The type of the value.</typeparam>
     /// <param name="newValue">The new value.</param>
     /// <param name="getter">A function to get the current value.</param>
     /// <param name="setter">A function to set the new value.</param>
-    private void OnValueChanged<T>(
-        T newValue,
-        Func<RangeGenerator<T>, T> getter,
-        Action<RangeGenerator<T>, T> setter) where T : struct, INumber<T>
+    private void OnValueChanged<TValue>(
+        TValue newValue,
+        Func<RangeGenerator<TValue>, TValue> getter,
+        Action<RangeGenerator<TValue>, TValue> setter) where TValue : struct, INumber<TValue>
     {
-        if (Model is RangeGenerator<T> model)
+        if (Model is RangeGenerator<TValue> model)
         {
             // Model is already of the correct type.
-            InvokeCommand(new PropertyChangeCommand<RangeGenerator<T>, T>(
+            InvokeCommand(new PropertyChangeCommand<RangeGenerator<TValue>, TValue>(
                 model,
                 getter(model),
                 newValue,
@@ -174,15 +176,15 @@ public class RangeValuesPresenter : PresenterBase<IRangeValuesView>, IValueGener
         }
         else
         {
-            // Model needs to be converted to a RangeGenerator<T> instance.
+            // Model needs to be converted to a RangeGenerator<TValue> instance.
 
             // Attempt to copy current values.
-            T start = GetStart<T>();
+            TValue start = GetStart<TValue>();
             int n = GetN();
-            T step = GetStep<T>();
+            TValue step = GetStep<TValue>();
 
-            // Create a new RangeGenerator<T> instance and set the new value.
-            RangeGenerator<T> newModel = new RangeGenerator<T>(start, n, step);
+            // Create a new RangeGenerator<TValue> instance and set the new value.
+            RangeGenerator<TValue> newModel = new RangeGenerator<TValue>(start, n, step);
             setter(newModel, newValue);
 
             // Emit a type changed event.

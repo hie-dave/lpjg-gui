@@ -120,14 +120,14 @@ public class FactorialPresenter : PresenterBase<IFactorialView, FactorialGenerat
         if (factor is BlockFactorGenerator blockFactorGenerator)
         {
             BlockFactorGeneratorView view = new BlockFactorGeneratorView();
-            BlockFactorGeneratorPresenter presenter = new(blockFactorGenerator, view);
+            BlockFactorGeneratorPresenter presenter = new(blockFactorGenerator, view, registry);
             return presenter;
         }
 
         if (factor is TopLevelFactorGenerator topLevelFactorGenerator)
         {
             TopLevelFactorGeneratorView view = new TopLevelFactorGeneratorView();
-            TopLevelFactorGeneratorPresenter presenter = new(topLevelFactorGenerator, view);
+            TopLevelFactorGeneratorPresenter presenter = new(topLevelFactorGenerator, view, registry);
             return presenter;
         }
         if (factor is SimpleFactorGenerator simpleGenerator)
