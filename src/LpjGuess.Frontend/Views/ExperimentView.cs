@@ -3,11 +3,8 @@ using LpjGuess.Core.Models.Factorial;
 using LpjGuess.Frontend.Classes;
 using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.Events;
-using LpjGuess.Frontend.Extensions;
 using LpjGuess.Frontend.Interfaces.Events;
 using LpjGuess.Frontend.Interfaces.Views;
-using LpjGuess.Runner.Models;
-using OxyPlot;
 
 namespace LpjGuess.Frontend.Views;
 
@@ -42,6 +39,11 @@ public class ExperimentView : ViewBase<ScrolledWindow>, IExperimentView
     private readonly StringDropDownView runnerDropDown;
 
     /// <summary>
+    /// The container for the factorial view.
+    /// </summary>
+    private readonly Box factorialContainer;
+
+    /// <summary>
     /// A child widget which allows the user to select which instruction files
     /// are used in the experiment.
     /// </summary>
@@ -61,11 +63,6 @@ public class ExperimentView : ViewBase<ScrolledWindow>, IExperimentView
     /// </summary>
     private int nrow;
 
-    /// <summary>
-    /// The view which displays the factorial data.
-    /// </summary>
-    public IFactorialView FactorialView { get; }
-
     /// <inheritdoc />
     public Event<IModelChange<Experiment>> OnChanged { get; }
 
@@ -75,7 +72,7 @@ public class ExperimentView : ViewBase<ScrolledWindow>, IExperimentView
     public ExperimentView() : base(new ScrolledWindow())
     {
         nrow = 0;
-        FactorialView = new FactorialView();
+        factorialContainer = new Box();
         OnChanged = new Event<IModelChange<Experiment>>();
 
         // Configure the scrolled window.
@@ -115,7 +112,7 @@ public class ExperimentView : ViewBase<ScrolledWindow>, IExperimentView
 
         // Pack child widgets into the container.
         container.Append(grid);
-        container.Append(FactorialView.GetWidget());
+        container.Append(factorialContainer);
         container.Append(simulationView);
 
         // Pack the container into the scrolled window.
@@ -192,6 +189,16 @@ public class ExperimentView : ViewBase<ScrolledWindow>, IExperimentView
         insFileView.Populate(
             instructionFiles.Select(i => i.Item1),
             instructionFiles.Where(i => i.Item2).Select(i => i.Item1));
+    }
+
+    /// <inheritdoc />
+    public void SetFactorialView(IFactorialView factorialView)
+    {
+        Widget? child;
+        while ((child = factorialContainer.GetFirstChild()) != null)
+            factorialContainer.Remove(child);
+
+        factorialContainer.Append(factorialView.GetWidget());
     }
 
     /// <summary>

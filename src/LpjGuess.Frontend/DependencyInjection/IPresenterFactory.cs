@@ -20,13 +20,11 @@ public interface IPresenterFactory
     /// Create a presenter of the specified type.
     /// </summary>
     /// <typeparam name="TPresenter">The type of presenter to create.</typeparam>
-    /// <typeparam name="TView">The type of view to create.</typeparam>
     /// <typeparam name="TModel">The type of model to create.</typeparam>
     /// <param name="model">The model to pass to the presenter.</param>
     /// <returns>The created presenter.</returns>
-    public TPresenter CreatePresenter<TPresenter, TView, TModel>(TModel model)
-        where TPresenter : IPresenter<TView, TModel>
-        where TView : IView
+    public TPresenter CreatePresenter<TPresenter, TModel>(TModel model)
+        where TPresenter : IPresenter<TModel>
         where TModel : notnull;
 
     /// <summary>
@@ -38,4 +36,20 @@ public interface IPresenterFactory
     /// <returns>The series presenter.</returns>
     public ISeriesPresenter CreateSeriesPresenter<TSeries>(TSeries series, IEnumerable<string> instructionFiles)
         where TSeries : ISeries;
+
+    /// <summary>
+    /// Creates a presenter for the given model by automatically determining the appropriate presenter type.
+    /// </summary>
+    /// <typeparam name="TModel">The type of model to create a presenter for.</typeparam>
+    /// <param name="model">The model to create a presenter for.</param>
+    /// <returns>A presenter that can handle the given model.</returns>
+    IPresenter<TModel> CreatePresenter<TModel>(TModel model) where TModel : notnull;
+
+    /// <summary>
+    /// Creates a presenter for the given model.
+    /// </summary>
+    /// <typeparam name="TPresenter">The type of presenter to create.</typeparam>
+    /// <param name="model">The model to create a presenter for.</param>
+    /// <returns>A presenter that can handle the given model.</returns>
+    TPresenter CreatePresenter<TPresenter>(object model) where TPresenter : IPresenter;
 }

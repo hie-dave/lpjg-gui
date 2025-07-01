@@ -23,33 +23,6 @@ internal enum FactorType
 internal static class FactorHelpers
 {
     /// <summary>
-    /// Create a factor presenter for the given factor.
-    /// </summary>
-    /// <param name="factor">The factor to create a presenter for.</param>
-    /// <returns>The presenter.</returns>
-    public static IFactorPresenter CreateFactorPresenter(IFactor factor)
-    {
-        // Note: BlockParameter extends TopLevelParameter, so we need to check
-        // for that first.
-        if (factor is BlockParameter blockParameter)
-        {
-            IBlockParameterView view = new BlockParameterView();
-            return new BlockParameterPresenter(blockParameter, view);
-        }
-        if (factor is TopLevelParameter topLevelParameter)
-        {
-            ITopLevelParameterView view = new TopLevelParameterView();
-            return new TopLevelParameterPresenter(topLevelParameter, view);
-        }
-        if (factor is CompositeFactor compositeFactor)
-        {
-            ICompositeFactorView view = new CompositeFactorView();
-            return new CompositeFactorPresenter(compositeFactor, view);
-        }
-        throw new NotImplementedException($"Unknown factor type: {factor.GetType().Name}");
-    }
-
-    /// <summary>
     /// Create a default factor for the given factor type.
     /// </summary>
     /// <param name="type">The type of factor to create.</param>

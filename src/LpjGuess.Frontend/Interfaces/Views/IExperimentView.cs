@@ -11,9 +11,9 @@ namespace LpjGuess.Frontend.Interfaces.Views;
 public interface IExperimentView : IView
 {
     /// <summary>
-    /// The view which displays the factorial data.
+    /// Set the factorial view.
     /// </summary>
-    IFactorialView FactorialView { get; }
+    void SetFactorialView(IFactorialView factorialView);
 
     /// <summary>
     /// Called when the user wants to change the experiment.

@@ -2,6 +2,7 @@ using System.Globalization;
 using LpjGuess.Core.Extensions;
 using LpjGuess.Core.Interfaces.Factorial;
 using LpjGuess.Core.Models.Factorial.Generators.Values;
+using LpjGuess.Frontend.Attributes;
 using LpjGuess.Frontend.Commands;
 using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.Interfaces;
@@ -15,7 +16,8 @@ namespace LpjGuess.Frontend.Presenters;
 /// <summary>
 /// A presenter for a discrete values view.
 /// </summary>
-public class DiscreteValuesPresenter : PresenterBase<IDiscreteValuesView, IValueGenerator>, IValueGeneratorPresenter
+[RegisterGenericType(typeof(string), typeof(int), typeof(double))]
+public class DiscreteValuesPresenter<T> : PresenterBase<IDiscreteValuesView, DiscreteValues<T>>, IValueGeneratorPresenter, IPresenter<IDiscreteValuesView, DiscreteValues<T>>
 {
     /// <summary>
     /// Called when the data type has been changed by the user. The event
@@ -24,19 +26,16 @@ public class DiscreteValuesPresenter : PresenterBase<IDiscreteValuesView, IValue
     public Event<IValueGenerator> OnTypeChanged { get; private init; }
 
     /// <inheritdoc />
-    public IValueGenerator Model => model;
-
-    /// <inheritdoc />
     public IView View => view;
 
     /// <summary>
-    /// Create a new <see cref="DiscreteValuesPresenter"/> instance.
+    /// Create a new <see cref="DiscreteValuesPresenter{T}"/> instance.
     /// </summary>
     /// <param name="model">The model to present.</param>
     /// <param name="view">The view to present the model on.</param>
     /// <param name="registry">The command registry to use for command execution.</param>
     public DiscreteValuesPresenter(
-        IValueGenerator model,
+        DiscreteValues<T> model,
         IDiscreteValuesView view,
         ICommandRegistry registry) : base(view, model, registry)
     {
@@ -91,23 +90,22 @@ public class DiscreteValuesPresenter : PresenterBase<IDiscreteValuesView, IValue
     /// <summary>
     /// Handle the user changing the values.
     /// </summary>
-    /// <typeparam name="T">The type of the values.</typeparam>
+    /// <typeparam name="TValue">The type of the values.</typeparam>
     /// <param name="values">The new values.</param>
-    private void OnChanged<T>(IEnumerable<T> values)
+    private void OnChanged<TValue>(IEnumerable<TValue> values)
     {
-        if (model is not DiscreteValues<T> typedModel)
+        if (model is not DiscreteValues<TValue> typedModel)
         {
             // Model is currently a differently-typed object. Need to
             // construct a new DiscreteValues<T> instance and raise the
             // OnTypeChanged event.
-            typedModel = new DiscreteValues<T>(values);
+            typedModel = new DiscreteValues<TValue>(values);
             OnTypeChanged.Invoke(typedModel);
-            model = typedModel;
             return;
         }
 
         // Model is already a DiscreteValues<T> instance. Update the values.
-        PropertyChangeCommand<DiscreteValues<T>, List<T>> command = new(
+        PropertyChangeCommand<DiscreteValues<TValue>, List<TValue>> command = new(
             typedModel,
             typedModel.Values,
             values.ToList(),
@@ -121,30 +119,6 @@ public class DiscreteValuesPresenter : PresenterBase<IDiscreteValuesView, IValue
     /// </summary>
     /// <param name="index">The index of the value to remove.</param>
     private void OnRemoveValue(int index)
-    {
-        switch (model)
-        {
-            case DiscreteValues<string> stringModel:
-                OnRemoveValue(stringModel, index);
-                break;
-            case DiscreteValues<int> intModel:
-                OnRemoveValue(intModel, index);
-                break;
-            case DiscreteValues<double> doubleModel:
-                OnRemoveValue(doubleModel, index);
-                break;
-            default:
-                throw new InvalidOperationException($"Unknown model type: {model.GetType().Name}");
-        }
-    }
-
-    /// <summary>
-    /// Remove a value from the model.
-    /// </summary>
-    /// <typeparam name="T">The type of the value.</typeparam>
-    /// <param name="model">The model to remove the value from.</param>
-    /// <param name="index">The index of the value to remove.</param>
-    private void OnRemoveValue<T>(DiscreteValues<T> model, int index)
     {
         List<T> values = model.Values.ToList();
         values.RemoveAt(index);
@@ -163,30 +137,7 @@ public class DiscreteValuesPresenter : PresenterBase<IDiscreteValuesView, IValue
     /// </summary>
     private void OnAddValue()
     {
-        switch (model)
-        {
-            case DiscreteValues<string> stringModel:
-                OnAddValueTo(stringModel);
-                break;
-            case DiscreteValues<int> intModel:
-                OnAddValueTo(intModel);
-                break;
-            case DiscreteValues<double> doubleModel:
-                OnAddValueTo(doubleModel);
-                break;
-            default:
-                throw new InvalidOperationException($"Unknown model type: {model.GetType().Name}");
-        }
-    }
-
-    /// <summary>
-    /// Add a default value to the specified model.
-    /// </summary>
-    /// <typeparam name="T">The type of the value.</typeparam>
-    /// <param name="model">The model to add the value to.</param>
-    private void OnAddValueTo<T>(DiscreteValues<T> model)
-    {
-        T newValue = CreateNewValue<T>();
+        T newValue = CreateNewValue();
         PropertyChangeCommand<DiscreteValues<T>, List<T>> command = new(
             model,
             model.Values,
@@ -200,9 +151,8 @@ public class DiscreteValuesPresenter : PresenterBase<IDiscreteValuesView, IValue
     /// Create a default value to be added to the list of values when the user
     /// clicks "add value".
     /// </summary>
-    /// <typeparam name="T">The type of the value.</typeparam>
     /// <returns>The default value.</returns>
-    private static T CreateNewValue<T>()
+    private static T CreateNewValue()
     {
         if (typeof(T) == typeof(string))
             return (T)(object)string.Empty;

@@ -13,9 +13,4 @@ public interface IPropertyPresenter : IPresenter<IPropertyView, object>
 	/// </summary>
 	/// <param name="property">Property metadata.</param>
 	public bool CanPresent(PropertyInfo property);
-
-	/// <summary>
-	/// Get the model being presented by this presenter.
-	/// </summary>
-	public object GetModel();
 }

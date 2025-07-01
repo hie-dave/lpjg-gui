@@ -1,5 +1,6 @@
 using LpjGuess.Core.Interfaces;
 using LpjGuess.Core.Interfaces.Graphing;
+using LpjGuess.Frontend.Extensions;
 using LpjGuess.Frontend.Interfaces;
 using LpjGuess.Frontend.Interfaces.Presenters;
 using LpjGuess.Frontend.Interfaces.Views;
@@ -34,9 +35,8 @@ public class PresenterFactory : IPresenterFactory
     }
 
     /// <inheritdoc />
-    public TPresenter CreatePresenter<TPresenter, TView, TModel>(TModel model)
-        where TPresenter : IPresenter<TView, TModel>
-        where TView : IView
+    public TPresenter CreatePresenter<TPresenter, TModel>(TModel model)
+        where TPresenter : IPresenter<TModel>
         where TModel : notnull
     {
         return ActivatorUtilities.CreateInstance<TPresenter>(serviceProvider, model);
@@ -48,6 +48,21 @@ public class PresenterFactory : IPresenterFactory
     {
         IDataSourcePresenter presenter = CreateDataSourcePresenter(series.DataSource, instructionFiles);
         return ActivatorUtilities.CreateInstance<ISeriesPresenter<TSeries>>(serviceProvider, presenter);
+    }
+
+    /// <inheritdoc />
+    public IPresenter<TModel> CreatePresenter<TModel>(TModel model)
+        where TModel : notnull
+    {
+        // Get the model type.
+        return CreatePresenter<IPresenter<TModel>>(model);
+    }
+
+    /// <inheritdoc />
+    public TPresenter CreatePresenter<TPresenter>(object model) where TPresenter : IPresenter
+    {
+        Console.WriteLine($"Creating presenter {typeof(TPresenter).ToFriendlyName()} for model {model.GetType().ToFriendlyName()}");
+        return serviceProvider.GetRequiredService<TPresenter>();
     }
 
     /// <summary>

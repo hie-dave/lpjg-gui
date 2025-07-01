@@ -1,5 +1,5 @@
-using System.Globalization;
 using LpjGuess.Core.Models.Factorial.Generators.Factors;
+using LpjGuess.Frontend.DependencyInjection;
 using LpjGuess.Frontend.Interfaces.Commands;
 using LpjGuess.Frontend.Interfaces.Events;
 using LpjGuess.Frontend.Interfaces.Views;
@@ -27,10 +27,12 @@ public class BlockFactorGeneratorPresenter : TopLevelFactorGeneratorPresenter
     /// <param name="model">The model to present.</param>
     /// <param name="view">The view to present the model on.</param>
     /// <param name="registry">The command registry to use for command execution.</param>
+    /// <param name="presenterFactory">The factory to use for creating presenters.</param>
     public BlockFactorGeneratorPresenter(
         BlockFactorGenerator model,
         IBlockFactorGeneratorView view,
-        ICommandRegistry registry) : base(model, view, registry)
+        ICommandRegistry registry,
+        IPresenterFactory presenterFactory) : base(model, view, registry, presenterFactory)
     {
         this.view = view;
         block = model;

@@ -9,6 +9,11 @@ namespace LpjGuess.Frontend.Commands;
 public class CommandRegistry : ICommandRegistry
 {
     /// <summary>
+    /// The default maximum number of commands to keep in history.
+    /// </summary>
+    private const int defaultHistorySize = 100;
+
+    /// <summary>
     /// Maximum number of commands to keep in history.
     /// </summary>
     private readonly int maxHistorySize;
@@ -64,10 +69,15 @@ public class CommandRegistry : ICommandRegistry
     public Event<CommandHistoryState> HistoryStateChanged { get; }
 
     /// <summary>
+    /// Create a new <see cref="CommandRegistry"/> instance with the default history size.
+    /// </summary>
+    public CommandRegistry() : this(defaultHistorySize) { }
+
+    /// <summary>
     /// Create a new <see cref="CommandRegistry"/> instance.
     /// </summary>
     /// <param name="maxHistorySize">Maximum number of commands to keep in history.</param>
-    private CommandRegistry(int maxHistorySize = 100)
+    private CommandRegistry(int maxHistorySize)
     {
         BeforeCommandExecuted = new Event<ICommand>();
         AfterCommandExecuted = new Event<ICommand>();

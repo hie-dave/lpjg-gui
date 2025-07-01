@@ -6,6 +6,7 @@ using LpjGuess.Core.Models.Factorial.Generators.Factors;
 using LpjGuess.Core.Models.Factorial.Generators.Values;
 using LpjGuess.Frontend.Classes;
 using LpjGuess.Frontend.Delegates;
+using LpjGuess.Frontend.DependencyInjection;
 using LpjGuess.Frontend.Events;
 using LpjGuess.Frontend.Interfaces;
 using LpjGuess.Frontend.Interfaces.Commands;
@@ -38,6 +39,11 @@ public class FactorialPresenter : PresenterBase<IFactorialView, FactorialGenerat
     private const string simpleFactorTitle = "Manual";
 
     /// <summary>
+    /// The presenter factory to use for creating value generator presenters.
+    /// </summary>
+    private readonly IPresenterFactory presenterFactory;
+
+    /// <summary>
     /// The presenters responsible for managing the factors of the factorial.
     /// </summary>
     private List<IFactorGeneratorPresenter> presenters;
@@ -51,12 +57,15 @@ public class FactorialPresenter : PresenterBase<IFactorialView, FactorialGenerat
     /// <param name="model">The model to present the factorial on.</param>
     /// <param name="view">The view to present the factorial on.</param>
     /// <param name="registry">The command registry to use for command execution.</param>
+    /// <param name="presenterFactory">The presenter factory to use for creating value generator presenters.</param>
     public FactorialPresenter(
         FactorialGenerator model,
         IFactorialView view,
-        ICommandRegistry registry) : base(view, model, registry)
+        ICommandRegistry registry,
+        IPresenterFactory presenterFactory) : base(view, model, registry)
     {
         presenters = [];
+        this.presenterFactory = presenterFactory;
         view.OnAddFactor.ConnectTo(OnAddFactor);
         view.OnRemoveFactor.ConnectTo(OnRemoveFactor);
         OnChanged = new Event();
@@ -117,27 +126,7 @@ public class FactorialPresenter : PresenterBase<IFactorialView, FactorialGenerat
     /// <returns>A tuple containing the presenter and view.</returns>
     private IFactorGeneratorPresenter CreateFactorPresenter(IFactorGenerator factor)
     {
-        if (factor is BlockFactorGenerator blockFactorGenerator)
-        {
-            BlockFactorGeneratorView view = new BlockFactorGeneratorView();
-            BlockFactorGeneratorPresenter presenter = new(blockFactorGenerator, view, registry);
-            return presenter;
-        }
-
-        if (factor is TopLevelFactorGenerator topLevelFactorGenerator)
-        {
-            TopLevelFactorGeneratorView view = new TopLevelFactorGeneratorView();
-            TopLevelFactorGeneratorPresenter presenter = new(topLevelFactorGenerator, view, registry);
-            return presenter;
-        }
-        if (factor is SimpleFactorGenerator simpleGenerator)
-        {
-            SimpleFactorGeneratorView view = new SimpleFactorGeneratorView();
-            SimpleFactorGeneratorPresenter presenter = new(simpleGenerator, view, registry);
-            return presenter;
-        }
-
-        throw new InvalidOperationException($"Unknown factor type: {factor.GetType().Name}");
+        return presenterFactory.CreatePresenter<IFactorGeneratorPresenter>(factor);
     }
 
     /// <summary>

@@ -86,9 +86,9 @@ public class WorkspacePresenter : PresenterBase<IWorkspaceView, Workspace>, IWor
 
 		// Construct child presenters.
 		insFilesPresenter = presenterFactory.CreatePresenter<IInstructionFilesPresenter>();
-		outputsPresenter = presenterFactory.CreatePresenter<IOutputsPresenter, IOutputsView, IEnumerable<string>>(workspace.InstructionFiles);
-		graphsPresenter = presenterFactory.CreatePresenter<IGraphsPresenter, IGraphsView, IEnumerable<Graph>>(workspace.Graphs);
-		experimentsPresenter = presenterFactory.CreatePresenter<IExperimentsPresenter, IExperimentsView, IEnumerable<Experiment>>(workspace.Experiments);
+		outputsPresenter = presenterFactory.CreatePresenter<IOutputsPresenter, IEnumerable<string>>(workspace.InstructionFiles);
+		graphsPresenter = presenterFactory.CreatePresenter<IGraphsPresenter, IReadOnlyList<Graph>>(workspace.Graphs);
+		experimentsPresenter = presenterFactory.CreatePresenter<IExperimentsPresenter, IEnumerable<Experiment>>(workspace.Experiments);
 
 		// Populate views.
 		PopulateRunners();

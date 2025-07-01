@@ -38,7 +38,7 @@ public static class AssemblyScanner
             if (implementations.Count == 1)
             {
                 // Register the single implementation
-                Console.WriteLine($"services.AddTransient<{interfaceType.ToFriendlyName()}, {implementations[0].ToFriendlyName()}>;");
+                Console.WriteLine($"services.AddTransient<{interfaceType.ToFriendlyName()}, {implementations[0].ToFriendlyName()}>();");
                 services.AddTransient(interfaceType, implementations[0]);
             }
             else

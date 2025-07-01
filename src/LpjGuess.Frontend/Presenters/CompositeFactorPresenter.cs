@@ -2,7 +2,7 @@ using LpjGuess.Core.Interfaces.Factorial;
 using LpjGuess.Core.Models.Factorial.Factors;
 using LpjGuess.Frontend.Commands;
 using LpjGuess.Frontend.Delegates;
-using LpjGuess.Frontend.Interfaces;
+using LpjGuess.Frontend.DependencyInjection;
 using LpjGuess.Frontend.Interfaces.Commands;
 using LpjGuess.Frontend.Interfaces.Events;
 using LpjGuess.Frontend.Interfaces.Presenters;
@@ -20,12 +20,17 @@ namespace LpjGuess.Frontend.Presenters;
 public class CompositeFactorPresenter : PresenterBase<ICompositeFactorView, CompositeFactor>, IFactorPresenter
 {
     /// <summary>
+    /// The factory to use for creating presenters.
+    /// </summary>
+    private readonly IPresenterFactory presenterFactory;
+
+    /// <summary>
     /// The presenters responsible for managing the individual factors.
     /// </summary>
     private List<IFactorPresenter> factorPresenters;
 
     /// <inheritdoc />
-    public IFactor Model => model;
+    IFactor IFactorPresenter.Model => model;
 
     /// <inheritdoc />
     public Event<string> OnRenamed { get; private init; }
@@ -36,13 +41,16 @@ public class CompositeFactorPresenter : PresenterBase<ICompositeFactorView, Comp
     /// <param name="model">The model to present.</param>
     /// <param name="view">The view to present the model on.</param>
     /// <param name="registry">The command registry to use for command execution.</param>
+    /// <param name="presenterFactory">The factory to use for creating presenters.</param>
     public CompositeFactorPresenter(
         CompositeFactor model,
         ICompositeFactorView view,
-        ICommandRegistry registry) : base(view, model, registry)
+        ICommandRegistry registry,
+        IPresenterFactory presenterFactory) : base(view, model, registry)
     {
         factorPresenters = new List<IFactorPresenter>();
         OnRenamed = new Event<string>();
+        this.presenterFactory = presenterFactory;
         view.OnChanged.ConnectTo(OnChanged);
         view.OnAddFactor.ConnectTo(OnAddFactor);
         view.OnRemoveFactor.ConnectTo(OnRemoveFactor);
@@ -77,6 +85,16 @@ public class CompositeFactorPresenter : PresenterBase<ICompositeFactorView, Comp
 
         factorPresenters.ForEach(p => p.Dispose());
         factorPresenters = presenters;
+    }
+
+    /// <summary>
+    /// Create a factor presenter for the given factor.
+    /// </summary>
+    /// <param name="factor">The factor to create a presenter for.</param>
+    /// <returns>The presenter.</returns>
+    private IFactorPresenter CreateFactorPresenter(IFactor factor)
+    {
+        return presenterFactory.CreatePresenter<IFactorPresenter>(factor);
     }
 
     /// <summary>

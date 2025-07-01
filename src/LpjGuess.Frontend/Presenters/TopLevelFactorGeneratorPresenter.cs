@@ -4,6 +4,7 @@ using LpjGuess.Core.Models.Factorial.Generators.Factors;
 using LpjGuess.Core.Models.Factorial.Generators.Values;
 using LpjGuess.Frontend.Commands;
 using LpjGuess.Frontend.Delegates;
+using LpjGuess.Frontend.DependencyInjection;
 using LpjGuess.Frontend.Events;
 using LpjGuess.Frontend.Interfaces;
 using LpjGuess.Frontend.Interfaces.Commands;
@@ -22,13 +23,15 @@ public class TopLevelFactorGeneratorPresenter :
     IFactorGeneratorPresenter<ITopLevelFactorGeneratorView, TopLevelFactorGenerator>
 {
     /// <summary>
+    /// The presenter factory to use for creating value generator presenters.
+    /// </summary>
+    private readonly IPresenterFactory presenterFactory;
+
+    /// <summary>
     /// The presenter responsible for managing the values of the factor
     /// generator.
     /// </summary>
     private IValueGeneratorPresenter? valuesPresenter;
-
-    /// <inheritdoc />
-    public TopLevelFactorGenerator Model => model;
 
     /// <inheritdoc />
     IFactorGenerator IFactorGeneratorPresenter.Model => model;
@@ -48,13 +51,16 @@ public class TopLevelFactorGeneratorPresenter :
     /// <param name="model">The model to present.</param>
     /// <param name="view">The view to present the model on.</param>
     /// <param name="registry">The command registry to use for command execution.</param>
+    /// <param name="presenterFactory">The presenter factory to use for creating value generator presenters.</param>
     public TopLevelFactorGeneratorPresenter(
         TopLevelFactorGenerator model,
         ITopLevelFactorGeneratorView view,
-        ICommandRegistry registry) : base(view, model, registry)
+        ICommandRegistry registry,
+        IPresenterFactory presenterFactory) : base(view, model, registry)
     {
         OnRenamed = new Event<string>();
         valuesPresenter = null;
+        this.presenterFactory = presenterFactory;
         view.OnChanged.ConnectTo(OnChanged);
         view.OnValuesTypeChanged.ConnectTo(OnValuesTypeChanged);
         RefreshView();
@@ -77,7 +83,7 @@ public class TopLevelFactorGeneratorPresenter :
     {
         IValueGeneratorPresenter presenter = CreateValuesPresenter(model.Values);
         presenter.OnTypeChanged.ConnectTo(OnGeneratorTypeChanged);
-        view.Populate(model.Name, GetGeneratorType(model.Values), presenter.View);
+        view.Populate(model.Name, GetGeneratorType(model.Values), presenter.GetView());
 
         if (valuesPresenter != null)
             valuesPresenter.Dispose();
@@ -104,24 +110,9 @@ public class TopLevelFactorGeneratorPresenter :
     /// </summary>
     /// <param name="values">The value generator to create a presenter for.</param>
     /// <returns>The presenter.</returns>
-    /// <exception cref="NotImplementedException">Thrown if the value generator type is not supported.</exception>
     private IValueGeneratorPresenter CreateValuesPresenter(IValueGenerator values)
     {
-        // Handle discrete value generators.
-        if (values is DiscreteValues<string> stringValues)
-            return new DiscreteValuesPresenter(stringValues, new DiscreteValuesView(), registry);
-        if (values is DiscreteValues<double> doubleValues)
-            return new DiscreteValuesPresenter(doubleValues, new DiscreteValuesView(), registry);
-        if (values is DiscreteValues<int> intValues)
-            return new DiscreteValuesPresenter(intValues, new DiscreteValuesView(), registry);
-
-        // Handle range-based value generators.
-        if (values is RangeGenerator<double> doubleRange)
-            return new RangeValuesPresenter<double>(doubleRange, new RangeValuesView(), registry);
-        if (values is RangeGenerator<int> intRange)
-            return new RangeValuesPresenter<int>(intRange, new RangeValuesView(), registry);
-
-        throw new NotImplementedException($"Unknown value generator type: {values.GetType()}");
+        return presenterFactory.CreatePresenter<IValueGeneratorPresenter>(values);
     }
 
     /// <summary>

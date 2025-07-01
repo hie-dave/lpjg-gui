@@ -3,6 +3,7 @@ using LpjGuess.Core.Models.Factorial;
 using LpjGuess.Core.Models.Factorial.Generators;
 using LpjGuess.Frontend.Classes;
 using LpjGuess.Frontend.Delegates;
+using LpjGuess.Frontend.DependencyInjection;
 using LpjGuess.Frontend.Interfaces.Commands;
 using LpjGuess.Frontend.Interfaces.Events;
 using LpjGuess.Frontend.Interfaces.Presenters;
@@ -21,6 +22,11 @@ public class ExperimentPresenter : PresenterBase<IExperimentView, Experiment>, I
     private readonly IFactorialPresenter factorialPresenter;
 
     /// <summary>
+    /// The factory to use for creating presenters.
+    /// </summary>
+    private readonly IPresenterFactory presenterFactory;
+
+    /// <summary>
     /// The available instruction files in the workspace.
     /// </summary>
     private IEnumerable<string> instructionFiles;
@@ -35,16 +41,20 @@ public class ExperimentPresenter : PresenterBase<IExperimentView, Experiment>, I
     /// <param name="experiment">The experiment to present.</param>
     /// <param name="view">The view to present the experiment on.</param>
     /// <param name="registry">The command registry to use for command execution.</param>
+    /// <param name="presenterFactory">The factory to use for creating presenters.</param>
     public ExperimentPresenter(
         IEnumerable<string> instructionFiles,
         Experiment experiment,
         IExperimentView view,
-        ICommandRegistry registry) : base(view, experiment, registry)
+        ICommandRegistry registry,
+        IPresenterFactory presenterFactory) : base(view, experiment, registry)
     {
         OnRenamed = new Event<string>();
         this.instructionFiles = instructionFiles;
+        this.presenterFactory = presenterFactory;
         view.OnChanged.ConnectTo(OnExperimentChanged);
-        factorialPresenter = new FactorialPresenter(GetFactorialGenerator(), view.FactorialView, registry);
+        factorialPresenter = presenterFactory.CreatePresenter<IFactorialPresenter>(GetFactorialGenerator());
+        view.SetFactorialView(factorialPresenter.GetView());
         factorialPresenter.OnChanged.ConnectTo(OnSimulationGeneratorChanged);
         RefreshView();
     }

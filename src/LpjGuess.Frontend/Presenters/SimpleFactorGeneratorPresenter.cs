@@ -3,6 +3,7 @@ using LpjGuess.Core.Models.Factorial.Factors;
 using LpjGuess.Core.Models.Factorial.Generators.Factors;
 using LpjGuess.Frontend.Commands;
 using LpjGuess.Frontend.Delegates;
+using LpjGuess.Frontend.DependencyInjection;
 using LpjGuess.Frontend.Interfaces;
 using LpjGuess.Frontend.Interfaces.Commands;
 using LpjGuess.Frontend.Interfaces.Events;
@@ -21,12 +22,17 @@ namespace LpjGuess.Frontend.Presenters;
 public class SimpleFactorGeneratorPresenter : PresenterBase<ISimpleFactorGeneratorView, SimpleFactorGenerator>, IFactorGeneratorPresenter
 {
     /// <summary>
+    /// The factory to use for creating presenters.
+    /// </summary>
+    private readonly IPresenterFactory presenterFactory;
+
+    /// <summary>
     /// The presenters responsible for managing the factor levels.
     /// </summary>
     private List<IFactorPresenter> factorPresenters;
 
     /// <inheritdoc />
-    public IFactorGenerator Model => model;
+    IFactorGenerator IFactorGeneratorPresenter.Model => model;
 
     /// <inheritdoc />
     public string Name => model.Name;
@@ -40,11 +46,14 @@ public class SimpleFactorGeneratorPresenter : PresenterBase<ISimpleFactorGenerat
     /// <param name="model">The model to present.</param>
     /// <param name="view">The view to present the model on.</param>
     /// <param name="registry">The command registry to use for command execution.</param>
+    /// <param name="presenterFactory">The factory to use for creating presenters.</param>
     public SimpleFactorGeneratorPresenter(
         SimpleFactorGenerator model,
         ISimpleFactorGeneratorView view,
-        ICommandRegistry registry) : base(view, model, registry)
+        ICommandRegistry registry,
+        IPresenterFactory presenterFactory) : base(view, model, registry)
     {
+        this.presenterFactory = presenterFactory;
         factorPresenters = new List<IFactorPresenter>();
         OnRenamed = new Event<string>();
         view.OnChanged.ConnectTo(OnChanged);
@@ -74,6 +83,16 @@ public class SimpleFactorGeneratorPresenter : PresenterBase<ISimpleFactorGenerat
 
         factorPresenters.ForEach(p => p.Dispose());
         factorPresenters = presenters;
+    }
+
+    /// <summary>
+    /// Create a factor presenter for the given factor.
+    /// </summary>
+    /// <param name="factor">The factor to create a presenter for.</param>
+    /// <returns>The presenter.</returns>
+    private IFactorPresenter CreateFactorPresenter(IFactor factor)
+    {
+        return presenterFactory.CreatePresenter<IFactorPresenter>(factor);
     }
 
     /// <summary>

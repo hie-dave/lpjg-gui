@@ -1,5 +1,6 @@
 using LpjGuess.Core.Interfaces.Graphing;
 using LpjGuess.Core.Models.Graphing.Style;
+using LpjGuess.Frontend.Attributes;
 using LpjGuess.Frontend.Commands;
 using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.Interfaces;
@@ -13,6 +14,7 @@ namespace LpjGuess.Frontend.Presenters;
 /// <summary>
 /// Presenter for managing series editing.
 /// </summary>
+[RegisterGenericType]
 public class SeriesPresenter<T> : PresenterBase<ISeriesView<T>, T>, ISeriesPresenter<T> where T : ISeries
 {
     /// <summary>

@@ -28,6 +28,11 @@ public abstract class PresenterBase<TView, TModel> : IPresenter<TView, TModel>
 	protected readonly ICommandRegistry registry;
 
 	/// <summary>
+	/// The model object.
+	/// </summary>
+	public TModel Model => model;
+
+	/// <summary>
 	/// Create a new <see cref="PresenterBase{TView, TModel}"/> instance.
 	/// </summary>
 	/// <param name="view">The view.</param>

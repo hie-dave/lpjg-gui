@@ -19,9 +19,6 @@ public class RangeValuesPresenter<T> : PresenterBase<IRangeValuesView, RangeGene
     where T : struct, INumber<T>
 {
     /// <inheritdoc />
-    public IValueGenerator Model => model;
-
-    /// <inheritdoc />
     public IView View => view;
 
     /// <inheritdoc />

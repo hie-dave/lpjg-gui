@@ -1,3 +1,4 @@
+/*
 using System.Reflection;
 using LpjGuess.Frontend.Interfaces;
 using LpjGuess.Frontend.Interfaces.Presenters;
@@ -19,6 +20,9 @@ public abstract class PropertyPresenterBase<T> : IPropertyPresenter
 	/// The property being presented.
 	/// </summary>
 	protected readonly PropertyInfo property;
+
+	/// <inheritdoc />
+	public T Model => (T)property.GetValue(model);
 
 	/// <summary>
 	/// Create a new <see cref="PropertyPresenterBase{T}"/> instance.
@@ -55,7 +59,5 @@ public abstract class PropertyPresenterBase<T> : IPropertyPresenter
 	/// Get a description of the specified property.
 	/// </summary>>
 	protected string GetDescription() => throw new NotImplementedException(); // property.GetSummary();
-
-	/// <inheritdoc />
-	public object GetModel() => model;
 }
+*/

@@ -70,9 +70,9 @@ public class GraphsPresenter : PresenterBase<IGraphsView, IReadOnlyList<Graph>>,
 	}
 
 	/// <inheritdoc />
-    public IEnumerable<Graph> GetGraphs()
+    public IReadOnlyList<Graph> GetGraphs()
     {
-        return plots.Values.Select(p => p.GetGraph());
+        return plots.Values.Select(p => p.GetGraph()).ToList();
     }
 
 	/// <summary>
