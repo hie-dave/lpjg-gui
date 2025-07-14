@@ -5,7 +5,6 @@ using LpjGuess.Frontend.Interfaces;
 using LpjGuess.Frontend.Interfaces.Commands;
 using LpjGuess.Frontend.Interfaces.Presenters;
 using LpjGuess.Frontend.Interfaces.Views;
-using LpjGuess.Frontend.Utility;
 using LpjGuess.Frontend.Views;
 using LpjGuess.Runner;
 
@@ -145,7 +144,18 @@ public class InstructionFilePresenter : PresenterBase<IInstructionFileView, stri
     /// <param name="ct">The cancellation token.</param>
     private async Task AddViewAsync(string file, CancellationToken ct)
     {
+        // await File.ReadAllTextAsync(file, ct).ContinueWithOnMainThread(text => AddViewFromFileAsync(file, text));
         string text = await File.ReadAllTextAsync(file, ct).ContinueOnMainThread(ct);
+        EditorView child = new EditorView();
+        child.Populate(text);
+        view.AddView(Path.GetFileName(file), child);
+        Editor editor = new Editor(file, child);
+        child.OnChanged.ConnectTo(() => OnEditorChanged(editor));
+        editors.Add(editor);
+    }
+
+    private void AddViewFromFileAsync(string file, string text)
+    {
         EditorView child = new EditorView();
         child.Populate(text);
         view.AddView(Path.GetFileName(file), child);

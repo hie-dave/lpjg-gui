@@ -84,7 +84,7 @@ public class ExperimentsPresenter : PresenterBase<IExperimentsView, IEnumerable<
         // Create a new set of views.
         foreach (Experiment experiment in experiments)
         {
-            IExperimentPresenter presenter = presenterFactory.CreatePresenter<IExperimentPresenter, Experiment>(experiment);
+            IExperimentPresenter presenter = presenterFactory.CreatePresenter<ExperimentPresenter, Experiment>(experiment);
             presenter.OnRenamed.ConnectTo(n => OnExperimentRenamed(experiment, n));
             presenters.Add(presenter);
         }

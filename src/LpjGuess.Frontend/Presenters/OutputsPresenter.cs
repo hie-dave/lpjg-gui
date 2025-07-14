@@ -35,6 +35,7 @@ public class OutputsPresenter : PresenterBase<IOutputsView, IEnumerable<string>>
         view.OnInstructionFileSelected.ConnectTo(OnInstructionFileSelected);
         view.OnOutputFileSelected.ConnectTo(OnOutputFileSelected);
         cts = new CancellationTokenSource();
+        Refresh();
     }
 
     /// <inheritdoc />

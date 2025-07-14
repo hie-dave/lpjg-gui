@@ -73,31 +73,6 @@ public class WorkspaceView : ViewBase<Box>, IWorkspaceView
 	private readonly Notebook notebook;
 
 	/// <summary>
-	/// ScrolledWindow containing the lpj-guess output TextView widget.
-	/// </summary>
-	private readonly ScrolledWindow logsScroller;
-
-	/// <summary>
-	/// The instruction files view.
-	/// </summary>
-	private readonly IInstructionFilesView insFilesView;
-
-	/// <summary>
-	/// The experiments view.
-	/// </summary>
-	private readonly ExperimentsView experimentsView;
-
-	/// <summary>
-	/// A view which allows the user to browse the raw outputs from the model.
-	/// </summary>
-	private readonly OutputsView outputsView;
-
-	/// <summary>
-	/// A view which displays configurable graphs.
-	/// </summary>
-	private readonly GraphsView graphsView;
-
-	/// <summary>
 	/// The run options menu.
 	/// </summary>
 	private readonly Menu runMenu;
@@ -166,22 +141,7 @@ public class WorkspaceView : ViewBase<Box>, IWorkspaceView
 		stop.AddCssClass(StyleClasses.DestructiveAction);
 		stop.Visible = false;
 
-		LogsView = new EditorView();
-		LogsView.Editable = false;
-		logsScroller = new ScrolledWindow();
-		logsScroller.Child = LogsView.GetWidget();
-
-		insFilesView = new InstructionFilesView();
-		experimentsView = new ExperimentsView();
-		outputsView = new OutputsView();
-		graphsView = new GraphsView();
-
 		notebook = new Notebook();
-		notebook.AppendPage(insFilesView.GetWidget(), Label.New("Instruction Files"));
-		notebook.AppendPage(experimentsView.GetWidget(), Label.New("Simulations"));
-		notebook.AppendPage(logsScroller, Label.New("Logs"));
-		notebook.AppendPage(outputsView.GetWidget(), Label.New("Outputs"));
-		notebook.AppendPage(graphsView.GetWidget(), Label.New("Graphs"));
 		// notebook.ShowTabs = false;
 
 		progressBar = new ProgressBar();
@@ -213,23 +173,6 @@ public class WorkspaceView : ViewBase<Box>, IWorkspaceView
 		}
 	}
 
-	/// <inheritdoc />
-	public IInstructionFilesView InsFilesView => insFilesView;
-
-	/// <inheritdoc />
-	public IGraphsView GraphsView => graphsView;
-
-	/// <inheritdoc />
-	public IEditorView LogsView { get; private init; }
-
-	/// <inheritdoc />
-	public IExperimentsView ExperimentsView => experimentsView;
-
-	/// <summary>
-	/// A view which allows the user to browse the raw outputs from the model.
-	/// </summary>
-	public IOutputsView OutputsView => outputsView;
-
 	/// <summary>
 	/// Dispose of native resources.
 	/// </summary>
@@ -244,40 +187,6 @@ public class WorkspaceView : ViewBase<Box>, IWorkspaceView
 	public void AppendTab(string name, IView view)
 	{
 		notebook.AppendPage(view.GetWidget(), Label.New(name));
-	}
-
-	/// <inheritdoc />
-	public void AppendOutput(string stdout)
-	{
-		MainView.RunOnMainThread(() =>
-		{
-			Adjustment? adj = logsScroller.Vadjustment;
-			double scroll = adj?.Value ?? 0;
-			LogsView.GetWidget().Show();
-			LogsView.AppendLine(stdout);
-			// If scrolled window is at bottom of screen, scroll to bottom.
-			// Otherwise, scroll to previous scroll position. This should be
-			// refactored once the gircore API includes TextIter methods.
-			if (adj != null)
-			{
-				if (scroll >= (adj.Upper - adj.PageSize))
-					scroll = adj.Upper;
-				adj.Value = scroll;
-			}
-		});
-	}
-
-	/// <inheritdoc />
-	public void AppendError(string stderr)
-	{
-		// tbi
-		AppendOutput(stderr);
-	}
-
-	/// <inheritdoc />
-	public void ClearOutput()
-	{
-		LogsView.Clear();
 	}
 
 	/// <inheritdoc />

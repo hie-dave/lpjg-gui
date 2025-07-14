@@ -39,6 +39,7 @@ public class PresenterFactory : IPresenterFactory
         where TPresenter : IPresenter<TModel>
         where TModel : notnull
     {
+        Console.WriteLine($"Creating presenter {typeof(TPresenter).ToFriendlyName()} for model of type {model.GetType().ToFriendlyName()}");
         return ActivatorUtilities.CreateInstance<TPresenter>(serviceProvider, model);
     }
 
@@ -61,7 +62,7 @@ public class PresenterFactory : IPresenterFactory
     /// <inheritdoc />
     public TPresenter CreatePresenter<TPresenter>(object model) where TPresenter : IPresenter
     {
-        Console.WriteLine($"Creating presenter {typeof(TPresenter).ToFriendlyName()} for model {model.GetType().ToFriendlyName()}");
+        Console.WriteLine($"Creating presenter {typeof(TPresenter).ToFriendlyName()} for model of type {model.GetType().ToFriendlyName()}");
         return serviceProvider.GetRequiredService<TPresenter>();
     }
 

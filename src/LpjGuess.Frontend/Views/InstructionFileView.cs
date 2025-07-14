@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Gtk;
 using LpjGuess.Frontend.Interfaces;
 using LpjGuess.Frontend.Interfaces.Views;
@@ -29,6 +30,18 @@ public class InstructionFileView : ViewBase<Notebook>, IInstructionFileView
     {
         Name = string.Empty;
         editors = new List<Tab>();
+        widget.OnDestroy += OnWidgetDestroyed;
+        widget.OnUnrealize += OnWidgetUnrealized;
+    }
+
+    private void OnWidgetUnrealized(Widget sender, EventArgs args)
+    {
+        Console.WriteLine($"{GetType().Name} unrealized");
+    }
+
+    private void OnWidgetDestroyed(Widget sender, EventArgs args)
+    {
+        Console.WriteLine($"{GetType().Name} destroyed");
     }
 
     /// <inheritdoc />

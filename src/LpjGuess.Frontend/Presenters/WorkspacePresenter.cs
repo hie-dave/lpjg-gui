@@ -43,6 +43,11 @@ public class WorkspacePresenter : PresenterBase<IWorkspaceView, Workspace>, IWor
 	private readonly IExperimentsPresenter experimentsPresenter;
 
 	/// <summary>
+	/// Presenter which displays log messages from the model.
+	/// </summary>
+	private readonly ILogsPresenter logsPresenter;
+
+	/// <summary>
 	/// The outputs presenter.
 	/// </summary>
 	private readonly IOutputsPresenter outputsPresenter;
@@ -86,14 +91,13 @@ public class WorkspacePresenter : PresenterBase<IWorkspaceView, Workspace>, IWor
 
 		// Construct child presenters.
 		insFilesPresenter = presenterFactory.CreatePresenter<IInstructionFilesPresenter>();
-		outputsPresenter = presenterFactory.CreatePresenter<IOutputsPresenter, IEnumerable<string>>(workspace.InstructionFiles);
-		graphsPresenter = presenterFactory.CreatePresenter<IGraphsPresenter, IReadOnlyList<Graph>>(workspace.Graphs);
-		experimentsPresenter = presenterFactory.CreatePresenter<IExperimentsPresenter, IEnumerable<Experiment>>(workspace.Experiments);
+		outputsPresenter = presenterFactory.CreatePresenter<OutputsPresenter, IEnumerable<string>>(workspace.InstructionFiles);
+		graphsPresenter = presenterFactory.CreatePresenter<GraphsPresenter, IReadOnlyList<Graph>>(workspace.Graphs);
+		experimentsPresenter = presenterFactory.CreatePresenter<ExperimentsPresenter, IEnumerable<Experiment>>(workspace.Experiments);
+		logsPresenter = presenterFactory.CreatePresenter<ILogsPresenter>();
 
 		// Populate views.
 		PopulateRunners();
-		insFilesPresenter.Refresh();
-		outputsPresenter.Refresh();
 
 		// Connect events.
 		view.OnRun.ConnectTo(OnRun);
@@ -101,6 +105,12 @@ public class WorkspacePresenter : PresenterBase<IWorkspaceView, Workspace>, IWor
 		view.OnAddRunOption.ConnectTo(OnConfigureRunners);
 		insFilesPresenter.OnAddInsFile.ConnectTo(OnAddInsFile);
 		insFilesPresenter.OnRemoveInsFile.ConnectTo(OnRemoveInsFile);
+
+		this.view.AppendTab("Instruction Files", insFilesPresenter.GetView());
+		this.view.AppendTab("Simulations", experimentsPresenter.GetView());
+		this.view.AppendTab("Logs", logsPresenter.GetView());
+		this.view.AppendTab("Outputs", outputsPresenter.GetView());
+		this.view.AppendTab("Graphs", graphsPresenter.GetView());
 	}
 
 	/// <summary>
@@ -223,7 +233,7 @@ public class WorkspacePresenter : PresenterBase<IWorkspaceView, Workspace>, IWor
 		insFilesPresenter.SaveChanges();
 
 		// Clear output buffer from any previous runs.
-		view.ClearOutput();
+		logsPresenter.Clear();
 
 		if (!cancellationTokenSource.TryReset())
 			cancellationTokenSource = new CancellationTokenSource();
@@ -306,7 +316,7 @@ public class WorkspacePresenter : PresenterBase<IWorkspaceView, Workspace>, IWor
 
 			cancellationTokenSource.Cancel();
 			view.ShowRunButton(true);
-			view.LogsView.AppendLine("Simulations were cancelled by the user");
+			logsPresenter.AppendLine("Simulations were cancelled by the user");
 		}
 		catch (Exception error)
 		{
@@ -360,7 +370,7 @@ public class WorkspacePresenter : PresenterBase<IWorkspaceView, Workspace>, IWor
 	/// <param name="stdout">The message written by guess to stdout.</param>
 	private void StdoutCallback(string jobName, string stdout)
 	{
-		MainView.RunOnMainThread(() => view.LogsView.AppendLine(stdout));
+		MainView.RunOnMainThread(() => logsPresenter.AppendLine(stdout));
 	}
 
 	/// <summary>
@@ -371,6 +381,6 @@ public class WorkspacePresenter : PresenterBase<IWorkspaceView, Workspace>, IWor
 	/// <param name="stderr">The message written by guess to stderr.</param>
 	private void StderrCallback(string jobName, string stderr)
 	{
-		MainView.RunOnMainThread(() => view.LogsView.AppendLine(stderr));
+		MainView.RunOnMainThread(() => logsPresenter.AppendLine(stderr));
 	}
 }

@@ -32,7 +32,9 @@ public class WorkspacePresenterFactory : PresenterFactory, IDisposable
     /// <param name="instructionFiles"></param>
     public InstructionFilesProvider Initialise(IEnumerable<string> instructionFiles)
     {
-        return ActivatorUtilities.CreateInstance<InstructionFilesProvider>(scope.ServiceProvider, instructionFiles);
+        var provider = (InstructionFilesProvider)scope.ServiceProvider.GetRequiredService<IInstructionFilesProvider>();
+        provider.UpdateInstructionFiles(instructionFiles);
+        return provider;
     }
 
     /// <inheritdoc />

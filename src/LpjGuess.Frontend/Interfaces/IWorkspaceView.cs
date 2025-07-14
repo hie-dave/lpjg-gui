@@ -22,11 +22,6 @@ public interface IWorkspaceView : IView
 	void AppendTab(string name, IView widget);
 
 	/// <summary>
-	/// Clear the buffer of messages received from lpj-guess.
-	/// </summary>
-	void ClearOutput();
-
-	/// <summary>
 	/// Populate the runners dropdown with the given list of options. When one
 	/// of them is activated by the user, <see cref="OnRun"/> will be invoked
 	/// with the name of the selected runner.
@@ -54,31 +49,6 @@ public interface IWorkspaceView : IView
 	/// </summary>
 	/// <param name="tab">The tab to be selected.</param>
 	void SelectTab(FileTab tab);
-
-	/// <summary>
-	/// Get a reference to the instruction files view.
-	/// </summary>
-	IInstructionFilesView InsFilesView { get; }
-
-	/// <summary>
-	/// Get a reference to the graphs view.
-	/// </summary>
-	IGraphsView GraphsView { get; }
-
-	/// <summary>
-	/// Get a reference to the experiments view.
-	/// </summary>
-	IExperimentsView ExperimentsView { get; }
-
-	/// <summary>
-	/// A child view which displays console output from runs of the model.
-	/// </summary>
-	IEditorView LogsView { get; }
-
-	/// <summary>
-	/// A view which allows the user to browse the raw outputs from the model.
-	/// </summary>
-	IOutputsView OutputsView { get; }
 
 	/// <summary>
 	/// Called when the user wants to run with a specific runner. The event
