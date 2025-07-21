@@ -2,5 +2,5 @@ using LpjGuess.Frontend;
 using LpjGuess.Frontend.DependencyInjection;
 
 IServiceLocator locator = new ServiceLocator();
-var app = locator.GetService<IApplication>();
+IApplication app = locator.GetService<IApplication>();
 app.Run(args);

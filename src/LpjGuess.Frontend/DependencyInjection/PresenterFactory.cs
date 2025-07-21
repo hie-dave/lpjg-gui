@@ -39,8 +39,8 @@ public class PresenterFactory : IPresenterFactory
         where TPresenter : IPresenter<TModel>
         where TModel : notnull
     {
-        Console.WriteLine($"Creating presenter {typeof(TPresenter).ToFriendlyName()} for model of type {model.GetType().ToFriendlyName()}");
-        return ActivatorUtilities.CreateInstance<TPresenter>(serviceProvider, model);
+        IModelPresenterFactory<TPresenter, TModel> factory = serviceProvider.GetRequiredService<IModelPresenterFactory<TPresenter, TModel>>();
+        return factory.CreatePresenter(model);
     }
 
     /// <inheritdoc />
@@ -48,7 +48,7 @@ public class PresenterFactory : IPresenterFactory
         where TSeries : ISeries
     {
         IDataSourcePresenter presenter = CreateDataSourcePresenter(series.DataSource, instructionFiles);
-        return ActivatorUtilities.CreateInstance<ISeriesPresenter<TSeries>>(serviceProvider, presenter);
+        return ActivatorUtilities.CreateInstance<SeriesPresenter<TSeries>>(serviceProvider, presenter);
     }
 
     /// <inheritdoc />

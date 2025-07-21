@@ -81,7 +81,16 @@ public class ServiceLocator : IServiceLocator
             foreach (Type interfaceType in presenterType.GetInterfaces()
                 .Where(i => typeof(IPresenter).IsAssignableFrom(i) && i != typeof(IPresenter)))
             {
-                services.AddTransient(interfaceType, presenterType);
+                if (interfaceType.IsGenericType && interfaceType.GetGenericTypeDefinition() == typeof(IPresenter<>))
+                {
+                    Type modelType = interfaceType.GetGenericArguments()[0];
+                    Type factoryType = typeof(ModelPresenterFactory<,,>).MakeGenericType(interfaceType, presenterType, modelType);
+                    Type factoryInterfaceType = typeof(IModelPresenterFactory<,>).MakeGenericType(interfaceType, modelType);
+                    Console.WriteLine($"services.AddTransient<{factoryInterfaceType.ToFriendlyName()}, {factoryType.ToFriendlyName()}>();");
+                    services.AddTransient(factoryInterfaceType, factoryType);
+                }
+                else
+                    services.AddTransient(interfaceType, presenterType);
                 Console.WriteLine($"services.AddTransient<{interfaceType.ToFriendlyName()}, {presenterType.ToFriendlyName()}>();");
             }
 
