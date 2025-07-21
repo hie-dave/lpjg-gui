@@ -54,6 +54,7 @@ public class ExperimentsPresenter : PresenterBase<IExperimentsView, IEnumerable<
         view.OnRemove.ConnectTo(OnRemove);
 
         presenters = [];
+        Refresh();
     }
 
     /// <inheritdoc />
