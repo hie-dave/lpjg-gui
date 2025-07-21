@@ -30,7 +30,7 @@ public interface IDataSourcePresenter : IPresenter
 /// Interface for presenters that manage data sources.
 /// </summary>
 /// <typeparam name="TModel"></typeparam>
-public interface IDataSourcePresenter<TModel> : IDataSourcePresenter
+public interface IDataSourcePresenter<TModel> : IDataSourcePresenter, IPresenter<TModel>
     where TModel : IDataSource
 {
     /// <summary>

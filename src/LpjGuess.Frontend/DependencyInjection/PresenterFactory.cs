@@ -1,3 +1,4 @@
+using System.Reflection;
 using LpjGuess.Core.Interfaces;
 using LpjGuess.Core.Interfaces.Graphing;
 using LpjGuess.Frontend.Extensions;
@@ -44,11 +45,14 @@ public class PresenterFactory : IPresenterFactory
     }
 
     /// <inheritdoc />
-    public ISeriesPresenter CreateSeriesPresenter<TSeries>(TSeries series, IEnumerable<string> instructionFiles)
+    public ISeriesPresenter CreateSeriesPresenter<TSeries>(TSeries series)
         where TSeries : ISeries
     {
-        IDataSourcePresenter presenter = CreateDataSourcePresenter(series.DataSource, instructionFiles);
-        return ActivatorUtilities.CreateInstance<SeriesPresenter<TSeries>>(serviceProvider, presenter);
+        Type viewType = typeof(ISeriesView<>).MakeGenericType(series.GetType());
+        object view = serviceProvider.GetRequiredService(viewType);
+        IDataSourcePresenter presenter = CreateDataSourcePresenter(series.DataSource);
+        Type presenterType = typeof(SeriesPresenter<>).MakeGenericType(series.GetType());
+        return (ISeriesPresenter)ActivatorUtilities.CreateInstance(serviceProvider, presenterType, view, series, presenter);
     }
 
     /// <inheritdoc />
@@ -62,7 +66,6 @@ public class PresenterFactory : IPresenterFactory
     /// <inheritdoc />
     public TPresenter CreatePresenter<TPresenter>(object model) where TPresenter : IPresenter
     {
-        Console.WriteLine($"Creating presenter {typeof(TPresenter).ToFriendlyName()} for model of type {model.GetType().ToFriendlyName()}");
         return serviceProvider.GetRequiredService<TPresenter>();
     }
 
@@ -71,12 +74,19 @@ public class PresenterFactory : IPresenterFactory
     /// </summary>
     /// <typeparam name="TDataSource">The type of the data source.</typeparam>
     /// <param name="dataSource">The data source to present.</param>
-    /// <param name="instructionFiles">The instruction files in the workspace.</param>
     /// <returns>The data source presenter.</returns>
-    private IDataSourcePresenter CreateDataSourcePresenter<TDataSource>(TDataSource dataSource, IEnumerable<string> instructionFiles)
+    private IDataSourcePresenter CreateDataSourcePresenter<TDataSource>(TDataSource dataSource)
         where TDataSource : IDataSource
     {
-        IDataSourcePresenter presenter = ActivatorUtilities.CreateInstance<IDataSourcePresenter<TDataSource>>(serviceProvider, dataSource, instructionFiles);
-        return presenter;
+        Type modelType = dataSource.GetType();
+        Type presenterType = typeof(IDataSourcePresenter<>).MakeGenericType(modelType);
+        MethodInfo methods = GetType().GetMethods(BindingFlags.Public | BindingFlags.Instance)
+            .Where(m => m.Name == nameof(CreatePresenter) &&
+            m.IsGenericMethod &&
+            m.GetGenericArguments().Length == 2 &&
+            m.GetParameters().Length == 1)
+            .Single();
+        MethodInfo genericMethod = methods.MakeGenericMethod(presenterType, modelType);
+        return (IDataSourcePresenter)genericMethod.Invoke(this, [dataSource])!;
     }
 }

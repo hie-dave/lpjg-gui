@@ -41,9 +41,25 @@ public static class AssemblyScanner
                 Console.WriteLine($"services.AddTransient<{interfaceType.ToFriendlyName()}, {implementations[0].ToFriendlyName()}>();");
                 services.AddTransient(interfaceType, implementations[0]);
             }
+            else if (interfaceType.IsGenericType)
+            {
+                List<Type> others = assembly.GetTypes()
+                    .Where(t => !t.IsAbstract &&
+                       t.GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == interfaceType))
+                    .ToList();
+                foreach (Type implementation in others)
+                {
+                    Type concreteInterface = implementation.GetInterfaces()
+                        .First(i => i.IsGenericType && i.GetGenericTypeDefinition() == interfaceType);
+                    Console.WriteLine($"services.AddTransient<{concreteInterface.ToFriendlyName()}, {implementation.ToFriendlyName()}>();");
+                    services.AddTransient(concreteInterface, implementation);
+                }
+                if (others.Count == 0)
+                    Console.WriteLine($"Found un-implemented generic view interface: {interfaceType.ToFriendlyName()}");
+            }
             else
             {
-                // TODO: emit warning?
+                Console.WriteLine($"Found un-implemented view interface: {interfaceType.ToFriendlyName()}");
             }
         }
     }

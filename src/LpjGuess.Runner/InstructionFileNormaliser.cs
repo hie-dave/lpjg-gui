@@ -120,7 +120,8 @@ public class InstructionFileNormaliser
 			"file_met_spinup",
 			"file_gridlist",
 			"file_soildata",
-			"file_co2"
+			"file_co2",
+			"file_disturb"
 		};
 		string[] paramsToFix = new[]
 		{

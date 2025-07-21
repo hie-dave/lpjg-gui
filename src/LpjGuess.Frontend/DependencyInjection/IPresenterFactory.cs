@@ -32,9 +32,8 @@ public interface IPresenterFactory
     /// </summary>
     /// <typeparam name="TSeries">The type of the series.</typeparam>
     /// <param name="series">The series to present.</param>
-    /// <param name="instructionFiles">The instruction files in the workspace.</param>
     /// <returns>The series presenter.</returns>
-    public ISeriesPresenter CreateSeriesPresenter<TSeries>(TSeries series, IEnumerable<string> instructionFiles)
+    public ISeriesPresenter CreateSeriesPresenter<TSeries>(TSeries series)
         where TSeries : ISeries;
 
     /// <summary>

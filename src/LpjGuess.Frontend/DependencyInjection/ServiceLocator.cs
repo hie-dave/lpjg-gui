@@ -81,18 +81,38 @@ public class ServiceLocator : IServiceLocator
             foreach (Type interfaceType in presenterType.GetInterfaces()
                 .Where(i => typeof(IPresenter).IsAssignableFrom(i) && i != typeof(IPresenter)))
             {
-                if (interfaceType.IsGenericType && interfaceType.GetGenericTypeDefinition() == typeof(IPresenter<>))
+                if (interfaceType.GetInterfaces().Select(i => i.IsGenericType ? i.GetGenericTypeDefinition() : i).Any(i => i.IsAssignableTo(typeof(IPresenter<>))))
                 {
-                    Type modelType = interfaceType.GetGenericArguments()[0];
+                    // Type modelType = interfaceType.GetGenericArguments()[0];
+                    Type modelPresenterInterface = interfaceType;
+                    if (!modelPresenterInterface.IsGenericType || modelPresenterInterface.GetGenericTypeDefinition() != typeof(IPresenter<>))
+                        modelPresenterInterface = interfaceType.GetInterfaces().Where(i => i.IsGenericType).First(i => i.GetGenericTypeDefinition() == typeof(IPresenter<>));
+                    Type modelType = modelPresenterInterface.GetGenericArguments()[0];
                     Type factoryType = typeof(ModelPresenterFactory<,,>).MakeGenericType(interfaceType, presenterType, modelType);
                     Type factoryInterfaceType = typeof(IModelPresenterFactory<,>).MakeGenericType(interfaceType, modelType);
                     Console.WriteLine($"services.AddTransient<{factoryInterfaceType.ToFriendlyName()}, {factoryType.ToFriendlyName()}>();");
                     services.AddTransient(factoryInterfaceType, factoryType);
                 }
-                else
-                    services.AddTransient(interfaceType, presenterType);
+                if (interfaceType.IsGenericType && interfaceType.GetGenericTypeDefinition().IsAssignableTo(typeof(IPresenter<>)))
+                    Console.WriteLine($"NOTE: we could register {interfaceType.ToFriendlyName()} -> {presenterType.ToFriendlyName()} but we currently don't");
+                services.AddTransient(interfaceType, presenterType);
                 Console.WriteLine($"services.AddTransient<{interfaceType.ToFriendlyName()}, {presenterType.ToFriendlyName()}>();");
             }
+
+            // If it's a model presenter, register a factory for it. This is not
+            // currently necessary, as all presenters are instantiated via an
+            // intermediary interface.
+
+            // if (presenterType.GetInterfaces().Select(i => i.IsGenericType ? i.GetGenericTypeDefinition() : i).Any(i => i.IsAssignableFrom(typeof(IPresenter<>))))
+            // {
+            //     Console.WriteLine($"Registering a factory for concrete presenter type: {presenterType.ToFriendlyName()}");
+            //     Type interfaceType = presenterType.GetInterfaces().Select(i => i.IsGenericType ? i.GetGenericTypeDefinition() : i).First(i => i == typeof(IPresenter<>));
+            //     Type modelType = interfaceType.GetGenericArguments()[0];
+            //     Type factoryType = typeof(ModelPresenterFactory<,,>).MakeGenericType(presenterType, presenterType, modelType);
+            //     Type factoryInterfaceType = typeof(IModelPresenterFactory<,>).MakeGenericType(presenterType, modelType);
+            //     Console.WriteLine($"services.AddTransient<{factoryInterfaceType.ToFriendlyName()}, {factoryType.ToFriendlyName()}>();");
+            //     services.AddTransient(factoryInterfaceType, factoryType);
+            // }
 
             // Also register with IPresenter.
             services.AddTransient(typeof(IPresenter), presenterType);

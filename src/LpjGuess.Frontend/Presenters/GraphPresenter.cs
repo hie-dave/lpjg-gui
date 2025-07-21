@@ -135,7 +135,7 @@ public class GraphPresenter : PresenterBase<IGraphView, Graph>, IGraphPresenter
         List<ISeriesPresenter> presenters = new();
         foreach (ISeries series in graph.Series)
         {
-            ISeriesPresenter seriesPresenter = presenterFactory.CreateSeriesPresenter(series, instructionFiles);
+            ISeriesPresenter seriesPresenter = presenterFactory.CreateSeriesPresenter(series);
             seriesPresenter.OnSeriesChanged.ConnectTo(OnSeriesChanged);
             presenters.Add(seriesPresenter);
         }

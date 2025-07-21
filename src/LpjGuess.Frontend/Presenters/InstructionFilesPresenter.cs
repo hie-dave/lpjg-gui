@@ -59,7 +59,7 @@ public class InstructionFilesPresenter : IInstructionFilesPresenter
         Refresh();
     }
 
-    /// <inheritdoc />
+    /// <inheritdoc />z
     public void Refresh()
     {
         // Remove existing presenters.
@@ -69,7 +69,7 @@ public class InstructionFilesPresenter : IInstructionFilesPresenter
 
         foreach (string file in insFilesProvider.GetInstructionFiles())
         {
-            IInstructionFilePresenter presenter = presenterFactory.CreatePresenter<InstructionFilePresenter, string>(file);
+            IInstructionFilePresenter presenter = presenterFactory.CreatePresenter<IInstructionFilePresenter, string>(file);
             presenter.OnFileChanged.ConnectTo(OnFileChanged);
             presenter.OnSaved.ConnectTo(f => OnFileSaved(presenter, f));
             presenters.Add(presenter);

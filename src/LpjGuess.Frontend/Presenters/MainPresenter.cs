@@ -129,7 +129,7 @@ public class MainPresenter : PresenterBase<IMainView, IApplication>, IMainPresen
 			Configuration.Instance.Save();
 		}
 
-		child = presenterFactory.CreatePresenter<WorkspacePresenter, Workspace>(workspace);
+		child = presenterFactory.CreatePresenter<IWorkspacePresenter, Workspace>(workspace);
 		view.SetChild(child.GetView());
 
 		// Update window title.
