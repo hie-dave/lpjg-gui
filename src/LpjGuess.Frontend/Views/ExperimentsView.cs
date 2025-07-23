@@ -38,9 +38,12 @@ public class ExperimentsView : DynamicStackSidebar<Experiment>, IExperimentsView
     /// <inheritdoc />
     protected override Widget CreateWidget(Experiment data)
     {
-        Label label = RenderLabel(data);
-        sidebarWidgets[data] = label;
-        return label;
+        Widget widget = base.CreateWidget(data);
+        if (widget is Box box && box.GetFirstChild() is Label label)
+            sidebarWidgets[data] = label;
+        else
+            Console.WriteLine($"Unable to initialise experiment view sidebar widget, likely due to changes in the base class");
+        return widget;
     }
 
     /// <summary>
