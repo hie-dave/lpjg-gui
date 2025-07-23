@@ -6,6 +6,7 @@ using Dave.Benchmarks.Core.Models.Importer;
 using Dave.Benchmarks.Core.Services;
 using LpjGuess.Core.Interfaces;
 using LpjGuess.Core.Models;
+using LpjGuess.Frontend.Attributes;
 using LpjGuess.Frontend.Classes;
 using LpjGuess.Frontend.Commands;
 using LpjGuess.Frontend.Data.Providers;
@@ -23,6 +24,7 @@ namespace LpjGuess.Frontend.Presenters;
 /// A presenter which controls a data source view to allow the user to view and
 /// customize a single data source.
 /// </summary>
+[RegisterPresenter(typeof(ModelOutput), typeof(IDataSourcePresenter))]
 public class ModelOutputPresenter : PresenterBase<IModelOutputView, ModelOutput>, IDataSourcePresenter<ModelOutput>
 {
     /// <summary>

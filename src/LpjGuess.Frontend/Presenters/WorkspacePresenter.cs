@@ -2,6 +2,7 @@ using LpjGuess.Core.Extensions;
 using LpjGuess.Core.Models;
 using LpjGuess.Core.Models.Factorial;
 using LpjGuess.Core.Models.Graphing;
+using LpjGuess.Frontend.Attributes;
 using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.DependencyInjection;
 using LpjGuess.Frontend.Enumerations;
@@ -19,6 +20,7 @@ namespace LpjGuess.Frontend.Presenters;
 /// A presenter for a view which displays an instruction file. This presenter
 /// handles logic for running the file or aborting an ongoing run.
 /// </summary>
+[RegisterPresenter(typeof(Workspace), typeof(IWorkspacePresenter))]
 public class WorkspacePresenter : PresenterBase<IWorkspaceView, Workspace>, IWorkspacePresenter
 {
 	/// <summary>
@@ -91,7 +93,7 @@ public class WorkspacePresenter : PresenterBase<IWorkspaceView, Workspace>, IWor
 
 		// Construct child presenters.
 		insFilesPresenter = presenterFactory.CreatePresenter<IInstructionFilesPresenter>();
-		outputsPresenter = presenterFactory.CreatePresenter<IOutputsPresenter, IEnumerable<string>>(workspace.InstructionFiles);
+		outputsPresenter = presenterFactory.CreatePresenter<IOutputsPresenter>();
 		graphsPresenter = presenterFactory.CreatePresenter<IGraphsPresenter, IReadOnlyList<Graph>>(workspace.Graphs);
 		experimentsPresenter = presenterFactory.CreatePresenter<IExperimentsPresenter, IEnumerable<Experiment>>(workspace.Experiments);
 		logsPresenter = presenterFactory.CreatePresenter<ILogsPresenter>();

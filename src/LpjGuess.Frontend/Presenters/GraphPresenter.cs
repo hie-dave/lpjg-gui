@@ -8,6 +8,7 @@ using LpjGuess.Core.Models.Graphing.Style;
 using LpjGuess.Core.Models.Graphing.Style.Identifiers;
 using LpjGuess.Core.Models.Graphing.Style.Providers;
 using LpjGuess.Core.Models.Graphing.Style.Strategies;
+using LpjGuess.Frontend.Attributes;
 using LpjGuess.Frontend.Commands;
 using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.DependencyInjection;
@@ -27,6 +28,7 @@ namespace LpjGuess.Frontend.Presenters;
 /// A presenter which controls a graph view to allow the user to view and customize
 /// a single graph.
 /// </summary>
+[RegisterPresenter(typeof(Graph), typeof(IGraphPresenter))]
 public class GraphPresenter : PresenterBase<IGraphView, Graph>, IGraphPresenter
 {
     /// <summary>

@@ -16,7 +16,8 @@ namespace LpjGuess.Frontend.Presenters;
 /// <summary>
 /// A presenter for a discrete values view.
 /// </summary>
-[RegisterGenericType(typeof(string), typeof(int), typeof(double))]
+[GenericPresenter(typeof(string), typeof(int), typeof(double))]
+[RegisterPresenter(typeof(DiscreteValues<>), typeof(IValueGeneratorPresenter))]
 public class DiscreteValuesPresenter<T> : PresenterBase<IDiscreteValuesView, DiscreteValues<T>>, IValueGeneratorPresenter, IPresenter<IDiscreteValuesView, DiscreteValues<T>>
 {
     /// <summary>

@@ -1,3 +1,4 @@
+using LpjGuess.Frontend.Attributes;
 using LpjGuess.Frontend.Classes;
 using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.Extensions;
@@ -15,6 +16,7 @@ namespace LpjGuess.Frontend.Presenters;
 /// <summary>
 /// Presenter for a <see cref="Configuration"/> instance.
 /// </summary>
+[RegisterStandalonePresenter(typeof(IPreferencesPresenter))]
 public class PreferencesPresenter : IPreferencesPresenter
 {
 	/// <summary>

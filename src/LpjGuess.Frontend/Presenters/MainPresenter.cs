@@ -1,4 +1,5 @@
 using LpjGuess.Core.Models;
+using LpjGuess.Frontend.Attributes;
 using LpjGuess.Frontend.DependencyInjection;
 using LpjGuess.Frontend.Interfaces;
 using LpjGuess.Frontend.Interfaces.Commands;
@@ -12,6 +13,7 @@ namespace LpjGuess.Frontend.Presenters;
 /// because it doesn't have a model object, so it's not quite a presenter in
 /// that sense.
 /// </summary>
+[RegisterStandalonePresenter(typeof(IMainPresenter))]
 public class MainPresenter : PresenterBase<IMainView, IApplication>, IMainPresenter
 {
 	/// <summary>

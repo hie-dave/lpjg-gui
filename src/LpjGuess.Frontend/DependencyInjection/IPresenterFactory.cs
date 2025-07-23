@@ -19,6 +19,10 @@ public interface IPresenterFactory
     /// <summary>
     /// Create a presenter of the specified type.
     /// </summary>
+    /// <remarks>
+    /// For this to work, the model type must match exactly what is registered
+    /// in the DI container. E.g. it should be ModelOutput, not IDataSource.
+    /// </remarks>
     /// <typeparam name="TPresenter">The type of presenter to create.</typeparam>
     /// <typeparam name="TModel">The type of model to create.</typeparam>
     /// <param name="model">The model to pass to the presenter.</param>
@@ -28,23 +32,6 @@ public interface IPresenterFactory
         where TModel : notnull;
 
     /// <summary>
-    /// Create a series presenter for the given series.
-    /// </summary>
-    /// <typeparam name="TSeries">The type of the series.</typeparam>
-    /// <param name="series">The series to present.</param>
-    /// <returns>The series presenter.</returns>
-    public ISeriesPresenter CreateSeriesPresenter<TSeries>(TSeries series)
-        where TSeries : ISeries;
-
-    /// <summary>
-    /// Creates a presenter for the given model by automatically determining the appropriate presenter type.
-    /// </summary>
-    /// <typeparam name="TModel">The type of model to create a presenter for.</typeparam>
-    /// <param name="model">The model to create a presenter for.</param>
-    /// <returns>A presenter that can handle the given model.</returns>
-    IPresenter CreatePresenter<TModel>(TModel model) where TModel : notnull;
-
-    /// <summary>
     /// Creates a presenter for the given model, whose type is not known at
     /// compile time.
     /// </summary>
@@ -52,4 +39,13 @@ public interface IPresenterFactory
     /// <param name="model">The model to create a presenter for.</param>
     /// <returns>The created presenter.</returns>
     TPresenter CreatePresenter<TPresenter>(object model) where TPresenter : IPresenter;
+
+    /// <summary>
+    /// Create a series presenter for the given series.
+    /// </summary>
+    /// <typeparam name="TSeries">The type of the series.</typeparam>
+    /// <param name="series">The series to present.</param>
+    /// <returns>The series presenter.</returns>
+    public ISeriesPresenter CreateSeriesPresenter<TSeries>(TSeries series)
+        where TSeries : ISeries;
 }

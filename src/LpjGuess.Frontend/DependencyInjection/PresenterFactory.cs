@@ -40,8 +40,7 @@ public class PresenterFactory : IPresenterFactory
         where TPresenter : IPresenter<TModel>
         where TModel : notnull
     {
-        IModelPresenterFactory<TPresenter, TModel> factory = serviceProvider.GetRequiredService<IModelPresenterFactory<TPresenter, TModel>>();
-        return factory.CreatePresenter(model);
+        return CreatePresenterInternal<TPresenter, TModel>(model);
     }
 
     /// <inheritdoc />
@@ -50,16 +49,9 @@ public class PresenterFactory : IPresenterFactory
     {
         Type viewType = typeof(ISeriesView<>).MakeGenericType(series.GetType());
         object view = serviceProvider.GetRequiredService(viewType);
-        IDataSourcePresenter presenter = (IDataSourcePresenter)CreatePresenterDynamic(series.DataSource);
+        IDataSourcePresenter presenter = CreatePresenter<IDataSourcePresenter>(series.DataSource);
         Type presenterType = typeof(SeriesPresenter<>).MakeGenericType(series.GetType());
         return (ISeriesPresenter)ActivatorUtilities.CreateInstance(serviceProvider, presenterType, view, series, presenter);
-    }
-
-    /// <inheritdoc />
-    public IPresenter CreatePresenter<TModel>(TModel model)
-        where TModel : notnull
-    {
-        return CreatePresenterDynamic(model);
     }
 
     /// <inheritdoc />
@@ -68,30 +60,27 @@ public class PresenterFactory : IPresenterFactory
         return (TPresenter)CreatePresenterDynamic(model, typeof(TPresenter));
     }
 
-    /// <summary>
-    /// Create a presenter for the given model, whose type is not known at
-    /// compile time.
-    /// </summary>
-    /// <param name="model">The model to create a presenter for.</param>
-    /// <returns>The presenter.</returns>
-    private IPresenter CreatePresenterDynamic<TModel>(TModel model)
-        where TModel : notnull
-    {
-        Type modelType = model.GetType();
-        Type presenterType = typeof(IPresenter<>).MakeGenericType(modelType);
-        return (IPresenter)CreatePresenterDynamic(model, presenterType);
-    }
-
     private object CreatePresenterDynamic<TModel>(TModel model, Type presenterType)
         where TModel : notnull
     {
-        MethodInfo method = GetType().GetMethods(BindingFlags.Public | BindingFlags.Instance)
-            .Where(m => m.Name == nameof(CreatePresenter) &&
-            m.IsGenericMethod &&
-            m.GetGenericArguments().Length == 2 &&
-            m.GetParameters().Length == 1)
-            .Single();
+        BindingFlags flags = BindingFlags.NonPublic | BindingFlags.Instance;
+        MethodInfo method = GetType().GetMethod(nameof(CreatePresenterInternal), flags)!;
         method = method.MakeGenericMethod(presenterType, model.GetType());
         return method.Invoke(this, [model])!;
+    }
+
+    /// <summary>
+    /// Create a presenter for the given model.
+    /// </summary>
+    /// <typeparam name="TPresenter">The type of the presenter.</typeparam>
+    /// <typeparam name="TModel">The type of the model.</typeparam>
+    /// <param name="model">The model to present.</param>
+    /// <returns>The created presenter.</returns>
+    private TPresenter CreatePresenterInternal<TPresenter, TModel>(TModel model)
+        where TPresenter : IPresenter
+        where TModel : notnull
+    {
+        IModelPresenterFactory<TPresenter, TModel> factory = serviceProvider.GetRequiredService<IModelPresenterFactory<TPresenter, TModel>>();
+        return factory.CreatePresenter(model);
     }
 }

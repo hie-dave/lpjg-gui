@@ -1,5 +1,6 @@
 using LpjGuess.Core.Interfaces.Factorial;
 using LpjGuess.Core.Models.Factorial.Factors;
+using LpjGuess.Frontend.Attributes;
 using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.Interfaces;
 using LpjGuess.Frontend.Interfaces.Commands;
@@ -12,6 +13,7 @@ namespace LpjGuess.Frontend.Presenters;
 /// <summary>
 /// A presenter for a concrete top-level parameter.
 /// </summary>
+[RegisterPresenter(typeof(TopLevelParameter), typeof(IFactorPresenter))]
 public class TopLevelParameterPresenter : PresenterBase<ITopLevelParameterView, TopLevelParameter>, IFactorPresenter
 {
     /// <inheritdoc />

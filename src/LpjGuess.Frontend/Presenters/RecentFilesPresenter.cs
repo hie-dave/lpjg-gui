@@ -1,3 +1,4 @@
+using LpjGuess.Frontend.Attributes;
 using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.Extensions;
 using LpjGuess.Frontend.Interfaces.Commands;
@@ -11,6 +12,7 @@ namespace LpjGuess.Frontend.Presenters;
 /// Presenter for a <see cref="RecentFilesView"/>. This view doesn't do anything
 /// (it's a placeholder), so this presenter doesn't really do anything either.
 /// </summary>
+[RegisterStandalonePresenter(typeof(IRecentFilesPresenter))]
 public class RecentFilesPresenter : PresenterBase<IRecentFilesView, Configuration>, IRecentFilesPresenter
 {
 	/// <summary>

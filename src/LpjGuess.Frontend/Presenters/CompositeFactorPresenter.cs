@@ -1,5 +1,6 @@
 using LpjGuess.Core.Interfaces.Factorial;
 using LpjGuess.Core.Models.Factorial.Factors;
+using LpjGuess.Frontend.Attributes;
 using LpjGuess.Frontend.Commands;
 using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.DependencyInjection;
@@ -17,6 +18,7 @@ namespace LpjGuess.Frontend.Presenters;
 /// <summary>
 /// A presenter for a composite factor.
 /// </summary>
+[RegisterPresenter(typeof(CompositeFactor), typeof(IFactorPresenter))]
 public class CompositeFactorPresenter : PresenterBase<ICompositeFactorView, CompositeFactor>, IFactorPresenter
 {
     /// <summary>

@@ -1,4 +1,5 @@
 using ExtendedXmlSerializer;
+using LpjGuess.Frontend.Attributes;
 using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.DependencyInjection;
 using LpjGuess.Frontend.Events;
@@ -12,6 +13,7 @@ namespace LpjGuess.Frontend.Presenters;
 /// <summary>
 /// A presenter for an instruction files view.
 /// </summary>
+[RegisterStandalonePresenter(typeof(IInstructionFilesPresenter))]
 public class InstructionFilesPresenter : IInstructionFilesPresenter
 {
     /// <summary>

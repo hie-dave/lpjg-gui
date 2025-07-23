@@ -1,3 +1,4 @@
+using LpjGuess.Frontend.Attributes;
 using LpjGuess.Frontend.Interfaces;
 using LpjGuess.Frontend.Interfaces.Presenters;
 
@@ -6,6 +7,7 @@ namespace LpjGuess.Frontend.Presenters;
 /// <summary>
 /// A presenter for a view which displays the logs of a simulation.
 /// </summary>
+[RegisterStandalonePresenter(typeof(ILogsPresenter))]
 public class LogsPresenter : ILogsPresenter
 {
     /// <summary>

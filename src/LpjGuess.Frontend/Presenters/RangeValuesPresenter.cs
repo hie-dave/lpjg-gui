@@ -3,6 +3,7 @@ using System.Numerics;
 using GObject;
 using LpjGuess.Core.Interfaces.Factorial;
 using LpjGuess.Core.Models.Factorial.Generators.Values;
+using LpjGuess.Frontend.Attributes;
 using LpjGuess.Frontend.Commands;
 using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.Interfaces;
@@ -15,6 +16,12 @@ namespace LpjGuess.Frontend.Presenters;
 /// <summary>
 /// A presenter for a range values view.
 /// </summary>
+/// <remarks>
+/// Currently only supporting double and int types. Could do other, but there's
+/// probably no need.
+/// </remarks>
+[GenericPresenter(typeof(double), typeof(int))]
+[RegisterPresenter(typeof(RangeGenerator<>), typeof(IValueGeneratorPresenter))]
 public class RangeValuesPresenter<T> : PresenterBase<IRangeValuesView, RangeGenerator<T>>, IValueGeneratorPresenter
     where T : struct, INumber<T>
 {

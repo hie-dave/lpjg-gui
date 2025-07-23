@@ -1,10 +1,11 @@
-using System.Data;
 using Dave.Benchmarks.Core.Models.Importer;
 using LpjGuess.Core.Extensions;
 using LpjGuess.Core.Models;
+using LpjGuess.Frontend.Attributes;
 using LpjGuess.Frontend.Classes;
 using LpjGuess.Frontend.Data.Providers;
-using LpjGuess.Frontend.Interfaces.Commands;
+using LpjGuess.Frontend.DependencyInjection;
+using LpjGuess.Frontend.Interfaces;
 using LpjGuess.Frontend.Interfaces.Presenters;
 using LpjGuess.Frontend.Interfaces.Views;
 
@@ -14,8 +15,19 @@ namespace LpjGuess.Frontend.Presenters;
 /// A presenter which controls an outputs view to display the raw outputs from a
 /// model run.
 /// </summary>
-public class OutputsPresenter : PresenterBase<IOutputsView, IEnumerable<string>>, IOutputsPresenter
+[RegisterStandalonePresenter(typeof(IOutputsPresenter))]
+public class OutputsPresenter : IOutputsPresenter
 {
+    /// <summary>
+    /// The view object.
+    /// </summary>
+    private readonly IOutputsView view;
+
+    /// <summary>
+    /// The instruction files provider.
+    /// </summary>
+    private readonly IInstructionFilesProvider insFilesProvider;
+
     /// <summary>
     /// The cancellation token source for the output file parsing task.
     /// </summary>
@@ -25,13 +37,13 @@ public class OutputsPresenter : PresenterBase<IOutputsView, IEnumerable<string>>
     /// Create a new <see cref="OutputsPresenter"/> instance.
     /// </summary>
     /// <param name="view">The view object.</param>
-    /// <param name="instructionFiles">The instruction files in the workspace.</param>
-    /// <param name="registry">The command registry to use for command execution.</param>
+    /// <param name="insFilesProvider">The instruction files provider.</param>
     public OutputsPresenter(
         IOutputsView view,
-        IEnumerable<string> instructionFiles,
-        ICommandRegistry registry) : base(view, instructionFiles, registry)
+        IInstructionFilesProvider insFilesProvider)
     {
+        this.view = view;
+        this.insFilesProvider = insFilesProvider;
         view.OnInstructionFileSelected.ConnectTo(OnInstructionFileSelected);
         view.OnOutputFileSelected.ConnectTo(OnOutputFileSelected);
         cts = new CancellationTokenSource();
@@ -44,12 +56,14 @@ public class OutputsPresenter : PresenterBase<IOutputsView, IEnumerable<string>>
         // Get the previously selected instruction file (if there is one).
         string? insFile = view.InstructionFile;
 
+        IReadOnlyList<string> insFiles = insFilesProvider.GetInstructionFiles().ToList();
+
         // Populate the view. This will not fire an instruction file selected
         // event.
-        view.PopulateInstructionFiles(model);
+        view.PopulateInstructionFiles(insFiles);
 
         string? outputFileType;
-        if (insFile != null && model.Contains(insFile))
+        if (insFile != null && insFiles.Contains(insFile))
         {
             // Select the previously-selected instruction file.
             view.SelectInstructionFile(insFile);
@@ -58,7 +72,7 @@ public class OutputsPresenter : PresenterBase<IOutputsView, IEnumerable<string>>
         else
         {
             // First item is selected by default.
-            insFile = model.FirstOrDefault();
+            insFile = insFiles.FirstOrDefault();
             outputFileType = null;
         }
 
@@ -144,5 +158,14 @@ public class OutputsPresenter : PresenterBase<IOutputsView, IEnumerable<string>>
     private void OnInstructionFileSelected(string file)
     {
         view.PopulateOutputFiles(GetOutputFiles(file));
+    }
+
+    /// <inheritdoc/>
+    public IView GetView() => view;
+
+    /// <inheritdoc/>
+    public void Dispose()
+    {
+        view.Dispose();
     }
 }

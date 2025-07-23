@@ -8,7 +8,7 @@ namespace LpjGuess.Frontend.Interfaces.Presenters;
 /// <summary>
 /// Base interface for presenters that manage series editing.
 /// </summary>
-public interface ISeriesPresenter : IDisposable
+public interface ISeriesPresenter : IPresenter
 {
     /// <summary>
     /// The series being edited.
@@ -19,11 +19,6 @@ public interface ISeriesPresenter : IDisposable
     /// Called when the series has been changed.
     /// </summary>
     Event<ICommand> OnSeriesChanged { get; }
-
-    /// <summary>
-    /// Get the view being managed by this presenter.
-    /// </summary>
-    IView GetView();
 }
 
 /// <summary>

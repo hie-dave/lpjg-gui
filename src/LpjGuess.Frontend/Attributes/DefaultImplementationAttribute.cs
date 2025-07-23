@@ -4,6 +4,6 @@ namespace LpjGuess.Frontend.Attributes;
 /// Attribute to mark a type as the default implementation of an interface.
 /// </summary>
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
-public class DefaultImplementationAttribute : Attribute
+public sealed class DefaultImplementationAttribute : Attribute
 {
 }

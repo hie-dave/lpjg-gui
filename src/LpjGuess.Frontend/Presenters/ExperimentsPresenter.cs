@@ -1,5 +1,6 @@
 using LpjGuess.Core.Models.Factorial;
 using LpjGuess.Core.Models.Factorial.Generators;
+using LpjGuess.Frontend.Attributes;
 using LpjGuess.Frontend.DependencyInjection;
 using LpjGuess.Frontend.Extensions;
 using LpjGuess.Frontend.Interfaces.Commands;
@@ -13,6 +14,7 @@ namespace LpjGuess.Frontend.Presenters;
 /// <summary>
 /// A presenter which manages the experiments.
 /// </summary>
+[RegisterPresenter(typeof(IEnumerable<Experiment>), typeof(IExperimentsPresenter))]
 public class ExperimentsPresenter : PresenterBase<IExperimentsView, IEnumerable<Experiment>>, IExperimentsPresenter
 {
     /// <summary>

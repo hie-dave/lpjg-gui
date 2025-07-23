@@ -4,6 +4,7 @@ using LpjGuess.Core.Models.Factorial.Factors;
 using LpjGuess.Core.Models.Factorial.Generators;
 using LpjGuess.Core.Models.Factorial.Generators.Factors;
 using LpjGuess.Core.Models.Factorial.Generators.Values;
+using LpjGuess.Frontend.Attributes;
 using LpjGuess.Frontend.Classes;
 using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.DependencyInjection;
@@ -21,6 +22,7 @@ namespace LpjGuess.Frontend.Presenters;
 /// <summary>
 /// A presenter for a factorial view.
 /// </summary>
+[RegisterPresenter(typeof(FactorialGenerator), typeof(IFactorialPresenter))]
 public class FactorialPresenter : PresenterBase<IFactorialView, FactorialGenerator>, IFactorialPresenter
 {
     /// <summary>

@@ -1,4 +1,5 @@
 using LpjGuess.Core.Models.Factorial.Factors;
+using LpjGuess.Frontend.Attributes;
 using LpjGuess.Frontend.Interfaces.Commands;
 using LpjGuess.Frontend.Interfaces.Events;
 using LpjGuess.Frontend.Interfaces.Presenters;
@@ -9,6 +10,7 @@ namespace LpjGuess.Frontend.Presenters;
 /// <summary>
 /// A presenter for a concrete block parameter.
 /// </summary>
+[RegisterPresenter(typeof(BlockParameter), typeof(IFactorPresenter))]
 public class BlockParameterPresenter : TopLevelParameterPresenter, IFactorPresenter
 {
     /// <summary>

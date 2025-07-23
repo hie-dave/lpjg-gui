@@ -1,6 +1,7 @@
 using LpjGuess.Core.Interfaces.Factorial;
 using LpjGuess.Core.Models.Factorial.Factors;
 using LpjGuess.Core.Models.Factorial.Generators.Factors;
+using LpjGuess.Frontend.Attributes;
 using LpjGuess.Frontend.Commands;
 using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.DependencyInjection;
@@ -19,6 +20,7 @@ namespace LpjGuess.Frontend.Presenters;
 /// <summary>
 /// A presenter for a simple factor generator.
 /// </summary>
+[RegisterPresenter(typeof(SimpleFactorGenerator), typeof(IFactorGeneratorPresenter))]
 public class SimpleFactorGeneratorPresenter : PresenterBase<ISimpleFactorGeneratorView, SimpleFactorGenerator>, IFactorGeneratorPresenter
 {
     /// <summary>

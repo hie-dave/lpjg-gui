@@ -3,6 +3,7 @@ using LpjGuess.Frontend.Attributes;
 using LpjGuess.Frontend.DependencyInjection;
 using LpjGuess.Frontend.Interfaces.Commands;
 using LpjGuess.Frontend.Interfaces.Events;
+using LpjGuess.Frontend.Interfaces.Presenters;
 using LpjGuess.Frontend.Interfaces.Views;
 
 namespace LpjGuess.Frontend.Presenters;
@@ -10,6 +11,7 @@ namespace LpjGuess.Frontend.Presenters;
 /// <summary>
 /// A presenter for a top-level factor generator.
 /// </summary>
+[RegisterPresenter(typeof(BlockFactorGenerator), typeof(IFactorGeneratorPresenter))]
 public class BlockFactorGeneratorPresenter : TopLevelFactorGeneratorPresenter
 {
     /// <summary>

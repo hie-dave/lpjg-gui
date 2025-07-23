@@ -1,4 +1,5 @@
 using LpjGuess.Core.Extensions;
+using LpjGuess.Frontend.Attributes;
 using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.Events;
 using LpjGuess.Frontend.Interfaces;
@@ -13,6 +14,7 @@ namespace LpjGuess.Frontend.Presenters;
 /// <summary>
 /// A presenter for an instruction file view.
 /// </summary>
+[RegisterPresenter(typeof(string), typeof(IInstructionFilePresenter))]
 public class InstructionFilePresenter : PresenterBase<IInstructionFileView, string>, IInstructionFilePresenter
 {
     /// <summary>

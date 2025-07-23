@@ -7,7 +7,7 @@ namespace LpjGuess.Frontend.DependencyInjection;
 /// An interface for a factory that creates presenters for models.
 /// </summary>
 public interface IModelPresenterFactory<TInterface, TModel>
-    where TInterface : IPresenter<TModel>
+    where TInterface : IPresenter
     where TModel : notnull
 {
     /// <summary>
@@ -22,7 +22,7 @@ public interface IModelPresenterFactory<TInterface, TModel>
 /// A factory for creating presenters for models.
 /// </summary>
 public class ModelPresenterFactory<TInterface, TPresenter, TModel> : IModelPresenterFactory<TInterface, TModel>
-    where TInterface : IPresenter<TModel>
+    where TInterface : IPresenter
     where TPresenter : TInterface
     where TModel : notnull
 {

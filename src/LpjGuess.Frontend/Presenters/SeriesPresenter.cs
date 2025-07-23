@@ -1,4 +1,5 @@
 using LpjGuess.Core.Interfaces.Graphing;
+using LpjGuess.Core.Models.Graphing.Series;
 using LpjGuess.Core.Models.Graphing.Style;
 using LpjGuess.Frontend.Attributes;
 using LpjGuess.Frontend.Commands;
@@ -14,7 +15,8 @@ namespace LpjGuess.Frontend.Presenters;
 /// <summary>
 /// Presenter for managing series editing.
 /// </summary>
-[RegisterGenericType]
+[GenericPresenter(typeof(LineSeries))] // todo: automatically discover all implementations?
+[RegisterPresenter(typeof(ISeries), typeof(ISeriesPresenter))]
 public class SeriesPresenter<T> : PresenterBase<ISeriesView<T>, T>, ISeriesPresenter<T> where T : ISeries
 {
     /// <summary>
@@ -60,11 +62,6 @@ public class SeriesPresenter<T> : PresenterBase<ISeriesView<T>, T>, ISeriesPrese
     /// Implementation of non-generic interface.
     /// </summary>
     ISeries ISeriesPresenter.Series => Series;
-
-    /// <summary>
-    /// Implementation of non-generic interface.
-    /// </summary>
-    IView ISeriesPresenter.GetView() => GetView();
 
     /// <summary>
     /// Override the default dispose method to additionally disconnect all

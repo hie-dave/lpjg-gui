@@ -6,6 +6,7 @@ using LpjGuess.Core.Models.Graphing.Series;
 using LpjGuess.Core.Models.Graphing.Style.Identifiers;
 using LpjGuess.Core.Models.Graphing.Style.Providers;
 using LpjGuess.Core.Models.Graphing.Style.Strategies;
+using LpjGuess.Frontend.Attributes;
 using LpjGuess.Frontend.DependencyInjection;
 using LpjGuess.Frontend.Interfaces.Commands;
 using LpjGuess.Frontend.Interfaces.Presenters;
@@ -18,6 +19,7 @@ namespace LpjGuess.Frontend.Presenters;
 /// A presenter which controls a graphs view to allow the user to navigate
 /// between and view multiple graphs.
 /// </summary>
+[RegisterPresenter(typeof(IReadOnlyList<Graph>), typeof(IGraphsPresenter))]
 public class GraphsPresenter : PresenterBase<IGraphsView, IReadOnlyList<Graph>>, IGraphsPresenter
 {
 	/// <summary>
