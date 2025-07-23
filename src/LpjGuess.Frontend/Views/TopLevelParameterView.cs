@@ -1,5 +1,6 @@
 using Gtk;
 using LpjGuess.Core.Models.Factorial.Factors;
+using LpjGuess.Frontend.Attributes;
 using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.Events;
 using LpjGuess.Frontend.Interfaces.Events;
@@ -10,6 +11,7 @@ namespace LpjGuess.Frontend.Views;
 /// <summary>
 /// A view for a concrete top-level parameter.
 /// </summary>
+[DefaultImplementation]
 public class TopLevelParameterView : ViewBase<Grid>, ITopLevelParameterView
 {
     /// <summary>

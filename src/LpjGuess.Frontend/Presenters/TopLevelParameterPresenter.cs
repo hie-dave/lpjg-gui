@@ -25,6 +25,9 @@ public class TopLevelParameterPresenter : PresenterBase<ITopLevelParameterView, 
     /// <inheritdoc />
     public Event<string> OnRenamed { get; private init; }
 
+    /// <inheritdoc />
+    public Event OnChanged { get; private init; }
+
     /// <summary>
     /// Create a new <see cref="TopLevelParameterPresenter"/> instance.
     /// </summary>
@@ -38,7 +41,8 @@ public class TopLevelParameterPresenter : PresenterBase<ITopLevelParameterView, 
         : base(view, model, registry)
     {
         OnRenamed = new Event<string>();
-        view.OnChanged.ConnectTo(OnChanged);
+        OnChanged = new Event();
+        view.OnChanged.ConnectTo(OnModelChanged);
         RefreshView();
     }
 
@@ -58,6 +62,8 @@ public class TopLevelParameterPresenter : PresenterBase<ITopLevelParameterView, 
         string newName = model.GetName();
         if (oldName != newName)
             OnRenamed.Invoke(newName);
+        else
+            OnChanged.Invoke();
     }
 
     /// <summary>
@@ -72,7 +78,7 @@ public class TopLevelParameterPresenter : PresenterBase<ITopLevelParameterView, 
     /// Handle an arbitrary change to the model.
     /// </summary>
     /// <param name="change">The change to the model.</param>
-    protected virtual void OnChanged(IModelChange<TopLevelParameter> change)
+    protected virtual void OnModelChanged(IModelChange<TopLevelParameter> change)
     {
         ICommand command = change.ToCommand(model);
         InvokeCommand(command);

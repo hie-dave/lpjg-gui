@@ -5,6 +5,7 @@ using LpjGuess.Frontend.Attributes;
 using LpjGuess.Frontend.Commands;
 using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.DependencyInjection;
+using LpjGuess.Frontend.Extensions;
 using LpjGuess.Frontend.Interfaces;
 using LpjGuess.Frontend.Interfaces.Commands;
 using LpjGuess.Frontend.Interfaces.Events;
@@ -40,6 +41,9 @@ public class SimpleFactorGeneratorPresenter : PresenterBase<ISimpleFactorGenerat
     public Event<string> OnRenamed { get; private init; }
 
     /// <inheritdoc />
+    public Event OnChanged { get; private init; }
+
+    /// <inheritdoc />
     IFactorGenerator IPresenter<IFactorGenerator>.Model => model;
 
     /// <summary>
@@ -58,7 +62,8 @@ public class SimpleFactorGeneratorPresenter : PresenterBase<ISimpleFactorGenerat
         this.presenterFactory = presenterFactory;
         factorPresenters = new List<IFactorPresenter>();
         OnRenamed = new Event<string>();
-        view.OnChanged.ConnectTo(OnChanged);
+        OnChanged = new Event();
+        view.OnChanged.ConnectTo(OnModelChanged);
         view.OnAddLevel.ConnectTo(OnAddLevel);
         view.OnRemoveLevel.ConnectTo(OnRemoveLevel);
         RefreshView();
@@ -72,6 +77,8 @@ public class SimpleFactorGeneratorPresenter : PresenterBase<ISimpleFactorGenerat
         RefreshView();
         if (oldName != model.Name)
             OnRenamed.Invoke(model.Name);
+        else
+            OnChanged.Invoke();
     }
 
     /// <summary>
@@ -82,6 +89,7 @@ public class SimpleFactorGeneratorPresenter : PresenterBase<ISimpleFactorGenerat
         List<IFactorPresenter> presenters = model.Levels.Select(CreateFactorPresenter).ToList();
         view.Populate(model.Name, presenters.Select(p => new NamedView(p.GetView(), p.Model.GetName())));
         presenters.ForEach(p => p.OnRenamed.ConnectTo(n => view.Rename(p.GetView(), n)));
+        presenters.ForEach(p => p.OnChanged.ConnectTo(OnChanged));
 
         factorPresenters.ForEach(p => p.Dispose());
         factorPresenters = presenters;
@@ -94,14 +102,14 @@ public class SimpleFactorGeneratorPresenter : PresenterBase<ISimpleFactorGenerat
     /// <returns>The presenter.</returns>
     private IFactorPresenter CreateFactorPresenter(IFactor factor)
     {
-        return presenterFactory.CreatePresenter<IFactorPresenter, IFactor>(factor);
+        return presenterFactory.CreatePresenter<IFactorPresenter>(factor);
     }
 
     /// <summary>
     /// Handle an arbitrary change to the model.
     /// </summary>
     /// <param name="change">The change to the model.</param>
-    private void OnChanged(IModelChange<SimpleFactorGenerator> change)
+    private void OnModelChanged(IModelChange<SimpleFactorGenerator> change)
     {
         ICommand command = change.ToCommand(model);
         InvokeCommand(command);

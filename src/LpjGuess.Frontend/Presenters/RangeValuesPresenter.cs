@@ -1,6 +1,5 @@
 using System.Globalization;
 using System.Numerics;
-using GObject;
 using LpjGuess.Core.Interfaces.Factorial;
 using LpjGuess.Core.Models.Factorial.Generators.Values;
 using LpjGuess.Frontend.Attributes;
@@ -32,6 +31,9 @@ public class RangeValuesPresenter<T> : PresenterBase<IRangeValuesView, RangeGene
     public Event<IValueGenerator> OnTypeChanged { get; private init; }
 
     /// <inheritdoc />
+    public Event OnChanged { get; private init; }
+
+    /// <inheritdoc />
     IValueGenerator IPresenter<IValueGenerator>.Model => Model;
 
     /// <summary>
@@ -47,6 +49,7 @@ public class RangeValuesPresenter<T> : PresenterBase<IRangeValuesView, RangeGene
         : base(view, model, registry)
     {
         OnTypeChanged = new Event<IValueGenerator>();
+        OnChanged = new Event();
 
         view.OnStartChanged.ConnectTo(OnStartChanged);
         view.OnNChanged.ConnectTo(OnNChanged);
@@ -59,6 +62,7 @@ public class RangeValuesPresenter<T> : PresenterBase<IRangeValuesView, RangeGene
     public override void Dispose()
     {
         OnTypeChanged.Dispose();
+        OnChanged.Dispose();
         base.Dispose();
     }
 
@@ -67,6 +71,7 @@ public class RangeValuesPresenter<T> : PresenterBase<IRangeValuesView, RangeGene
     {
         base.InvokeCommand(command);
         RefreshView();
+        OnChanged.Invoke();
     }
 
     /// <summary>

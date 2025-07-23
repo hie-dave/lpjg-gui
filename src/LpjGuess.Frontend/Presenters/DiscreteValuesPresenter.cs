@@ -27,6 +27,9 @@ public class DiscreteValuesPresenter<T> : PresenterBase<IDiscreteValuesView, Dis
     public Event<IValueGenerator> OnTypeChanged { get; private init; }
 
     /// <inheritdoc />
+    public Event OnChanged { get; private init; }
+
+    /// <inheritdoc />
     public IView View => view;
 
     /// <inheritdoc />
@@ -44,10 +47,11 @@ public class DiscreteValuesPresenter<T> : PresenterBase<IDiscreteValuesView, Dis
         ICommandRegistry registry) : base(view, model, registry)
     {
         OnTypeChanged = new Event<IValueGenerator>();
+        OnChanged = new Event();
 
         view.OnAddValue.ConnectTo(OnAddValue);
         view.OnRemoveValue.ConnectTo(OnRemoveValue);
-        view.OnChanged.ConnectTo(OnChanged);
+        view.OnChanged.ConnectTo(OnModelChanged);
 
         RefreshView();
     }
@@ -64,6 +68,7 @@ public class DiscreteValuesPresenter<T> : PresenterBase<IDiscreteValuesView, Dis
     {
         base.InvokeCommand(command);
         RefreshView();
+        OnChanged.Invoke();
     }
 
     /// <summary>
@@ -78,17 +83,17 @@ public class DiscreteValuesPresenter<T> : PresenterBase<IDiscreteValuesView, Dis
     /// Called when the user has changed the values.
     /// </summary>
     /// <param name="enumerable">The new values.</param>
-    private void OnChanged(IEnumerable<string> enumerable)
+    private void OnModelChanged(IEnumerable<string> enumerable)
     {
         // Determine the type of the data by checking the values. If all values
         // are valid integers, use an integer type. If all values are valid
         // doubles, use a double type. Otherwise use a string type.
         if (enumerable.TrySelect(int.TryParse, out IEnumerable<int>? ints))
-            OnChanged(ints);
+            OnModelChanged(ints);
         else if (enumerable.TrySelect(double.TryParse, out IEnumerable<double>? doubles))
-            OnChanged(doubles);
+            OnModelChanged(doubles);
         else
-            OnChanged<string>(enumerable);
+            OnModelChanged<string>(enumerable);
     }
 
     /// <summary>
@@ -96,7 +101,7 @@ public class DiscreteValuesPresenter<T> : PresenterBase<IDiscreteValuesView, Dis
     /// </summary>
     /// <typeparam name="TValue">The type of the values.</typeparam>
     /// <param name="values">The new values.</param>
-    private void OnChanged<TValue>(IEnumerable<TValue> values)
+    private void OnModelChanged<TValue>(IEnumerable<TValue> values)
     {
         if (model is not DiscreteValues<TValue> typedModel)
         {

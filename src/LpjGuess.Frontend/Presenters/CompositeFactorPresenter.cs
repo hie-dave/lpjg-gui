@@ -4,6 +4,7 @@ using LpjGuess.Frontend.Attributes;
 using LpjGuess.Frontend.Commands;
 using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.DependencyInjection;
+using LpjGuess.Frontend.Extensions;
 using LpjGuess.Frontend.Interfaces.Commands;
 using LpjGuess.Frontend.Interfaces.Events;
 using LpjGuess.Frontend.Interfaces.Presenters;
@@ -37,6 +38,9 @@ public class CompositeFactorPresenter : PresenterBase<ICompositeFactorView, Comp
     /// <inheritdoc />
     public Event<string> OnRenamed { get; private init; }
 
+    /// <inheritdoc />
+    public Event OnChanged { get; private init; }
+
     /// <summary>
     /// Create a new <see cref="CompositeFactorPresenter"/> instance.
     /// </summary>
@@ -52,8 +56,9 @@ public class CompositeFactorPresenter : PresenterBase<ICompositeFactorView, Comp
     {
         factorPresenters = new List<IFactorPresenter>();
         OnRenamed = new Event<string>();
+        OnChanged = new Event();
         this.presenterFactory = presenterFactory;
-        view.OnChanged.ConnectTo(OnChanged);
+        view.OnChanged.ConnectTo(OnFactorChanged);
         view.OnAddFactor.ConnectTo(OnAddFactor);
         view.OnRemoveFactor.ConnectTo(OnRemoveFactor);
         RefreshView();
@@ -84,6 +89,7 @@ public class CompositeFactorPresenter : PresenterBase<ICompositeFactorView, Comp
         List<IFactorPresenter> presenters = model.Factors.Select(CreateFactorPresenter).ToList();
         view.Populate(model.GetName(), presenters.Select(p => new NamedView(p.GetView(), p.Model.GetName())));
         presenters.ForEach(p => p.OnRenamed.ConnectTo(_ => OnPresenterRenamed()));
+        presenters.ForEach(p => p.OnChanged.ConnectTo(OnChanged));
 
         factorPresenters.ForEach(p => p.Dispose());
         factorPresenters = presenters;
@@ -96,7 +102,7 @@ public class CompositeFactorPresenter : PresenterBase<ICompositeFactorView, Comp
     /// <returns>The presenter.</returns>
     private IFactorPresenter CreateFactorPresenter(IFactor factor)
     {
-        return presenterFactory.CreatePresenter<IFactorPresenter, IFactor>(factor);
+        return presenterFactory.CreatePresenter<IFactorPresenter>(factor);
     }
 
     /// <summary>
@@ -105,7 +111,7 @@ public class CompositeFactorPresenter : PresenterBase<ICompositeFactorView, Comp
     /// doesn't really have much in the way of configurable properties (yet!).
     /// </summary>
     /// <param name="change">The change to the model.</param>
-    private void OnChanged(IModelChange<CompositeFactor> change)
+    private void OnFactorChanged(IModelChange<CompositeFactor> change)
     {
         ICommand command = change.ToCommand(model);
         InvokeCommand(command);

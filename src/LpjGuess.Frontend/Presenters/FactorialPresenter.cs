@@ -9,6 +9,7 @@ using LpjGuess.Frontend.Classes;
 using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.DependencyInjection;
 using LpjGuess.Frontend.Events;
+using LpjGuess.Frontend.Extensions;
 using LpjGuess.Frontend.Interfaces;
 using LpjGuess.Frontend.Interfaces.Commands;
 using LpjGuess.Frontend.Interfaces.Events;
@@ -87,7 +88,10 @@ public class FactorialPresenter : PresenterBase<IFactorialView, FactorialGenerat
 
         presenters = newPresenters;
         foreach (IFactorGeneratorPresenter presenter in presenters)
+        {
             presenter.OnRenamed.ConnectTo(n => OnFactorRenamed(n, presenter.GetView()));
+            presenter.OnChanged.ConnectTo(OnChanged);
+        }
     }
 
     /// <inheritdoc />
@@ -102,6 +106,7 @@ public class FactorialPresenter : PresenterBase<IFactorialView, FactorialGenerat
     {
         base.InvokeCommand(command);
         OnChanged.Invoke();
+        Refresh();
     }
 
     private IValueGeneratorView CreateValueView(IFactorGeneratorPresenter presenter)
@@ -140,11 +145,10 @@ public class FactorialPresenter : PresenterBase<IFactorialView, FactorialGenerat
     /// <exception cref="InvalidOperationException">Thrown if the factor type is unknown.</exception>
     private IFactorGenerator CreateFactor(string factorType)
     {
-        IValueGenerator generator = new DiscreteValues<string>([]);
         if (factorType == topLevelFactorTitle)
-            return new TopLevelFactorGenerator("wateruptake", generator);
+            return new TopLevelFactorGenerator("wateruptake", new DiscreteValues<string>(["wcont"]));
         if (factorType == blockFactorTitle)
-            return new BlockFactorGenerator("pft", "TeBE", "sla", generator);
+            return new BlockFactorGenerator("pft", "TeBE", "sla", new DiscreteValues<int>([27]));
         if (factorType == simpleFactorTitle)
             return new SimpleFactorGenerator("TODO: think of a better default name here", []);
 

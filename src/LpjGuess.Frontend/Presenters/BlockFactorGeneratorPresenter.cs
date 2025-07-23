@@ -39,7 +39,7 @@ public class BlockFactorGeneratorPresenter : TopLevelFactorGeneratorPresenter
     {
         this.view = view;
         block = model;
-        view.OnChanged.ConnectTo(OnChanged);
+        view.OnChanged.ConnectTo(OnModelChanged);
         RefreshView();
     }
 
@@ -60,7 +60,7 @@ public class BlockFactorGeneratorPresenter : TopLevelFactorGeneratorPresenter
     /// Handle an arbitrary change to the model.
     /// </summary>
     /// <param name="change">The change to the model.</param>
-    private void OnChanged(IModelChange<BlockFactorGenerator> change)
+    private void OnModelChanged(IModelChange<BlockFactorGenerator> change)
     {
         // Apply the command and refresh the view.
         ICommand command = change.ToCommand(block);

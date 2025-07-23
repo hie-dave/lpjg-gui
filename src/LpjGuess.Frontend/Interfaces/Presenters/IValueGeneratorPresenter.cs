@@ -13,4 +13,9 @@ public interface IValueGeneratorPresenter : IPresenter<IValueGenerator>
     /// parameter is the new value generator instance.
     /// </summary>
     Event<IValueGenerator> OnTypeChanged { get; }
+
+    /// <summary>
+    /// Called when the model has been changed by the user.
+    /// </summary>
+    Event OnChanged { get; }
 }

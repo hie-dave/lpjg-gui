@@ -13,6 +13,7 @@ using LpjGuess.Frontend.Interfaces.Events;
 using LpjGuess.Frontend.Interfaces.Presenters;
 using LpjGuess.Frontend.Interfaces.Views;
 using LpjGuess.Frontend.Views;
+using LpjGuess.Frontend.Extensions;
 
 namespace LpjGuess.Frontend.Presenters;
 
@@ -45,6 +46,9 @@ public class TopLevelFactorGeneratorPresenter :
     public Event<string> OnRenamed { get; private init; }
 
     /// <inheritdoc />
+    public Event OnChanged { get; private init; }
+
+    /// <inheritdoc />
     IFactorGenerator IPresenter<IFactorGenerator>.Model => model;
 
     /// <summary>
@@ -61,9 +65,10 @@ public class TopLevelFactorGeneratorPresenter :
         IPresenterFactory presenterFactory) : base(view, model, registry)
     {
         OnRenamed = new Event<string>();
+        OnChanged = new Event();
         valuesPresenter = null;
         this.presenterFactory = presenterFactory;
-        view.OnChanged.ConnectTo(OnChanged);
+        view.OnChanged.ConnectTo(OnFactorChanged);
         view.OnValuesTypeChanged.ConnectTo(OnValuesTypeChanged);
         RefreshView();
     }
@@ -76,6 +81,8 @@ public class TopLevelFactorGeneratorPresenter :
         RefreshView();
         if (oldName != model.Name)
             OnRenamed.Invoke(model.Name);
+        else
+            OnChanged.Invoke();
     }
 
     /// <summary>
@@ -85,6 +92,7 @@ public class TopLevelFactorGeneratorPresenter :
     {
         IValueGeneratorPresenter presenter = CreateValuesPresenter(model.Values);
         presenter.OnTypeChanged.ConnectTo(OnGeneratorTypeChanged);
+        presenter.OnChanged.ConnectTo(OnChanged);
         view.Populate(model.Name, GetGeneratorType(model.Values), presenter.GetView());
 
         if (valuesPresenter != null)
@@ -160,7 +168,7 @@ public class TopLevelFactorGeneratorPresenter :
     /// Handle an arbitrary change to the model.
     /// </summary>
     /// <param name="change">The change to the model.</param>
-    private void OnChanged(IModelChange<TopLevelFactorGenerator> change)
+    private void OnFactorChanged(IModelChange<TopLevelFactorGenerator> change)
     {
         // Apply the command and refresh the view.
         ICommand command = change.ToCommand(model);

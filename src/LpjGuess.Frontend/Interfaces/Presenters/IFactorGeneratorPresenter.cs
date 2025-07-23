@@ -17,4 +17,9 @@ public interface IFactorGeneratorPresenter : IPresenter<IFactorGenerator>
     /// Called when the name of the factor has been changed by the user.
     /// </summary>
     Event<string> OnRenamed { get; }
+
+    /// <summary>
+    /// Called when the factor generator has changed.
+    /// </summary>
+    Event OnChanged { get; }
 }
