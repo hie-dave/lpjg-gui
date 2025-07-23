@@ -32,13 +32,13 @@ public class SimpleFactorGeneratorPresenter : PresenterBase<ISimpleFactorGenerat
     private List<IFactorPresenter> factorPresenters;
 
     /// <inheritdoc />
-    IFactorGenerator IFactorGeneratorPresenter.Model => model;
-
-    /// <inheritdoc />
     public string Name => model.Name;
 
     /// <inheritdoc />
     public Event<string> OnRenamed { get; private init; }
+
+    /// <inheritdoc />
+    IFactorGenerator IPresenter<IFactorGenerator>.Model => model;
 
     /// <summary>
     /// Create a new <see cref="SimpleFactorGeneratorPresenter"/> instance.
@@ -92,7 +92,7 @@ public class SimpleFactorGeneratorPresenter : PresenterBase<ISimpleFactorGenerat
     /// <returns>The presenter.</returns>
     private IFactorPresenter CreateFactorPresenter(IFactor factor)
     {
-        return presenterFactory.CreatePresenter<IFactorPresenter>(factor);
+        return presenterFactory.CreatePresenter<IFactorPresenter, IFactor>(factor);
     }
 
     /// <summary>

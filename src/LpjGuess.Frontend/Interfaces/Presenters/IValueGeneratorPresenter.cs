@@ -6,7 +6,7 @@ namespace LpjGuess.Frontend.Interfaces.Presenters;
 /// <summary>
 /// An interface for a presenter which manages a value generator.
 /// </summary>
-public interface IValueGeneratorPresenter : IPresenter
+public interface IValueGeneratorPresenter : IPresenter<IValueGenerator>
 {
     /// <summary>
     /// Called when the data type has been changed by the user. The event

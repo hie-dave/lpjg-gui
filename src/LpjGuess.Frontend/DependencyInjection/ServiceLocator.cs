@@ -39,7 +39,7 @@ public class ServiceLocator : IServiceLocator
     {
         // Register services.
         services.AddSingleton<ICommandRegistry, CommandRegistry>();
-        services.AddSingleton<IPresenterFactory, PresenterFactory>();
+        services.AddScoped<IPresenterFactory, PresenterFactory>();
         services.AddSingleton(Configuration.Instance);
 
         // Add scoped services.
@@ -81,7 +81,8 @@ public class ServiceLocator : IServiceLocator
             foreach (Type interfaceType in presenterType.GetInterfaces()
                 .Where(i => typeof(IPresenter).IsAssignableFrom(i) && i != typeof(IPresenter)))
             {
-                if (interfaceType.GetInterfaces().Select(i => i.IsGenericType ? i.GetGenericTypeDefinition() : i).Any(i => i.IsAssignableTo(typeof(IPresenter<>))))
+                if (interfaceType.GetInterfaces().Select(i => i.IsGenericType ? i.GetGenericTypeDefinition() : i).Any(i => i.IsAssignableTo(typeof(IPresenter<>))) ||
+                    interfaceType.IsGenericType && interfaceType.GetGenericTypeDefinition() == typeof(IPresenter<>))
                 {
                     // Type modelType = interfaceType.GetGenericArguments()[0];
                     Type modelPresenterInterface = interfaceType;
@@ -145,6 +146,21 @@ public class ServiceLocator : IServiceLocator
                 Type concreteInterfaceType = Concretise(interfaceType, type);
                 Console.WriteLine($"services.AddTransient<{concreteInterfaceType.ToFriendlyName()}, {genericType.ToFriendlyName()}>();");
                 services.AddTransient(concreteInterfaceType, genericType);
+
+                // Register a model presenter factory for this interface.
+                if (concreteInterfaceType.GetInterfaces().Select(i => i.IsGenericType ? i.GetGenericTypeDefinition() : i).Any(i => i.IsAssignableTo(typeof(IPresenter<>))) ||
+                    concreteInterfaceType.IsGenericType && concreteInterfaceType.GetGenericTypeDefinition() == typeof(IPresenter<>))
+                {
+                    // Type modelType = interfaceType.GetGenericArguments()[0];
+                    Type modelPresenterInterface = concreteInterfaceType;
+                    if (!modelPresenterInterface.IsGenericType || modelPresenterInterface.GetGenericTypeDefinition() != typeof(IPresenter<>))
+                        modelPresenterInterface = concreteInterfaceType.GetInterfaces().Where(i => i.IsGenericType).First(i => i.GetGenericTypeDefinition() == typeof(IPresenter<>));
+                    Type modelType = modelPresenterInterface.GetGenericArguments()[0];
+                    Type factoryType = typeof(ModelPresenterFactory<,,>).MakeGenericType(concreteInterfaceType, genericType, modelType);
+                    Type factoryInterfaceType = typeof(IModelPresenterFactory<,>).MakeGenericType(concreteInterfaceType, modelType);
+                    Console.WriteLine($"services.AddTransient<{factoryInterfaceType.ToFriendlyName()}, {factoryType.ToFriendlyName()}>();");
+                    services.AddTransient(factoryInterfaceType, factoryType);
+                }
             }
             Console.WriteLine($"services.AddTransient<IPresenter, {genericType.ToFriendlyName()}>();");
             services.AddTransient(typeof(IPresenter), genericType);

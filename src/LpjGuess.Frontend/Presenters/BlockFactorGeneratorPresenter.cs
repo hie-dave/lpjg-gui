@@ -1,4 +1,5 @@
 using LpjGuess.Core.Models.Factorial.Generators.Factors;
+using LpjGuess.Frontend.Attributes;
 using LpjGuess.Frontend.DependencyInjection;
 using LpjGuess.Frontend.Interfaces.Commands;
 using LpjGuess.Frontend.Interfaces.Events;

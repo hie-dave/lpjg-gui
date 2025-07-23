@@ -70,6 +70,7 @@ public class FactorialPresenter : PresenterBase<IFactorialView, FactorialGenerat
         view.OnRemoveFactor.ConnectTo(OnRemoveFactor);
         OnChanged = new Event();
         view.OnChanged.ConnectTo(OnViewChanged);
+        Refresh();
     }
 
     /// <inheritdoc />

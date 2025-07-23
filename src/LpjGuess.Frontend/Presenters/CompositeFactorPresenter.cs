@@ -30,7 +30,7 @@ public class CompositeFactorPresenter : PresenterBase<ICompositeFactorView, Comp
     private List<IFactorPresenter> factorPresenters;
 
     /// <inheritdoc />
-    IFactor IFactorPresenter.Model => model;
+    IFactor IPresenter<IFactor>.Model => model;
 
     /// <inheritdoc />
     public Event<string> OnRenamed { get; private init; }
@@ -94,7 +94,7 @@ public class CompositeFactorPresenter : PresenterBase<ICompositeFactorView, Comp
     /// <returns>The presenter.</returns>
     private IFactorPresenter CreateFactorPresenter(IFactor factor)
     {
-        return presenterFactory.CreatePresenter<IFactorPresenter>(factor);
+        return presenterFactory.CreatePresenter<IFactorPresenter, IFactor>(factor);
     }
 
     /// <summary>

@@ -29,7 +29,7 @@ public class ExperimentPresenter : PresenterBase<IExperimentView, Experiment>, I
     /// <summary>
     /// The available instruction files in the workspace.
     /// </summary>
-    private IEnumerable<string> instructionFiles;
+    private IInstructionFilesProvider insFilesProvider;
 
     /// <inheritdoc />
     public Event<string> OnRenamed { get; private init; }
@@ -37,41 +37,37 @@ public class ExperimentPresenter : PresenterBase<IExperimentView, Experiment>, I
     /// <summary>
     /// Create a new <see cref="ExperimentPresenter"/> instance.
     /// </summary>
-    /// <param name="instructionFiles">The available instruction files in the workspace.</param>
     /// <param name="experiment">The experiment to present.</param>
+    /// <param name="insFilesProvider">The instruction files provider.</param>
     /// <param name="view">The view to present the experiment on.</param>
     /// <param name="registry">The command registry to use for command execution.</param>
     /// <param name="presenterFactory">The factory to use for creating presenters.</param>
     public ExperimentPresenter(
-        IEnumerable<string> instructionFiles,
         Experiment experiment,
+        IInstructionFilesProvider insFilesProvider,
         IExperimentView view,
         ICommandRegistry registry,
         IPresenterFactory presenterFactory) : base(view, experiment, registry)
     {
         OnRenamed = new Event<string>();
-        this.instructionFiles = instructionFiles;
+        this.insFilesProvider = insFilesProvider;
         this.presenterFactory = presenterFactory;
         view.OnChanged.ConnectTo(OnExperimentChanged);
-        factorialPresenter = presenterFactory.CreatePresenter<IFactorialPresenter>(GetFactorialGenerator());
+        factorialPresenter = presenterFactory.CreatePresenter<IFactorialPresenter, FactorialGenerator>(GetFactorialGenerator());
         view.SetFactorialView(factorialPresenter.GetView());
-        factorialPresenter.OnChanged.ConnectTo(OnSimulationGeneratorChanged);
         RefreshView();
+
+        factorialPresenter.OnChanged.ConnectTo(OnSimulationGeneratorChanged);
+        this.insFilesProvider.OnInstructionFilesChanged.ConnectTo(OnInsFilesChanged);
     }
 
     /// <inheritdoc />
     public Experiment GetExperiment() => model;
 
     /// <inheritdoc />
-    public void UpdateInstructionFiles(IEnumerable<string> instructionFiles)
-    {
-        this.instructionFiles = instructionFiles;
-        view.UpdateInstructionFiles(instructionFiles.Select(f => (f, model.InstructionFiles.Contains(f))));
-    }
-
-    /// <inheritdoc />
     public override void Dispose()
     {
+        insFilesProvider.OnInstructionFilesChanged.DisconnectFrom(OnInsFilesChanged);
         factorialPresenter.Dispose();
         base.Dispose();
     }
@@ -85,7 +81,7 @@ public class ExperimentPresenter : PresenterBase<IExperimentView, Experiment>, I
             model.Name,
             model.Description,
             model.Runner,
-            instructionFiles.Select(f => (f, model.InstructionFiles.Contains(f))),
+            insFilesProvider.GetInstructionFiles().Select(f => (f, model.InstructionFiles.Contains(f))),
             model.Pfts);
         UpdateSimulations();
 
@@ -154,6 +150,16 @@ public class ExperimentPresenter : PresenterBase<IExperimentView, Experiment>, I
         if (model.Name != oldName)
             OnRenamed.Invoke(model.Name);
         RefreshView();
+    }
+
+    /// <summary>
+    /// Called when an instruction file is added to or removed from the
+    /// workspace.
+    /// </summary>
+    /// <param name="instructionFiles">The instruction files in the workspace.</param>
+    private void OnInsFilesChanged(IEnumerable<string> instructionFiles)
+    {
+        view.UpdateInstructionFiles(instructionFiles.Select(f => (f, model.InstructionFiles.Contains(f))));
     }
 
     /// <summary>

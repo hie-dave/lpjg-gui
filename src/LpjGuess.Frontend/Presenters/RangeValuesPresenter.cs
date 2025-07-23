@@ -24,6 +24,9 @@ public class RangeValuesPresenter<T> : PresenterBase<IRangeValuesView, RangeGene
     /// <inheritdoc />
     public Event<IValueGenerator> OnTypeChanged { get; private init; }
 
+    /// <inheritdoc />
+    IValueGenerator IPresenter<IValueGenerator>.Model => Model;
+
     /// <summary>
     /// Create a new <see cref="RangeValuesPresenter{T}"/> instance.
     /// </summary>

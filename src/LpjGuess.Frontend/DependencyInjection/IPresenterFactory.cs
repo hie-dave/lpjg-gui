@@ -42,13 +42,14 @@ public interface IPresenterFactory
     /// <typeparam name="TModel">The type of model to create a presenter for.</typeparam>
     /// <param name="model">The model to create a presenter for.</param>
     /// <returns>A presenter that can handle the given model.</returns>
-    IPresenter<TModel> CreatePresenter<TModel>(TModel model) where TModel : notnull;
+    IPresenter CreatePresenter<TModel>(TModel model) where TModel : notnull;
 
     /// <summary>
-    /// Creates a presenter for the given model.
+    /// Creates a presenter for the given model, whose type is not known at
+    /// compile time.
     /// </summary>
     /// <typeparam name="TPresenter">The type of presenter to create.</typeparam>
     /// <param name="model">The model to create a presenter for.</param>
-    /// <returns>A presenter that can handle the given model.</returns>
+    /// <returns>The created presenter.</returns>
     TPresenter CreatePresenter<TPresenter>(object model) where TPresenter : IPresenter;
 }

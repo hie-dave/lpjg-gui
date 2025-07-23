@@ -1,5 +1,6 @@
 namespace LpjGuess.Frontend.DependencyInjection;
 
+using LpjGuess.Frontend.Attributes;
 using LpjGuess.Frontend.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
@@ -56,6 +57,21 @@ public static class AssemblyScanner
                 }
                 if (others.Count == 0)
                     Console.WriteLine($"Found un-implemented generic view interface: {interfaceType.ToFriendlyName()}");
+            }
+            else if (implementations.Count > 1)
+            {
+                // If exactly one implementation has the DefaultImplementation attribute, register it.
+                Type? defaultImplementation = implementations
+                    .FirstOrDefault(i => i.GetCustomAttribute<DefaultImplementationAttribute>() != null);
+                if (defaultImplementation != null)
+                {
+                    Console.WriteLine($"services.AddTransient<{interfaceType.ToFriendlyName()}, {defaultImplementation.ToFriendlyName()}>();");
+                    services.AddTransient(interfaceType, defaultImplementation);
+                }
+                else
+                {
+                    Console.WriteLine($"Found {implementations.Count} implementations of {interfaceType.ToFriendlyName()}: {string.Join(", ", implementations.Select(t => t.ToFriendlyName()))}. These will not be registered with this interface.");
+                }
             }
             else
             {

@@ -15,7 +15,7 @@ namespace LpjGuess.Frontend.Presenters;
 public class TopLevelParameterPresenter : PresenterBase<ITopLevelParameterView, TopLevelParameter>, IFactorPresenter
 {
     /// <inheritdoc />
-    IFactor IFactorPresenter.Model => model;
+    IFactor IPresenter<IFactor>.Model => model;
 
     /// <inheritdoc />
     public IView View => view;

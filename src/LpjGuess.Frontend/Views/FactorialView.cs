@@ -128,7 +128,7 @@ public class FactorialView : ViewBase<Box>, IFactorialView
     /// </summary>
     private void ConnectEvents()
     {
-        fullFactorialSwitch.OnActivate += OnFullFactorialChanged;
+        fullFactorialSwitch.OnStateSet += OnFullFactorialChanged;
     }
 
     /// <summary>
@@ -136,7 +136,7 @@ public class FactorialView : ViewBase<Box>, IFactorialView
     /// </summary>
     private void DisconnectEvents()
     {
-        fullFactorialSwitch.OnActivate -= OnFullFactorialChanged;
+        fullFactorialSwitch.OnStateSet -= OnFullFactorialChanged;
     }
 
     /// <summary>
@@ -144,19 +144,20 @@ public class FactorialView : ViewBase<Box>, IFactorialView
     /// </summary>
     /// <param name="sender">The sender object.</param>
     /// <param name="args">Event data.</param>
-    private void OnFullFactorialChanged(object sender, EventArgs args)
+    private bool OnFullFactorialChanged(Switch sender, Switch.StateSetSignalArgs args)
     {
         try
         {
             OnChanged.Invoke(new ModelChangeEventArgs<FactorialGenerator, bool>(
                 f => f.FullFactorial,
                 (f, fullFactorial) => f.FullFactorial = fullFactorial,
-                fullFactorialSwitch.GetActive()
+                args.State
             ));
         }
         catch (Exception error)
         {
             MainView.Instance.ReportError(error);
         }
+        return false;
     }
 }

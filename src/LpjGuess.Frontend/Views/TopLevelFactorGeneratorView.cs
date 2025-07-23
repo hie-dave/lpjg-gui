@@ -1,19 +1,20 @@
 using Gtk;
 using LpjGuess.Core.Models.Factorial;
 using LpjGuess.Core.Models.Factorial.Generators.Factors;
+using LpjGuess.Frontend.Attributes;
 using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.Events;
 using LpjGuess.Frontend.Extensions;
 using LpjGuess.Frontend.Interfaces;
 using LpjGuess.Frontend.Interfaces.Events;
 using LpjGuess.Frontend.Interfaces.Views;
-using Pomelo.EntityFrameworkCore.MySql.Query.Internal;
 
 namespace LpjGuess.Frontend.Views;
 
 /// <summary>
 /// A view for a top-level factor generator.
 /// </summary>
+[DefaultImplementation]
 public class TopLevelFactorGeneratorView : ViewBase<ScrolledWindow>, ITopLevelFactorGeneratorView
 {
     /// <summary>

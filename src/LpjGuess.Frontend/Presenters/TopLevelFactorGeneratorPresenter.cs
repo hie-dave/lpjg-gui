@@ -7,6 +7,7 @@ using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.DependencyInjection;
 using LpjGuess.Frontend.Events;
 using LpjGuess.Frontend.Interfaces;
+using LpjGuess.Frontend.Attributes;
 using LpjGuess.Frontend.Interfaces.Commands;
 using LpjGuess.Frontend.Interfaces.Events;
 using LpjGuess.Frontend.Interfaces.Presenters;
@@ -20,7 +21,7 @@ namespace LpjGuess.Frontend.Presenters;
 /// </summary>
 public class TopLevelFactorGeneratorPresenter : 
     PresenterBase<ITopLevelFactorGeneratorView, TopLevelFactorGenerator>,
-    IFactorGeneratorPresenter<ITopLevelFactorGeneratorView, TopLevelFactorGenerator>
+    IFactorGeneratorPresenter
 {
     /// <summary>
     /// The presenter factory to use for creating value generator presenters.
@@ -34,9 +35,6 @@ public class TopLevelFactorGeneratorPresenter :
     private IValueGeneratorPresenter? valuesPresenter;
 
     /// <inheritdoc />
-    IFactorGenerator IFactorGeneratorPresenter.Model => model;
-
-    /// <inheritdoc />
     public IView View => view;
 
     /// <inheritdoc />
@@ -44,6 +42,9 @@ public class TopLevelFactorGeneratorPresenter :
 
     /// <inheritdoc />
     public Event<string> OnRenamed { get; private init; }
+
+    /// <inheritdoc />
+    IFactorGenerator IPresenter<IFactorGenerator>.Model => model;
 
     /// <summary>
     /// Create a new <see cref="TopLevelFactorGeneratorPresenter"/> instance.
@@ -112,7 +113,7 @@ public class TopLevelFactorGeneratorPresenter :
     /// <returns>The presenter.</returns>
     private IValueGeneratorPresenter CreateValuesPresenter(IValueGenerator values)
     {
-        return presenterFactory.CreatePresenter<IValueGeneratorPresenter>(values);
+        return (IValueGeneratorPresenter)presenterFactory.CreatePresenter(values);
     }
 
     /// <summary>

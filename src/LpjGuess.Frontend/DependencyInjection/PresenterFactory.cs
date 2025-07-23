@@ -50,43 +50,48 @@ public class PresenterFactory : IPresenterFactory
     {
         Type viewType = typeof(ISeriesView<>).MakeGenericType(series.GetType());
         object view = serviceProvider.GetRequiredService(viewType);
-        IDataSourcePresenter presenter = CreateDataSourcePresenter(series.DataSource);
+        IDataSourcePresenter presenter = (IDataSourcePresenter)CreatePresenterDynamic(series.DataSource);
         Type presenterType = typeof(SeriesPresenter<>).MakeGenericType(series.GetType());
         return (ISeriesPresenter)ActivatorUtilities.CreateInstance(serviceProvider, presenterType, view, series, presenter);
     }
 
     /// <inheritdoc />
-    public IPresenter<TModel> CreatePresenter<TModel>(TModel model)
+    public IPresenter CreatePresenter<TModel>(TModel model)
         where TModel : notnull
     {
-        // Get the model type.
-        return CreatePresenter<IPresenter<TModel>>(model);
+        return CreatePresenterDynamic(model);
     }
 
     /// <inheritdoc />
     public TPresenter CreatePresenter<TPresenter>(object model) where TPresenter : IPresenter
     {
-        return serviceProvider.GetRequiredService<TPresenter>();
+        return (TPresenter)CreatePresenterDynamic(model, typeof(TPresenter));
     }
 
     /// <summary>
-    /// Create a data source presenter for the given data source.
+    /// Create a presenter for the given model, whose type is not known at
+    /// compile time.
     /// </summary>
-    /// <typeparam name="TDataSource">The type of the data source.</typeparam>
-    /// <param name="dataSource">The data source to present.</param>
-    /// <returns>The data source presenter.</returns>
-    private IDataSourcePresenter CreateDataSourcePresenter<TDataSource>(TDataSource dataSource)
-        where TDataSource : IDataSource
+    /// <param name="model">The model to create a presenter for.</param>
+    /// <returns>The presenter.</returns>
+    private IPresenter CreatePresenterDynamic<TModel>(TModel model)
+        where TModel : notnull
     {
-        Type modelType = dataSource.GetType();
-        Type presenterType = typeof(IDataSourcePresenter<>).MakeGenericType(modelType);
-        MethodInfo methods = GetType().GetMethods(BindingFlags.Public | BindingFlags.Instance)
+        Type modelType = model.GetType();
+        Type presenterType = typeof(IPresenter<>).MakeGenericType(modelType);
+        return (IPresenter)CreatePresenterDynamic(model, presenterType);
+    }
+
+    private object CreatePresenterDynamic<TModel>(TModel model, Type presenterType)
+        where TModel : notnull
+    {
+        MethodInfo method = GetType().GetMethods(BindingFlags.Public | BindingFlags.Instance)
             .Where(m => m.Name == nameof(CreatePresenter) &&
             m.IsGenericMethod &&
             m.GetGenericArguments().Length == 2 &&
             m.GetParameters().Length == 1)
             .Single();
-        MethodInfo genericMethod = methods.MakeGenericMethod(presenterType, modelType);
-        return (IDataSourcePresenter)genericMethod.Invoke(this, [dataSource])!;
+        method = method.MakeGenericMethod(presenterType, model.GetType());
+        return method.Invoke(this, [model])!;
     }
 }

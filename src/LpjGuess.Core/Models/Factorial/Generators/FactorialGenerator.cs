@@ -32,6 +32,9 @@ public class FactorialGenerator : ISimulationGenerator
     /// <inheritdoc />
     public IEnumerable<IFactors> Generate()
     {
+        if (!Factors.Any())
+            return Array.Empty<IFactors>();
+
         var factors = Factors.Select(f => f.Generate());
         if (FullFactorial)
             factors = factors.AllCombinations();

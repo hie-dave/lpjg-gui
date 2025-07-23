@@ -15,12 +15,6 @@ public interface IExperimentPresenter : IPresenter<IExperimentView, Experiment>
     Experiment GetExperiment();
 
     /// <summary>
-    /// Update the instruction files for the experiment.
-    /// </summary>
-    /// <param name="instructionFiles">The instruction files.</param>
-    void UpdateInstructionFiles(IEnumerable<string> instructionFiles);
-
-    /// <summary>
     /// Event raised when the experiment is renamed.
     /// </summary>
     Event<string> OnRenamed { get; }

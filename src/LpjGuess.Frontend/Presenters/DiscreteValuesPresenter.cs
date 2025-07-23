@@ -28,6 +28,9 @@ public class DiscreteValuesPresenter<T> : PresenterBase<IDiscreteValuesView, Dis
     /// <inheritdoc />
     public IView View => view;
 
+    /// <inheritdoc />
+    IValueGenerator IPresenter<IValueGenerator>.Model => Model;
+
     /// <summary>
     /// Create a new <see cref="DiscreteValuesPresenter{T}"/> instance.
     /// </summary>

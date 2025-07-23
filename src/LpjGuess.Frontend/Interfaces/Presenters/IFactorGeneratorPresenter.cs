@@ -6,13 +6,8 @@ namespace LpjGuess.Frontend.Interfaces.Presenters;
 /// <summary>
 /// An interface for a presenter which manages a factor generator.
 /// </summary>
-public interface IFactorGeneratorPresenter : IPresenter
+public interface IFactorGeneratorPresenter : IPresenter<IFactorGenerator>
 {
-    /// <summary>
-    /// The factor generator being presented.
-    /// </summary>
-    IFactorGenerator Model { get; }
-
     /// <summary>
     /// Name of the factor.
     /// </summary>
@@ -22,17 +17,4 @@ public interface IFactorGeneratorPresenter : IPresenter
     /// Called when the name of the factor has been changed by the user.
     /// </summary>
     Event<string> OnRenamed { get; }
-}
-
-/// <summary>
-/// An interface for a presenter which manages a factor generator.
-/// </summary>
-public interface IFactorGeneratorPresenter<TView, TModel> : IPresenter<TView, TModel>, IFactorGeneratorPresenter
-    where TView : IView
-    where TModel : IFactorGenerator
-{
-    /// <summary>
-    /// The factor generator being presented.
-    /// </summary>
-    new TModel Model { get; }
 }
