@@ -65,6 +65,7 @@ public class Workspace
 	public static Workspace ForInsFile(string insFile)
 	{
 		Workspace result = new Workspace();
+		result.Experiments.Add(Experiment.CreateBaseline());
 		result.InstructionFiles.Add(insFile);
 		result.FilePath = Path.ChangeExtension(insFile, DefaultFileExtension);
 		result.Save();

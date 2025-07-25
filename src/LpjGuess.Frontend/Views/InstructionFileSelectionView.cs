@@ -14,9 +14,22 @@ public class InstructionFileSelectionView : CustomColumnView<string>
     private HashSet<string> selectedInstructionFiles;
 
     /// <summary>
+    /// All instruction files.
+    /// </summary>
+    private List<string> allInstructionFiles;
+
+    /// <summary>
     /// Called when the selected instruction files are changed by the user.
     /// </summary>
     public Event<IEnumerable<string>> OnSelectionChanged { get; private init; }
+
+    /// <summary>
+    /// Get the current selection.
+    /// </summary>
+    public IEnumerable<(string, bool)> GetSelection()
+    {
+        return allInstructionFiles.Select(f => (f, selectedInstructionFiles.Contains(f)));
+    }
 
     /// <summary>
     /// Create a new <see cref="InstructionFileSelectionView"/> instance.
@@ -25,6 +38,7 @@ public class InstructionFileSelectionView : CustomColumnView<string>
     {
         OnSelectionChanged = new Event<IEnumerable<string>>();
         selectedInstructionFiles = [];
+        allInstructionFiles = [];
 
         AddColumn("Selected", CreateCheckButton, BindCheckButton);
         AddColumn("File", CreateLabel, BindLabel);
@@ -39,7 +53,8 @@ public class InstructionFileSelectionView : CustomColumnView<string>
     {
         RemoveRows();
         selectedInstructionFiles = selectedFiles.ToHashSet();
-        Populate(allFiles);
+        allInstructionFiles = allFiles.ToList();
+        Populate(allInstructionFiles);
     }
 
     /// <summary>

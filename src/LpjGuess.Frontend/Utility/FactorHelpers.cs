@@ -1,9 +1,5 @@
 using LpjGuess.Core.Interfaces.Factorial;
 using LpjGuess.Core.Models.Factorial.Factors;
-using LpjGuess.Frontend.Interfaces.Presenters;
-using LpjGuess.Frontend.Interfaces.Views;
-using LpjGuess.Frontend.Presenters;
-using LpjGuess.Frontend.Views;
 
 namespace LpjGuess.Frontend.Utility;
 
@@ -14,7 +10,8 @@ internal enum FactorType
 {
     TopLevel,
     Block,
-    Composite
+    Composite,
+    Dummy
 }
 
 /// <summary>
@@ -38,6 +35,8 @@ internal static class FactorHelpers
                 return new BlockParameter("sla", "pft", "TeBE", "30");
             case FactorType.Composite:
                 return new CompositeFactor([]);
+            case FactorType.Dummy:
+                return new DummyFactor();
             default:
                 throw new NotImplementedException($"Unknown factor type: {type}");
         }
@@ -58,6 +57,8 @@ internal static class FactorHelpers
                 return "Override a single block (e.g. PFT)-level parameter (e.g. sla)";
             case FactorType.Composite:
                 return "Change multiple parameters at once";
+            case FactorType.Dummy:
+                return "Make no changes";
             default:
                 throw new NotImplementedException($"Unknown factor type: {type}");
         }
@@ -78,6 +79,8 @@ internal static class FactorHelpers
                 return "Block";
             case FactorType.Composite:
                 return "Composite";
+            case FactorType.Dummy:
+                return "Identity";
             default:
                 throw new NotImplementedException($"Unknown factor type: {type}");
         }

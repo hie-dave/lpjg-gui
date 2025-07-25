@@ -1,4 +1,7 @@
 using LpjGuess.Core.Interfaces.Factorial;
+using LpjGuess.Core.Models.Factorial.Factors;
+using LpjGuess.Core.Models.Factorial.Generators;
+using LpjGuess.Core.Models.Factorial.Generators.Factors;
 
 namespace LpjGuess.Core.Models.Factorial;
 
@@ -23,9 +26,9 @@ public class Experiment
     public string Runner { get; set; }
 
     /// <summary>
-    /// List of instruction files to run.
+    /// List of instruction files not to run.
     /// </summary>
-    public List<string> InstructionFiles { get; set; }
+    public List<string> DisabledInsFiles { get; set; }
 
     /// <summary>
     /// List of PFTs to enable for this experiment. All others will be disabled.
@@ -43,22 +46,39 @@ public class Experiment
     /// <param name="name">Name of this experiment.</param>
     /// <param name="description">Description of this experiment.</param>
     /// <param name="runner">Name of the runner to use for this experiment.</param>
-    /// <param name="instructionFiles">List of instruction files to run.</param>
+    /// <param name="disabledInstructionFiles">List of instruction files not to run.</param>
     /// <param name="pfts">List of PFTs to enable for this experiment. All others will be disabled.</param>
     /// <param name="simulationGenerator">List of factorials in this experiment.</param>
     public Experiment(
         string name,
         string description,
         string runner,
-        List<string> instructionFiles,
+        List<string> disabledInstructionFiles,
         List<string> pfts,
         ISimulationGenerator simulationGenerator)
     {
         Name = name;
         Description = description;
         Runner = runner;
-        InstructionFiles = instructionFiles;
+        DisabledInsFiles = disabledInstructionFiles;
         Pfts = pfts;
         SimulationGenerator = simulationGenerator;
+    }
+
+    /// <summary>
+    /// Create an experiment that represents a baseline run of all instruction
+    /// files in the workspace.
+    /// </summary>
+    /// <returns>An experiment that represents a baseline run.</returns>
+    public static Experiment CreateBaseline()
+    {
+        SimpleFactorGenerator generator = new("Baseline", [new DummyFactor()]);
+        return new Experiment(
+            "Baseline",
+            "Baseline experiment",
+            "baseline",
+            new List<string>(),
+            new List<string>(),
+            new FactorialGenerator(false, [generator]));
     }
 }

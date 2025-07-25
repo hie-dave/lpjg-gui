@@ -83,7 +83,7 @@ public class ExperimentPresenter : PresenterBase<IExperimentView, Experiment>, I
             model.Name,
             model.Description,
             model.Runner,
-            insFilesProvider.GetInstructionFiles().Select(f => (f, model.InstructionFiles.Contains(f))),
+            insFilesProvider.GetInstructionFiles().Select(f => (f, !model.DisabledInsFiles.Contains(f))),
             model.Pfts);
         UpdateSimulations();
 
@@ -161,7 +161,7 @@ public class ExperimentPresenter : PresenterBase<IExperimentView, Experiment>, I
     /// <param name="instructionFiles">The instruction files in the workspace.</param>
     private void OnInsFilesChanged(IEnumerable<string> instructionFiles)
     {
-        view.UpdateInstructionFiles(instructionFiles.Select(f => (f, model.InstructionFiles.Contains(f))));
+        view.UpdateInstructionFiles(instructionFiles.Select(f => (f, !model.DisabledInsFiles.Contains(f))));
     }
 
     /// <summary>

@@ -25,12 +25,6 @@ public interface IGraphPresenter : IPresenter<IGraphView, Graph>
     void RefreshData();
 
     /// <summary>
-    /// Update the instruction files used for loading data.
-    /// </summary>
-    /// <param name="instructionFiles">The instruction files.</param>
-    void UpdateInstructionFiles(IEnumerable<string> instructionFiles);
-
-    /// <summary>
     /// Event raised when the graph title is changed.
     /// </summary>
     Event<string> OnTitleChanged { get; }

@@ -5,6 +5,7 @@ using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.Events;
 using LpjGuess.Frontend.Interfaces.Events;
 using LpjGuess.Frontend.Interfaces.Views;
+using LpjGuess.Frontend.Utility.Gtk;
 
 namespace LpjGuess.Frontend.Views;
 
@@ -110,10 +111,40 @@ public class ExperimentView : ViewBase<ScrolledWindow>, IExperimentView
         container.SetOrientation(Orientation.Vertical);
         container.Spacing = spacing;
 
+        Frame simulationsFrame = new Frame();
+        simulationsFrame.Label = "Simulations";
+        simulationView.MarginBottom = 4;
+        simulationView.MarginTop = 4;
+        simulationView.MarginStart = 4;
+        simulationView.MarginEnd = 4;
+        simulationsFrame.SetChild(simulationView);
+        if (simulationsFrame.LabelWidget is Label simsLabel)
+            simsLabel.AddCssClass(StyleClasses.Heading);
+
+        Frame factorialFrame = new Frame();
+        factorialFrame.Label = "Factors";
+        factorialContainer.MarginBottom = 4;
+        factorialContainer.MarginTop = 4;
+        factorialContainer.MarginStart = 4;
+        factorialContainer.MarginEnd = 4;
+        factorialFrame.SetChild(factorialContainer);
+        if (factorialFrame.LabelWidget is Label factLabel)
+            factLabel.AddCssClass(StyleClasses.Heading);
+
+        Frame parametersFrame = new Frame();
+        parametersFrame.Label = "Configuration";
+        grid.MarginBottom = 4;
+        grid.MarginTop = 4;
+        grid.MarginStart = 4;
+        grid.MarginEnd = 4;
+        parametersFrame.SetChild(grid);
+        if (parametersFrame.LabelWidget is Label paramsLabel)
+            paramsLabel.AddCssClass(StyleClasses.Heading);
+
         // Pack child widgets into the container.
-        container.Append(grid);
-        container.Append(factorialContainer);
-        container.Append(simulationView);
+        container.Append(parametersFrame);
+        container.Append(factorialFrame);
+        container.Append(simulationsFrame);
 
         // Pack the container into the scrolled window.
         widget.Child = container;
@@ -233,10 +264,14 @@ public class ExperimentView : ViewBase<ScrolledWindow>, IExperimentView
     /// <param name="insFiles">The instruction files.</param>
     private void OnInsFilesChanged(IEnumerable<string> insFiles)
     {
+        IEnumerable<string> disabled = insFileView.GetSelection()
+            .Where(s => !s.Item2) // Where not enabled
+            .Select(s => s.Item1) // Select instruction file
+            .ToList();
         OnChanged.Invoke(new ModelChangeEventArgs<Experiment, IEnumerable<string>>(
-            e => e.InstructionFiles,
-            (e, i) => e.InstructionFiles = i.ToList(),
-            insFiles));
+            e => e.DisabledInsFiles,
+            (e, i) => e.DisabledInsFiles = i.ToList(),
+            disabled));
     }
 
     /// <summary>

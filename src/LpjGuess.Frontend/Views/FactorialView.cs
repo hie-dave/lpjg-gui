@@ -70,17 +70,17 @@ public class FactorialView : ViewBase<Box>, IFactorialView
 
         fullFactorialSwitch = new Switch();
 
-        Label factorsLabel = new Label();
-        factorsLabel.Halign = Align.Start;
-        factorsLabel.SetText("Factors");
-        factorsLabel.AddCssClass(StyleClasses.Heading);
+        // Label factorsLabel = new Label();
+        // factorsLabel.Halign = Align.Start;
+        // factorsLabel.SetText("Factors");
+        // factorsLabel.AddCssClass(StyleClasses.Heading);
 
         // Pack controls into the grid.
         AddControl("Full Factorial", fullFactorialSwitch);
 
         // Pack child widgets into the container.
         widget.Append(grid);
-        widget.Append(factorsLabel);
+        // widget.Append(factorsLabel);
         widget.Append(factorsContainer.GetWidget());
 
         // Connect event handlers.

@@ -47,9 +47,9 @@ public class GraphPresenter : PresenterBase<IGraphView, Graph>, IGraphPresenter
     private PlotModel plotModel;
 
     /// <summary>
-    /// The instruction file path.
+    /// The instruction files provider.
     /// </summary>
-    private IEnumerable<string> instructionFiles;
+    private readonly IInstructionFilesProvider provider;
 
     /// <summary>
     /// List of presenters currently managing views for the graph's series.
@@ -71,19 +71,19 @@ public class GraphPresenter : PresenterBase<IGraphView, Graph>, IGraphPresenter
     /// </summary>
     /// <param name="view">The view object.</param>
     /// <param name="graph">The graph model.</param>
-    /// <param name="instructionFiles">The instruction files for which data should be displayed.</param>
+    /// <param name="provider">The instruction files provider.</param>
     /// <param name="presenterFactory">Presenter factory for creating series views.</param>
     /// <param name="registry">The command registry to use for command execution.</param>
     public GraphPresenter(
         IGraphView view,
         Graph graph,
-        IEnumerable<string> instructionFiles,
+        IInstructionFilesProvider provider,
         IPresenterFactory presenterFactory,
         ICommandRegistry registry)
         : base(view, graph, registry)
     {
         this.graph = graph;
-        this.instructionFiles = instructionFiles;
+        this.provider = provider;
         this.presenterFactory = presenterFactory;
         OnTitleChanged = new Event<string>();
 
@@ -96,6 +96,8 @@ public class GraphPresenter : PresenterBase<IGraphView, Graph>, IGraphPresenter
         // doesn't know this.
         plotModel = new();
         seriesPresenters = new();
+
+        // TODO: should we trap an ins files changed event?
 
         cts = new();
         RefreshData();
@@ -191,7 +193,7 @@ public class GraphPresenter : PresenterBase<IGraphView, Graph>, IGraphPresenter
         LineSeries series = new LineSeries(
             string.Empty,
             new DynamicStyleProvider<Colour>(new GridcellIdentifier(), new ColourStrategy()),
-            new ModelOutput("file_lai", "Date", ["Total"], instructionFiles),
+            new ModelOutput("file_lai", "Date", ["Total"], provider.GetInstructionFiles()),
             AxisPosition.Bottom,
             AxisPosition.Left,
             new FixedStyleProvider<LineType>(LineType.Solid),
@@ -215,13 +217,6 @@ public class GraphPresenter : PresenterBase<IGraphView, Graph>, IGraphPresenter
         
         // Update the plot model
         RefreshData();
-    }
-
-    /// <inheritdoc />
-    public void UpdateInstructionFiles(IEnumerable<string> instructionFiles)
-    {
-        this.instructionFiles = instructionFiles;
-        // TODO: update instruction files in any ModelOutputSeries??
     }
 
     /// <summary>

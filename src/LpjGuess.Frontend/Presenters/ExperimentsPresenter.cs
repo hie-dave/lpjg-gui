@@ -106,7 +106,7 @@ public class ExperimentsPresenter : PresenterBase<IExperimentsView, IEnumerable<
             "New Experiment",
             "Description",
             Configuration.Instance.GetDefaultRunner()?.Name ?? string.Empty,
-            insFilesProvider.GetInstructionFiles().ToList(),
+            [],
             [],
             new FactorialGenerator(true, [])
         );

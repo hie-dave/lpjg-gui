@@ -93,11 +93,12 @@ public class GraphsPresenter : PresenterBase<IGraphsView, IReadOnlyList<Graph>>,
 		foreach (Graph graph in graphs)
 		{
 			// Construct new child presenter/view to display the oxyplot model.
-			IGraphView graphView = new GraphView();
-			IGraphPresenter presenter = new GraphPresenter(graphView, graph, insFilesProvider.GetInstructionFiles(), presenterFactory, registry);
-			presenter.OnTitleChanged.ConnectTo(t => OnGraphRenamed(t, graphView));
+			// IGraphView graphView = new GraphView();
+			// IGraphPresenter presenter = new GraphPresenter(graphView, graph, insFilesProvider, presenterFactory, registry);
+			IGraphPresenter presenter = presenterFactory.CreatePresenter<IGraphPresenter, Graph>(graph);
+			presenter.OnTitleChanged.ConnectTo(t => OnGraphRenamed(t, presenter.GetView()));
 
-			plots.Add(graphView, presenter);
+			plots.Add(presenter.GetView(), presenter);
 		}
 
 		// This will remove any existing plots from the view.
