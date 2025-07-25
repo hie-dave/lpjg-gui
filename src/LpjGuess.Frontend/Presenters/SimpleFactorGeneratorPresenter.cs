@@ -88,11 +88,17 @@ public class SimpleFactorGeneratorPresenter : PresenterBase<ISimpleFactorGenerat
     {
         List<IFactorPresenter> presenters = model.Levels.Select(CreateFactorPresenter).ToList();
         view.Populate(model.Name, presenters.Select(p => new NamedView(p.GetView(), p.Model.GetName())));
-        presenters.ForEach(p => p.OnRenamed.ConnectTo(n => view.Rename(p.GetView(), n)));
+        presenters.ForEach(p => p.OnRenamed.ConnectTo(n => OnChildNameChanged(n, p)));
         presenters.ForEach(p => p.OnChanged.ConnectTo(OnChanged));
 
         factorPresenters.ForEach(p => p.Dispose());
         factorPresenters = presenters;
+    }
+
+    private void OnChildNameChanged(string name, IFactorPresenter presenter)
+    {
+        view.Rename(presenter.GetView(), name);
+        OnChanged.Invoke();
     }
 
     /// <summary>

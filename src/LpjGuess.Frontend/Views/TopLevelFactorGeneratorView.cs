@@ -15,13 +15,8 @@ namespace LpjGuess.Frontend.Views;
 /// A view for a top-level factor generator.
 /// </summary>
 [DefaultImplementation]
-public class TopLevelFactorGeneratorView : ViewBase<ScrolledWindow>, ITopLevelFactorGeneratorView
+public class TopLevelFactorGeneratorView : ViewBase<Box>, ITopLevelFactorGeneratorView
 {
-    /// <summary>
-    /// The container for the view.
-    /// </summary>
-    private readonly Box container;
-
     /// <summary>
     /// The entry containing the factor name.
     /// </summary>
@@ -66,7 +61,7 @@ public class TopLevelFactorGeneratorView : ViewBase<ScrolledWindow>, ITopLevelFa
     /// <summary>
     /// Create a new <see cref="TopLevelFactorGeneratorView"/> instance.
     /// </summary>
-    public TopLevelFactorGeneratorView() : base(new ScrolledWindow())
+    public TopLevelFactorGeneratorView() : base(Box.New(Orientation.Vertical, 6))
     {
         nrow = 0;
         OnChanged = new Event<IModelChange<TopLevelFactorGenerator>>();
@@ -93,16 +88,11 @@ public class TopLevelFactorGeneratorView : ViewBase<ScrolledWindow>, ITopLevelFa
         valuesView = null;
 
         // Pack child widgets into the container.
-        container = Box.New(Orientation.Vertical, 6);
-        container.Append(grid);
-        container.Append(valuesContainer);
+        widget.Append(grid);
+        widget.Append(valuesContainer);
 
         // Pack the container into the main widget.
-        widget.Child = container;
         widget.Vexpand = true;
-
-        widget.PropagateNaturalHeight = true;
-        widget.PropagateNaturalWidth = true;
 
         ConnectEvents();
     }
