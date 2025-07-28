@@ -1,5 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
-using Dave.Benchmarks.Core.Models.Importer;
+using LpjGuess.Core.Models.Importer;
 
 namespace LpjGuess.Core.Models;
 

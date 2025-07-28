@@ -1,4 +1,4 @@
-using Dave.Benchmarks.Core.Models.Entities;
+using LpjGuess.Core.Models.Entities;
 using LpjGuess.Core.Models;
 
 namespace LpjGuess.Core.Interfaces.Graphing;

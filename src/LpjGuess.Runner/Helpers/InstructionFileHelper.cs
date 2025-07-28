@@ -1,5 +1,5 @@
-using LpjGuess.Runner.Models;
-using LpjGuess.Runner.Parsers;
+using LpjGuess.Core.Models;
+using LpjGuess.Core.Parsers;
 
 namespace LpjGuess.Runner.Helpers;
 

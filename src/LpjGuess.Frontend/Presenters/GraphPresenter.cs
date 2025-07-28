@@ -1,4 +1,4 @@
-using Dave.Benchmarks.Core.Services;
+using LpjGuess.Core.Services;
 using LpjGuess.Core.Extensions;
 using LpjGuess.Core.Interfaces.Graphing;
 using LpjGuess.Core.Models;

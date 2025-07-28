@@ -1,6 +1,6 @@
-using Dave.Benchmarks.Core.Models;
-using Dave.Benchmarks.Core.Models.Importer;
-using Dave.Benchmarks.Core.Services;
+using LpjGuess.Core.Models;
+using LpjGuess.Core.Models.Importer;
+using LpjGuess.Core.Services;
 using LpjGuess.Core.Models;
 using LpjGuess.Runner.Extensions;
 using LpjGuess.Runner.Helpers;

@@ -1,7 +1,6 @@
 using LpjGuess.Core.Interfaces.Graphing;
 using LpjGuess.Core.Models.Factorial;
 using LpjGuess.Core.Models.Graphing;
-using LpjGuess.Core.Serialisation.Json;
 
 namespace LpjGuess.Core.Models;
 
@@ -48,14 +47,6 @@ public class Workspace
 	}
 
 	/// <summary>
-	/// Save all changes to this file to disk.
-	/// </summary>
-	public void Save()
-	{
-		this.SerialiseTo(FilePath);
-	}
-
-	/// <summary>
 	/// Create a new <see cref="Workspace"/> instance for the specified instruction
 	/// file and serialise to disk before returning. The lpj file will be saved
 	/// in the same directory as the .ins file, but with the default lpj file
@@ -68,16 +59,6 @@ public class Workspace
 		result.Experiments.Add(Experiment.CreateBaseline());
 		result.InstructionFiles.Add(insFile);
 		result.FilePath = Path.ChangeExtension(insFile, DefaultFileExtension);
-		result.Save();
 		return result;
-	}
-
-	/// <summary>
-	/// Deserialise the specified file into an instance of <see cref="Workspace"/>.
-	/// </summary>
-	/// <param name="filePath">Path to the serialised file.</param>
-	public static Workspace LoadFrom(string filePath)
-	{
-		return JsonSerialisation.DeserialiseFrom<Workspace>(filePath);
 	}
 }

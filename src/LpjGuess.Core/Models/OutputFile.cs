@@ -1,4 +1,4 @@
-using Dave.Benchmarks.Core.Models;
+using LpjGuess.Core.Models;
 
 namespace LpjGuess.Core.Models;
 

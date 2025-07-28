@@ -1,5 +1,5 @@
 using LpjGuess.Core.Interfaces.Graphing.Style;
-using LpjGuess.Runner.Utility;
+using LpjGuess.Core.Utility;
 
 namespace LpjGuess.Core.Models.Graphing.Style.Identities;
 

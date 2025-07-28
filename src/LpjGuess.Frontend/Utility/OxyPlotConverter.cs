@@ -1,6 +1,6 @@
 using System.Data;
-using Dave.Benchmarks.Core.Models;
-using Dave.Benchmarks.Core.Models.Importer;
+using LpjGuess.Core.Models;
+using LpjGuess.Core.Models.Importer;
 using LpjGuess.Core.Interfaces.Graphing;
 using LpjGuess.Core.Models.Graphing;
 using LpjGuess.Frontend.Data;

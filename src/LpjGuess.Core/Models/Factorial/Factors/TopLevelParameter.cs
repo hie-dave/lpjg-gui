@@ -1,5 +1,5 @@
 using LpjGuess.Core.Interfaces.Factorial;
-using LpjGuess.Runner.Parsers;
+using LpjGuess.Core.Parsers;
 
 namespace LpjGuess.Core.Models.Factorial.Factors;
 

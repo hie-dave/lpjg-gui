@@ -1,4 +1,4 @@
-using LpjGuess.Runner.Parsers;
+using LpjGuess.Core.Parsers;
 
 namespace LpjGuess.Core.Interfaces.Factorial;
 

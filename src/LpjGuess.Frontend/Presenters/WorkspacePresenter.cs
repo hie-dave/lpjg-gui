@@ -1,4 +1,5 @@
 using LpjGuess.Core.Extensions;
+using LpjGuess.Core.Interfaces.Factorial;
 using LpjGuess.Core.Models;
 using LpjGuess.Core.Models.Factorial;
 using LpjGuess.Core.Models.Graphing;
@@ -240,9 +241,41 @@ public class WorkspacePresenter : PresenterBase<IWorkspaceView, Workspace>, IWor
 		if (!cancellationTokenSource.TryReset())
 			cancellationTokenSource = new CancellationTokenSource();
 
+		int cpuCount = Environment.ProcessorCount;
+
+		// Create jobs from experiments.
+		string outputDirectory = GetOutputDirectory();
+
+		// fixme - why on earth do we have PBS settings in here???
+		RunSettings runSettings = new RunSettings(
+			false,
+			true,
+			outputDirectory,
+			runConfig.GuessPath,
+			view.InputModule,
+			(ushort)cpuCount, // safe on machines with <65536 cores
+			TimeSpan.FromMinutes(1),
+			1,
+			"",
+			"",
+			false,
+			"",
+			"",
+			false
+		);
+
+		// foreach (Experiment experiment in model.Experiments)
+		// {
+		// 	// Create a simulation generator.
+		// 	IEnumerable<string> insFiles = model.InstructionFiles.Where(i => !experiment.DisabledInsFiles.Contains(i));
+		// 	IEnumerable<IFactors> factors = experiment.SimulationGenerator.Generate();
+		// 	IReadOnlyCollection<Factorial> factorials = 
+		// 	SimulationGenerator generator = new(insFiles.ToList(), experiment.Pfts, factorials, runSettings);
+		// }
+
 		// var simulations = workspace.InstructionFiles.Select(i => new SimulationConfiguration(i, view.InputModule));
 		IEnumerable<Job> jobs = model.InstructionFiles.Select(i => new Job(GetJobName(i), i));
-		int cpuCount = Environment.ProcessorCount;
+
 		var progress = new CustomProgressReporter(ProgressCallback);
 		IOutputHelper outputHandler = new CustomOutputHelper(StdoutCallback, StderrCallback);
 		JobManagerConfiguration settings = new JobManagerConfiguration(runConfig, cpuCount, false, view.InputModule);
@@ -257,6 +290,15 @@ public class WorkspacePresenter : PresenterBase<IWorkspaceView, Workspace>, IWor
 		if (Configuration.Instance.GoToLogsTabOnRun)
 			view.SelectTab(FileTab.Logs);
 	}
+
+	/// <summary>
+	/// Get the output directory for generated simulations.
+	/// </summary>
+	/// <returns>The output directory.</returns>
+    private string GetOutputDirectory()
+    {
+        return Path.Combine(model.FilePath, ".simulations");
+    }
 
     /// <summary>
     /// Generate a job name for the given instruction file.

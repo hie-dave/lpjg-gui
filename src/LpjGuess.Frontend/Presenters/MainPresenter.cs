@@ -2,6 +2,7 @@ using LpjGuess.Core.Models;
 using LpjGuess.Core.Models.Factorial;
 using LpjGuess.Frontend.Attributes;
 using LpjGuess.Frontend.DependencyInjection;
+using LpjGuess.Frontend.Extensions;
 using LpjGuess.Frontend.Interfaces;
 using LpjGuess.Frontend.Interfaces.Commands;
 using LpjGuess.Frontend.Interfaces.Presenters;
@@ -150,9 +151,11 @@ public class MainPresenter : PresenterBase<IMainView, IApplication>, IMainPresen
 	{
 		if (Path.GetExtension(file).ToLower() == ".ins")
 		{
-			return Workspace.ForInsFile(file);
+			Workspace workspace = Workspace.ForInsFile(file);
+			workspace.Save();
+			return workspace;
 		}
-		return Workspace.LoadFrom(file);
+		return file.LoadWorkspace();
 	}
 
 	/// <summary>
