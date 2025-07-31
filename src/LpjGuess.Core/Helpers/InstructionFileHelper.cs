@@ -1,7 +1,7 @@
 using LpjGuess.Core.Models;
 using LpjGuess.Core.Parsers;
 
-namespace LpjGuess.Runner.Helpers;
+namespace LpjGuess.Core.Helpers;
 
 /// <summary>
 /// Helper methods for parsing LPJ-GUESS instruction files.

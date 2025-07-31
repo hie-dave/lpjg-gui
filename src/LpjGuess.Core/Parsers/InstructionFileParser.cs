@@ -30,8 +30,8 @@ public partial class InstructionFileParser
     /// <summary>
     /// A regular expression for detecting the start of a block.
     /// </summary>
-    private static readonly Regex blockStartRegex = new Regex(
-        @"^\s*(\w+)\s+\""([^\""]+)\""\s*\((.*)", RegexOptions.Compiled);
+    [GeneratedRegex(@"^\s*(\w+)\s+\""([^\""]+)\""\s*\((.*)")]
+    private static partial Regex BlockStartRegex();
 
     /// <summary>
     /// The parsed items in the file.
@@ -398,7 +398,7 @@ public partial class InstructionFileParser
         // Replace everything after a comment character, if one is present.
         line = line.SplitHonouringQuotes([commentChar]).First();
 
-        Match match = blockStartRegex.Match(line);
+        Match match = BlockStartRegex().Match(line);
         if (match.Success)
         {
             // Group 1 captures the block type, e.g., "group"

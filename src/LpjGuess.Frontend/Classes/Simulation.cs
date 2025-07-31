@@ -1,11 +1,8 @@
+using LpjGuess.Core.Helpers;
 using LpjGuess.Core.Models;
 using LpjGuess.Core.Models.Importer;
+using LpjGuess.Core.Parsers;
 using LpjGuess.Core.Services;
-using LpjGuess.Core.Models;
-using LpjGuess.Runner.Extensions;
-using LpjGuess.Runner.Helpers;
-using LpjGuess.Runner.Models;
-using LpjGuess.Runner.Parsers;
 using Microsoft.Extensions.Logging;
 
 namespace LpjGuess.Frontend.Classes;
@@ -20,6 +17,11 @@ public class Simulation
     /// The output file parser.
     /// </summary>
     private readonly ModelOutputParser outputParser;
+
+    /// <summary>
+    /// Collection of unknown output files.
+    /// </summary>
+    private readonly HashSet<string> unknownFiles = [];
 
     /// <summary>
     /// Path to the instruction file.
@@ -87,8 +89,6 @@ public class Simulation
                           .ToList();
         return files;
     }
-
-    private readonly HashSet<string> unknownFiles = new();
 
     /// <summary>
     /// Create an output file object for file at the specified path.

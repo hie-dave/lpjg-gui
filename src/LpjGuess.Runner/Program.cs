@@ -11,7 +11,7 @@ if (args.Length == 0)
 
 string inputFile = args[0];
 IParser parser = new TomlParser();
-RunnerConfiguration input = parser.Parse(inputFile);
+RunnerConfiguration config = parser.Parse(inputFile);
 
 CancellationTokenSource cancellation = new CancellationTokenSource();
 Console.CancelKeyPress += (_, args) =>
@@ -24,14 +24,15 @@ Console.CancelKeyPress += (_, args) =>
 	args.Cancel = true;
 };
 
-IEnumerable<Job> jobs = input.GenerateAllJobs(cancellation.Token);
+SimulationGenerator generator = new SimulationGenerator(config);
+IEnumerable<Job> jobs = generator.GenerateAllJobs(cancellation.Token);
 IProgressReporter progress = new ConsoleProgressReporter();
 
 // Don't stream stdout/stderr to this process' tty; it will be included in
 // a model exception if one is thrown due to model execution failure.
 IOutputHelper outputHelper = new OutputIgnorer();
 
-JobManagerConfiguration jobSettings = input.Settings.ToJobManagerConfig();
+JobManagerConfiguration jobSettings = config.Settings.ToJobManagerConfig();
 JobManager jobManager = new JobManager(jobSettings, progress, outputHelper, jobs);
 try
 {

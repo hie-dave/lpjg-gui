@@ -241,46 +241,33 @@ public class WorkspacePresenter : PresenterBase<IWorkspaceView, Workspace>, IWor
 		if (!cancellationTokenSource.TryReset())
 			cancellationTokenSource = new CancellationTokenSource();
 
-		int cpuCount = Environment.ProcessorCount;
-
 		// Create jobs from experiments.
 		string outputDirectory = GetOutputDirectory();
 
-		// fixme - why on earth do we have PBS settings in here???
-		RunSettings runSettings = new RunSettings(
-			false,
-			true,
-			outputDirectory,
-			runConfig.GuessPath,
-			view.InputModule,
-			(ushort)cpuCount, // safe on machines with <65536 cores
-			TimeSpan.FromMinutes(1),
-			1,
-			"",
-			"",
-			false,
-			"",
-			"",
-			false
-		);
+		List<Job> jobs = new List<Job>();
+		foreach (Experiment experiment in model.Experiments)
+		{
+			// Store simulations for this experiment in a subdirectory.
+			string directory = Path.Combine(outputDirectory, experiment.Name);
+			RunSettings runSettings = CreateRunSettings(directory, runConfig.GuessPath);
 
-		// foreach (Experiment experiment in model.Experiments)
-		// {
-		// 	// Create a simulation generator.
-		// 	IEnumerable<string> insFiles = model.InstructionFiles.Where(i => !experiment.DisabledInsFiles.Contains(i));
-		// 	IEnumerable<IFactors> factors = experiment.SimulationGenerator.Generate();
-		// 	IReadOnlyCollection<Factorial> factorials = 
-		// 	SimulationGenerator generator = new(insFiles.ToList(), experiment.Pfts, factorials, runSettings);
-		// }
+			// Get the instruction files to be used for this experiment.
+			IEnumerable<string> insFiles = model.InstructionFiles.Where(i => !experiment.DisabledInsFiles.Contains(i));
 
-		// var simulations = workspace.InstructionFiles.Select(i => new SimulationConfiguration(i, view.InputModule));
-		IEnumerable<Job> jobs = model.InstructionFiles.Select(i => new Job(GetJobName(i), i));
+			// Generate parameter overrides for this experiment.
+			IEnumerable<IFactors> factors = experiment.SimulationGenerator.Generate();
 
-		var progress = new CustomProgressReporter(ProgressCallback);
+			// Generate jobs for this experiment.
+			RunnerConfiguration config = new(runSettings, factors, insFiles, experiment.Pfts);
+			SimulationGenerator generator = new(config);
+			jobs.AddRange(generator.GenerateAllJobs(cancellationTokenSource.Token));
+		}
+
+		CustomProgressReporter progress = new CustomProgressReporter(ProgressCallback);
 		IOutputHelper outputHandler = new CustomOutputHelper(StdoutCallback, StderrCallback);
-		JobManagerConfiguration settings = new JobManagerConfiguration(runConfig, cpuCount, false, view.InputModule);
+		JobManagerConfiguration configuration = new JobManagerConfiguration(runConfig, Environment.ProcessorCount, false, view.InputModule);
 
-		JobManager jobManager = new JobManager(settings, progress, outputHandler, jobs);
+		JobManager jobManager = new JobManager(configuration, progress, outputHandler, jobs);
 		simulations = jobManager.RunAllAsync(cancellationTokenSource.Token)
 							    .ContinueWithOnMainThread(() => OnCompleted());
 
@@ -291,13 +278,37 @@ public class WorkspacePresenter : PresenterBase<IWorkspaceView, Workspace>, IWor
 			view.SelectTab(FileTab.Logs);
 	}
 
-	/// <summary>
-	/// Get the output directory for generated simulations.
-	/// </summary>
-	/// <returns>The output directory.</returns>
+    private RunSettings CreateRunSettings(string outputDirectory, string guessPath)
+    {
+		// fixme - why on earth do we have PBS settings in here???
+		return new RunSettings(
+			false,
+			true,
+			outputDirectory,
+			guessPath,
+			view.InputModule,
+			(ushort)Environment.ProcessorCount, // safe on machines with <65536 cores
+			TimeSpan.FromMinutes(1),
+			1,
+			"",
+			"",
+			false,
+			"",
+			"",
+			false
+		);
+
+    }
+
+    /// <summary>
+    /// Get the output directory for generated simulations.
+    /// </summary>
+    /// <returns>The output directory.</returns>
     private string GetOutputDirectory()
     {
-        return Path.Combine(model.FilePath, ".simulations");
+		string directory = Path.GetDirectoryName(model.FilePath)
+			?? Directory.GetCurrentDirectory();
+        return Path.Combine(directory, ".simulations");
     }
 
     /// <summary>
@@ -322,7 +333,7 @@ public class WorkspacePresenter : PresenterBase<IWorkspaceView, Workspace>, IWor
 	/// Get the runner configuration with the specified name.
 	/// </summary>
 	/// <param name="name">Name of a runner configuration.</param>
-	private IRunnerConfiguration? GetRunner(string? name)
+	private static IRunnerConfiguration? GetRunner(string? name)
 	{
 		Configuration conf = Configuration.Instance;
 		if (name == null)

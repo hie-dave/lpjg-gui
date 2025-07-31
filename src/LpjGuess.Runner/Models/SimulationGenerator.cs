@@ -1,6 +1,5 @@
-using System.Diagnostics;
-using System.Globalization;
-using LpjGuess.Runner.Parsers;
+using LpjGuess.Core.Interfaces.Factorial;
+using LpjGuess.Core.Parsers;
 
 namespace LpjGuess.Runner.Models;
 
@@ -26,7 +25,7 @@ public class SimulationGenerator
 	/// <summary>
 	/// The parameter changes being applied in this run.
 	/// </summary>
-	public IReadOnlyCollection<Factorial> Factorials { get; private init; }
+	public IReadOnlyCollection<IFactors> Simulations { get; private init; }
 
 	/// <summary>
 	/// Run settings.
@@ -36,19 +35,14 @@ public class SimulationGenerator
 	/// <summary>
 	/// Create a new <see cref="SimulationGenerator"/> instance.
 	/// </summary>
-	/// <param name="insFiles">List of paths to instruction files to be run.</param>
-	/// <param name="pfts">List of PFTs to be enabled for this run. All others will be disabled. If empty, no PFTs will be disabled.</param>
-	/// <param name="parameters">The parameter changes being applied in this run.</param>
-	/// <param name="settings">Run settings.</param>
-	public SimulationGenerator(IReadOnlyCollection<string> insFiles, IReadOnlyCollection<string> pfts
-		, IReadOnlyCollection<Factorial> factorials, RunSettings settings)
+	/// <param name="config">The configuration to use.</param>
+	public SimulationGenerator(RunnerConfiguration config)
 	{
-		InsFiles = insFiles;
-		Pfts = pfts;
-		Settings = settings;
-		if (factorials.Count == 0)
-			factorials = new List<Factorial>() { new Factorial(new List<Factor>()) };
-		Factorials = factorials;
+		InsFiles = config.InsFiles;
+		Pfts = config.Pfts;
+		Settings = config.Settings;
+
+		Simulations = config.Factors;
 	}
 
 	/// <summary>
@@ -74,7 +68,7 @@ public class SimulationGenerator
 	/// <param name="insFile">Path to the instruction file.</param>
 	private IEnumerable<Job> GenerateJobs(string insFile, CancellationToken ct)
 	{
-		IEnumerable<Factorial> query = Factorials;
+		IEnumerable<IFactors> query = Simulations;
 
 		if (Settings.Parallel)
 		{
@@ -86,22 +80,22 @@ public class SimulationGenerator
 		return query.Select(f => GenerateSimulation(insFile, f));
 	}
 
-	private Job GenerateSimulation(string insFile, Factorial factorial)
+	private Job GenerateSimulation(string insFile, IFactors factors)
 	{
 		// Apply changes from this factorial.
-		string jobName = factorial.GetName();
+		string jobName = factors.Name;
 		if (InsFiles.Count > 1)
 			jobName = $"{Path.GetFileNameWithoutExtension(insFile)}-{jobName}";
-		string targetInsFile = ApplyOverrides(factorial, insFile, jobName);
+		string targetInsFile = ApplyOverrides(factors, insFile, jobName);
 		return new Job(jobName, targetInsFile);
 	}
 
-	private string ApplyOverrides(Factorial factorial, string insFile, string name)
+	private string ApplyOverrides(IFactors factors, string insFile, string name)
 	{
 		string file = Path.GetFileNameWithoutExtension(insFile);
 		string ext = Path.GetExtension(insFile);
 		string jobDirectory = Settings.OutputDirectory;
-		if (insFile.Length > 1 && Factorials.Count > 1)
+		if (insFile.Length > 1 && Simulations.Count > 1)
 			jobDirectory = Path.Combine(jobDirectory, file);
 		jobDirectory = Path.Combine(jobDirectory, name);
 		string targetInsFile = Path.Combine(jobDirectory, $"{file}-{name}{ext}");
@@ -111,8 +105,8 @@ public class SimulationGenerator
 		{
 			InstructionFileParser ins = InstructionFileParser.FromFile(insFile);
 
-			foreach (Factor factor in factorial.Factors)
-				ins.ApplyChange(factor);
+			foreach (IFactor factor in factors.Changes)
+				factor.Apply(ins);
 
 			// Disable all PFTs except those required.
 			if (Pfts.Count > 0)
@@ -142,7 +136,7 @@ public class SimulationGenerator
 		}
 	}
 
-	private void CleanupFailure(Exception error, string file)
+	private static void CleanupFailure(Exception error, string file)
 	{
 		Console.Error.WriteLine($"WARNING: Failed to clean temporary file: '{file}':");
 		Console.Error.WriteLine(error);

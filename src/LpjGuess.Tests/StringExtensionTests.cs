@@ -1,6 +1,7 @@
+using LpjGuess.Core.Extensions;
 using LpjGuess.Runner.Extensions;
 
-namespace LpjGuess.Tests.Runner;
+namespace LpjGuess.Tests;
 
 public class StringExtensionTests
 {

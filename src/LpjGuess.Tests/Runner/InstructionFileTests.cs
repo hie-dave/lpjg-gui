@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using LpjGuess.Core.Parsers;
 using LpjGuess.Runner;
 using Xunit;
 

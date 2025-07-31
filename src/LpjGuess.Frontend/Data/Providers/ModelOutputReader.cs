@@ -2,7 +2,6 @@ using LpjGuess.Core.Models;
 using LpjGuess.Core.Models.Entities;
 using LpjGuess.Core.Models.Importer;
 using LpjGuess.Core.Services;
-using LpjGuess.Core.Models;
 using LpjGuess.Frontend.Classes;
 using OxyPlot.Axes;
 

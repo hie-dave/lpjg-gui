@@ -38,7 +38,7 @@ internal class TomlParser : IParser
 	private RunnerConfiguration Parse(TomlTable model)
 	{
 		RunSettings settings = ParseRunSettings(model);
-		IFactors combinations = ParseParameters(model, settings.FullFactorial);
+		IEnumerable<IFactors> combinations = ParseParameters(model, settings.FullFactorial);
 		IReadOnlyList<string> insFiles = ParseInsFiles(model);
 		IReadOnlyList<string> pfts = ParsePfts(model);
 
@@ -101,11 +101,11 @@ internal class TomlParser : IParser
 	/// Parse all factorial settings from the model.
 	/// </summary>
 	/// <param name="model">The model.</param>
-	private IFactors ParseParameters(TomlTable model, bool fullFactorial)
+	private IEnumerable<IFactors> ParseParameters(TomlTable model, bool fullFactorial)
 	{
 		const string keyParameters = "parameters";
 		if (!model.ContainsKey(keyParameters))
-			return new FactorCollection(Enumerable.Empty<IFactor>());
+			return [];
 
 		if ( !(model[keyParameters] is TomlTable section) )
 			throw new InvalidOperationException($"{keyParameters} should be a section");
@@ -120,17 +120,17 @@ internal class TomlParser : IParser
 				parameters[key] = ParseStringArray(section, key).ToList();
 		}
 
-		return new FactorCollection(GetParameters(parameters, fullFactorial));
+		return GetParameters(parameters, fullFactorial);
 	}
 
 	/// <summary>
 	/// Get all combinations of factors from the user inputs.
 	/// </summary>
 	/// <param name="parameters">The parameters as they appear in the user input object.</param>
-	private IReadOnlyCollection<IFactor> GetParameters(IDictionary<string, List<string>> parameters, bool fullFactorial)
+	private IReadOnlyCollection<IFactors> GetParameters(IDictionary<string, List<string>> parameters, bool fullFactorial)
 	{
 		if (parameters.Count == 0)
-			return new List<IFactor>();
+			return [];
 
 		// Convert dictionary to 2D list of factors.
 		List<List<IFactor>> factors = new List<List<IFactor>>();
@@ -143,7 +143,7 @@ internal class TomlParser : IParser
 			combinations = factors.AllCombinations();
 		else
 			combinations = factors.SelectMany(f => f.Select(f => new List<IFactor> { f })).ToList();
-		return combinations.Select(c => new CompositeFactor(c)).ToList();
+		return combinations.Select(c => new FactorCollection(c)).ToList();
 	}
 
 	private IReadOnlyDictionary<string, List<string>> ParseTableOfArrays(TomlTable table, string keyName)
@@ -152,7 +152,7 @@ internal class TomlParser : IParser
 
 		foreach (string key in table.Keys)
 		{
-			if (table[key] is TomlArray array)
+			if (table[key] is TomlArray)
 			{
 				List<string> values = ParseStringArray(table, key, false).ToList();
 				string fullKey = $"{keyName}.{key}";
@@ -176,7 +176,7 @@ internal class TomlParser : IParser
 		if (!model.ContainsKey(keyName))
 		{
 			if (optional)
-				return Array.Empty<string>();
+				return [];
 			throw new InvalidOperationException(VarNotSet(keyName));
 		}
 

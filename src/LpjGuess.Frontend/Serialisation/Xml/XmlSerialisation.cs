@@ -2,6 +2,7 @@ using System.Xml;
 using ExtendedXmlSerializer;
 using ExtendedXmlSerializer.Configuration;
 using LpjGuess.Core.Models;
+using LpjGuess.Runner.Models;
 
 namespace LpjGuess.Frontend.Serialisation.Xml;
 
