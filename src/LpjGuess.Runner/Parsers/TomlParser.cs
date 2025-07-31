@@ -38,7 +38,7 @@ internal class TomlParser : IParser
 	private RunnerConfiguration Parse(TomlTable model)
 	{
 		RunSettings settings = ParseRunSettings(model);
-		IEnumerable<IFactors> combinations = ParseParameters(model, settings.FullFactorial);
+		IEnumerable<ISimulation> combinations = ParseParameters(model, settings.FullFactorial);
 		IReadOnlyList<string> insFiles = ParseInsFiles(model);
 		IReadOnlyList<string> pfts = ParsePfts(model);
 
@@ -101,7 +101,7 @@ internal class TomlParser : IParser
 	/// Parse all factorial settings from the model.
 	/// </summary>
 	/// <param name="model">The model.</param>
-	private IEnumerable<IFactors> ParseParameters(TomlTable model, bool fullFactorial)
+	private IEnumerable<ISimulation> ParseParameters(TomlTable model, bool fullFactorial)
 	{
 		const string keyParameters = "parameters";
 		if (!model.ContainsKey(keyParameters))
@@ -127,7 +127,7 @@ internal class TomlParser : IParser
 	/// Get all combinations of factors from the user inputs.
 	/// </summary>
 	/// <param name="parameters">The parameters as they appear in the user input object.</param>
-	private IReadOnlyCollection<IFactors> GetParameters(IDictionary<string, List<string>> parameters, bool fullFactorial)
+	private IReadOnlyCollection<ISimulation> GetParameters(IDictionary<string, List<string>> parameters, bool fullFactorial)
 	{
 		if (parameters.Count == 0)
 			return [];
@@ -143,7 +143,7 @@ internal class TomlParser : IParser
 			combinations = factors.AllCombinations();
 		else
 			combinations = factors.SelectMany(f => f.Select(f => new List<IFactor> { f })).ToList();
-		return combinations.Select(c => new FactorCollection(c)).ToList();
+		return combinations.Select(c => new Simulation(c)).ToList();
 	}
 
 	private IReadOnlyDictionary<string, List<string>> ParseTableOfArrays(TomlTable table, string keyName)

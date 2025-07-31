@@ -255,7 +255,7 @@ public class WorkspacePresenter : PresenterBase<IWorkspaceView, Workspace>, IWor
 			IEnumerable<string> insFiles = model.InstructionFiles.Where(i => !experiment.DisabledInsFiles.Contains(i));
 
 			// Generate parameter overrides for this experiment.
-			IEnumerable<IFactors> factors = experiment.SimulationGenerator.Generate();
+			IEnumerable<ISimulation> factors = experiment.SimulationGenerator.Generate();
 
 			// Generate jobs for this experiment.
 			RunnerConfiguration config = new(runSettings, factors, insFiles, experiment.Pfts);

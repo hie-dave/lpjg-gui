@@ -105,9 +105,9 @@ public class ExperimentPresenter : PresenterBase<IExperimentView, Experiment>, I
     private List<SimulationDescription> GetSimulationDescriptions()
     {
         List<SimulationDescription> descriptions = new List<SimulationDescription>();
-        IEnumerable<IFactors> simulations = model.SimulationGenerator.Generate();
+        IEnumerable<ISimulation> simulations = model.SimulationGenerator.Generate();
 
-        foreach (IFactors simulation in simulations)
+        foreach (Simulation simulation in simulations.OfType<Simulation>())
         {
             List<ParameterChange> changes = new List<ParameterChange>();
             foreach (IFactor factor in simulation.Changes)

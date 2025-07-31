@@ -16,7 +16,7 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
     /// List of simulation objects, which are cached between uses of this class,
     /// to avoid double-parsing.
     /// </summary>
-    private static readonly List<Simulation> simulations = new List<Simulation>();
+    private static readonly List<SimulationReader> simulations = new List<SimulationReader>();
 
     /// <summary>
     /// Create a new <see cref="ModelOutputReader"/> instance.
@@ -39,12 +39,12 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
     /// </summary>
     /// <param name="instructionFile"></param>
     /// <returns></returns>
-    public static Simulation GetSimulation(string instructionFile)
+    public static SimulationReader GetSimulation(string instructionFile)
     {
         var simulation = simulations.FirstOrDefault(s => s.FileName == instructionFile);
         if (simulation == null)
         {
-            simulation = new Simulation(instructionFile);
+            simulation = new SimulationReader(instructionFile);
             lock (simulations)
                 simulations.Add(simulation);
         }
@@ -61,7 +61,7 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
     /// <returns>The data read from the simulation.</returns>
     private async Task<IEnumerable<SeriesData>> ReadSimulationAsync(
         ModelOutput source,
-        Simulation simulation,
+        SimulationReader simulation,
         CancellationToken ct)
     {
         // TODO: async support.
@@ -118,7 +118,7 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
 
     private IEnumerable<SeriesData> GenerateSeries(
         ModelOutput source,
-        Simulation simulation,
+        SimulationReader simulation,
         Layer xlayer,
         Layer ylayer,
         IReadOnlyDictionary<int, string>? pftMappings,
@@ -167,7 +167,7 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
     /// <param name="datapoint">The data point.</param>
     /// <param name="pftMappings">The PFT mappings.</param>
     /// <returns>The context for the data point.</returns>
-    private static SeriesContext GetContext(Simulation simulation, Layer layer, DataPoint datapoint, IReadOnlyDictionary<int, string>? pftMappings)
+    private static SeriesContext GetContext(SimulationReader simulation, Layer layer, DataPoint datapoint, IReadOnlyDictionary<int, string>? pftMappings)
     {
         // FIXME: this will throw for coordinates not in the gridlist. Would it
         // be better to use the fallback name (lat, lon) in that case?

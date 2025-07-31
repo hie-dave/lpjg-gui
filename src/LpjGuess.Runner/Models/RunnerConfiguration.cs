@@ -15,7 +15,7 @@ public class RunnerConfiguration
     /// <summary>
     /// Factorial combinations.
     /// </summary>
-    public IReadOnlyList<IFactors> Factors { get; private init; }
+    public IReadOnlyList<ISimulation> Factors { get; private init; }
 
     /// <summary>
     /// Input files.
@@ -35,7 +35,7 @@ public class RunnerConfiguration
     /// <param name="insFiles">Input files.</param>
     public RunnerConfiguration(
         RunSettings settings,
-        IEnumerable<IFactors> factors,
+        IEnumerable<ISimulation> factors,
         IEnumerable<string> insFiles,
         IEnumerable<string> pfts)
     {

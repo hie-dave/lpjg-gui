@@ -10,5 +10,5 @@ public interface ISimulationGenerator
     /// Generate the simulations encapsulated by this generator.
     /// </summary>
     /// <returns>The simulations.</returns>
-    IEnumerable<IFactors> Generate();
+    IEnumerable<ISimulation> Generate();
 }

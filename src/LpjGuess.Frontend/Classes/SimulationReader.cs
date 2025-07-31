@@ -11,7 +11,7 @@ namespace LpjGuess.Frontend.Classes;
 /// Data class which combines an instruction file, its parser, and output
 /// file name resolver.
 /// </summary>
-public class Simulation
+public class SimulationReader
 {
     /// <summary>
     /// The output file parser.
@@ -49,10 +49,10 @@ public class Simulation
     public GridlistParser Gridlist { get; private init; }
 
     /// <summary>
-    /// Create a new <see cref="Simulation"/> instance.
+    /// Create a new <see cref="SimulationReader"/> instance.
     /// </summary>
     /// <param name="fileName">Path to the instruction file.</param>
-    public Simulation(string fileName)
+    public SimulationReader(string fileName)
     {
         FileName = fileName;
 

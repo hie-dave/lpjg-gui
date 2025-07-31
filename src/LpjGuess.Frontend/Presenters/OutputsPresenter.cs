@@ -123,7 +123,7 @@ public class OutputsPresenter : IOutputsPresenter
         if (instructionFile == null)
             // Shouldn't happen, but best to be safe.
             return;
-        Simulation simulation = ModelOutputReader.GetSimulation(instructionFile);
+        SimulationReader simulation = ModelOutputReader.GetSimulation(instructionFile);
 
         // Cancel any existing tasks.
         cts.Cancel();
@@ -145,7 +145,7 @@ public class OutputsPresenter : IOutputsPresenter
         // TODO: consolidate instruction file parsers in runner/benchmarks.
         // We are double parsing here (since we also parse when ins files are
         // selected by the user).
-        Simulation simulation = ModelOutputReader.GetSimulation(file);
+        SimulationReader simulation = ModelOutputReader.GetSimulation(file);
         return simulation.GetOutputFiles();
     }
 
