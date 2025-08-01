@@ -46,15 +46,26 @@ namespace LpjGuess.Frontend.Utility;
 /// <summary>
 /// Utility class for converting between LPJ-GUESS domain models and OxyPlot objects.
 /// </summary>
-public static class OxyPlotConverter
+public class OxyPlotConverter
 {
+    private readonly IDataProviderFactory dataProviderFactory;
+
+    /// <summary>
+    /// Create a new <see cref="OxyPlotConverter"/> instance.
+    /// </summary>
+    /// <param name="dataProviderFactory">The data provider factory.</param>
+    public OxyPlotConverter(IDataProviderFactory dataProviderFactory)
+    {
+        this.dataProviderFactory = dataProviderFactory;
+    }
+
     /// <summary>
     /// Convert a Graph object to an OxyPlot PlotModel.
     /// </summary>
     /// <param name="graph">The graph to convert.</param>
     /// <param name="ct">The cancellation token.</param>
     /// <returns>An OxyPlot PlotModel.</returns>
-    public static async Task<PlotModel> ToPlotModelAsync(Graph graph, CancellationToken ct)
+    public async Task<PlotModel> ToPlotModelAsync(Graph graph, CancellationToken ct)
     {
         // Leaving this here for now, as it's easy to get in here too often, and
         // easy to fix.
@@ -79,8 +90,8 @@ public static class OxyPlotConverter
         {
             // Need to ensure the axis data is plotted on the correct axis,
             // because different series can have different axis positions.
-            OxyAxis? xaxis = plot.Axes.FirstOrDefault(a => a.Position == series.XAxisPosition.ToOxyAxisPosition());
-            OxyAxis? yaxis = plot.Axes.FirstOrDefault(a => a.Position == series.YAxisPosition.ToOxyAxisPosition());
+            OxyAxis? xaxis = plot.Axes.FirstOrDefault(a => a.Position == ToOxyAxisPosition(series.XAxisPosition));
+            OxyAxis? yaxis = plot.Axes.FirstOrDefault(a => a.Position == ToOxyAxisPosition(series.YAxisPosition));
             foreach (OxySeries oxySeries in await ToOxySeriesAsync(series, context, ct))
             {
                 if (oxySeries is XYAxisSeries xySeries)
@@ -107,7 +118,7 @@ public static class OxyPlotConverter
         return plot;
     }
 
-    private static OxyLegendPosition ToOxyPosition(LegendPosition position)
+    private OxyLegendPosition ToOxyPosition(LegendPosition position)
     {
         return position switch
         {
@@ -127,7 +138,7 @@ public static class OxyPlotConverter
         };
     }
 
-    private static OxyLegendPlacement ToOxyPlacement(LegendPlacement placement)
+    private OxyLegendPlacement ToOxyPlacement(LegendPlacement placement)
     {
         return placement switch
         {
@@ -137,7 +148,7 @@ public static class OxyPlotConverter
         };
     }
 
-    private static OxyLegendOrientation ToOxyOrientation(LegendOrientation orientation)
+    private OxyLegendOrientation ToOxyOrientation(LegendOrientation orientation)
     {
         return orientation switch
         {
@@ -147,7 +158,7 @@ public static class OxyPlotConverter
         };
     }
 
-    private static string GetPlotTitle(Graph graph)
+    private string GetPlotTitle(Graph graph)
     {
         if (!string.IsNullOrWhiteSpace(graph.Title))
             return graph.Title;
@@ -168,7 +179,7 @@ public static class OxyPlotConverter
     /// </summary>
     /// <param name="graph">The graph.</param>
     /// <returns>The oxyplot axes required by the graph.</returns>
-    private static IEnumerable<OxyAxis> CreateAxes(Graph graph)
+    private IEnumerable<OxyAxis> CreateAxes(Graph graph)
     {
         IEnumerable<AxisRequirements> axisRequirements = graph.GetAxisRequirements();
         AssertCompatibility(axisRequirements);
@@ -184,7 +195,7 @@ public static class OxyPlotConverter
         }
     }
 
-    private static string GetAxisTitle(Graph graph, IGrouping<AxisPosition, AxisRequirements> requirements)
+    private string GetAxisTitle(Graph graph, IGrouping<AxisPosition, AxisRequirements> requirements)
     {
         AxisPosition position = requirements.Key;
         return position switch
@@ -198,7 +209,7 @@ public static class OxyPlotConverter
         };
     }
 
-    private static string GenerateAxisTitle(Graph graph, IGrouping<AxisPosition, AxisRequirements> requirements)
+    private string GenerateAxisTitle(Graph graph, IGrouping<AxisPosition, AxisRequirements> requirements)
     {
         IEnumerable<string> titles = requirements.Select(r => r.Title);
         if (titles.Distinct().Count() != 1)
@@ -206,13 +217,13 @@ public static class OxyPlotConverter
         string title = titles.First();
         if (!string.IsNullOrWhiteSpace(title))
             return title;
-        IEnumerable<string> dataNames = graph.Series.Select(s => DataProviderFactory.GetName(s.DataSource));
+        IEnumerable<string> dataNames = graph.Series.Select(s => dataProviderFactory.GetName(s.DataSource));
         if (dataNames.Distinct().Count() != 1)
             return graph.Title;
         return dataNames.First();
     }
 
-    private static OxyAxis CreateOxyAxis(IGrouping<AxisPosition, AxisRequirements> group)
+    private OxyAxis CreateOxyAxis(IGrouping<AxisPosition, AxisRequirements> group)
     {
         AxisPosition position = group.Key;
         // Assuming AssertCompatibility has been called, all elements of this
@@ -223,7 +234,7 @@ public static class OxyPlotConverter
         return axis;
     }
 
-    private static OxyAxisPosition ToOxyAxisPosition(this AxisPosition position)
+    private OxyAxisPosition ToOxyAxisPosition(AxisPosition position)
     {
         return position switch
         {
@@ -235,7 +246,7 @@ public static class OxyPlotConverter
         };
     }
 
-    private static OxyAxis CreateOxyAxis(AxisType type)
+    private OxyAxis CreateOxyAxis(AxisType type)
     {
         return type switch
         {
@@ -250,7 +261,7 @@ public static class OxyPlotConverter
     /// Ensure that all axis requirements are mutually compatible.
     /// </summary>
     /// <param name="axisRequirements">The axis requirements to check.</param>
-    private static void AssertCompatibility(IEnumerable<AxisRequirements> axisRequirements)
+    private void AssertCompatibility(IEnumerable<AxisRequirements> axisRequirements)
     {
         // Assert compatibility between all combinations of axis requirements.
         foreach (AxisRequirements left in axisRequirements)
@@ -265,15 +276,15 @@ public static class OxyPlotConverter
     /// <param name="context">The style context.</param>
     /// <param name="ct">The cancellation token.</param>
     /// <returns>An OxyPlot Series.</returns>
-    public static async Task<IEnumerable<OxySeries>> ToOxySeriesAsync(ISeries series, StyleContext context, CancellationToken ct)
+    public async Task<IEnumerable<OxySeries>> ToOxySeriesAsync(ISeries series, StyleContext context, CancellationToken ct)
     {
         // FIXME - this probably doesn't work. Need to rethink the data provider API.
-        IEnumerable<SeriesData> data = await DataProviderFactory.ReadAsync(series.DataSource, ct);
+        IEnumerable<SeriesData> data = await dataProviderFactory.ReadAsync(series.DataSource, ct);
 
         return data.Select(seriesData => CreateOxySeries(series, seriesData, context));
     }
 
-    private static OxySeries CreateOxySeries(ISeries series, SeriesData data, StyleContext context)
+    private OxySeries CreateOxySeries(ISeries series, SeriesData data, StyleContext context)
     {
         // Create the appropriate series type
         if (series is LineSeries line)
@@ -284,7 +295,7 @@ public static class OxyPlotConverter
             throw new NotImplementedException($"Unsupported series type: {series.GetType().Name}");
     }
 
-    private static OxyLineSeries CreateLineSeries(
+    private OxyLineSeries CreateLineSeries(
         LineSeries series,
         SeriesData data,
         StyleContext context)

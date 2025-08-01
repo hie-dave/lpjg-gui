@@ -6,6 +6,8 @@ using LpjGuess.Frontend.Extensions;
 using LpjGuess.Frontend.Data.Providers;
 using LpjGuess.Runner.Services;
 using LpjGuess.Frontend.Services;
+using LpjGuess.Frontend.Data;
+using LpjGuess.Frontend.Utility;
 
 namespace LpjGuess.Frontend.DependencyInjection;
 
@@ -46,6 +48,8 @@ public class ServiceLocator : IServiceLocator
         services.AddScoped<IPathResolver, WorkspacePathResolver>();
 
         services.AddTransient<WorkspacePresenterFactory>();
+        services.AddTransient<IDataProviderFactory, DataProviderFactory>();
+        services.AddTransient<OxyPlotConverter>();
 
         // Register views.
         // TODO: make this configurable.

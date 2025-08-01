@@ -1,4 +1,7 @@
+using LpjGuess.Core.Interfaces.Factorial;
+using LpjGuess.Frontend.Data.Providers;
 using LpjGuess.Frontend.Delegates;
+using LpjGuess.Runner.Services;
 
 namespace LpjGuess.Frontend.DependencyInjection;
 
@@ -7,6 +10,16 @@ namespace LpjGuess.Frontend.DependencyInjection;
 /// </summary>
 public class InstructionFilesProvider : IInstructionFilesProvider
 {
+    /// <summary>
+    /// The experiment provider.
+    /// </summary>
+    private readonly IExperimentProvider experimentsProvider;
+
+    /// <summary>
+    /// The path resolver.
+    /// </summary>
+    private readonly IPathResolver resolver;
+
     /// <summary>
     /// The instruction files in the workspace.
     /// </summary>
@@ -20,18 +33,12 @@ public class InstructionFilesProvider : IInstructionFilesProvider
     /// <summary>
     /// Create a new <see cref="InstructionFilesProvider"/> instance.
     /// </summary>
-    public InstructionFilesProvider() : this([])
+    public InstructionFilesProvider(IExperimentProvider provider, IPathResolver resolver)
     {
-    }
-
-    /// <summary>
-    /// Create a new <see cref="InstructionFilesProvider"/> instance.
-    /// </summary>
-    /// <param name="instructionFiles">The instruction files.</param>
-    public InstructionFilesProvider(IEnumerable<string> instructionFiles)
-    {
+        experimentsProvider = provider;
+        this.resolver = resolver;
         OnInstructionFilesChanged = new Event<IEnumerable<string>>();
-        this.instructionFiles = instructionFiles.ToList();
+        instructionFiles = [];
     }
 
     /// <summary>
@@ -48,5 +55,25 @@ public class InstructionFilesProvider : IInstructionFilesProvider
     {
         this.instructionFiles = instructionFiles.ToList();
         OnInstructionFilesChanged.Invoke(instructionFiles);
+    }
+
+    /// <inheritdoc />
+    public IEnumerable<string> GetGeneratedInstructionFiles()
+    {
+        IEnumerable<ISimulation> simulations = experimentsProvider
+            .GetExperiments()
+            .SelectMany(e => e.SimulationGenerator.Generate());
+
+        List<string> concreteInsFiles = [];
+        foreach (string insFile in instructionFiles)
+        {
+            foreach (ISimulation simulation in simulations)
+            {
+                string generated = resolver.GenerateTargetInsFilePath(insFile, simulation);
+                concreteInsFiles.Add(generated);
+            }
+        }
+
+        return concreteInsFiles;
     }
 }

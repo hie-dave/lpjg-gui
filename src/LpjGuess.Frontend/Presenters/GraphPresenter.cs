@@ -52,6 +52,11 @@ public class GraphPresenter : PresenterBase<IGraphView, Graph>, IGraphPresenter
     private readonly IInstructionFilesProvider provider;
 
     /// <summary>
+    /// The oxyplot converter.
+    /// </summary>
+    private readonly OxyPlotConverter converter;
+
+    /// <summary>
     /// List of presenters currently managing views for the graph's series.
     /// </summary>
     private List<ISeriesPresenter> seriesPresenters;
@@ -73,18 +78,21 @@ public class GraphPresenter : PresenterBase<IGraphView, Graph>, IGraphPresenter
     /// <param name="graph">The graph model.</param>
     /// <param name="provider">The instruction files provider.</param>
     /// <param name="presenterFactory">Presenter factory for creating series views.</param>
+    /// <param name="converter">The oxyplot converter.</param>
     /// <param name="registry">The command registry to use for command execution.</param>
     public GraphPresenter(
         IGraphView view,
         Graph graph,
         IInstructionFilesProvider provider,
         IPresenterFactory presenterFactory,
+        OxyPlotConverter converter,
         ICommandRegistry registry)
         : base(view, graph, registry)
     {
         this.graph = graph;
         this.provider = provider;
         this.presenterFactory = presenterFactory;
+        this.converter = converter;
         OnTitleChanged = new Event<string>();
 
         // Connect event handlers
@@ -168,7 +176,7 @@ public class GraphPresenter : PresenterBase<IGraphView, Graph>, IGraphPresenter
             // Cancel any existing plot conversion tasks.
             cts.Cancel();
             cts = new();
-            return await OxyPlotConverter.ToPlotModelAsync(graph, cts.Token);
+            return await converter.ToPlotModelAsync(graph, cts.Token);
         }
         catch (Exception ex)
         {

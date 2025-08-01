@@ -1,41 +1,64 @@
 using LpjGuess.Core.Interfaces;
 using LpjGuess.Core.Models;
 using LpjGuess.Frontend.Data.Providers;
+using LpjGuess.Frontend.DependencyInjection;
+using LpjGuess.Runner.Services;
 
 namespace LpjGuess.Frontend.Data;
 
 /// <summary>
 /// Factory for creating data providers.
 /// </summary>
-public static class DataProviderFactory
+public class DataProviderFactory : IDataProviderFactory
 {
     /// <summary>
-    /// Read data from the specified data source.
+    /// The instruction files provider.
     /// </summary>
-    /// <param name="source">The data source.</param>
-    /// <param name="ct">The cancellation token.</param>
-    /// <returns>The data read from the data source.</returns>
-    /// <exception cref="NotSupportedException">Thrown if the data source type is not supported.</exception>
-    public static async Task<IEnumerable<SeriesData>> ReadAsync(IDataSource source, CancellationToken ct)
+    private readonly IInstructionFilesProvider insFilesProvider;
+
+    /// <summary>
+    /// The experiments provider.
+    /// </summary>
+    private readonly IExperimentProvider experimentsProvider;
+
+    /// <summary>
+    /// The path resolver.
+    /// </summary>
+    private readonly IPathResolver resolver;
+
+    /// <summary>
+    /// Create a new <see cref="DataProviderFactory"/> instance.
+    /// </summary>
+    /// <param name="insFilesProvider">The instruction files provider.</param>
+    /// <param name="experimentsProvider">The experiments provider.</param>
+    /// <param name="resolver">The path resolver.</param>
+    public DataProviderFactory(
+        IInstructionFilesProvider insFilesProvider,
+        IExperimentProvider experimentsProvider,
+        IPathResolver resolver)
+    {
+        this.insFilesProvider = insFilesProvider;
+        this.experimentsProvider = experimentsProvider;
+        this.resolver = resolver;
+    }
+
+    /// <inheritdoc />
+    public async Task<IEnumerable<SeriesData>> ReadAsync(IDataSource source, CancellationToken ct)
     {
         if (source is ModelOutput modelOutput)
         {
-            return await new ModelOutputReader().ReadAsync(modelOutput, ct);
+            return await new ModelOutputReader(insFilesProvider, experimentsProvider, resolver).ReadAsync(modelOutput, ct);
         }
 
         throw new NotSupportedException($"Data provider not supported for {typeof(IDataSource).Name}");
     }
 
-    /// <summary>
-    /// Get the name of the data source.
-    /// </summary>
-    /// <param name="source">The data source.</param>
-    /// <returns>The name of the data source.</returns>
-    public static string GetName(IDataSource source)
+    /// <inheritdoc />
+    public string GetName(IDataSource source)
     {
         // fixme!!
         if (source is ModelOutput modelOutput)
-            return new ModelOutputReader().GetName(modelOutput);
+            return new ModelOutputReader(insFilesProvider, experimentsProvider, resolver).GetName(modelOutput);
 
         throw new NotSupportedException($"Data provider not supported for {typeof(IDataSource).Name}");
     }

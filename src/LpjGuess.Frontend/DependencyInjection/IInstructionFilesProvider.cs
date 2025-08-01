@@ -14,6 +14,12 @@ public interface IInstructionFilesProvider
     IEnumerable<string> GetInstructionFiles();
 
     /// <summary>
+    /// Get the generated instruction files.
+    /// </summary>
+    /// <returns>The generated instruction files.</returns>
+    IEnumerable<string> GetGeneratedInstructionFiles();
+
+    /// <summary>
     /// Event raised when the instruction files change.
     /// </summary>
     Event<IEnumerable<string>> OnInstructionFilesChanged { get; }
