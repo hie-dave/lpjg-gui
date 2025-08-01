@@ -8,6 +8,8 @@ using LpjGuess.Frontend.DependencyInjection;
 using LpjGuess.Frontend.Interfaces;
 using LpjGuess.Frontend.Interfaces.Presenters;
 using LpjGuess.Frontend.Interfaces.Views;
+using LpjGuess.Core.Models.Factorial;
+using LpjGuess.Core.Interfaces.Factorial;
 
 namespace LpjGuess.Frontend.Presenters;
 
@@ -24,9 +26,9 @@ public class OutputsPresenter : IOutputsPresenter
     private readonly IOutputsView view;
 
     /// <summary>
-    /// The instruction files provider.
+    /// The experiment provider.
     /// </summary>
-    private readonly IInstructionFilesProvider insFilesProvider;
+    private readonly IExperimentProvider provider;
 
     /// <summary>
     /// The cancellation token source for the output file parsing task.
@@ -37,14 +39,15 @@ public class OutputsPresenter : IOutputsPresenter
     /// Create a new <see cref="OutputsPresenter"/> instance.
     /// </summary>
     /// <param name="view">The view object.</param>
-    /// <param name="insFilesProvider">The instruction files provider.</param>
+    /// <param name="provider">The experiment provider.</param>
     public OutputsPresenter(
         IOutputsView view,
-        IInstructionFilesProvider insFilesProvider)
+        IExperimentProvider provider)
     {
         this.view = view;
-        this.insFilesProvider = insFilesProvider;
-        view.OnInstructionFileSelected.ConnectTo(OnInstructionFileSelected);
+        this.provider = provider;
+        view.OnExperimentSelected.ConnectTo(OnExperimentSelected);
+        view.OnSimulationSelected.ConnectTo(OnSimulationSelected);
         view.OnOutputFileSelected.ConnectTo(OnOutputFileSelected);
         cts = new CancellationTokenSource();
         Refresh();
@@ -119,10 +122,19 @@ public class OutputsPresenter : IOutputsPresenter
     private void OnOutputFileSelected(OutputFile file)
     {
         // TODO: true async support.
-        string? instructionFile = view.InstructionFile;
-        if (instructionFile == null)
+        string? experimentName = view.SelectedExperiment;
+        if (experimentName == null)
             // Shouldn't happen, but best to be safe.
             return;
+
+        Experiment experiment = GetExperiment(experimentName);
+        string? simulationName = view.SelectedSimulation;
+        if (simulationName == null)
+            // Shouldn't happen, but best to be safe.
+            return;
+
+        ISimulation simulation = GetSimulation(experiment, simulationName);
+
         SimulationReader simulation = ModelOutputReader.GetSimulation(instructionFile);
 
         // Cancel any existing tasks.
@@ -154,10 +166,47 @@ public class OutputsPresenter : IOutputsPresenter
     /// files dropdown. Populates the output files dropdown with all available
     /// outputs for the given instruction file.
     /// </summary>
-    /// <param name="file">The instruction file selected by the user.</param>
-    private void OnInstructionFileSelected(string file)
+    /// <param name="experiment">The experiment selected by the user.</param>
+    private void OnExperimentSelected(string experiment)
     {
-        view.PopulateOutputFiles(GetOutputFiles(file));
+        view.PopulateSimulations(GetSimulations(experiment));
+    }
+
+    /// <summary>
+    /// Gets the simulations available for the specified experiment.
+    /// </summary>
+    /// <param name="experimentName">The name of the experiment.</param>
+    private IEnumerable<string> GetSimulations(string experimentName)
+    {
+        Experiment? experiment = GetExperiment(experimentName);
+        return experiment.SimulationGenerator.Generate().Select(s => s.Name);
+    }
+
+    /// <summary>
+    /// Gets the experiment with the specified name.
+    /// </summary>
+    /// <param name="name">The name of the experiment.</param>
+    /// <returns>The experiment with the specified name.</returns>
+    private Experiment GetExperiment(string name)
+    {
+        Experiment? experiment = provider.GetExperiments().FirstOrDefault(e => e.Name == name);
+        if (experiment == null)
+            throw new InvalidOperationException($"Experiment '{name}' not found");
+        return experiment;
+    }
+
+    /// <summary>
+    /// Gets the simulation with the specified name.
+    /// </summary>
+    /// <param name="experiment">The experiment to search within.</param>
+    /// <param name="simulationName">The name of the simulation.</param>
+    /// <returns>The simulation with the specified name.</returns>
+    private ISimulation GetSimulation(Experiment experiment, string simulationName)
+    {
+        ISimulation? simulation = experiment.SimulationGenerator.Generate().FirstOrDefault(s => s.Name == simulationName);
+        if (simulation == null)
+            throw new InvalidOperationException($"Simulation '{simulationName}' not found");
+        return simulation;
     }
 
     /// <inheritdoc/>

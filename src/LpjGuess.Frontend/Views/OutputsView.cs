@@ -1,5 +1,4 @@
 using System.Data;
-using ExtendedXmlSerializer;
 using Gtk;
 using LpjGuess.Core.Models;
 using LpjGuess.Frontend.Delegates;
@@ -16,7 +15,12 @@ public class OutputsView : Box, IOutputsView
 	/// <summary>
 	/// The dropdown box containing the instruction files.
 	/// </summary>
-	private readonly StringDropDownView<string> insFilesDropdown;
+	private readonly StringDropDownView<string> experimentsDropdown;
+
+	/// <summary>
+	/// The dropdown box containing the simulation files.
+	/// </summary>
+	private readonly StringDropDownView<string> simulationsDropdown;
 
 	/// <summary>
 	/// The dropdown box containing the output files.
@@ -33,18 +37,27 @@ public class OutputsView : Box, IOutputsView
 	/// </summary>
 	public OutputsView()
 	{
-		OnInstructionFileSelected = new Event<string>();
+		OnExperimentSelected = new Event<string>();
+		OnSimulationSelected = new Event<string>();
 		OnOutputFileSelected = new Event<OutputFile>();
 
 		SetOrientation(Orientation.Vertical);
 
-		Label insFilesLabel = Label.New("Instruction File:");
-		insFilesLabel.Halign = Align.Start;
-		insFilesLabel.Valign = Align.Center;
+		Label experimentsLabel = Label.New("Experiment:");
+		experimentsLabel.Halign = Align.Start;
+		experimentsLabel.Valign = Align.Center;
 
-		insFilesDropdown = new StringDropDownView<string>(Path.GetFileName);
-		insFilesDropdown.GetWidget().Hexpand = true;
-		insFilesDropdown.OnSelectionChanged.ConnectTo(OnInstructionFileSelected);
+		experimentsDropdown = new StringDropDownView<string>(Path.GetFileName);
+		experimentsDropdown.GetWidget().Hexpand = true;
+		experimentsDropdown.OnSelectionChanged.ConnectTo(OnExperimentSelected);
+
+		Label simulationsLabel = Label.New("Simulation:");
+		simulationsLabel.Halign = Align.Start;
+		simulationsLabel.Valign = Align.Center;
+
+		simulationsDropdown = new StringDropDownView<string>(Path.GetFileName);
+		simulationsDropdown.GetWidget().Hexpand = true;
+		simulationsDropdown.OnSelectionChanged.ConnectTo(OnSimulationSelected);
 
 		Label outputsLabel = Label.New("Output File:");
 		outputsLabel.Halign = Align.Start;
@@ -67,23 +80,31 @@ public class OutputsView : Box, IOutputsView
 		grid.MarginTop = 6;
 		grid.MarginStart = 6;
 		grid.MarginEnd = 6;
-		grid.Attach(insFilesLabel, 0, 0, 1, 1);
-		grid.Attach(insFilesDropdown.GetWidget(), 1, 0, 1, 1);
-		grid.Attach(outputsLabel, 0, 1, 1, 1);
-		grid.Attach(outputsDropdown.GetWidget(), 1, 1, 1, 1);
-		grid.Attach(dataScroller, 0, 2, 2, 1);
+		grid.Attach(experimentsLabel, 0, 0, 1, 1);
+		grid.Attach(experimentsDropdown.GetWidget(), 1, 0, 1, 1);
+		grid.Attach(simulationsLabel, 0, 1, 1, 1);
+		grid.Attach(simulationsDropdown.GetWidget(), 1, 1, 1, 1);
+		grid.Attach(outputsLabel, 0, 2, 1, 1);
+		grid.Attach(outputsDropdown.GetWidget(), 1, 2, 1, 1);
+		grid.Attach(dataScroller, 0, 3, 2, 1);
 
 		Append(grid);
 	}
 
 	/// <inheritdoc />
-	public string? InstructionFile => insFilesDropdown.Selection;
+	public string? SelectedExperiment => experimentsDropdown.Selection;
+
+	/// <inheritdoc />
+	public string? SelectedSimulation => simulationsDropdown.Selection;
 
 	/// <inheritdoc />
 	public OutputFile? SelectedOutputFile => outputsDropdown.Selection;
 
 	/// <inheritdoc />
-	public Event<string> OnInstructionFileSelected { get; private init; }
+	public Event<string> OnExperimentSelected { get; private init; }
+
+	/// <inheritdoc />
+	public Event<string> OnSimulationSelected { get; private init; }
 
     /// <inheritdoc />
     public Event<OutputFile> OnOutputFileSelected { get; private init; }
@@ -92,17 +113,24 @@ public class OutputsView : Box, IOutputsView
     public Widget GetWidget() => this;
 
     /// <inheritdoc />
-    public void PopulateInstructionFiles(IEnumerable<string> instructionFiles)
+    public void PopulateExperiments(IEnumerable<string> experiments)
     {
 		// Remove everything from the model.
-		insFilesDropdown.Populate(instructionFiles);
+		experimentsDropdown.Populate(experiments);
     }
 
-    /// <inheritdoc />
-    public void PopulateOutputFiles(IEnumerable<OutputFile> outputFiles)
-    {
+	/// <inheritdoc />
+	public void PopulateSimulations(IEnumerable<string> simulations)
+	{
+		// Remove everything from the model.
+		simulationsDropdown.Populate(simulations);
+	}
+
+	/// <inheritdoc />
+	public void PopulateOutputFiles(IEnumerable<OutputFile> outputFiles)
+	{
 		outputsDropdown.Populate(outputFiles);
-    }
+	}
 
 	/// <inheritdoc />
     public void PopulateData(DataTable data)
@@ -111,9 +139,15 @@ public class OutputsView : Box, IOutputsView
     }
 
 	/// <inheritdoc />
-	public void SelectInstructionFile(string file)
+	public void SelectExperiment(string experiment)
 	{
-		insFilesDropdown.Select(file);
+		experimentsDropdown.Select(experiment);
+	}
+
+	/// <inheritdoc />
+	public void SelectSimulation(string simulation)
+	{
+		simulationsDropdown.Select(simulation);
 	}
 
 	/// <inheritdoc />

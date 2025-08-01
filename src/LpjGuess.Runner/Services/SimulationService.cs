@@ -1,7 +1,7 @@
 using LpjGuess.Core.Interfaces.Factorial;
-using LpjGuess.Core.Parsers;
+using LpjGuess.Runner.Models;
 
-namespace LpjGuess.Runner.Models;
+namespace LpjGuess.Runner.Services;
 
 /// <summary>
 /// Changes to be applied to a collection of LPJ-Guess instruction files.
@@ -9,7 +9,7 @@ namespace LpjGuess.Runner.Models;
 /// <remarks>
 /// Refactor most of the logic out of here.
 /// </remarks>
-public class SimulationGenerator
+public class SimulationService : ISimulationService
 {
 	/// <summary>
 	/// List of paths to instruction files to be run.
@@ -28,19 +28,13 @@ public class SimulationGenerator
 	public IReadOnlyCollection<ISimulation> Simulations { get; private init; }
 
 	/// <summary>
-	/// Run settings.
-	/// </summary>
-	public RunSettings Settings { get; private init; }
-
-	/// <summary>
-	/// Create a new <see cref="SimulationGenerator"/> instance.
+	/// Create a new <see cref="SimulationService"/> instance.
 	/// </summary>
 	/// <param name="config">The configuration to use.</param>
-	public SimulationGenerator(RunnerConfiguration config)
+	public SimulationService(SimulationGeneratorConfig config)
 	{
 		InsFiles = config.InsFiles;
 		Pfts = config.Pfts;
-		Settings = config.Settings;
 
 		Simulations = config.Factors;
 	}

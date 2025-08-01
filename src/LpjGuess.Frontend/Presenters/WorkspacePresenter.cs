@@ -90,7 +90,7 @@ public class WorkspacePresenter : PresenterBase<IWorkspaceView, Workspace>, IWor
 	{
 		this.presenterFactory = presenterFactory;
 
-		insFilesProvider = presenterFactory.Initialise(workspace.InstructionFiles);
+		insFilesProvider = presenterFactory.Initialise(workspace);
 
 		// Construct child presenters.
 		insFilesPresenter = presenterFactory.CreatePresenter<IInstructionFilesPresenter>();
@@ -258,7 +258,7 @@ public class WorkspacePresenter : PresenterBase<IWorkspaceView, Workspace>, IWor
 			IEnumerable<ISimulation> factors = experiment.SimulationGenerator.Generate();
 
 			// Generate jobs for this experiment.
-			RunnerConfiguration config = new(runSettings, factors, insFiles, experiment.Pfts);
+			SimulationGeneratorConfig config = new(runSettings, factors, insFiles, experiment.Pfts);
 			SimulationGenerator generator = new(config);
 			jobs.AddRange(generator.GenerateAllJobs(cancellationTokenSource.Token));
 		}

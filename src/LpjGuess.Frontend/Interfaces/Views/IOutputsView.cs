@@ -1,5 +1,4 @@
 using System.Data;
-using LpjGuess.Core.Models.Importer;
 using LpjGuess.Core.Models;
 using LpjGuess.Frontend.Delegates;
 
@@ -11,9 +10,14 @@ namespace LpjGuess.Frontend.Interfaces.Views;
 public interface IOutputsView : IView
 {
     /// <summary>
-    /// Get the currently-selected instruction file.
+    /// Get the currently-selected experiment.
     /// </summary>
-    string? InstructionFile { get; }
+    string? SelectedExperiment { get; }
+
+    /// <summary>
+    /// Get the currently-selected simulation.
+    /// </summary>
+    string? SelectedSimulation { get; }
 
     /// <summary>
     /// Get the currently-selected output file.
@@ -21,9 +25,14 @@ public interface IOutputsView : IView
     OutputFile? SelectedOutputFile { get; }
 
     /// <summary>
-    /// Invoked when the user has selected an instruction file.
+    /// Invoked when the user has selected an experiment.
     /// </summary>
-    Event<string> OnInstructionFileSelected { get; }
+    Event<string> OnExperimentSelected { get; }
+
+    /// <summary>
+    /// Invoked when the user has selected a simulation.
+    /// </summary>
+    Event<string> OnSimulationSelected { get; }
 
     /// <summary>
     /// Invoked when the user has selected an output file.
@@ -31,10 +40,16 @@ public interface IOutputsView : IView
     Event<OutputFile> OnOutputFileSelected { get; }
 
     /// <summary>
-    /// Populate the view with the given instruction files.
+    /// Populate the view with the given experiment names.
     /// </summary>
-    /// <param name="instructionFiles">Instruction file paths.</param>
-    void PopulateInstructionFiles(IEnumerable<string> instructionFiles);
+    /// <param name="experimentNames">Experiment names.</param>
+    void PopulateExperiments(IEnumerable<string> experimentNames);
+
+    /// <summary>
+    /// Populate the view with the given simulation names.
+    /// </summary>
+    /// <param name="simulationNames">Simulation names.</param>
+    void PopulateSimulations(IEnumerable<string> simulationNames);
 
     /// <summary>
     /// Populate the view with the given output files.
@@ -49,9 +64,14 @@ public interface IOutputsView : IView
     void PopulateData(DataTable data);
 
     /// <summary>
-    /// Select the specified instruction file.
+    /// Select the specified experiment.
     /// </summary>
-    void SelectInstructionFile(string file);
+    void SelectExperiment(string experiment);
+
+    /// <summary>
+    /// Select the specified simulation.
+    /// </summary>
+    void SelectSimulation(string simulation);
 
     /// <summary>
     /// Select the specified output file.

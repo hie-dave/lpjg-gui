@@ -1,13 +1,12 @@
 using LpjGuess.Core.Models.Factorial;
 using LpjGuess.Core.Models.Factorial.Generators;
 using LpjGuess.Frontend.Attributes;
+using LpjGuess.Frontend.Data.Providers;
 using LpjGuess.Frontend.DependencyInjection;
 using LpjGuess.Frontend.Extensions;
 using LpjGuess.Frontend.Interfaces.Commands;
 using LpjGuess.Frontend.Interfaces.Presenters;
 using LpjGuess.Frontend.Interfaces.Views;
-using LpjGuess.Frontend.Views;
-using LpjGuess.Runner.Models;
 
 namespace LpjGuess.Frontend.Presenters;
 
@@ -23,9 +22,14 @@ public class ExperimentsPresenter : PresenterBase<IExperimentsView, IEnumerable<
     private readonly IPresenterFactory presenterFactory;
 
     /// <summary>
+    /// The experiment provider.
+    /// </summary>
+    private readonly IExperimentProvider experimentProvider;
+
+    /// <summary>
     /// The list of experiment presenters.
     /// </summary>
-    private List<IExperimentPresenter> presenters;
+    private readonly List<IExperimentPresenter> presenters;
 
     /// <summary>
     /// Create a new <see cref="ExperimentsPresenter"/> instance.
@@ -34,13 +38,16 @@ public class ExperimentsPresenter : PresenterBase<IExperimentsView, IEnumerable<
     /// <param name="view">The view to present.</param>
     /// <param name="registry">The command registry to use for command execution.</param>
     /// <param name="presenterFactory">The presenter factory to use for creating experiment presenters.</param>
+    /// <param name="experimentProvider">The experiment provider.</param>
     public ExperimentsPresenter(
         IEnumerable<Experiment> experiments,
         IExperimentsView view,
         ICommandRegistry registry,
-        IPresenterFactory presenterFactory) : base(view, experiments, registry)
+        IPresenterFactory presenterFactory,
+        IExperimentProvider experimentProvider) : base(view, experiments, registry)
     {
         this.presenterFactory = presenterFactory;
+        this.experimentProvider = experimentProvider;
 
         view.AddText = "Add Experiment";
 
@@ -109,7 +116,12 @@ public class ExperimentsPresenter : PresenterBase<IExperimentsView, IEnumerable<
     /// </summary>
     private void OnAdd()
     {
-        RefreshView(GetExperiments().Append(CreateDefaultExperiment()));
+        IEnumerable<Experiment> experiments = GetExperiments().Append(CreateDefaultExperiment()).ToList();
+        RefreshView(experiments);
+
+        // Propagate the change to any listening presenters.
+        if (experimentProvider is ExperimentProvider provider)
+            provider.UpdateExperiments(experiments);
     }
 
     /// <summary>
@@ -122,9 +134,13 @@ public class ExperimentsPresenter : PresenterBase<IExperimentsView, IEnumerable<
             // Should never happen.
             throw new InvalidOperationException($"Experiment '{experiment}' not found in experiments");
 
-        RefreshView(GetExperiments().Except([experiment]));
-    }
+        IEnumerable<Experiment> experiments = GetExperiments().Except([experiment]).ToList();
+        RefreshView(experiments);
 
+        // Propagate the change to any listening presenters.
+        if (experimentProvider is ExperimentProvider provider)
+            provider.UpdateExperiments(experiments);
+    }
 
     /// <summary>
     /// Called when an experiment is renamed by the user.
@@ -133,6 +149,11 @@ public class ExperimentsPresenter : PresenterBase<IExperimentsView, IEnumerable<
     /// <param name="name">The new name of the experiment.</param>
     private void OnExperimentRenamed(Experiment experiment, string name)
     {
+        experiment.Name = name;
         view.Rename(experiment, name);
+
+        // Propagate the change to any listening presenters.
+        if (experimentProvider is ExperimentProvider provider)
+            provider.UpdateExperiments(GetExperiments());
     }
 }

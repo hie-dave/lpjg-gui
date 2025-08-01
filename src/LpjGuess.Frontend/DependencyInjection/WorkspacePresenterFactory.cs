@@ -1,3 +1,5 @@
+using LpjGuess.Core.Models;
+using LpjGuess.Frontend.Data.Providers;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace LpjGuess.Frontend.DependencyInjection;
@@ -29,11 +31,15 @@ public class WorkspacePresenterFactory : PresenterFactory, IDisposable
     /// <summary>
     /// Initialise the workspace scope with the given instruction files.
     /// </summary>
-    /// <param name="instructionFiles"></param>
-    public InstructionFilesProvider Initialise(IEnumerable<string> instructionFiles)
+    /// <param name="workspace"></param>
+    public InstructionFilesProvider Initialise(Workspace workspace)
     {
+        // Initialise workspace-level data providers.
+        var experimentProvider = (ExperimentProvider)scope.ServiceProvider.GetRequiredService<IExperimentProvider>();
+        experimentProvider.UpdateExperiments(workspace.Experiments);
+
         var provider = (InstructionFilesProvider)scope.ServiceProvider.GetRequiredService<IInstructionFilesProvider>();
-        provider.UpdateInstructionFiles(instructionFiles);
+        provider.UpdateInstructionFiles(workspace.InstructionFiles);
         return provider;
     }
 
