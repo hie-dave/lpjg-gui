@@ -23,6 +23,11 @@ public class OutputsView : Box, IOutputsView
 	private readonly StringDropDownView<string> simulationsDropdown;
 
 	/// <summary>
+	/// The dropdown box containing the instruction files.
+	/// </summary>
+	private readonly StringDropDownView<string> instructionFilesDropdown;
+
+	/// <summary>
 	/// The dropdown box containing the output files.
 	/// </summary>
 	private readonly OutputFilesDropDownView outputsDropdown;
@@ -39,6 +44,7 @@ public class OutputsView : Box, IOutputsView
 	{
 		OnExperimentSelected = new Event<string>();
 		OnSimulationSelected = new Event<string>();
+		OnInstructionFileSelected = new Event<string>();
 		OnOutputFileSelected = new Event<OutputFile>();
 
 		SetOrientation(Orientation.Vertical);
@@ -58,6 +64,14 @@ public class OutputsView : Box, IOutputsView
 		simulationsDropdown = new StringDropDownView<string>(Path.GetFileName);
 		simulationsDropdown.GetWidget().Hexpand = true;
 		simulationsDropdown.OnSelectionChanged.ConnectTo(OnSimulationSelected);
+
+		Label instructionFilesLabel = Label.New("Instruction File:");
+		instructionFilesLabel.Halign = Align.Start;
+		instructionFilesLabel.Valign = Align.Center;
+
+		instructionFilesDropdown = new StringDropDownView<string>(Path.GetFileName);
+		instructionFilesDropdown.GetWidget().Hexpand = true;
+		instructionFilesDropdown.OnSelectionChanged.ConnectTo(OnInstructionFileSelected);
 
 		Label outputsLabel = Label.New("Output File:");
 		outputsLabel.Halign = Align.Start;
@@ -84,9 +98,11 @@ public class OutputsView : Box, IOutputsView
 		grid.Attach(experimentsDropdown.GetWidget(), 1, 0, 1, 1);
 		grid.Attach(simulationsLabel, 0, 1, 1, 1);
 		grid.Attach(simulationsDropdown.GetWidget(), 1, 1, 1, 1);
-		grid.Attach(outputsLabel, 0, 2, 1, 1);
-		grid.Attach(outputsDropdown.GetWidget(), 1, 2, 1, 1);
-		grid.Attach(dataScroller, 0, 3, 2, 1);
+		grid.Attach(instructionFilesLabel, 0, 2, 1, 1);
+		grid.Attach(instructionFilesDropdown.GetWidget(), 1, 2, 1, 1);
+		grid.Attach(outputsLabel, 0, 3, 1, 1);
+		grid.Attach(outputsDropdown.GetWidget(), 1, 3, 1, 1);
+		grid.Attach(dataScroller, 0, 4, 2, 1);
 
 		Append(grid);
 	}
@@ -101,10 +117,16 @@ public class OutputsView : Box, IOutputsView
 	public OutputFile? SelectedOutputFile => outputsDropdown.Selection;
 
 	/// <inheritdoc />
+	public string? InstructionFile => instructionFilesDropdown.Selection;
+
+	/// <inheritdoc />
 	public Event<string> OnExperimentSelected { get; private init; }
 
 	/// <inheritdoc />
 	public Event<string> OnSimulationSelected { get; private init; }
+
+	/// <inheritdoc />
+	public Event<string> OnInstructionFileSelected { get; private init; }
 
     /// <inheritdoc />
     public Event<OutputFile> OnOutputFileSelected { get; private init; }
@@ -124,6 +146,12 @@ public class OutputsView : Box, IOutputsView
 	{
 		// Remove everything from the model.
 		simulationsDropdown.Populate(simulations);
+	}
+
+	/// <inheritdoc />
+	public void PopulateInstructionFiles(IEnumerable<string> instructionFiles)
+	{
+		instructionFilesDropdown.Populate(instructionFiles);
 	}
 
 	/// <inheritdoc />
@@ -148,6 +176,12 @@ public class OutputsView : Box, IOutputsView
 	public void SelectSimulation(string simulation)
 	{
 		simulationsDropdown.Select(simulation);
+	}
+
+	/// <inheritdoc />
+	public void SelectInstructionFile(string instructionFile)
+	{
+		instructionFilesDropdown.Select(instructionFile);
 	}
 
 	/// <inheritdoc />

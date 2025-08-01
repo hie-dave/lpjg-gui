@@ -25,7 +25,7 @@ public class SimulationGeneratorConfig
     /// <summary>
     /// Simulations to generate from each instruction file.
     /// </summary>
-    public IReadOnlyList<ISimulation> Factors { get; private init; }
+    public IReadOnlyList<ISimulation> Simulations { get; private init; }
 
     /// <summary>
     /// Instruction files.
@@ -43,21 +43,21 @@ public class SimulationGeneratorConfig
     /// <param name="outputDirectory">Output directory into which jobs will be generated.</param>
     /// <param name="parallel">Whether to generate jobs in parallel.</param>
     /// <param name="cpuCount">Number of CPUs to use for job generation if parallel generation is enabled.</param>
-    /// <param name="factors">Simulations to generate from each instruction file.</param>
+    /// <param name="simulations">Simulations to generate from each instruction file.</param>
     /// <param name="insFiles">Instruction files.</param>
     /// <param name="pfts">The PFTs to enable.</param>
     public SimulationGeneratorConfig(
         string outputDirectory,
         bool parallel,
         ushort cpuCount,
-        IEnumerable<ISimulation> factors,
+        IEnumerable<ISimulation> simulations,
         IEnumerable<string> insFiles,
         IEnumerable<string> pfts)
     {
         OutputDirectory = outputDirectory;
         Parallel = parallel;
         CpuCount = cpuCount;
-        Factors = factors.ToList();
+        Simulations = simulations.ToList();
         InsFiles = insFiles.ToList();
         Pfts = pfts.ToList();
     }

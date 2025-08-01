@@ -17,7 +17,7 @@ namespace LpjGuess.Runner.Parsers;
 internal class TomlParser : IParser
 {
 	/// <inheritdoc />
-	public SimulationGeneratorConfig Parse(string file)
+	public RunnerConfiguration Parse(string file)
 	{
 		try
 		{
@@ -35,7 +35,7 @@ internal class TomlParser : IParser
 	/// some manual validation of inputs not covered by the library.
 	/// </summary>
 	/// <param name="model">The raw user input object.</param>
-	private SimulationGeneratorConfig Parse(TomlTable model)
+	private RunnerConfiguration Parse(TomlTable model)
 	{
 		RunSettings settings = ParseRunSettings(model);
 		IEnumerable<ISimulation> combinations = ParseParameters(model, settings.FullFactorial);

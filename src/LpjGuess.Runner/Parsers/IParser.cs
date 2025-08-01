@@ -11,5 +11,5 @@ internal interface IParser
 	/// Parse an input file.
 	/// </summary>
 	/// <param name="file">Path to the input file.</param>
-	SimulationGeneratorConfig Parse(string file);
+	RunnerConfiguration Parse(string file);
 }

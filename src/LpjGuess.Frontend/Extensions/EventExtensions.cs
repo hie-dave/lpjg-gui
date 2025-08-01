@@ -26,4 +26,16 @@ public static class EventExtensions
 	{
 		source.ConnectTo(x => sink.Invoke(x));
 	}
+
+	/// <summary>
+	/// Connect the source event to a sink action which doesn't accept any
+	/// parameters.
+	/// </summary>
+	/// <param name="source">The source event.</param>
+	/// <param name="sink">The sink action.</param>
+	public static void ConnectTo<T>(this Event<T> source, Action sink)
+	{
+		// fixme - is it possible to later disconnect from this?
+		source.ConnectTo(_ => sink());
+	}
 }

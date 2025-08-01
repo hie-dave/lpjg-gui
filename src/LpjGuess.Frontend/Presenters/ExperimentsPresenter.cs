@@ -1,6 +1,7 @@
 using LpjGuess.Core.Models.Factorial;
 using LpjGuess.Core.Models.Factorial.Generators;
 using LpjGuess.Frontend.Attributes;
+using LpjGuess.Frontend.Commands;
 using LpjGuess.Frontend.Data.Providers;
 using LpjGuess.Frontend.DependencyInjection;
 using LpjGuess.Frontend.Extensions;
@@ -13,8 +14,8 @@ namespace LpjGuess.Frontend.Presenters;
 /// <summary>
 /// A presenter which manages the experiments.
 /// </summary>
-[RegisterPresenter(typeof(IEnumerable<Experiment>), typeof(IExperimentsPresenter))]
-public class ExperimentsPresenter : PresenterBase<IExperimentsView, IEnumerable<Experiment>>, IExperimentsPresenter
+[RegisterPresenter(typeof(List<Experiment>), typeof(IExperimentsPresenter))]
+public class ExperimentsPresenter : PresenterBase<IExperimentsView, List<Experiment>>, IExperimentsPresenter
 {
     /// <summary>
     /// The presenter factory to use for creating experiment presenters.
@@ -40,7 +41,7 @@ public class ExperimentsPresenter : PresenterBase<IExperimentsView, IEnumerable<
     /// <param name="presenterFactory">The presenter factory to use for creating experiment presenters.</param>
     /// <param name="experimentProvider">The experiment provider.</param>
     public ExperimentsPresenter(
-        IEnumerable<Experiment> experiments,
+        List<Experiment> experiments,
         IExperimentsView view,
         ICommandRegistry registry,
         IPresenterFactory presenterFactory,
@@ -59,10 +60,7 @@ public class ExperimentsPresenter : PresenterBase<IExperimentsView, IEnumerable<
     }
 
     /// <inheritdoc />
-    public IEnumerable<Experiment> GetExperiments()
-    {
-        return presenters.Select(p => p.GetExperiment());
-    }
+    public List<Experiment> GetExperiments() => model;
 
     /// <inheritdoc />
     public void Refresh()
@@ -74,7 +72,7 @@ public class ExperimentsPresenter : PresenterBase<IExperimentsView, IEnumerable<
     /// Refresh the view with the given experiments.
     /// </summary>
     /// <param name="experiments">The experiments to display.</param>
-    private void RefreshView(IEnumerable<Experiment> experiments)
+    private void RefreshView(List<Experiment> experiments)
     {
         // Force greedy evaluation before clearing the presenters list.
         experiments = experiments.ToList();
@@ -116,12 +114,14 @@ public class ExperimentsPresenter : PresenterBase<IExperimentsView, IEnumerable<
     /// </summary>
     private void OnAdd()
     {
-        IEnumerable<Experiment> experiments = GetExperiments().Append(CreateDefaultExperiment()).ToList();
-        RefreshView(experiments);
+        Experiment experiment = CreateDefaultExperiment();
+        AddElementCommand<Experiment> command = new(model, experiment);
+        registry.Execute(command);
+        RefreshView(model);
 
         // Propagate the change to any listening presenters.
         if (experimentProvider is ExperimentProvider provider)
-            provider.UpdateExperiments(experiments);
+            provider.UpdateExperiments(model);
     }
 
     /// <summary>
@@ -134,12 +134,13 @@ public class ExperimentsPresenter : PresenterBase<IExperimentsView, IEnumerable<
             // Should never happen.
             throw new InvalidOperationException($"Experiment '{experiment}' not found in experiments");
 
-        IEnumerable<Experiment> experiments = GetExperiments().Except([experiment]).ToList();
-        RefreshView(experiments);
+        RemoveElementCommand<Experiment> command = new(model, experiment);
+        registry.Execute(command);
+        RefreshView(model);
 
         // Propagate the change to any listening presenters.
         if (experimentProvider is ExperimentProvider provider)
-            provider.UpdateExperiments(experiments);
+            provider.UpdateExperiments(model);
     }
 
     /// <summary>
@@ -149,11 +150,12 @@ public class ExperimentsPresenter : PresenterBase<IExperimentsView, IEnumerable<
     /// <param name="name">The new name of the experiment.</param>
     private void OnExperimentRenamed(Experiment experiment, string name)
     {
-        experiment.Name = name;
+        PropertyChangeCommand<Experiment, string> command = new(experiment, experiment.Name, name, (e, n) => e.Name = n);
+        registry.Execute(command);
         view.Rename(experiment, name);
 
         // Propagate the change to any listening presenters.
         if (experimentProvider is ExperimentProvider provider)
-            provider.UpdateExperiments(GetExperiments());
+            provider.UpdateExperiments(model);
     }
 }

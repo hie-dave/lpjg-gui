@@ -7,8 +7,7 @@ namespace LpjGuess.Frontend.Interfaces.Presenters;
 public interface IOutputsPresenter : IPresenter
 {
     /// <summary>
-    /// Refresh the contents of the view with the currently-available output
-    /// files.
+    /// Refresh the data displayed in the view.
     /// </summary>
-    void Refresh();
+    void RefreshData();
 }

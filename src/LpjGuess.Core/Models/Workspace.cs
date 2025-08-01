@@ -11,6 +11,11 @@ namespace LpjGuess.Core.Models;
 public class Workspace
 {
 	/// <summary>
+	/// The default output directory for generated simulations.
+	/// </summary>
+	private const string defaultOutputDirectory = ".simulations";
+
+	/// <summary>
 	/// The default file extension used for workspace files.
 	/// </summary>
 	public const string DefaultFileExtension = ".lpj";
@@ -61,4 +66,15 @@ public class Workspace
 		result.FilePath = Path.ChangeExtension(insFile, DefaultFileExtension);
 		return result;
 	}
+
+    /// <summary>
+    /// Get the output directory for generated simulations.
+    /// </summary>
+    /// <returns>The output directory.</returns>
+    public string GetOutputDirectory()
+    {
+		string directory = Path.GetDirectoryName(FilePath)
+			?? Directory.GetCurrentDirectory();
+        return Path.Combine(directory, defaultOutputDirectory);
+    }
 }

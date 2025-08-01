@@ -20,6 +20,11 @@ public interface IOutputsView : IView
     string? SelectedSimulation { get; }
 
     /// <summary>
+    /// Get the currently-selected instruction file.
+    /// </summary>
+    string? InstructionFile { get; }
+
+    /// <summary>
     /// Get the currently-selected output file.
     /// </summary>
     OutputFile? SelectedOutputFile { get; }
@@ -33,6 +38,11 @@ public interface IOutputsView : IView
     /// Invoked when the user has selected a simulation.
     /// </summary>
     Event<string> OnSimulationSelected { get; }
+
+    /// <summary>
+    /// Invoked when the user has selected an instruction file.
+    /// </summary>
+    Event<string> OnInstructionFileSelected { get; }
 
     /// <summary>
     /// Invoked when the user has selected an output file.
@@ -50,6 +60,12 @@ public interface IOutputsView : IView
     /// </summary>
     /// <param name="simulationNames">Simulation names.</param>
     void PopulateSimulations(IEnumerable<string> simulationNames);
+
+    /// <summary>
+    /// Populate the view with the given instruction files.
+    /// </summary>
+    /// <param name="instructionFiles">Instruction file paths.</param>
+    void PopulateInstructionFiles(IEnumerable<string> instructionFiles);
 
     /// <summary>
     /// Populate the view with the given output files.
@@ -72,6 +88,11 @@ public interface IOutputsView : IView
     /// Select the specified simulation.
     /// </summary>
     void SelectSimulation(string simulation);
+
+    /// <summary>
+    /// Select the specified instruction file.
+    /// </summary>
+    void SelectInstructionFile(string file);
 
     /// <summary>
     /// Select the specified output file.

@@ -4,6 +4,8 @@ using LpjGuess.Frontend.Interfaces.Commands;
 using LpjGuess.Frontend.Presenters;
 using LpjGuess.Frontend.Extensions;
 using LpjGuess.Frontend.Data.Providers;
+using LpjGuess.Runner.Services;
+using LpjGuess.Frontend.Services;
 
 namespace LpjGuess.Frontend.DependencyInjection;
 
@@ -41,6 +43,7 @@ public class ServiceLocator : IServiceLocator
         // Add scoped services.
         services.AddScoped<IInstructionFilesProvider, InstructionFilesProvider>();
         services.AddScoped<IExperimentProvider, ExperimentProvider>();
+        services.AddScoped<IPathResolver, WorkspacePathResolver>();
 
         services.AddTransient<WorkspacePresenterFactory>();
 

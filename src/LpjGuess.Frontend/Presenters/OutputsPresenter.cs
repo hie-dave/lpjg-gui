@@ -10,6 +10,8 @@ using LpjGuess.Frontend.Interfaces.Presenters;
 using LpjGuess.Frontend.Interfaces.Views;
 using LpjGuess.Core.Models.Factorial;
 using LpjGuess.Core.Interfaces.Factorial;
+using LpjGuess.Runner.Services;
+using LpjGuess.Frontend.Extensions;
 
 namespace LpjGuess.Frontend.Presenters;
 
@@ -31,6 +33,13 @@ public class OutputsPresenter : IOutputsPresenter
     private readonly IExperimentProvider provider;
 
     /// <summary>
+    /// The path resolver.
+    /// </summary>
+    private readonly IPathResolver pathResolver;
+
+    private IInstructionFilesProvider instructionFilesProvider;
+
+    /// <summary>
     /// The cancellation token source for the output file parsing task.
     /// </summary>
     private CancellationTokenSource cts;
@@ -40,110 +49,111 @@ public class OutputsPresenter : IOutputsPresenter
     /// </summary>
     /// <param name="view">The view object.</param>
     /// <param name="provider">The experiment provider.</param>
+    /// <param name="pathResolver">The path resolver.</param>
+    /// <param name="instructionFilesProvider">The instruction files provider.</param>
     public OutputsPresenter(
         IOutputsView view,
-        IExperimentProvider provider)
+        IExperimentProvider provider,
+        IPathResolver pathResolver,
+        IInstructionFilesProvider instructionFilesProvider)
     {
         this.view = view;
         this.provider = provider;
+        this.pathResolver = pathResolver;
+        this.instructionFilesProvider = instructionFilesProvider;
         view.OnExperimentSelected.ConnectTo(OnExperimentSelected);
         view.OnSimulationSelected.ConnectTo(OnSimulationSelected);
+        view.OnInstructionFileSelected.ConnectTo(OnInstructionFileSelected);
         view.OnOutputFileSelected.ConnectTo(OnOutputFileSelected);
         cts = new CancellationTokenSource();
-        Refresh();
-    }
 
-    /// <inheritdoc />
-    public void Refresh()
-    {
-        // Get the previously selected instruction file (if there is one).
-        string? insFile = view.InstructionFile;
+        UpdateExperiments();
+        UpdateSimulations();
+        UpdateInstructionFiles();
+        UpdateOutputFiles();
+        RefreshData();
 
-        IReadOnlyList<string> insFiles = insFilesProvider.GetInstructionFiles().ToList();
-
-        // Populate the view. This will not fire an instruction file selected
-        // event.
-        view.PopulateInstructionFiles(insFiles);
-
-        string? outputFileType;
-        if (insFile != null && insFiles.Contains(insFile))
-        {
-            // Select the previously-selected instruction file.
-            view.SelectInstructionFile(insFile);
-            outputFileType = view.SelectedOutputFile?.Metadata.FileName;
-        }
-        else
-        {
-            // First item is selected by default.
-            insFile = insFiles.FirstOrDefault();
-            outputFileType = null;
-        }
-
-        // We need to update the output files dropdown. Note: insFile will be
-        // null here if there was no previously-selected file, and if the
-        // current collection of instruction files is empty.
-        if (insFile != null)
-        {
-            IEnumerable<OutputFile> outputFiles = GetOutputFiles(insFile);
-            view.PopulateOutputFiles(outputFiles);
-
-            OutputFile? outputFile;
-            if (outputFileType != null && outputFiles.Any(f => f.Metadata.FileName == outputFileType))
-            {
-                // User had previously selected an output file which is still
-                // available. We should select this file.
-                outputFile = outputFiles.First(f => f.Metadata.FileName == outputFileType);
-                view.SelectOutputFile(outputFile);
-            }
-            else
-            {
-                // Either no output file was previously selected, or the
-                // previously-selected file is no longer available.
-                outputFile = outputFiles.FirstOrDefault();
-                // No need to select this output file - the first item in the
-                // collection was automatically selected when we called
-                // Populate().
-            }
-
-            // We should update the data displayed in the view, if an output
-            // file is now selected (which should be the case unless the
-            // collection is empty).
-            if (outputFile != null)
-                OnOutputFileSelected(outputFile);
-        }
+        // Call UpdateExperiments any time an experiment is added or removed
+        // to or from the workspace.
+        this.provider.OnExperimentsChanged.ConnectTo(UpdateExperiments);
+        this.instructionFilesProvider.OnInstructionFilesChanged.ConnectTo(UpdateInstructionFiles);
     }
 
     /// <summary>
-    /// Called when the user has selected an output file in the output files
-    /// dropdown. Populates the data area with the data from the specified
-    /// output file.
+    /// Updates the experiments dropdown with the currently-available experiments.
     /// </summary>
-    /// <param name="file">The output file selected by the user.</param>
-    private void OnOutputFileSelected(OutputFile file)
+    private void UpdateExperiments()
     {
-        // TODO: true async support.
+        IEnumerable<string> experiments = provider.GetExperiments().Select(e => e.Name);
+        view.PopulateExperiments(experiments);
+    }
+
+    /// <summary>
+    /// Updates the simulations dropdown with the currently-available simulations.
+    /// </summary>
+    private void UpdateSimulations()
+    {
         string? experimentName = view.SelectedExperiment;
         if (experimentName == null)
-            // Shouldn't happen, but best to be safe.
+            return;
+
+        IEnumerable<string> simulations = GetSimulations(experimentName);
+        view.PopulateSimulations(simulations);
+    }
+
+    /// <summary>
+    /// Updates the instruction files dropdown with the currently-available
+    /// instruction files.
+    /// </summary>
+    private void UpdateInstructionFiles()
+    {
+        string? experimentName = view.SelectedExperiment;
+        if (experimentName == null)
             return;
 
         Experiment experiment = GetExperiment(experimentName);
+        IEnumerable<string> instructionFiles = GetInstructionFiles(experiment);
+        view.PopulateInstructionFiles(instructionFiles);
+    }
+
+    /// <summary>
+    /// Updates the output files dropdown with the currently-available output files.
+    /// </summary>
+    private void UpdateOutputFiles()
+    {
+        string? experimentName = view.SelectedExperiment;
         string? simulationName = view.SelectedSimulation;
-        if (simulationName == null)
-            // Shouldn't happen, but best to be safe.
+        string? insFile = view.InstructionFile;
+        if (experimentName == null || simulationName == null || insFile == null)
             return;
 
+        Experiment experiment = GetExperiment(experimentName);
         ISimulation simulation = GetSimulation(experiment, simulationName);
+        string concreteInsFile = pathResolver.GenerateTargetInsFilePath(insFile, simulation);
+        IEnumerable<OutputFile> outputFiles = GetOutputFiles(concreteInsFile);
+        view.PopulateOutputFiles(outputFiles);
+    }
 
-        SimulationReader simulation = ModelOutputReader.GetSimulation(instructionFile);
+    /// <inheritdoc />
+    public void RefreshData()
+    {
+        string? experimentName = view.SelectedExperiment;
+        string? simulationName = view.SelectedSimulation;
+        string? insFile = view.InstructionFile;
+        OutputFile? outputFile = view.SelectedOutputFile;
+        if (experimentName == null || simulationName == null || insFile == null || outputFile == null)
+            return;
 
-        // Cancel any existing tasks.
-        cts.Cancel();
-        cts = new CancellationTokenSource();
+        OnOutputFileSelected(outputFile);
+    }
 
-        Task<Quantity> task = simulation.ReadOutputFileAsync(file.Path, cts.Token);
-        task.ContinueWith(q => q.Result.ToDataTable())
-            .ContinueWithOnMainThread(view.PopulateData);
+    /// <inheritdoc/>
+    public IView GetView() => view;
+
+    /// <inheritdoc/>
+    public void Dispose()
+    {
+        view.Dispose();
     }
 
     /// <summary>
@@ -154,22 +164,14 @@ public class OutputsPresenter : IOutputsPresenter
     /// <returns>The output files available for the given instruction file.</returns>
     private IEnumerable<OutputFile> GetOutputFiles(string file)
     {
+        if (!File.Exists(file))
+            return [];
+
         // TODO: consolidate instruction file parsers in runner/benchmarks.
         // We are double parsing here (since we also parse when ins files are
         // selected by the user).
         SimulationReader simulation = ModelOutputReader.GetSimulation(file);
         return simulation.GetOutputFiles();
-    }
-
-    /// <summary>
-    /// Called when the user has selected an instruction file in the instruction
-    /// files dropdown. Populates the output files dropdown with all available
-    /// outputs for the given instruction file.
-    /// </summary>
-    /// <param name="experiment">The experiment selected by the user.</param>
-    private void OnExperimentSelected(string experiment)
-    {
-        view.PopulateSimulations(GetSimulations(experiment));
     }
 
     /// <summary>
@@ -180,6 +182,16 @@ public class OutputsPresenter : IOutputsPresenter
     {
         Experiment? experiment = GetExperiment(experimentName);
         return experiment.SimulationGenerator.Generate().Select(s => s.Name);
+    }
+
+    /// <summary>
+    /// Gets the instruction files available for the specified experiment.
+    /// </summary>
+    /// <param name="experiment">The experiment to search within.</param>
+    private IEnumerable<string> GetInstructionFiles(Experiment experiment)
+    {
+        return instructionFilesProvider.GetInstructionFiles()
+            .Except(experiment.DisabledInsFiles);
     }
 
     /// <summary>
@@ -209,12 +221,74 @@ public class OutputsPresenter : IOutputsPresenter
         return simulation;
     }
 
-    /// <inheritdoc/>
-    public IView GetView() => view;
-
-    /// <inheritdoc/>
-    public void Dispose()
+    /// <summary>
+    /// Called when the user has selected an output file in the output files
+    /// dropdown. Populates the data area with the data from the specified
+    /// output file.
+    /// </summary>
+    /// <param name="file">The output file selected by the user.</param>
+    private void OnOutputFileSelected(OutputFile file)
     {
-        view.Dispose();
+        string? experimentName = view.SelectedExperiment;
+        if (experimentName == null)
+            return;
+
+        Experiment experiment = GetExperiment(experimentName);
+        string? simulationName = view.SelectedSimulation;
+        if (simulationName == null)
+            return;
+
+        string? insFile = view.InstructionFile;
+        if (insFile == null)
+            return;
+
+        ISimulation simulation = GetSimulation(experiment, simulationName);
+        string concreteInsFile = pathResolver.GenerateTargetInsFilePath(insFile, simulation);
+
+        SimulationReader reader = ModelOutputReader.GetSimulation(concreteInsFile);
+
+        // Cancel any existing tasks.
+        cts.Cancel();
+        cts = new CancellationTokenSource();
+
+        // TODO: true async support.
+        Task<Quantity> task = reader.ReadOutputFileAsync(file.Path, cts.Token);
+        task.ContinueWith(q => q.Result.ToDataTable())
+            .ContinueWithOnMainThread(view.PopulateData);
+    }
+
+    /// <summary>
+    /// Called when the user has selected an instruction file in the instruction
+    /// files dropdown. Populates the output files dropdown with all available
+    /// outputs for the given instruction file.
+    /// </summary>
+    /// <param name="experiment">The experiment selected by the user.</param>
+    private void OnExperimentSelected(string experiment)
+    {
+        UpdateSimulations();
+        UpdateInstructionFiles();
+        RefreshData();
+    }
+
+    /// <summary>
+    /// Called when the user has selected a simulation in the simulations
+    /// dropdown.
+    /// </summary>
+    /// <param name="simulationName">The simulation selected by the user.</param>
+    private void OnSimulationSelected(string simulationName)
+    {
+        UpdateOutputFiles();
+        RefreshData();
+    }
+
+    /// <summary>
+    /// Called when the user has selected an instruction file in the instruction
+    /// files dropdown.
+    /// </summary>
+    /// <param name="instructionFile">The instruction file selected by the user.</param>
+    private void OnInstructionFileSelected(string instructionFile)
+    {
+        UpdateOutputFiles();
+        RefreshData();
     }
 }

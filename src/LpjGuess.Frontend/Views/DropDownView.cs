@@ -110,6 +110,8 @@ public abstract class DropDownView<T, TWidget> : ViewBase<DropDown> where TWidge
         // being called while we're populating the dropdown.
         widget.OnNotify -= NotifyHandler;
 
+        T? selected = Selection;
+
         // Remove all existing items from the model.
         model.RemoveAll();
 
@@ -120,6 +122,9 @@ public abstract class DropDownView<T, TWidget> : ViewBase<DropDown> where TWidge
             GenericGObject<DropdownEntry> wrapper = new GenericGObject<DropdownEntry>(entry);
             model.Append(wrapper);
         }
+
+        // if (selected != null && values.Contains(selected))
+        //     Select(selected);
 
         // Reconnect the notify signal.
         widget.OnNotify += NotifyHandler;

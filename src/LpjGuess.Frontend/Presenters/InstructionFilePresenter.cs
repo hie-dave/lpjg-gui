@@ -61,7 +61,7 @@ public class InstructionFilePresenter : PresenterBase<IInstructionFileView, stri
         editors = new List<Editor>();
         changedFiles = new HashSet<string>();
 
-        view.Name = Path.GetFileName(insFile);
+        view.Name = insFile;
 
         // Fire and forget. The CancellationTokenSource will be disposed of
         // when the presenter is disposed.

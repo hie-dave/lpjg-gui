@@ -1,5 +1,6 @@
 ﻿using LpjGuess.Runner.Models;
 using LpjGuess.Runner.Parsers;
+using LpjGuess.Runner.Services;
 
 const string appName = "lpjg-experiment";
 
@@ -11,7 +12,7 @@ if (args.Length == 0)
 
 string inputFile = args[0];
 IParser parser = new TomlParser();
-SimulationGeneratorConfig config = parser.Parse(inputFile);
+RunnerConfiguration config = parser.Parse(inputFile);
 
 CancellationTokenSource cancellation = new CancellationTokenSource();
 Console.CancelKeyPress += (_, args) =>
@@ -24,7 +25,14 @@ Console.CancelKeyPress += (_, args) =>
 	args.Cancel = true;
 };
 
-SimulationGenerator generator = new SimulationGenerator(config);
+SimulationGeneratorConfig generatorConfig = new SimulationGeneratorConfig(
+	config.Settings.OutputDirectory,
+	config.Settings.Parallel,
+	config.Settings.CpuCount,
+	config.Factors,
+	config.InsFiles,
+	config.Pfts);
+SimulationService generator = new SimulationService(generatorConfig);
 IEnumerable<Job> jobs = generator.GenerateAllJobs(cancellation.Token);
 IProgressReporter progress = new ConsoleProgressReporter();
 

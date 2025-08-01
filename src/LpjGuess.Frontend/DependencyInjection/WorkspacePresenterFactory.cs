@@ -1,5 +1,7 @@
 using LpjGuess.Core.Models;
 using LpjGuess.Frontend.Data.Providers;
+using LpjGuess.Frontend.Services;
+using LpjGuess.Runner.Services;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace LpjGuess.Frontend.DependencyInjection;
@@ -31,16 +33,29 @@ public class WorkspacePresenterFactory : PresenterFactory, IDisposable
     /// <summary>
     /// Initialise the workspace scope with the given instruction files.
     /// </summary>
-    /// <param name="workspace"></param>
+    /// <param name="workspace">The workspace.</param>
     public InstructionFilesProvider Initialise(Workspace workspace)
     {
         // Initialise workspace-level data providers.
         var experimentProvider = (ExperimentProvider)scope.ServiceProvider.GetRequiredService<IExperimentProvider>();
         experimentProvider.UpdateExperiments(workspace.Experiments);
 
+        IPathResolver pathResolver = scope.ServiceProvider.GetRequiredService<IPathResolver>();
+        if (pathResolver is not WorkspacePathResolver resolver)
+            throw new InvalidOperationException("Path resolver is not a workspace path resolver.");
+        resolver.Initialise(workspace.GetOutputDirectory());
+
         var provider = (InstructionFilesProvider)scope.ServiceProvider.GetRequiredService<IInstructionFilesProvider>();
         provider.UpdateInstructionFiles(workspace.InstructionFiles);
         return provider;
+    }
+
+    /// <summary>
+    /// Get the path resolver.
+    /// </summary>
+    public IPathResolver GetPathResolver()
+    {
+        return scope.ServiceProvider.GetRequiredService<IPathResolver>();
     }
 
     /// <inheritdoc />

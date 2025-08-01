@@ -4,6 +4,7 @@ using LpjGuess.Core.Models;
 using LpjGuess.Core.Models.Factorial;
 using LpjGuess.Core.Models.Graphing;
 using LpjGuess.Frontend.Attributes;
+using LpjGuess.Frontend.Commands;
 using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.DependencyInjection;
 using LpjGuess.Frontend.Enumerations;
@@ -14,6 +15,7 @@ using LpjGuess.Frontend.Interfaces.Presenters;
 using LpjGuess.Frontend.Interfaces.Views;
 using LpjGuess.Frontend.Views;
 using LpjGuess.Runner.Models;
+using LpjGuess.Runner.Services;
 
 namespace LpjGuess.Frontend.Presenters;
 
@@ -70,6 +72,11 @@ public class WorkspacePresenter : PresenterBase<IWorkspaceView, Workspace>, IWor
 	/// </summary>
     private readonly InstructionFilesProvider insFilesProvider;
 
+	/// <summary>
+	/// The path resolver.
+	/// </summary>
+	private readonly IPathResolver pathResolver;
+
     /// <summary>
     /// Cancellation token used to cancel running simulations.
     /// </summary>
@@ -91,12 +98,13 @@ public class WorkspacePresenter : PresenterBase<IWorkspaceView, Workspace>, IWor
 		this.presenterFactory = presenterFactory;
 
 		insFilesProvider = presenterFactory.Initialise(workspace);
+		pathResolver = presenterFactory.GetPathResolver();
 
 		// Construct child presenters.
 		insFilesPresenter = presenterFactory.CreatePresenter<IInstructionFilesPresenter>();
 		outputsPresenter = presenterFactory.CreatePresenter<IOutputsPresenter>();
 		graphsPresenter = presenterFactory.CreatePresenter<IGraphsPresenter, IReadOnlyList<Graph>>(workspace.Graphs);
-		experimentsPresenter = presenterFactory.CreatePresenter<IExperimentsPresenter, IEnumerable<Experiment>>(workspace.Experiments);
+		experimentsPresenter = presenterFactory.CreatePresenter<IExperimentsPresenter, List<Experiment>>(workspace.Experiments);
 		logsPresenter = presenterFactory.CreatePresenter<ILogsPresenter>();
 
 		// Populate views.
@@ -126,7 +134,8 @@ public class WorkspacePresenter : PresenterBase<IWorkspaceView, Workspace>, IWor
 		// either directly, or indirectly (ie imported by another ins file).
 
 		// Add the instruction file to the workspace.
-        model.InstructionFiles.Add(file);
+		AddElementCommand<string> command = new(model.InstructionFiles, file);
+		registry.Execute(command);
 
 		// Save the changes to the workspace.
 		model.Save();
@@ -143,11 +152,8 @@ public class WorkspacePresenter : PresenterBase<IWorkspaceView, Workspace>, IWor
 	/// <exception cref="ArgumentException">Thrown if the specified file is not found in the workspace.</exception>
 	private void OnRemoveInsFile(string file)
 	{
-		if (!model.InstructionFiles.Contains(file))
-			throw new ArgumentException($"File '{file}' not found in workspace");
-
-		// Remove the instruction file from the workspace.
-		model.InstructionFiles.Remove(file);
+		RemoveElementCommand<string> command = new(model.InstructionFiles, file);
+		registry.Execute(command);
 
 		// Save the changes to the workspace.
 		model.Save();
@@ -217,9 +223,11 @@ public class WorkspacePresenter : PresenterBase<IWorkspaceView, Workspace>, IWor
 		// Save changes to instruction files.
 		insFilesPresenter.SaveChanges();
 
-		// Save changes to the file.
+		// Update graphs in the workspace.
+		// TODO: refactor graphs presenter so this isn't necessary.
 		model.Graphs = graphsPresenter.GetGraphs().ToList();
-		model.Experiments = experimentsPresenter.GetExperiments().ToList();
+
+		// Save changes to the file.
 		model.Save();
     }
 
@@ -242,14 +250,14 @@ public class WorkspacePresenter : PresenterBase<IWorkspaceView, Workspace>, IWor
 			cancellationTokenSource = new CancellationTokenSource();
 
 		// Create jobs from experiments.
-		string outputDirectory = GetOutputDirectory();
+		string outputDirectory = model.GetOutputDirectory();
+		ushort cpuCount = (ushort)Environment.ProcessorCount;
 
 		List<Job> jobs = new List<Job>();
 		foreach (Experiment experiment in model.Experiments)
 		{
 			// Store simulations for this experiment in a subdirectory.
 			string directory = Path.Combine(outputDirectory, experiment.Name);
-			RunSettings runSettings = CreateRunSettings(directory, runConfig.GuessPath);
 
 			// Get the instruction files to be used for this experiment.
 			IEnumerable<string> insFiles = model.InstructionFiles.Where(i => !experiment.DisabledInsFiles.Contains(i));
@@ -258,14 +266,14 @@ public class WorkspacePresenter : PresenterBase<IWorkspaceView, Workspace>, IWor
 			IEnumerable<ISimulation> factors = experiment.SimulationGenerator.Generate();
 
 			// Generate jobs for this experiment.
-			SimulationGeneratorConfig config = new(runSettings, factors, insFiles, experiment.Pfts);
-			SimulationGenerator generator = new(config);
+			SimulationGeneratorConfig config = new(directory, true, cpuCount, factors, insFiles, experiment.Pfts);
+			SimulationService generator = new(pathResolver, config);
 			jobs.AddRange(generator.GenerateAllJobs(cancellationTokenSource.Token));
 		}
 
 		CustomProgressReporter progress = new CustomProgressReporter(ProgressCallback);
 		IOutputHelper outputHandler = new CustomOutputHelper(StdoutCallback, StderrCallback);
-		JobManagerConfiguration configuration = new JobManagerConfiguration(runConfig, Environment.ProcessorCount, false, view.InputModule);
+		JobManagerConfiguration configuration = new JobManagerConfiguration(runConfig, cpuCount, false, view.InputModule);
 
 		JobManager jobManager = new JobManager(configuration, progress, outputHandler, jobs);
 		simulations = jobManager.RunAllAsync(cancellationTokenSource.Token)
@@ -277,39 +285,6 @@ public class WorkspacePresenter : PresenterBase<IWorkspaceView, Workspace>, IWor
 		if (Configuration.Instance.GoToLogsTabOnRun)
 			view.SelectTab(FileTab.Logs);
 	}
-
-    private RunSettings CreateRunSettings(string outputDirectory, string guessPath)
-    {
-		// fixme - why on earth do we have PBS settings in here???
-		return new RunSettings(
-			false,
-			true,
-			outputDirectory,
-			guessPath,
-			view.InputModule,
-			(ushort)Environment.ProcessorCount, // safe on machines with <65536 cores
-			TimeSpan.FromMinutes(1),
-			1,
-			"",
-			"",
-			false,
-			"",
-			"",
-			false
-		);
-
-    }
-
-    /// <summary>
-    /// Get the output directory for generated simulations.
-    /// </summary>
-    /// <returns>The output directory.</returns>
-    private string GetOutputDirectory()
-    {
-		string directory = Path.GetDirectoryName(model.FilePath)
-			?? Directory.GetCurrentDirectory();
-        return Path.Combine(directory, ".simulations");
-    }
 
     /// <summary>
     /// Generate a job name for the given instruction file.
@@ -387,7 +362,7 @@ public class WorkspacePresenter : PresenterBase<IWorkspaceView, Workspace>, IWor
 		try
 		{
 			view.ShowRunButton(true);
-			outputsPresenter.Refresh();
+			outputsPresenter.RefreshData();
 			graphsPresenter.RefreshAll();
 		}
 		catch (Exception error)

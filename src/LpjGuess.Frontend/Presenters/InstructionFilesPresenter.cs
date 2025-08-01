@@ -3,6 +3,7 @@ using LpjGuess.Frontend.Attributes;
 using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.DependencyInjection;
 using LpjGuess.Frontend.Events;
+using LpjGuess.Frontend.Extensions;
 using LpjGuess.Frontend.Interfaces;
 using LpjGuess.Frontend.Interfaces.Commands;
 using LpjGuess.Frontend.Interfaces.Presenters;
@@ -57,6 +58,8 @@ public class InstructionFilesPresenter : IInstructionFilesPresenter
         this.presenterFactory = presenterFactory;
         this.insFilesProvider = insFilesProvider;
         presenters = new List<IInstructionFilePresenter>();
+
+        insFilesProvider.OnInstructionFilesChanged.ConnectTo(Refresh);
 
         Refresh();
     }

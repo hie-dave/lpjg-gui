@@ -6,37 +6,35 @@ namespace LpjGuess.Runner.Services;
 /// <summary>
 /// Changes to be applied to a collection of LPJ-Guess instruction files.
 /// </summary>
-/// <remarks>
-/// Refactor most of the logic out of here.
-/// </remarks>
 public class SimulationService : ISimulationService
 {
 	/// <summary>
-	/// List of paths to instruction files to be run.
+	/// The path resolver.
 	/// </summary>
-	public IReadOnlyCollection<string> InsFiles { get; private init; }
+	private readonly IPathResolver pathResolver;
 
 	/// <summary>
-	/// List of PFTs to be enabled for this run. All others will be disabled.
-	/// If empty, no PFTs will be disabled.
+	/// The configuration to use.
 	/// </summary>
-	public IReadOnlyCollection<string> Pfts { get; private init; }
-
-	/// <summary>
-	/// The parameter changes being applied in this run.
-	/// </summary>
-	public IReadOnlyCollection<ISimulation> Simulations { get; private init; }
+	private readonly SimulationGeneratorConfig config;
 
 	/// <summary>
 	/// Create a new <see cref="SimulationService"/> instance.
 	/// </summary>
 	/// <param name="config">The configuration to use.</param>
-	public SimulationService(SimulationGeneratorConfig config)
+	public SimulationService(SimulationGeneratorConfig config) : this(new SimulationPathResolver(config), config)
 	{
-		InsFiles = config.InsFiles;
-		Pfts = config.Pfts;
+	}
 
-		Simulations = config.Factors;
+	/// <summary>
+	/// Create a new <see cref="SimulationService"/> instance.
+	/// </summary>
+	/// <param name="pathResolver">The path resolver.</param>
+	/// <param name="config">The configuration to use.</param>
+	public SimulationService(IPathResolver pathResolver, SimulationGeneratorConfig config)
+	{
+		this.pathResolver = pathResolver;
+		this.config = config;
 	}
 
 	/// <summary>
@@ -45,11 +43,11 @@ public class SimulationService : ISimulationService
 	/// <param name="ct">Cancellation token.</param>
 	public IEnumerable<Job> GenerateAllJobs(CancellationToken ct)
 	{
-		IEnumerable<string> query = InsFiles;
-		if (Settings.Parallel)
+		IEnumerable<string> query = config.InsFiles;
+		if (config.Parallel)
 		{
 			query = query.AsParallel()
-						 .WithDegreeOfParallelism(Settings.CpuCount)
+						 .WithDegreeOfParallelism(config.CpuCount)
 						 .WithCancellation(ct);
 		}
 
@@ -62,37 +60,38 @@ public class SimulationService : ISimulationService
 	/// <param name="insFile">Path to the instruction file.</param>
 	private IEnumerable<Job> GenerateJobs(string insFile, CancellationToken ct)
 	{
-		IEnumerable<ISimulation> query = Simulations;
+		IEnumerable<ISimulation> query = config.Simulations;
 
-		if (Settings.Parallel)
+		if (config.Parallel)
 		{
 			query = query.AsParallel()
-			 			 .WithDegreeOfParallelism(Settings.CpuCount)
+			 			 .WithDegreeOfParallelism(config.CpuCount)
 						 .WithCancellation(ct);
 		}
 
 		return query.Select(f => GenerateSimulation(insFile, f));
 	}
 
+	/// <summary>
+	/// Generate the specified simulation for the given instruction file.
+	/// </summary>
+	/// <param name="insFile">Path to the instruction file.</param>
+	/// <param name="simulation">The simulation.</param>
+	/// <returns>A job encapsulating the generated simulation.</returns>
 	private Job GenerateSimulation(string insFile, ISimulation simulation)
 	{
+		// Choose an instruction file name and path.
+		string targetInsFile = pathResolver.GenerateTargetInsFilePath(insFile, simulation);
+
+		// Create the output directory if it doesn't already exist.
+		string? directory = Path.GetDirectoryName(targetInsFile);
+		if (directory != null)
+			Directory.CreateDirectory(directory);
+
 		// Apply changes from this factorial.
-		string jobName = simulation.Name;
-		string insName = Path.GetFileNameWithoutExtension(insFile);
+		simulation.Generate(insFile, targetInsFile, config.Pfts);
 
-		if (InsFiles.Count > 1)
-			jobName = $"{insName}-{jobName}";
-
-        string jobDirectory = Settings.OutputDirectory;
-		if (InsFiles.Count > 1)
-			jobDirectory = Path.Combine(jobDirectory, insName);
-		if (Simulations.Count > 1)
-			jobDirectory = Path.Combine(jobDirectory, simulation.Name);
-
-		Directory.CreateDirectory(jobDirectory);
-		string targetInsFile = Path.Combine(jobDirectory, $"{jobName}.ins");
-
-		simulation.Generate(insFile, targetInsFile, Pfts);
-		return new Job(jobName, targetInsFile);
+		// Return a job object encapsulating this information.
+		return new Job(simulation.Name, targetInsFile);
 	}
 }

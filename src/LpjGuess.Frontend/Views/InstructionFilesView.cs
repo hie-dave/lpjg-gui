@@ -10,17 +10,12 @@ namespace LpjGuess.Frontend.Views;
 /// <summary>
 /// A view which displays the instruction files in a sidebar.
 /// </summary>
-public class InstructionFilesView : DynamicStackSidebar<string>, IInstructionFilesView
+public class InstructionFilesView : DynamicStackSidebar<IInstructionFileView>, IInstructionFilesView
 {
 	/// <summary>
 	/// The views used to display instruction files.
 	/// </summary>
 	private readonly List<IInstructionFileView> instructionFileViews;
-
-	/// <summary>
-	/// The name of the previously visible instruction file.
-	/// </summary>
-	private string? previouslyVisibleInsFile = null;
 
 	/// <inheritdoc />
 	public Event<string> OnAddInsFile { get; private init; }
@@ -38,8 +33,7 @@ public class InstructionFilesView : DynamicStackSidebar<string>, IInstructionFil
 		instructionFileViews = new List<IInstructionFileView>();
 
         AddText = "Add File";
-        OnPageSelected.ConnectTo(OnInsFilesSidebarPageSelected);
-        OnRemove.ConnectTo(OnRemoveInsFile);
+        OnRemove.ConnectTo(OnRemoveView);
         OnAdd.ConnectTo(OnAddFile);
     }
 
@@ -53,7 +47,7 @@ public class InstructionFilesView : DynamicStackSidebar<string>, IInstructionFil
         instructionFileViews.AddRange(insFileViews);
 
 		// Populate the stack with new views.
-        Populate(insFileViews.Select(f => (GetTabName(f.Name), f.GetWidget())));
+        Populate(insFileViews.Select(f => (f, f.GetWidget())));
 	}
 
     /// <summary>
@@ -61,9 +55,9 @@ public class InstructionFilesView : DynamicStackSidebar<string>, IInstructionFil
     /// </summary>
     /// <param name="insFile">Path to an instruction file.</param>
     /// <returns>A tab name.</returns>
-    private static string GetTabName(string insFile)
+    private static string GetTabName(IInstructionFileView insFile)
     {
-        return Path.GetFileName(insFile);
+        return Path.GetFileName(insFile.Name);
     }
 
     /// <summary>
@@ -72,7 +66,7 @@ public class InstructionFilesView : DynamicStackSidebar<string>, IInstructionFil
     /// </summary>
     /// <param name="instructionFile">The instruction file.</param>
     /// <returns>A label for the sidebar tab.</returns>
-    private static Widget CreateInsFileSidebarLabel(string instructionFile)
+    private static Widget CreateInsFileSidebarLabel(IInstructionFileView instructionFile)
     {
         Label label = Label.New(GetTabName(instructionFile));
         label.Halign = Align.Start;
@@ -97,66 +91,10 @@ public class InstructionFilesView : DynamicStackSidebar<string>, IInstructionFil
     }
 
 	/// <summary>
-	/// User wants to add an instruction file.
+	/// Called when the user wants to remove an instruction file.
 	/// </summary>
-	/// <param name="sender">Sender object.</param>
-	/// <param name="args">Event data.</param>
-	private void OnAddInstructionFile(object sender, EventArgs args)
-	{
-		try
-		{
-			FileChooserDialog dialog = FileChooserDialog.Open(
-				"Open Instruction File",
-				"Instruction Files",
-				"*.ins",
-				true,
-				false);
-			dialog.OnFileSelected.ConnectTo(OnAddInsFile);
-			dialog.Run();
-		}
-		catch (Exception error)
-		{
-			MainView.Instance.ReportError(error);
-		}
-	}
-
-	/// <summary>
-	/// Callback for the instruction files' stack's "notify" signal.
-	/// </summary>
-	/// <param name="page">The page that was selected.</param>
-	private void OnInsFilesSidebarPageSelected(string page)
-	{
-		try
-		{
-			// The visible child of the stack has changed.
-			if (page == AddText)
-			{
-				// The user has clicked the "Add File" button. This button
-				// is an entry in the sidebar with a corresponding blank
-				// widget in the stack. Therefore we try to reset the
-				// visible child to the previously-selected ins file.
-				if (previouslyVisibleInsFile == null)
-				{
-					// No ins file was previously selected. Try to select
-					// the last ins file (ie the one closest to the button).
-					if (instructionFileViews.Count > 0)
-						VisibleChildName = GetTabName(instructionFileViews.Last().Name);
-					// else user has clicked Add File in a workspace with no
-					// instruction files - nothing we can do.
-				}
-				else
-					VisibleChildName = previouslyVisibleInsFile;
-
-				// Handle the "Add File" action by prompting the user to
-				// select an instruction file.
-				OnAddInstructionFile(this, EventArgs.Empty);
-			}
-			else
-				previouslyVisibleInsFile = VisibleChildName;
-		}
-		catch (Exception error)
-		{
-			MainView.Instance.ReportError(error);
-		}
+    private void OnRemoveView(IInstructionFileView view)
+    {
+        OnRemoveInsFile.Invoke(view.Name);
     }
 }
