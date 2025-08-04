@@ -101,6 +101,11 @@ public class ModelOutputPresenter : PresenterBase<IModelOutputView, ModelOutput>
             DataSource.YAxisColumns);
     }
 
+    /// <summary>
+    /// Get a list of columns for the given output file type.
+    /// </summary>
+    /// <param name="fileType">The output file type.</param>
+    /// <returns>A list of columns.</returns>
     private IEnumerable<string> GetColumns(string fileType)
     {
         IEnumerable<string> fileTypes = instructionFilesProvider.GetGeneratedInstructionFiles()
@@ -130,7 +135,7 @@ public class ModelOutputPresenter : PresenterBase<IModelOutputView, ModelOutput>
         // simulation contains only a single patch. It seemed like such a
         // clever idea at the time too...
         OutputFileMetadata meta = OutputFileDefinitions.GetMetadata(fileType);
-        if (meta.Level  > AggregationLevel.Gridcell)
+        if (meta.Level > AggregationLevel.Gridcell)
             columns.Add("stand");
         if (meta.Level > AggregationLevel.Stand)
             columns.Add("patch");
@@ -138,6 +143,43 @@ public class ModelOutputPresenter : PresenterBase<IModelOutputView, ModelOutput>
             columns.Add("indiv");
 
         return columns.Distinct().ToList();
+    }
+
+    /// <summary>
+    /// Attempt to guess a good default x- and y- column name for the given
+    /// output file type.
+    /// </summary>
+    /// <param name="fileType">The output file type.</param>
+    /// <param name="xcol">The guessed x-column name.</param>
+    /// <param name="ycol">The guessed y-column name.</param>
+    private void GuessColumns(string fileType, out string xcol, out string ycol)
+    {
+        // TODO: we could improve the column selection by doing  partial-parse
+        // of the output file type, but this is probably good enough for 90% of
+        // cases.
+        IEnumerable<string> columns = GetColumns(fileType);
+        string[] toTry = ["Total", "total", "Mean", "mean"];
+        foreach (string col in toTry)
+        {
+            if (columns.Contains(col))
+            {
+                xcol = "Date"; // Should be a safe guess?
+                ycol = col;
+                return;
+            }
+        }
+
+        string[] toIgnore = ["Date", "Lon", "Lat", "patch", "stand", "indiv", "pft"];
+        IEnumerable<string> remaining = columns.Except(toIgnore);
+        if (remaining.Any())
+        {
+            xcol = "Date";
+            ycol = remaining.First();
+            return;
+        }
+
+        xcol = string.Empty;
+        ycol = string.Empty;
     }
 
     /// <summary>
@@ -183,42 +225,5 @@ public class ModelOutputPresenter : PresenterBase<IModelOutputView, ModelOutput>
 
         ICommand command = new CompositeCommand(commands);
         OnDataSourceChanged.Invoke(command);
-    }
-
-    /// <summary>
-    /// Attempt to guess a good default x- and y- column name for the given
-    /// output file type.
-    /// </summary>
-    /// <param name="fileType">The output file type.</param>
-    /// <param name="xcol">The guessed x-column name.</param>
-    /// <param name="ycol">The guessed y-column name.</param>
-    private void GuessColumns(string fileType, out string xcol, out string ycol)
-    {
-        // TODO: we could improve the column selection by doing  partial-parse
-        // of the output file type, but this is probably good enough for 90% of
-        // cases.
-        IEnumerable<string> columns = GetColumns(fileType);
-        string[] toTry = ["Total", "total", "Mean", "mean"];
-        foreach (string col in toTry)
-        {
-            if (columns.Contains(col))
-            {
-                xcol = "Date"; // Should be a safe guess?
-                ycol = col;
-                return;
-            }
-        }
-
-        string[] toIgnore = ["Date", "Lon", "Lat", "patch", "stand", "indiv", "pft"];
-        IEnumerable<string> remaining = columns.Except(toIgnore);
-        if (remaining.Any())
-        {
-            xcol = "Date";
-            ycol = remaining.First();
-            return;
-        }
-
-        xcol = string.Empty;
-        ycol = string.Empty;
     }
 }

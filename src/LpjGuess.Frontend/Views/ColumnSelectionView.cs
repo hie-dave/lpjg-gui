@@ -34,6 +34,11 @@ public class ColumnSelectionView : ViewBase<Button>
     private readonly Button clearAllButton;
 
     /// <summary>
+    /// The columns which were selected by the last call to <see cref="Select"/>.
+    /// </summary>
+    private List<string> selectedColumns;
+
+    /// <summary>
     /// The event that is raised when the selection changes.
     /// </summary>
     public Event<IEnumerable<string>> OnSelectionChanged { get; private init; }
@@ -43,6 +48,7 @@ public class ColumnSelectionView : ViewBase<Button>
     /// </summary>
     public ColumnSelectionView() : base(new Button())
     {
+        selectedColumns = [];
         OnSelectionChanged = new Event<IEnumerable<string>>();
 
         // Create the dropdown button
@@ -52,6 +58,7 @@ public class ColumnSelectionView : ViewBase<Button>
         // Create the popover
         selectionPopover = Popover.New();
         selectionPopover.SetParent(widget);
+        selectionPopover.OnClosed += OnPopoverClosed;
 
         // Create container for checkboxes
         var popoverContent = Box.New(Orientation.Vertical, 6);
@@ -92,7 +99,7 @@ public class ColumnSelectionView : ViewBase<Button>
         selectionPopover.SetChild(popoverContent);
 
         // Connect events
-        widget.OnClicked += (sender, args) => selectionPopover.Popup();
+        widget.OnClicked += OnClicked;
     }
 
     /// <summary>
@@ -128,11 +135,15 @@ public class ColumnSelectionView : ViewBase<Button>
     /// <param name="columns">The columns to select.</param>
     public void Select(IEnumerable<string> columns)
     {
+        selectedColumns = columns.ToList();
         foreach (string column in columns)
         {
             if (!columnCheckboxes.TryGetValue(column, out CheckButton? checkbox))
                 throw new ArgumentException($"Column {column} not found.");
+
+            checkbox.OnToggled -= OnCheckboxToggled;
             checkbox.Active = true;
+            checkbox.OnToggled += OnCheckboxToggled;
         }
 
         UpdateButtonLabel();
@@ -149,6 +160,45 @@ public class ColumnSelectionView : ViewBase<Button>
             .Select(kvp => kvp.Key);
     }
 
+    /// <inheritdoc />
+    public override void Dispose()
+    {
+        widget.OnClicked -= OnClicked;
+        selectAllButton.OnClicked -= OnSelectAllClicked;
+        clearAllButton.OnClicked -= OnClearAllClicked;
+        selectionPopover.OnClosed -= OnPopoverClosed;
+
+        foreach (CheckButton checkbox in columnCheckboxes.Values)
+            checkbox.OnToggled -= OnCheckboxToggled;
+        selectionPopover.Dispose();
+        base.Dispose();
+    }
+
+    /// <summary>
+    /// Updates the button label based on the currently selected columns.
+    /// </summary>
+    private void UpdateButtonLabel()
+    {
+        var selectedCount = GetSelectedColumns().Count();
+
+        if (selectedCount == 0)
+            widget.SetLabel("Select Y-axis columns...");
+        else if (selectedCount == 1)
+            widget.SetLabel(GetSelectedColumns().First());
+        else
+            widget.SetLabel($"{selectedCount} columns selected");
+    }
+
+    /// <summary>
+    /// Checks if there are any pending changes.
+    /// </summary>
+    /// <returns>True if there are pending changes, false otherwise.</returns>
+    private bool PendingChanges()
+    {
+        return !selectedColumns.OrderBy(c => c)
+            .SequenceEqual(GetSelectedColumns().OrderBy(c => c));
+    }
+
     /// <summary>
     /// Handles the checkbox toggled event.
     /// </summary>
@@ -159,7 +209,7 @@ public class ColumnSelectionView : ViewBase<Button>
         try
         {
             UpdateButtonLabel();
-            OnSelectionChanged.Invoke(GetSelectedColumns());
+            // OnSelectionChanged.Invoke(GetSelectedColumns());
         }
         catch (Exception error)
         {
@@ -210,17 +260,37 @@ public class ColumnSelectionView : ViewBase<Button>
     }
 
     /// <summary>
-    /// Updates the button label based on the currently selected columns.
+    /// Handles the popover closed event.
     /// </summary>
-    private void UpdateButtonLabel()
+    /// <param name="sender">The popover that was closed.</param>
+    /// <param name="args">The event arguments.</param>
+    private void OnPopoverClosed(Popover sender, EventArgs args)
     {
-        var selectedCount = GetSelectedColumns().Count();
+        try
+        {
+            if (PendingChanges())
+                OnSelectionChanged.Invoke(GetSelectedColumns());
+        }
+        catch (Exception error)
+        {
+            MainView.Instance.ReportError(error);
+        }
+    }
 
-        if (selectedCount == 0)
-            widget.SetLabel("Select Y-axis columns...");
-        else if (selectedCount == 1)
-            widget.SetLabel(GetSelectedColumns().First());
-        else
-            widget.SetLabel($"{selectedCount} columns selected");
+    /// <summary>
+    /// Handles the button clicked event.
+    /// </summary>
+    /// <param name="sender">The button that was clicked.</param>
+    /// <param name="args">The event arguments.</param>
+    private void OnClicked(Button sender, EventArgs args)
+    {
+        try
+        {
+            selectionPopover.Popup();
+        }
+        catch (Exception error)
+        {
+            MainView.Instance.ReportError(error);
+        }
     }
 }
