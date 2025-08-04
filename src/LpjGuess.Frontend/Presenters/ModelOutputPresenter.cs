@@ -11,6 +11,7 @@ using LpjGuess.Frontend.Interfaces.Commands;
 using LpjGuess.Frontend.Interfaces.Events;
 using LpjGuess.Frontend.Interfaces.Presenters;
 using LpjGuess.Frontend.Interfaces.Views;
+using LpjGuess.Frontend.DependencyInjection;
 
 namespace LpjGuess.Frontend.Presenters;
 
@@ -24,7 +25,7 @@ public class ModelOutputPresenter : PresenterBase<IModelOutputView, ModelOutput>
     /// <summary>
     /// The instruction files in the workspace.
     /// </summary>
-    private readonly IEnumerable<string> instructionFiles;
+    private readonly IInstructionFilesProvider instructionFilesProvider;
 
     /// <inheritdoc/>
     public ModelOutput DataSource { get; private init; }
@@ -43,19 +44,19 @@ public class ModelOutputPresenter : PresenterBase<IModelOutputView, ModelOutput>
     /// </summary>
     /// <param name="view">The view to present to.</param>
     /// <param name="model">The data source being edited.</param>
-    /// <param name="instructionFiles">The instruction files in the workspace.</param>
+    /// <param name="instructionFilesProvider">The instruction files provider.</param>
     /// <param name="registry">The command registry to use for command execution.</param>
     public ModelOutputPresenter(
         IModelOutputView view,
         ModelOutput model,
-        IEnumerable<string> instructionFiles,
+        IInstructionFilesProvider instructionFilesProvider,
         ICommandRegistry registry) : base(view, model, registry)
     {
         DataSource = model;
         OnDataSourceChanged = new Event<ICommand>();
         view.OnEditDataSource.ConnectTo(OnEditDataSource);
         view.OnFileTypeChanged.ConnectTo(OnFileTypeChanged);
-        this.instructionFiles = instructionFiles;
+        this.instructionFilesProvider = instructionFilesProvider;
 
         RefreshView();
     }
@@ -65,7 +66,7 @@ public class ModelOutputPresenter : PresenterBase<IModelOutputView, ModelOutput>
     /// </summary>
     public void RefreshView()
     {
-        IEnumerable<OutputFile> fileTypes = instructionFiles
+        IEnumerable<OutputFile> fileTypes = instructionFilesProvider.GetGeneratedInstructionFiles()
             .Select(ModelOutputReader.GetSimulation)
             .SelectMany(s => s.GetOutputFiles())
             .DistinctBy(o => o.Metadata.FileName);
@@ -102,7 +103,7 @@ public class ModelOutputPresenter : PresenterBase<IModelOutputView, ModelOutput>
 
     private IEnumerable<string> GetColumns(string fileType)
     {
-        IEnumerable<string> fileTypes = instructionFiles
+        IEnumerable<string> fileTypes = instructionFilesProvider.GetGeneratedInstructionFiles()
             .Select(ModelOutputReader.GetSimulation)
             .SelectMany(s => s.GetOutputFiles())
             .DistinctBy(o => o.Metadata.FileName)
@@ -116,7 +117,7 @@ public class ModelOutputPresenter : PresenterBase<IModelOutputView, ModelOutput>
 
         // Partially parse output file to get columns.
         // TODO: make this cancellable?
-        IEnumerable<Task<IEnumerable<LayerMetadata>>> tasks = instructionFiles
+        IEnumerable<Task<IEnumerable<LayerMetadata>>> tasks = instructionFilesProvider.GetGeneratedInstructionFiles()
             .Select(ModelOutputReader.GetSimulation)
             .Select(s => s.ReadOutputFileMetadataAsync(fileType));
         Task.WaitAll(tasks);

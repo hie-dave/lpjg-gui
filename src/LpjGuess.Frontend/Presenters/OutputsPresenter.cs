@@ -12,6 +12,7 @@ using LpjGuess.Core.Models.Factorial;
 using LpjGuess.Core.Interfaces.Factorial;
 using LpjGuess.Runner.Services;
 using LpjGuess.Frontend.Extensions;
+using LpjGuess.Frontend.Views;
 
 namespace LpjGuess.Frontend.Presenters;
 
@@ -67,16 +68,23 @@ public class OutputsPresenter : IOutputsPresenter
         view.OnOutputFileSelected.ConnectTo(OnOutputFileSelected);
         cts = new CancellationTokenSource();
 
-        UpdateExperiments();
-        UpdateSimulations();
-        UpdateInstructionFiles();
-        UpdateOutputFiles();
-        RefreshData();
-
         // Call UpdateExperiments any time an experiment is added or removed
         // to or from the workspace.
         this.provider.OnExperimentsChanged.ConnectTo(UpdateExperiments);
         this.instructionFilesProvider.OnInstructionFilesChanged.ConnectTo(UpdateInstructionFiles);
+
+        try
+        {
+            UpdateExperiments();
+            UpdateSimulations();
+            UpdateInstructionFiles();
+            UpdateOutputFiles();
+            RefreshData();
+        }
+        catch (Exception error)
+        {
+            MainView.Instance.ReportError(error);
+        }
     }
 
     /// <summary>

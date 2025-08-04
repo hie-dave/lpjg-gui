@@ -83,8 +83,15 @@ public partial class InstructionFileParser
     /// <returns>A new <see cref="InstructionFileParser"/> instance.</returns>
     public static InstructionFileParser FromFile(string path)
     {
-        string contents = InstructionFileNormaliser.Normalise(path);
-        return new InstructionFileParser(contents, path);
+        try
+        {
+            string contents = InstructionFileNormaliser.Normalise(path);
+            return new InstructionFileParser(contents, path);
+        }
+        catch (Exception error)
+        {
+            throw new Exception($"Unable to parse instruction file '{path}'", error);
+        }
     }
 
     /// <summary>
