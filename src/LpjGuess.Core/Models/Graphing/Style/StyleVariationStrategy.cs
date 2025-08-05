@@ -21,6 +21,11 @@ public enum StyleVariationStrategy
     BySeries,
 
     /// <summary>
+    /// The visual property varies by experiment.
+    /// </summary>
+    ByExperiment,
+
+    /// <summary>
     /// The visual property varies by simulation.
     /// </summary>
     BySimulation,

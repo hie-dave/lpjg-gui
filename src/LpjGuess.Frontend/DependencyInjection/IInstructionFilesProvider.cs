@@ -1,3 +1,4 @@
+using LpjGuess.Frontend.Classes;
 using LpjGuess.Frontend.Delegates;
 
 namespace LpjGuess.Frontend.DependencyInjection;
@@ -17,7 +18,7 @@ public interface IInstructionFilesProvider
     /// Get the generated instruction files.
     /// </summary>
     /// <returns>The generated instruction files.</returns>
-    IEnumerable<string> GetGeneratedInstructionFiles();
+    IEnumerable<InstructionFile> GetGeneratedInstructionFiles();
 
     /// <summary>
     /// Event raised when the instruction files change.

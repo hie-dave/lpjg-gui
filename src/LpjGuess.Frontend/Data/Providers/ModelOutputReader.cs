@@ -1,5 +1,8 @@
+using LpjGuess.Core.Interfaces.Graphing;
 using LpjGuess.Core.Models;
 using LpjGuess.Core.Models.Entities;
+using LpjGuess.Core.Models.Graphing;
+using LpjGuess.Core.Models.Graphing.Style;
 using LpjGuess.Core.Models.Importer;
 using LpjGuess.Core.Services;
 using LpjGuess.Frontend.Classes;
@@ -39,7 +42,7 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
     public async Task<IEnumerable<SeriesData>> ReadAsync(ModelOutput source, CancellationToken ct)
     {
         // The filtered list of instruction files to be read.
-        IEnumerable<string> instructionFiles = insFilesProvider.GetGeneratedInstructionFiles();
+        IEnumerable<InstructionFile> instructionFiles = insFilesProvider.GetGeneratedInstructionFiles();
         return (await Task.WhenAll(
             instructionFiles
                   .Select(f => ReadSimulationAsync(source, GetSimulation(f), ct))))
@@ -49,11 +52,11 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
     /// <summary>
     /// Get a simulation object for the given instruction file.
     /// </summary>
-    /// <param name="instructionFile"></param>
-    /// <returns></returns>
-    public static SimulationReader GetSimulation(string instructionFile)
+    /// <param name="instructionFile">The instruction file.</param>
+    /// <returns>The simulation reader.</returns>
+    public static SimulationReader GetSimulation(InstructionFile instructionFile)
     {
-        var simulation = readers.FirstOrDefault(s => s.FileName == instructionFile);
+        var simulation = readers.FirstOrDefault(s => s.InsFile == instructionFile);
         if (simulation == null)
         {
             simulation = new SimulationReader(instructionFile);
@@ -82,10 +85,23 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
         SimulationReader simulation,
         CancellationToken ct)
     {
-        // TODO: async support.
+        // This is a bit clunky, but it should work, and will avoid us parsing
+        // unwanted output files.
+        SeriesContext proxyContext = new(
+            simulation.InsFile.ExperimentName,
+            simulation.InsFile.SimulationName,
+            new Gridcell(0, 0, ""), // FIXME - this will match against valid gridcells
+            "");
+        if (source.Filters.Any(f => f.IsFiltered(proxyContext)))
+            return [];
+
+        // Read the output file.
         Quantity quantity = await simulation.ReadOutputFileTypeAsync(source.OutputFileType, ct);
         List<SeriesData> data = new List<SeriesData>();
 
+        // Iterate through the requested layers and generate series for each
+        // one. Each layer can in principle generate multiple series - e.g. a
+        // patch-level model output will generate one series per patch.
         foreach (string column in source.YAxisColumns)
         {
             Layer? layer = quantity.Layers.FirstOrDefault(l => l.Name == column);
@@ -206,12 +222,13 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
             pft = pftValue;
         }
         return new SeriesContext(
+            simulation.InsFile.ExperimentName,
+            simulation.InsFile.SimulationName,
             new Gridcell(datapoint.Latitude, datapoint.Longitude, name),
             layer.Name,
             datapoint.Stand,
             datapoint.Patch,
             datapoint.Individual,
-            Path.GetFileNameWithoutExtension(simulation.FileName),
             pft);
     }
 

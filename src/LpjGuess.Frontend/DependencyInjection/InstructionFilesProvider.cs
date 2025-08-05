@@ -1,4 +1,6 @@
 using LpjGuess.Core.Interfaces.Factorial;
+using LpjGuess.Core.Models.Factorial;
+using LpjGuess.Frontend.Classes;
 using LpjGuess.Frontend.Data.Providers;
 using LpjGuess.Frontend.Delegates;
 using LpjGuess.Runner.Services;
@@ -58,22 +60,20 @@ public class InstructionFilesProvider : IInstructionFilesProvider
     }
 
     /// <inheritdoc />
-    public IEnumerable<string> GetGeneratedInstructionFiles()
+    public IEnumerable<InstructionFile> GetGeneratedInstructionFiles()
     {
-        IEnumerable<ISimulation> simulations = experimentsProvider
-            .GetExperiments()
-            .SelectMany(e => e.SimulationGenerator.Generate());
-
-        List<string> concreteInsFiles = [];
-        foreach (string insFile in instructionFiles)
+        List<InstructionFile> concreteInsFiles = [];
+        foreach (Experiment experiment in experimentsProvider.GetExperiments())
         {
-            foreach (ISimulation simulation in simulations)
+            foreach (ISimulation simulation in experiment.SimulationGenerator.Generate())
             {
-                string generated = resolver.GenerateTargetInsFilePath(insFile, simulation);
-                concreteInsFiles.Add(generated);
+                foreach (string insFile in instructionFiles)
+                {
+                    string generated = resolver.GenerateTargetInsFilePath(insFile, simulation);
+                    concreteInsFiles.Add(new InstructionFile(generated, experiment.Name, simulation.Name));
+                }
             }
         }
-
         return concreteInsFiles;
     }
 }

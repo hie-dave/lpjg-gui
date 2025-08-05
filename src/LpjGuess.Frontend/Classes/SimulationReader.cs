@@ -24,9 +24,9 @@ public class SimulationReader
     private readonly HashSet<string> unknownFiles = [];
 
     /// <summary>
-    /// Path to the instruction file.
+    /// The instruction file.
     /// </summary>
-    public string FileName { get; private init; }
+    public InstructionFile InsFile { get; private init; }
 
     /// <summary>
     /// Output file type resolver.
@@ -36,7 +36,7 @@ public class SimulationReader
     /// <summary>
     /// Instruction file parser.
     /// </summary>
-    public InstructionFileParser InstructionFile { get; private init; }
+    public InstructionFileParser Parser { get; private init; }
 
     /// <summary>
     /// Helper for the instruction file.
@@ -51,10 +51,10 @@ public class SimulationReader
     /// <summary>
     /// Create a new <see cref="SimulationReader"/> instance.
     /// </summary>
-    /// <param name="fileName">Path to the instruction file.</param>
-    public SimulationReader(string fileName)
+    /// <param name="insFile">The instruction file.</param>
+    public SimulationReader(InstructionFile insFile)
     {
-        FileName = fileName;
+        InsFile = insFile;
 
         // TODO: dependency injection. Don't create an OutputParser every time.
         var factory = new LoggerFactory();
@@ -62,14 +62,14 @@ public class SimulationReader
         var logger2 = new Logger<ModelOutputParser>(factory);
 
         // TODO: proper async support.
-        InstructionFile = InstructionFileParser.FromFile(fileName);
-        Helper = new InstructionFileHelper(InstructionFile);
+        Parser = InstructionFileParser.FromFile(insFile.FileName);
+        Helper = new InstructionFileHelper(Parser);
 
         string gridlist = Helper.GetGridlist();
         Gridlist = new GridlistParser(gridlist);
 
         Resolver = new OutputFileTypeResolver(logger);
-        Resolver.BuildLookupTable(InstructionFile);
+        Resolver.BuildLookupTable(Parser);
 
         outputParser = new ModelOutputParser(logger2, Resolver);
     }

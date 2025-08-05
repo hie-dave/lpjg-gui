@@ -138,7 +138,8 @@ public class OutputsPresenter : IOutputsPresenter
         Experiment experiment = GetExperiment(experimentName);
         ISimulation simulation = GetSimulation(experiment, simulationName);
         string concreteInsFile = pathResolver.GenerateTargetInsFilePath(insFile, simulation);
-        IEnumerable<OutputFile> outputFiles = GetOutputFiles(concreteInsFile);
+        InstructionFile ins = new(concreteInsFile, experimentName, simulationName);
+        IEnumerable<OutputFile> outputFiles = GetOutputFiles(ins);
         view.PopulateOutputFiles(outputFiles);
     }
 
@@ -170,9 +171,9 @@ public class OutputsPresenter : IOutputsPresenter
     /// </summary>
     /// <param name="file">The instruction file selected by the user.</param>
     /// <returns>The output files available for the given instruction file.</returns>
-    private IEnumerable<OutputFile> GetOutputFiles(string file)
+    private static IEnumerable<OutputFile> GetOutputFiles(InstructionFile file)
     {
-        if (!File.Exists(file))
+        if (!File.Exists(file.FileName))
             return [];
 
         // TODO: consolidate instruction file parsers in runner/benchmarks.
@@ -253,7 +254,8 @@ public class OutputsPresenter : IOutputsPresenter
         ISimulation simulation = GetSimulation(experiment, simulationName);
         string concreteInsFile = pathResolver.GenerateTargetInsFilePath(insFile, simulation);
 
-        SimulationReader reader = ModelOutputReader.GetSimulation(concreteInsFile);
+        InstructionFile ins = new(concreteInsFile, experimentName, simulationName);
+        SimulationReader reader = ModelOutputReader.GetSimulation(ins);
 
         // Cancel any existing tasks.
         cts.Cancel();

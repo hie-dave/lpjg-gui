@@ -20,6 +20,7 @@ public static class StyleVariationStrategyExtensions
     {
         return variation switch
         {
+            StyleVariationStrategy.ByExperiment => new ExperimentIdentifier(),
             StyleVariationStrategy.ByGridcell => new GridcellIdentifier(),
             StyleVariationStrategy.BySimulation => new SimulationIdentifier(),
             StyleVariationStrategy.ByStand => new StandIdentifier(),
