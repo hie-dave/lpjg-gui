@@ -11,15 +11,15 @@ namespace LpjGuess.Core.Models.Graphing.Style.Identifiers;
 public class IndividualIdentifier : ISeriesIdentifier
 {
     /// <inheritdoc />
-    public SeriesIdentityBase Identify(ISeriesData series)
+    public SeriesIdentityBase Identify(SeriesContext context)
     {
-        if (series.Context.Individual is null)
+        if (context.Individual is null)
             // This should never happen - users should only be able to select
             // this strategy for series on which it is valid.
             throw new InvalidOperationException("Varying by individual is only valid for individual-level model outputs");
 
         // TODO: should this take the gridcell/stand/patch into account?
-        return new NumericIdentity(series.Context.Individual.Value);
+        return new NumericIdentity(context.Individual.Value);
     }
 
     /// <inheritdoc />

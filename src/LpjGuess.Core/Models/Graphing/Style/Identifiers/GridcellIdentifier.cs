@@ -10,12 +10,12 @@ namespace LpjGuess.Core.Models.Graphing.Style.Identifiers;
 public class GridcellIdentifier : ISeriesIdentifier
 {
     /// <inheritdoc />
-    public SeriesIdentityBase Identify(ISeriesData series)
+    public SeriesIdentityBase Identify(SeriesContext context)
     {
         return new GridcellIdentity(
-            series.Context.Gridcell.Latitude,
-            series.Context.Gridcell.Longitude,
-            series.Context.Gridcell.Name);
+            context.Gridcell.Latitude,
+            context.Gridcell.Longitude,
+            context.Gridcell.Name);
     }
 
     /// <inheritdoc />

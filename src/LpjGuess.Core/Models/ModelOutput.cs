@@ -1,10 +1,10 @@
-using LpjGuess.Core.Models;
 using LpjGuess.Core.Models.Entities;
 using LpjGuess.Core.Models.Importer;
 using LpjGuess.Core.Services;
 using LpjGuess.Core.Interfaces;
 using LpjGuess.Core.Models.Graphing;
 using LpjGuess.Core.Models.Graphing.Style;
+using LpjGuess.Core.Interfaces.Graphing;
 
 namespace LpjGuess.Core.Models;
 
@@ -40,9 +40,9 @@ public class ModelOutput : IDataSource
     }
 
     /// <summary>
-    /// Instruction files for which data should be displayed.
+    /// The data filters.
     /// </summary>
-    public List<string> InstructionFiles { get; set; }
+    public List<IDataFilter> Filters { get; set; }
 
     /// <summary>
     /// Create a new <see cref="ModelOutput"/> instance.
@@ -52,7 +52,7 @@ public class ModelOutput : IDataSource
         OutputFileType = string.Empty;
         XAxisColumn = string.Empty;
         YAxisColumns = [];
-        InstructionFiles = new List<string>();
+        Filters = [];
     }
 
     /// <summary>
@@ -61,18 +61,18 @@ public class ModelOutput : IDataSource
     /// <param name="outputFileType">Output file type.</param>
     /// <param name="xAxisColumn">Name of the column used for the x-axis.</param>
     /// <param name="yAxisColumns">Names of the columns used for the y-axis.</param>
-    /// <param name="instructionFiles">Instruction files for which data should be displayed.</param>
+    /// <param name="filters">The data filters.</param>
     public ModelOutput(
         string outputFileType,
         string xAxisColumn,
         IEnumerable<string> yAxisColumns,
-        IEnumerable<string> instructionFiles
+        IEnumerable<IDataFilter> filters
     )
     {
         OutputFileType = outputFileType;
         XAxisColumn = xAxisColumn;
         YAxisColumns = yAxisColumns;
-        InstructionFiles = instructionFiles.ToList();
+        Filters = filters.ToList();
     }
 
     /// <inheritdoc />
@@ -128,12 +128,6 @@ public class ModelOutput : IDataSource
     {
         OutputFileMetadata meta = OutputFileDefinitions.GetMetadata(OutputFileType);
         return GetAllowedStrategies(meta.Level);
-    }
-
-    /// <inheritdoc />
-    public int GetNumSeries()
-    {
-        return InstructionFiles.Count * YAxisColumns.Count();
     }
 
     /// <summary>

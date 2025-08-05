@@ -3,6 +3,7 @@ using LpjGuess.Core.Models;
 using LpjGuess.Frontend.Data.Providers;
 using LpjGuess.Frontend.DependencyInjection;
 using LpjGuess.Runner.Services;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace LpjGuess.Frontend.Data;
 
@@ -12,46 +13,59 @@ namespace LpjGuess.Frontend.Data;
 public class DataProviderFactory : IDataProviderFactory
 {
     /// <summary>
-    /// The instruction files provider.
+    /// The service provider.
     /// </summary>
-    private readonly IInstructionFilesProvider insFilesProvider;
-
-    /// <summary>
-    /// The path resolver.
-    /// </summary>
-    private readonly IPathResolver resolver;
+    private readonly IServiceProvider serviceProvider;
 
     /// <summary>
     /// Create a new <see cref="DataProviderFactory"/> instance.
     /// </summary>
-    /// <param name="insFilesProvider">The instruction files provider.</param>
-    /// <param name="resolver">The path resolver.</param>
+    /// <param name="serviceProvider">The service provider.</param>
     public DataProviderFactory(
-        IInstructionFilesProvider insFilesProvider,
-        IPathResolver resolver)
+        IServiceProvider serviceProvider)
     {
-        this.insFilesProvider = insFilesProvider;
-        this.resolver = resolver;
+        this.serviceProvider = serviceProvider;
     }
 
     /// <inheritdoc />
     public async Task<IEnumerable<SeriesData>> ReadAsync(IDataSource source, CancellationToken ct)
     {
-        if (source is ModelOutput modelOutput)
-        {
-            return await new ModelOutputReader(insFilesProvider, resolver).ReadAsync(modelOutput, ct);
-        }
-
-        throw new NotSupportedException($"Data provider not supported for {typeof(IDataSource).Name}");
+        return await ReadAsyncGeneric((dynamic)source, ct);
     }
 
     /// <inheritdoc />
     public string GetName(IDataSource source)
     {
-        // fixme!!
-        if (source is ModelOutput modelOutput)
-            return new ModelOutputReader(insFilesProvider, resolver).GetName(modelOutput);
+        return GetNameGeneric((dynamic)source);
+    }
 
-        throw new NotSupportedException($"Data provider not supported for {typeof(IDataSource).Name}");
+    /// <inheritdoc />
+    public int GetNumSeries(IDataSource source)
+    {
+        return GetNumSeriesGeneric((dynamic)source);
+    }
+
+    private async Task<IEnumerable<SeriesData>> ReadAsyncGeneric<T>(T source, CancellationToken ct)
+        where T : IDataSource
+    {
+        return await CreateProvider(source).ReadAsync(source, ct);
+    }
+
+    private string GetNameGeneric<T>(T source)
+        where T : IDataSource
+    {
+        return CreateProvider(source).GetName(source);
+    }
+
+    private int GetNumSeriesGeneric<T>(T source)
+        where T : IDataSource
+    {
+        return CreateProvider(source).GetNumSeries(source);
+    }
+
+    private IDataProvider<T> CreateProvider<T>(T dataSource) where T : IDataSource
+    {
+        Type interfaceType = typeof(IDataProvider<>).MakeGenericType(dataSource.GetType());
+        return (IDataProvider<T>)serviceProvider.GetRequiredService(interfaceType);
     }
 }

@@ -12,7 +12,7 @@ public class SeriesIdentifier : ISeriesIdentifier
     private int index = 0;
 
     /// <inheritdoc />
-    public SeriesIdentityBase Identify(ISeriesData series)
+    public SeriesIdentityBase Identify(SeriesContext context)
     {
         // TODO: should this take the gridcell/stand/patch into account?
         lock (this)

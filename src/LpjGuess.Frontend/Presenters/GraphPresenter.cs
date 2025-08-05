@@ -201,7 +201,7 @@ public class GraphPresenter : PresenterBase<IGraphView, Graph>, IGraphPresenter
         LineSeries series = new LineSeries(
             string.Empty,
             new DynamicStyleProvider<Colour>(new GridcellIdentifier(), new ColourStrategy()),
-            new ModelOutput("file_lai", "Date", ["Total"], provider.GetInstructionFiles()),
+            new ModelOutput("file_lai", "Date", ["Total"], []),
             AxisPosition.Bottom,
             AxisPosition.Left,
             new FixedStyleProvider<LineType>(LineType.Solid),

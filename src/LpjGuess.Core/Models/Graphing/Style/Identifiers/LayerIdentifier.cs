@@ -9,11 +9,11 @@ namespace LpjGuess.Core.Models.Graphing.Style.Identifiers;
 public class LayerIdentifier : ISeriesIdentifier
 {
     /// <inheritdoc />
-    public SeriesIdentityBase Identify(ISeriesData series)
+    public SeriesIdentityBase Identify(SeriesContext context)
     {
         // TODO: should this take the gridcell/stand/patch into account?
         lock (this)
-            return new StringIdentity(series.Context.Layer);
+            return new StringIdentity(context.Layer);
     }
 
     /// <inheritdoc />

@@ -10,15 +10,15 @@ namespace LpjGuess.Core.Models.Graphing.Style.Identifiers;
 public class PftIdentifier : ISeriesIdentifier
 {
     /// <inheritdoc />
-    public SeriesIdentityBase Identify(ISeriesData series)
+    public SeriesIdentityBase Identify(SeriesContext context)
     {
-        if (series.Context.Pft is null)
+        if (context.Pft is null)
             // This should never happen - users should only be able to select
             // this strategy for series on which it is valid.
             throw new InvalidOperationException("Varying by PFT is only valid for cohort-level model outputs");
 
         // TODO: should this take the gridcell/stand/patch into account?
-        return new StringIdentity(series.Context.Pft);
+        return new StringIdentity(context.Pft);
     }
 
     /// <inheritdoc />

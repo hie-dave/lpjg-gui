@@ -1,12 +1,12 @@
-using LpjGuess.Core.Interfaces.Factorial;
 using LpjGuess.Core.Models;
 using LpjGuess.Core.Models.Entities;
 using LpjGuess.Core.Models.Importer;
 using LpjGuess.Core.Services;
 using LpjGuess.Frontend.Classes;
 using LpjGuess.Frontend.DependencyInjection;
-using LpjGuess.Runner.Services;
 using OxyPlot.Axes;
+
+using OxyDataPoint = OxyPlot.DataPoint;
 
 namespace LpjGuess.Frontend.Data.Providers;
 
@@ -16,10 +16,10 @@ namespace LpjGuess.Frontend.Data.Providers;
 public class ModelOutputReader : IDataProvider<ModelOutput>
 {
     /// <summary>
-    /// List of simulation objects, which are cached between uses of this class,
+    /// List of simulation readers, which are cached between uses of this class,
     /// to avoid double-parsing.
     /// </summary>
-    private static readonly List<SimulationReader> simulations = new List<SimulationReader>();
+    private static readonly List<SimulationReader> readers = new List<SimulationReader>();
 
     /// <summary>
     /// The instruction files provider.
@@ -27,19 +27,12 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
     private readonly IInstructionFilesProvider insFilesProvider;
 
     /// <summary>
-    /// The path resolver.
-    /// </summary>
-    private readonly IPathResolver resolver;
-
-    /// <summary>
     /// Create a new <see cref="ModelOutputReader"/> instance.
     /// </summary>
     /// <param name="insFilesProvider">The instruction files provider.</param>
-    /// <param name="resolver">The path resolver.</param>
-    public ModelOutputReader(IInstructionFilesProvider insFilesProvider, IPathResolver resolver)
+    public ModelOutputReader(IInstructionFilesProvider insFilesProvider)
     {
         this.insFilesProvider = insFilesProvider;
-        this.resolver = resolver;
     }
 
     /// <inheritdoc />
@@ -60,15 +53,21 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
     /// <returns></returns>
     public static SimulationReader GetSimulation(string instructionFile)
     {
-        var simulation = simulations.FirstOrDefault(s => s.FileName == instructionFile);
+        var simulation = readers.FirstOrDefault(s => s.FileName == instructionFile);
         if (simulation == null)
         {
             simulation = new SimulationReader(instructionFile);
-            lock (simulations)
-                simulations.Add(simulation);
+            lock (readers)
+                readers.Add(simulation);
         }
 
         return simulation;
+    }
+
+    /// <inheritdoc />
+    public int GetNumSeries(ModelOutput source)
+    {
+        return insFilesProvider.GetGeneratedInstructionFiles().Count() * source.YAxisColumns.Count();
     }
 
     /// <summary>
@@ -155,8 +154,14 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
         // Now we can zip the groups together.
         foreach (IGrouping<SeriesContext, DataPoint> xgroup in xgroups)
         {
+            SeriesContext context = xgroup.Key;
+
+            // Ignore this series if it is filtered.
+            if (source.Filters.Any(f => f.IsFiltered(context)))
+                continue;
+
             IGrouping<SeriesContext, DataPoint>? ygroup = ygroups
-                .FirstOrDefault(g => g.Key.Equals(xgroup.Key));
+                .FirstOrDefault(g => g.Key.Equals(context));
 
             if (ygroup == null)
             {
@@ -166,15 +171,15 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
                 continue;
             }
 
-            string name = GenerateSeriesName(source, xgroup.Key, contexts, ylayer);
+            string name = GenerateSeriesName(source, context, contexts, ylayer);
 
-            IEnumerable<OxyPlot.DataPoint> data = MergeOn(
+            IEnumerable<OxyDataPoint> data = MergeOn(
                 xgroup,
                 ygroup,
                 xselector,
                 yselector,
                 predicates: (x, y) => x.Timestamp == y.Timestamp).ToList();
-            yield return new SeriesData(name, xgroup.Key, data);
+            yield return new SeriesData(name, context, data);
         }
     }
 
@@ -218,7 +223,7 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
     /// <param name="contexts">The list of all series contexts.</param>
     /// <param name="ylayer">The y-layer.</param>
     /// <returns>The series name.</returns>
-    private static string GenerateSeriesName(ModelOutput source, SeriesContext context, IEnumerable<SeriesContext> contexts, Layer ylayer)
+    private string GenerateSeriesName(ModelOutput source, SeriesContext context, IEnumerable<SeriesContext> contexts, Layer ylayer)
     {
         // We need to generate a name which will disambiguate each series.
         OutputFileMetadata metadata = OutputFileDefinitions.GetMetadata(source.OutputFileType);
@@ -237,7 +242,7 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
         }
 
         // Simulation name should be included if there are multiple simulations.
-        if (source.InstructionFiles.Count > 1)
+        if (insFilesProvider.GetGeneratedInstructionFiles().Count() > 1)
         {
             if (context.SimulationName == null)
                 throw new InvalidOperationException("Simulation name is null");
@@ -274,17 +279,15 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
     /// <param name="xselector">Selector for the x value. If null, x.Value will be selected.</param>
     /// <param name="yselector">Selector for the y value. If null, y.Value will be selected.</param>
     /// <returns>The merged data points.</returns>
-    private IEnumerable<OxyPlot.DataPoint> MergeOn(
+    private static IEnumerable<OxyDataPoint> MergeOn(
         IEnumerable<DataPoint> xpoints,
         IEnumerable<DataPoint> ypoints,
         Func<DataPoint, double>? xselector = null,
         Func<DataPoint, double>? yselector = null,
         params Func<DataPoint, DataPoint, bool>[] predicates)
     {
-        if (xselector == null)
-            xselector = x => x.Value;
-        if (yselector == null)
-            yselector = y => y.Value;
+        xselector ??= x => x.Value;
+        yselector ??= y => y.Value;
 
         // For each data point in xlayer, select a data point in ylayer for which
         // all coordinates match.
@@ -294,7 +297,7 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
             IEnumerable<DataPoint> matches = ypoints
                 .Where(yi => predicates.All(p => p(x, yi)));
             foreach (DataPoint y in matches)
-                yield return new OxyPlot.DataPoint(xselector(x), yselector(y));
+                yield return new OxyDataPoint(xselector(x), yselector(y));
         }
         // We can assume commutativity of the predicates, so there's no need for
         // double-iteration.

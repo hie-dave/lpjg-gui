@@ -1,5 +1,6 @@
 using System.Reflection;
 using LpjGuess.Frontend.Attributes;
+using LpjGuess.Frontend.Data;
 using LpjGuess.Frontend.DependencyInjection;
 using LpjGuess.Frontend.Interfaces.Presenters;
 using Microsoft.Extensions.DependencyInjection;

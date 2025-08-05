@@ -10,14 +10,14 @@ namespace LpjGuess.Core.Models.Graphing.Style.Identifiers;
 public class SimulationIdentifier : ISeriesIdentifier
 {
     /// <inheritdoc />
-    public SeriesIdentityBase Identify(ISeriesData series)
+    public SeriesIdentityBase Identify(SeriesContext context)
     {
-        if (series.Context.SimulationName is null)
+        if (context.SimulationName is null)
             // This should never happen - users should only be able to select
             // this strategy for series on which it is valid.
             throw new InvalidOperationException("Varying by simulation is only valid for model output series");
 
-        return new StringIdentity(series.Context.SimulationName);
+        return new StringIdentity(context.SimulationName);
     }
 
     /// <inheritdoc />

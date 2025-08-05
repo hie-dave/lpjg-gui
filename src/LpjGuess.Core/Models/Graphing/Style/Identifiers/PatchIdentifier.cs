@@ -11,15 +11,15 @@ namespace LpjGuess.Core.Models.Graphing.Style.Identifiers;
 public class PatchIdentifier : ISeriesIdentifier
 {
     /// <inheritdoc />
-    public SeriesIdentityBase Identify(ISeriesData series)
+    public SeriesIdentityBase Identify(SeriesContext context)
     {
-        if (series.Context.Patch is null)
+        if (context.Patch is null)
             // This should never happen - users should only be able to select
             // this strategy for series on which it is valid.
             throw new InvalidOperationException("Varying by patch is only valid for patch-level model outputs");
 
         // TODO: should this take the gridcell/stand into account?
-        return new NumericIdentity(series.Context.Patch.Value);
+        return new NumericIdentity(context.Patch.Value);
     }
 
     /// <inheritdoc />

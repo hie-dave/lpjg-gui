@@ -4,6 +4,9 @@ namespace LpjGuess.Core.Interfaces.Graphing.Style;
 /// An interface to a class which uniquely identifies a series according to a
 /// particular identification strategy.
 /// </summary>
+/// <remarks>
+/// All implementations must be serializable.
+/// </remarks>
 public abstract class SeriesIdentityBase : IEquatable<SeriesIdentityBase>
 {
     /// <inheritdoc />

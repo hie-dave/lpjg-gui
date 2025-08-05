@@ -136,7 +136,7 @@ public class GraphsPresenter : PresenterBase<IGraphsView, IReadOnlyList<Graph>>,
 			"file_lai",
 			"Date",
 			["Total"],
-			insFilesProvider.GetInstructionFiles());
+			[]);
 		ISeries series = new LineSeries(
 			// Empty series name will use data source as title.
 			string.Empty,

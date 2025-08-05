@@ -23,4 +23,11 @@ public interface IDataProvider<T> where T : IDataSource
     /// <param name="source">The data source.</param>
     /// <returns>A name which describes the data returned form this data source.</returns>
     string GetName(T source);
+
+    /// <summary>
+    /// Get the number of series yielded by a data source.
+    /// </summary>
+    /// <param name="source">The data source.</param>
+    /// <returns>The number of series in the data source.</returns>
+    int GetNumSeries(T source);
 }

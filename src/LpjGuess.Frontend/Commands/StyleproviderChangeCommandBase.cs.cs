@@ -1,4 +1,5 @@
 using LpjGuess.Core.Interfaces.Graphing.Style;
+using LpjGuess.Core.Extensions;
 using LpjGuess.Core.Models.Graphing.Style;
 using LpjGuess.Core.Models.Graphing.Style.Identifiers;
 using LpjGuess.Core.Models.Graphing.Style.Providers;
@@ -91,7 +92,7 @@ public abstract class StyleProviderChangeCommandBase<TObject, TStyle> : ICommand
         if (strategy == StyleVariationStrategy.Fixed)
             return new FixedStyleProvider<TStyle>(DefaultStyle());
 
-        ISeriesIdentifier identifier = CreateIdentifier(strategy);
+        ISeriesIdentifier identifier = strategy.CreateIdentifier();
         IStyleStrategy<TStyle> valueStrategy = CreateStrategy();
         return new DynamicStyleProvider<TStyle>(identifier, valueStrategy);
     }
@@ -102,27 +103,4 @@ public abstract class StyleProviderChangeCommandBase<TObject, TStyle> : ICommand
     /// </summary>
     /// <returns>The default style.</returns>
     protected virtual TStyle DefaultStyle() => default;
-
-    /// <summary>
-    /// Create a series identifier corresponding to the specified style
-    /// variation strategy.
-    /// </summary>
-    /// <param name="variation">The style variation strategy.</param>
-    /// <returns>The series identifier.</returns>
-    /// <exception cref="ArgumentException"></exception>
-    private static ISeriesIdentifier CreateIdentifier(StyleVariationStrategy variation)
-    {
-        return variation switch
-        {
-            StyleVariationStrategy.ByGridcell => new GridcellIdentifier(),
-            StyleVariationStrategy.BySimulation => new SimulationIdentifier(),
-            StyleVariationStrategy.ByStand => new StandIdentifier(),
-            StyleVariationStrategy.ByPatch => new PatchIdentifier(),
-            StyleVariationStrategy.ByIndividual => new IndividualIdentifier(),
-            StyleVariationStrategy.ByPft => new PftIdentifier(),
-            StyleVariationStrategy.BySeries => new SeriesIdentifier(),
-            StyleVariationStrategy.ByLayer => new LayerIdentifier(),
-            _ => throw new ArgumentException($"Invalid style variation strategy: {variation}")
-        };
-    }
 }

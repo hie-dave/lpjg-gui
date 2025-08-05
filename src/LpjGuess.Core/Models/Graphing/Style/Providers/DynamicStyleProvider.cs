@@ -51,10 +51,10 @@ public class DynamicStyleProvider<T> : IStyleProvider<T>
     {
         lock (styles)
         {
-            if (!styles.TryGetValue(Identifier.Identify(data), out T? style))
+            if (!styles.TryGetValue(Identifier.Identify(data.Context), out T? style))
             {
                 style = ValueStrategy.GetValue(index++);
-                styles.Add(Identifier.Identify(data), style);
+                styles.Add(Identifier.Identify(data.Context), style);
             }
             return style;
         }

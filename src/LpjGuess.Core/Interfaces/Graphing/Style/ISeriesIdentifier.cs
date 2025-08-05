@@ -1,4 +1,4 @@
-using System.Text.Json.Serialization;
+using LpjGuess.Core.Models;
 using LpjGuess.Core.Models.Graphing.Style;
 
 namespace LpjGuess.Core.Interfaces.Graphing.Style;
@@ -11,10 +11,10 @@ public interface ISeriesIdentifier
     /// <summary>
     /// Identify a series.
     /// </summary>
-    /// <param name="series">The series.</param>
+    /// <param name="context">The context describing the series data.</param>
     /// <returns>An object which uniquely identifies the series according to
     /// this strategy.</returns>
-    SeriesIdentityBase Identify(ISeriesData series);
+    SeriesIdentityBase Identify(SeriesContext context);
 
     /// <summary>
     /// Get the strategy that this identifier uses to identify a series.

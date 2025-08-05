@@ -11,15 +11,15 @@ namespace LpjGuess.Core.Models.Graphing.Style.Identifiers;
 public class StandIdentifier : ISeriesIdentifier
 {
     /// <inheritdoc />
-    public SeriesIdentityBase Identify(ISeriesData series)
+    public SeriesIdentityBase Identify(SeriesContext context)
     {
-        if (series.Context.Stand is null)
+        if (context.Stand is null)
             // This should never happen - users should only be able to select
             // this strategy for series on which it is valid.
             throw new InvalidOperationException("Varying by stand is only valid for stand-level model outputs");
 
         // TODO: should this take the gridcell into account?
-        return new NumericIdentity(series.Context.Stand.Value);
+        return new NumericIdentity(context.Stand.Value);
     }
 
     /// <inheritdoc />

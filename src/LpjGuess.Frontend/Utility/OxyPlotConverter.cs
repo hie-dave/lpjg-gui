@@ -38,8 +38,6 @@ using OxyLegendPlacement = OxyPlot.Legends.LegendPlacement;
 
 using LegendOrientation = LpjGuess.Core.Models.Graphing.LegendOrientation;
 using OxyLegendOrientation = OxyPlot.Legends.LegendOrientation;
-using System.Threading;
-using System.Diagnostics;
 
 namespace LpjGuess.Frontend.Utility;
 
@@ -84,7 +82,7 @@ public class OxyPlotConverter
             plot.Axes.Add(axis);
 
         // Add series.
-        int nseries = graph.Series.Sum(s => s.DataSource.GetNumSeries());
+        int nseries = graph.Series.Sum(s => dataProviderFactory.GetNumSeries(s.DataSource));
         StyleContext context = new StyleContext(nseries);
         foreach (ISeries series in graph.Series)
         {
