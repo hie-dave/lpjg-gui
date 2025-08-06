@@ -23,9 +23,19 @@ public class DataFilter : IDataFilter
     /// <summary>
     /// Create a new <see cref="DataFilter"/> instance.
     /// </summary>
-    public DataFilter()
+    public DataFilter() : this(StyleVariationStrategy.BySeries, [])
     {
-        FilteredValues = [];
+    }
+
+    /// <summary>
+    /// Create a new <see cref="DataFilter"/> instance.
+    /// </summary>
+    /// <param name="strategy">The strategy to use for filtering.</param>
+    /// <param name="filteredValues">The values to be filtered out.</param>
+    public DataFilter(StyleVariationStrategy strategy, List<SeriesIdentityBase> filteredValues)
+    {
+        Strategy = strategy;
+        FilteredValues = filteredValues;
     }
 
     /// <inheritdoc />

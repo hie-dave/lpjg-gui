@@ -1,8 +1,11 @@
+using LpjGuess.Core.Extensions;
 using LpjGuess.Core.Interfaces.Graphing;
+using LpjGuess.Core.Interfaces.Graphing.Style;
 using LpjGuess.Core.Models;
 using LpjGuess.Core.Models.Entities;
 using LpjGuess.Core.Models.Graphing;
 using LpjGuess.Core.Models.Graphing.Style;
+using LpjGuess.Core.Models.Graphing.Style.Identifiers;
 using LpjGuess.Core.Models.Importer;
 using LpjGuess.Core.Services;
 using LpjGuess.Frontend.Classes;
@@ -30,12 +33,21 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
     private readonly IInstructionFilesProvider insFilesProvider;
 
     /// <summary>
+    /// The experiment provider.
+    /// </summary>
+    private readonly IExperimentProvider experimentProvider;
+
+    /// <summary>
     /// Create a new <see cref="ModelOutputReader"/> instance.
     /// </summary>
     /// <param name="insFilesProvider">The instruction files provider.</param>
-    public ModelOutputReader(IInstructionFilesProvider insFilesProvider)
+    /// <param name="experimentProvider">The experiment provider.</param>
+    public ModelOutputReader(
+        IInstructionFilesProvider insFilesProvider,
+        IExperimentProvider experimentProvider)
     {
         this.insFilesProvider = insFilesProvider;
+        this.experimentProvider = experimentProvider;
     }
 
     /// <inheritdoc />
@@ -74,6 +86,166 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
     }
 
     /// <summary>
+    /// Get the set of valid series identities for the given strategy.
+    /// </summary>
+    /// <param name="model">The model output.</param>
+    /// <param name="strategy">The strategy to get identities for.</param>
+    /// <returns>The set of valid series identities.</returns>
+    public IEnumerable<SeriesIdentityBase> GetIdentities(ModelOutput model, StyleVariationStrategy strategy)
+    {
+        ISeriesIdentifier identifier = strategy.CreateIdentifier();
+        return identifier switch
+        {
+            ExperimentIdentifier e => GetIdentities(e),
+            SimulationIdentifier s => GetIdentities(s),
+            SeriesIdentifier se => GetIdentities(se),
+            LayerIdentifier l => GetIdentities(l, model),
+            GridcellIdentifier g => GetIdentities(g),
+            StandIdentifier s => GetIdentities(s),
+            PatchIdentifier p => GetIdentities(p),
+            IndividualIdentifier i => GetIdentities(i, model),
+            PftIdentifier pft => GetIdentities(pft),
+            _ => throw new ArgumentException($"Unknown strategy: {strategy}"),
+        };
+    }
+
+    /// <summary>
+    /// Get the identities of all known PFTs.
+    /// </summary>
+    /// <param name="identifier">The PFT identifier.</param>
+    /// <returns>The set of valid PFT identities.</returns>
+    private IEnumerable<SeriesIdentityBase> GetIdentities(PftIdentifier identifier)
+    {
+        return insFilesProvider.GetGeneratedInstructionFiles()
+            .SelectMany(f => GetSimulation(f).Helper.GetEnabledPfts())
+            .Select(identifier.Identify)
+            .Distinct();
+    }
+
+    /// <summary>
+    /// Get the identities of all known patches.
+    /// </summary>
+    /// <param name="identifier">The patch identifier.</param>
+    /// <returns>The set of valid patch identities.</returns>
+    private IEnumerable<SeriesIdentityBase> GetIdentities(PatchIdentifier identifier)
+    {
+        int maxNumPatches = insFilesProvider.GetGeneratedInstructionFiles()
+            .Select(f => GetSimulation(f).Helper.GetNumPatches())
+            .Max();
+        return Enumerable.Range(0, maxNumPatches)
+            .Select(identifier.Identify);
+    }
+
+    /// <summary>
+    /// Get the identities of all known stands.
+    /// </summary>
+    /// <param name="identifier">The stand identifier.</param>
+    /// <returns>The set of valid stand identities.</returns>
+    private IEnumerable<SeriesIdentityBase> GetIdentities(StandIdentifier identifier)
+    {
+        int maxNumStands = insFilesProvider.GetGeneratedInstructionFiles()
+            .Select(f => GetSimulation(f).Helper.GetEnabledStands().Count())
+            .Max();
+        return Enumerable.Range(0, maxNumStands)
+            .Select(identifier.Identify);
+    }
+
+    /// <summary>
+    /// Get the identities of all known gridcells.
+    /// </summary>
+    /// <param name="identifier">The gridcell identifier.</param>
+    /// <returns>The set of valid gridcell identities.</returns>
+    private IEnumerable<SeriesIdentityBase> GetIdentities(GridcellIdentifier identifier)
+    {
+        // Technically, the generated simulations could have different
+        // gridcells, even though this is probably very rare in practice.
+        return insFilesProvider.GetGeneratedInstructionFiles()
+            .SelectMany(f => GetSimulation(f).Gridlist.Gridcells)
+            .Select(identifier.Identify)
+            .Distinct();
+    }
+
+    /// <summary>
+    /// Get the identities of all known individuals.
+    /// </summary>
+    /// <param name="identifier">The individual identifier.</param>
+    /// <param name="model">The model output.</param>
+    /// <returns>The set of valid individual identities.</returns>
+    private IEnumerable<SeriesIdentityBase> GetIdentities(IndividualIdentifier identifier, ModelOutput model)
+    {
+        HashSet<SeriesIdentityBase> identities = [];
+        foreach (InstructionFile instructionFile in insFilesProvider.GetGeneratedInstructionFiles())
+        {
+            SimulationReader reader = GetSimulation(instructionFile);
+            var task = reader.ReadOutputFileAsync(model.OutputFileType, CancellationToken.None);
+            task.Wait();
+            Quantity quantity = task.Result;
+            Layer? xlayer = quantity.Layers.FirstOrDefault(l => l.Name == model.XAxisColumn);
+            if (xlayer is null)
+                throw new InvalidOperationException($"Layer {model.XAxisColumn} not found in output file {model.OutputFileType}");
+            // X and Y layers, from the same file, will always have the same
+            // indiv values.
+            identities.AddRange(xlayer.Data
+                .Select(dp => dp.Individual)
+                .Where(i => i.HasValue)
+                .Select(i => identifier.Identify(i!.Value))
+                .Distinct());
+        }
+        return identities;
+    }
+
+    /// <summary>
+    /// Get the identities of all known layers.
+    /// </summary>
+    /// <param name="identifier">The layer identifier.</param>
+    /// <param name="model">The model output.</param>
+    /// <returns>The set of valid layer identities.</returns>
+    private IEnumerable<SeriesIdentityBase> GetIdentities(LayerIdentifier identifier, ModelOutput model)
+    {
+        List<SeriesIdentityBase> identities = [];
+        foreach (InstructionFile instructionFile in insFilesProvider.GetGeneratedInstructionFiles())
+        {
+            SimulationReader reader = GetSimulation(instructionFile);
+            var task = reader.ReadOutputFileMetadataAsync(model.OutputFileType, CancellationToken.None);
+            task.Wait();
+            foreach (LayerMetadata layer in task.Result)
+                identities.Add(identifier.Identify(layer.Name));
+        }
+        return identities.Distinct();
+    }
+
+    /// <summary>
+    /// Get the identities of all known simulations.
+    /// </summary>
+    /// <param name="identifier">The simulation identifier.</param>
+    /// <returns>The set of valid simulation identities.</returns>
+    private IEnumerable<SeriesIdentityBase> GetIdentities(SimulationIdentifier identifier)
+    {
+        return insFilesProvider.GetGeneratedInstructionFiles()
+            .Select(f => f.SimulationName)
+            .Select(identifier.Identify)
+            .Distinct();
+    }
+
+    /// <summary>
+    /// Get the identities of all known experiments.
+    /// </summary>
+    /// <param name="identifier">The experiment identifier.</param>
+    /// <returns>The set of valid experiment identities.</returns>
+    private IEnumerable<SeriesIdentityBase> GetIdentities(ExperimentIdentifier identifier)
+    {
+        return experimentProvider.GetExperiments().Select(identifier.Identify);
+    }
+
+    private IEnumerable<SeriesIdentityBase> GetIdentities(SeriesIdentifier identifier)
+    {
+        // Unfortunately, there is no way to get the series identities from the
+        // model output without doing a full parse.
+        // TODO: look into caching
+        throw new NotImplementedException();
+    }
+
+    /// <summary>
     /// Read data for a single simulation.
     /// </summary>
     /// <param name="source">The model output.</param>
@@ -91,6 +263,10 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
             simulation.InsFile.ExperimentName,
             simulation.InsFile.SimulationName,
             new Gridcell(0, 0, ""), // FIXME - this will match against valid gridcells
+            "",
+            -1,
+            -1,
+            -1,
             "");
         if (source.Filters.Any(f => f.IsFiltered(proxyContext)))
             return [];
@@ -252,7 +428,8 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
             name = ylayer.Name;
 
         // Gridcell name should be included if there are multiple gridcells.
-        if (metadata.Level >= AggregationLevel.Gridcell && contexts.Select(c => c.Gridcell).Distinct().Count() > 1)
+        bool multiGridcells = GetIdentities(source, StyleVariationStrategy.ByGridcell).Count() > 1;
+        if (metadata.Level >= AggregationLevel.Gridcell && multiGridcells)
         {
             // Gridcell.Name will be (lat,lon) if the gridcell is unnamed.
             name = $"{context.Gridcell.Name}: {name}";

@@ -95,6 +95,19 @@ public partial class InstructionFileParser
     }
 
     /// <summary>
+    /// Get the names of all blocks with the specified name.
+    /// </summary>
+    /// <param name="blockType">Type of the block (e.g., "group", "pft")</param>
+    /// <returns>The names of all blocks with the specified type.</returns>
+    public IEnumerable<string> GetBlockNames(string blockType)
+    {
+        return items
+            .OfType<Block>()
+            .Where(b => b.Type == blockType)
+            .Select(b => b.Name);
+    }
+
+    /// <summary>
     /// Gets the value of a parameter within a specific block.
     /// </summary>
     /// <param name="blockType">Type of the block (e.g., "group", "pft")</param>

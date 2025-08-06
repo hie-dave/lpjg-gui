@@ -22,6 +22,16 @@ public class PatchIdentifier : ISeriesIdentifier
         return new NumericIdentity(context.Patch.Value);
     }
 
+    /// <summary>
+    /// Identify a series by its patch ID.
+    /// </summary>
+    /// <param name="patch">The ID of the patch.</param>
+    /// <returns>The series identity.</returns>
+    public SeriesIdentityBase Identify(int patch)
+    {
+        return new NumericIdentity(patch);
+    }
+
     /// <inheritdoc />
     public StyleVariationStrategy GetStrategy() => StyleVariationStrategy.ByPatch;
 }

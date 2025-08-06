@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using LpjGuess.Core.Utility;
 
 namespace LpjGuess.Core.Models;
 
@@ -7,6 +8,11 @@ namespace LpjGuess.Core.Models;
 /// </summary>
 public class Gridcell
 {
+    /// <summary>
+    /// Tolerance for floating point comparison.
+    /// </summary>
+    private readonly double eps;
+
     /// <summary>
     /// Optional name of the gridcell.
     /// </summary>
@@ -25,7 +31,19 @@ public class Gridcell
     /// <summary>
     /// Create a new <see cref="Gridcell"/> instance.
     /// </summary>
-    public Gridcell(double latitude, double longitude, string? name = null)
+    /// <param name="latitude">The latitude of the gridcell.</param>
+    /// <param name="longitude">The longitude of the gridcell.</param>
+    /// <param name="name">Optional name of the gridcell.</param>
+    /// <param name="eps">Tolerance for floating point comparison.</param>
+    /// <remarks>
+    /// Default tolerance of 1e-2, because coordinates in output files are
+    /// usually rounded to 2 decimal places.
+    /// </remarks>
+    public Gridcell(
+        double latitude,
+        double longitude,
+        string? name = null,
+        double eps = 1e-2)
     {
         if (latitude < -90 || latitude > 90)
             throw new ArgumentException("Latitude must be between -90 and 90", nameof(latitude));
@@ -35,6 +53,7 @@ public class Gridcell
         Latitude = latitude;
         Longitude = longitude;
         this.name = name;
+        this.eps = eps;
     }
 
     /// <summary>
@@ -48,8 +67,8 @@ public class Gridcell
         if (obj is not Gridcell other)
             return false;
 
-        return Latitude == other.Latitude &&
-               Longitude == other.Longitude;
+        return MathUtility.AreEqual(Latitude, other.Latitude, eps) &&
+               MathUtility.AreEqual(Longitude, other.Longitude, eps);
     }
 
     /// <inheritdoc />

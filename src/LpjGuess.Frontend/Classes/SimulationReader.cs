@@ -60,10 +60,11 @@ public class SimulationReader
         var factory = new LoggerFactory();
         var logger = new Logger<OutputFileTypeResolver>(factory);
         var logger2 = new Logger<ModelOutputParser>(factory);
+        var logger3 = new Logger<InstructionFileHelper>(factory);
 
         // TODO: proper async support.
         Parser = InstructionFileParser.FromFile(insFile.FileName);
-        Helper = new InstructionFileHelper(Parser);
+        Helper = new InstructionFileHelper(Parser, logger3);
 
         string gridlist = Helper.GetGridlist();
         Gridlist = new GridlistParser(gridlist);

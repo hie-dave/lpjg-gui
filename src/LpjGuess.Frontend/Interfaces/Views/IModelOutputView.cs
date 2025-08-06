@@ -1,4 +1,5 @@
 using LpjGuess.Core.Models;
+using LpjGuess.Core.Models.Graphing.Style;
 using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.Interfaces.Events;
 
@@ -16,6 +17,17 @@ public interface IModelOutputView : IDataSourceView<ModelOutput>
     Event<OutputFile> OnFileTypeChanged { get; }
 
     /// <summary>
+    /// Event which is raised when the user wants to add a filter.
+    /// </summary>
+    Event OnAddFilter { get; }
+
+    /// <summary>
+    /// Event which is raised when the user wants to remove a filter. The event
+    /// parameter is the name of the filter to be removed.
+    /// </summary>
+    Event<StyleVariationStrategy> OnRemoveFilter { get; }
+
+    /// <summary>
     /// Populate the view with the given data source.
     /// </summary>
     /// <param name="fileTypes">The file types to display in the file type dropdown.</param>
@@ -24,11 +36,13 @@ public interface IModelOutputView : IDataSourceView<ModelOutput>
     /// <param name="fileType">The selected file type.</param>
     /// <param name="xColumn">The selected x-axis column.</param>
     /// <param name="selectedColumns">The selected y-axis columns.</param>
-    public void Populate(
+    /// <param name="filterViews">The views for the filters of this model output.</param>
+    void Populate(
         IEnumerable<OutputFile> fileTypes,
         IEnumerable<string> xcols,
         IEnumerable<string> ycols,
         OutputFile fileType,
         string xColumn,
-        IEnumerable<string> selectedColumns);
+        IEnumerable<string> selectedColumns,
+        IEnumerable<IFilterView> filterViews);
 }

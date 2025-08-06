@@ -172,8 +172,16 @@ public abstract class SeriesViewBase<T> : ViewBase<Box>, ISeriesView<T> where T 
         // FIXME: Should probably remove any existing data source views.
         AddControl("Data source type", dataSourceTypeDropdown.GetWidget());
         dataSourceTypeDropdown.OnSelectionChanged.ConnectTo(OnDataSourceTypeChanged);
-        foreach (INamedView namedView in view.CreateConfigurationViews())
+        foreach (INamedView namedView in view.GetGridConfigViews())
             AddControl(namedView.Name, namedView.View.GetWidget());
+
+        // FIXME: Should remove existing extra config views.
+        foreach (INamedView named in view.GetExtraConfigViews())
+        {
+            Frame frame = Frame.New(named.Name);
+            frame.SetChild(named.View.GetWidget());
+            widget.Append(frame);
+        }
     }
 
     /// <inheritdoc />

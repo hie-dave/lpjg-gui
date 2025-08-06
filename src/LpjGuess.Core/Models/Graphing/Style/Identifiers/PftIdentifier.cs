@@ -1,4 +1,3 @@
-using LpjGuess.Core.Interfaces.Graphing;
 using LpjGuess.Core.Interfaces.Graphing.Style;
 
 namespace LpjGuess.Core.Models.Graphing.Style.Identifiers;
@@ -18,7 +17,17 @@ public class PftIdentifier : ISeriesIdentifier
             throw new InvalidOperationException("Varying by PFT is only valid for cohort-level model outputs");
 
         // TODO: should this take the gridcell/stand/patch into account?
-        return new StringIdentity(context.Pft);
+        return Identify(context.Pft);
+    }
+
+    /// <summary>
+    /// Identify a series by its PFT.
+    /// </summary>
+    /// <param name="pft">The PFT.</param>
+    /// <returns>The series identity.</returns>
+    public SeriesIdentityBase Identify(string pft)
+    {
+        return new StringIdentity(pft);
     }
 
     /// <inheritdoc />

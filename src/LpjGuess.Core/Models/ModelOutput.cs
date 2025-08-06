@@ -138,6 +138,8 @@ public class ModelOutput : IDataSource
     private IEnumerable<StyleVariationStrategy> GetAllowedStrategies(AggregationLevel level)
     {
         List<StyleVariationStrategy> strategies = [
+            StyleVariationStrategy.ByExperiment,
+            StyleVariationStrategy.BySimulation,
             StyleVariationStrategy.BySeries,
             StyleVariationStrategy.ByLayer
         ];

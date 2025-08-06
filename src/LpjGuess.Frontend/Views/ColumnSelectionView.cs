@@ -34,14 +34,55 @@ public class ColumnSelectionView : ViewBase<Button>
     private readonly Button clearAllButton;
 
     /// <summary>
+    /// The label at the top of the popover.
+    /// </summary>
+    private readonly Label label;
+
+    /// <summary>
     /// The columns which were selected by the last call to <see cref="Select"/>.
     /// </summary>
     private List<string> selectedColumns;
 
     /// <summary>
+    /// The text on the button when no items are selected.
+    /// </summary>
+    private string buttonTextNoSelection = "Select Y-axis columns...";
+
+    /// <summary>
+    /// The text on the button when multiple items are selected.
+    /// </summary>
+    private Func<int, string> buttonTextMultipleSelected = count => $"{count} columns selected";
+
+    /// <summary>
     /// The event that is raised when the selection changes.
     /// </summary>
     public Event<IEnumerable<string>> OnSelectionChanged { get; private init; }
+
+    /// <summary>
+    /// Gets or sets the text on the button when no items are selected.
+    /// </summary>
+    public string ButtonTextNoSelection
+    {
+        get => buttonTextNoSelection;
+        set
+        {
+            buttonTextNoSelection = value;
+            UpdateButtonLabel();
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the function that returns the text on the button when multiple items are selected.
+    /// </summary>
+    public Func<int, string> ButtonTextMultipleSelected
+    {
+        get => buttonTextMultipleSelected;
+        set
+        {
+            buttonTextMultipleSelected = value;
+            UpdateButtonLabel();
+        }
+    }
 
     /// <summary>
     /// Create a new <see cref="ColumnSelectionView"/> instance.
@@ -52,7 +93,7 @@ public class ColumnSelectionView : ViewBase<Button>
         OnSelectionChanged = new Event<IEnumerable<string>>();
 
         // Create the dropdown button
-        widget.SetLabel("Select Y-axis columns...");
+        widget.SetLabel(ButtonTextNoSelection);
         widget.Hexpand = true;
 
         // Create the popover
@@ -68,7 +109,7 @@ public class ColumnSelectionView : ViewBase<Button>
         popoverContent.MarginBottom = 12;
 
         // Label at the top
-        var label = Label.New("Select columns to plot:");
+        label = Label.New("Select columns to plot:");
         popoverContent.Append(label);
 
         // Scrolled window for checkboxes
@@ -110,8 +151,11 @@ public class ColumnSelectionView : ViewBase<Button>
     {
         // Clear existing checkboxes
         Widget? child;
-        while ( (child = container.GetFirstChild()) != null)
+        while ((child = container.GetFirstChild()) != null)
+        {
             container.Remove(child);
+            child.Dispose();
+        }
         columnCheckboxes.Clear();
 
         // Add checkboxes for each column.
@@ -160,6 +204,15 @@ public class ColumnSelectionView : ViewBase<Button>
             .Select(kvp => kvp.Key);
     }
 
+    /// <summary>
+    /// Sets the text displayed on the label at the top of the popover.
+    /// </summary>
+    /// <param name="text">The text to display on the label.</param>
+    public void SetLabelText(string text)
+    {
+        label.SetLabel(text);
+    }
+
     /// <inheritdoc />
     public override void Dispose()
     {
@@ -182,11 +235,11 @@ public class ColumnSelectionView : ViewBase<Button>
         var selectedCount = GetSelectedColumns().Count();
 
         if (selectedCount == 0)
-            widget.SetLabel("Select Y-axis columns...");
+            widget.SetLabel(buttonTextNoSelection);
         else if (selectedCount == 1)
             widget.SetLabel(GetSelectedColumns().First());
         else
-            widget.SetLabel($"{selectedCount} columns selected");
+            widget.SetLabel(buttonTextMultipleSelected(selectedCount));
     }
 
     /// <summary>

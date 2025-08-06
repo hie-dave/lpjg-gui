@@ -19,7 +19,17 @@ public class IndividualIdentifier : ISeriesIdentifier
             throw new InvalidOperationException("Varying by individual is only valid for individual-level model outputs");
 
         // TODO: should this take the gridcell/stand/patch into account?
-        return new NumericIdentity(context.Individual.Value);
+        return Identify(context.Individual.Value);
+    }
+
+    /// <summary>
+    /// Identify the individual with the given ID.
+    /// </summary>
+    /// <param name="individual">The ID of the individual.</param>
+    /// <returns>The series identity.</returns>
+    public SeriesIdentityBase Identify(int individual)
+    {
+        return new NumericIdentity(individual);
     }
 
     /// <inheritdoc />

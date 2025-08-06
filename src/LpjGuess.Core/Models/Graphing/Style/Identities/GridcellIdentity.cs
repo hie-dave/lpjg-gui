@@ -10,6 +10,11 @@ namespace LpjGuess.Core.Models.Graphing.Style.Identities;
 public class GridcellIdentity : SeriesIdentityBase
 {
     /// <summary>
+    /// Tolerance to use for floating point comparisons.
+    /// </summary>
+    private readonly double eps;
+
+    /// <summary>
     /// The latitude of the gridcell.
     /// </summary>
     public double Latitude { get; private init; }
@@ -30,8 +35,15 @@ public class GridcellIdentity : SeriesIdentityBase
     /// <param name="latitude">The latitude of the gridcell.</param>
     /// <param name="longitude">The longitude of the gridcell.</param>
     /// <param name="name">The name of the gridcell.</param>
-    public GridcellIdentity(double latitude, double longitude, string? name = null)
+    /// <param name="eps">The tolerance to use for floating point comparisons.</param>
+    /// <remarks>
+    /// Using a default tolerance of 1e-2, because most output files round their
+    /// coordinates to 2 decimal places.
+    /// </remarks>
+    public GridcellIdentity(
+        double latitude, double longitude, string? name = null, double eps = 1e-2)
     {
+        this.eps = eps;
         Latitude = latitude;
         Longitude = longitude;
         Name = name;
@@ -43,8 +55,8 @@ public class GridcellIdentity : SeriesIdentityBase
         if (other is not GridcellIdentity otherIdentifier)
             return false;
 
-        return MathUtility.AreEqual(Latitude, otherIdentifier.Latitude) &&
-               MathUtility.AreEqual(Longitude, otherIdentifier.Longitude);
+        return MathUtility.AreEqual(Latitude, otherIdentifier.Latitude, eps) &&
+               MathUtility.AreEqual(Longitude, otherIdentifier.Longitude, eps);
     }
 
     /// <inheritdoc />

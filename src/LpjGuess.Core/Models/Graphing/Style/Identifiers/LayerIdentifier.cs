@@ -13,7 +13,17 @@ public class LayerIdentifier : ISeriesIdentifier
     {
         // TODO: should this take the gridcell/stand/patch into account?
         lock (this)
-            return new StringIdentity(context.Layer);
+            return Identify(context.Layer);
+    }
+
+    /// <summary>
+    /// Create a series identity for a given layer.
+    /// </summary>
+    /// <param name="layerName">The name of the layer.</param>
+    /// <returns>The series identity.</returns>
+    public SeriesIdentityBase Identify(string layerName)
+    {
+        return new StringIdentity(layerName);
     }
 
     /// <inheritdoc />

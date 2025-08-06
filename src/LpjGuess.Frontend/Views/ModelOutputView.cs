@@ -1,5 +1,7 @@
 using Gtk;
+using LpjGuess.Core.Extensions;
 using LpjGuess.Core.Models;
+using LpjGuess.Core.Models.Graphing.Style;
 using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.Events;
 using LpjGuess.Frontend.Extensions;
@@ -28,11 +30,22 @@ public class ModelOutputView : IModelOutputView
     /// </summary>
     private readonly ColumnSelectionView yAxisColumnView;
 
+    /// <summary>
+    /// The view for selecting the filters.
+    /// </summary>
+    private readonly ListBoxPopoverView filtersView;
+
     /// <inheritdoc/>
     public Event<IModelChange<ModelOutput>> OnEditDataSource { get; private init; }
 
     /// <inheritdoc/>
     public Event<OutputFile> OnFileTypeChanged { get; private init; }
+
+    /// <inheritdoc/>
+    public Event OnAddFilter => filtersView.OnAdd;
+
+    /// <inheritdoc/>
+    public Event<StyleVariationStrategy> OnRemoveFilter { get; private init; }
 
     /// <summary>
     /// Create a new <see cref="ModelOutputView"/> instance.
@@ -41,6 +54,7 @@ public class ModelOutputView : IModelOutputView
     {
         OnEditDataSource = new Event<IModelChange<ModelOutput>>();
         OnFileTypeChanged = new Event<OutputFile>();
+        OnRemoveFilter = new Event<StyleVariationStrategy>();
 
         fileTypeView = new OutputFilesDropDownView();
         fileTypeView.GetWidget().Hexpand = true;
@@ -53,15 +67,26 @@ public class ModelOutputView : IModelOutputView
         yAxisColumnView = new ColumnSelectionView();
         yAxisColumnView.GetWidget().Hexpand = true;
         yAxisColumnView.OnSelectionChanged.ConnectTo(OnYAxisColumnChanged);
+
+        filtersView = new ListBoxPopoverView();
+        filtersView.OnRemove.ConnectTo(OnFilterRemoved);
     }
 
     /// <inheritdoc/>
-    public IEnumerable<INamedView> CreateConfigurationViews()
+    public IEnumerable<INamedView> GetGridConfigViews()
     {
         return [
             new NamedView(fileTypeView, "Output file"),
             new NamedView(xAxisColumnView, "X-axis column"),
             new NamedView(yAxisColumnView, "Y-axis columns")
+        ];
+    }
+
+    /// <inheritdoc/>
+    public IEnumerable<INamedView> GetExtraConfigViews()
+    {
+        return [
+            new NamedView(filtersView, "Filters")
         ];
     }
 
@@ -80,7 +105,8 @@ public class ModelOutputView : IModelOutputView
                          IEnumerable<string> ycols,
                          OutputFile fileType,
                          string xColumn,
-                         IEnumerable<string> selectedColumns)
+                         IEnumerable<string> selectedColumns,
+                         IEnumerable<IFilterView> filterViews)
     {
         fileTypeView.Populate(fileTypes);
         xAxisColumnView.Populate(xcols);
@@ -90,6 +116,22 @@ public class ModelOutputView : IModelOutputView
         fileTypeView.Select(fileType);
         xAxisColumnView.Select(xColumn);
         yAxisColumnView.Select(selectedColumns);
+
+        filtersView.Populate(filterViews
+            .Select(v => new NamedView(v, Enum.GetName(v.Strategy)!.PascalToHumanCase())));
+    }
+
+    /// <summary>
+    /// Called when the user removes a filter. Propagates the event back up to the
+    /// owner of this view.
+    /// </summary>
+    /// <param name="name">The name of the filter to remove.</param>
+    private void OnFilterRemoved(string name)
+    {
+        // TODO: Double check this. Unsure how reliable this is in principle.
+        string enumName = name.Replace(" ", "");
+        StyleVariationStrategy strategy = Enum.Parse<StyleVariationStrategy>(enumName);
+        OnRemoveFilter.Invoke(strategy);
     }
 
     /// <summary>

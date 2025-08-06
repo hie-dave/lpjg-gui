@@ -17,7 +17,17 @@ public class SimulationIdentifier : ISeriesIdentifier
             // this strategy for series on which it is valid.
             throw new InvalidOperationException("Varying by simulation is only valid for model output series");
 
-        return new StringIdentity(context.SimulationName);
+        return Identify(context.SimulationName);
+    }
+
+    /// <summary>
+    /// Create a series identity for a given simulation.
+    /// </summary>
+    /// <param name="simulationName">The name of the simulation.</param>
+    /// <returns>The series identity.</returns>
+    public SeriesIdentityBase Identify(string simulationName)
+    {
+        return new StringIdentity(simulationName);
     }
 
     /// <inheritdoc />

@@ -10,10 +10,20 @@ namespace LpjGuess.Frontend.Interfaces.Views;
 public interface IDataSourceView : IView
 {
     /// <summary>
-    /// Creates the collection of named views needed to configure this data source type.
+    /// Gets the views needed to configure this data source type, which are
+    /// suitable for adding to a grid.
     /// </summary>
-    /// <returns>An enumerable of named views for configuring the data source.</returns>
-    IEnumerable<INamedView> CreateConfigurationViews();
+    /// <returns>An enumerable of named views for configuring the data
+    /// source.</returns>
+    IEnumerable<INamedView> GetGridConfigViews();
+
+    /// <summary>
+    /// Gets the views needed to configure this data source type, which are
+    /// not suitable for adding to a grid.
+    /// </summary>
+    /// <returns>An enumerable of named views for configuring the data
+    /// source.</returns>
+    IEnumerable<INamedView> GetExtraConfigViews();
 }
 
 /// <summary>

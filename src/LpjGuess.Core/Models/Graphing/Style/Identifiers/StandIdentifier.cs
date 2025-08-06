@@ -19,7 +19,17 @@ public class StandIdentifier : ISeriesIdentifier
             throw new InvalidOperationException("Varying by stand is only valid for stand-level model outputs");
 
         // TODO: should this take the gridcell into account?
-        return new NumericIdentity(context.Stand.Value);
+        return Identify(context.Stand.Value);
+    }
+
+    /// <summary>
+    /// Identify a series by its stand ID.
+    /// </summary>
+    /// <param name="stand">The stand ID.</param>
+    /// <returns>The series identity.</returns>
+    public SeriesIdentityBase Identify(int stand)
+    {
+        return new NumericIdentity(stand);
     }
 
     /// <inheritdoc />

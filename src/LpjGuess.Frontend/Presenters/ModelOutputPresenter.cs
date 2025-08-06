@@ -12,6 +12,15 @@ using LpjGuess.Frontend.Interfaces.Events;
 using LpjGuess.Frontend.Interfaces.Presenters;
 using LpjGuess.Frontend.Interfaces.Views;
 using LpjGuess.Frontend.DependencyInjection;
+using LpjGuess.Core.Models.Graphing.Style;
+using LpjGuess.Frontend.Views.Dialogs;
+using LpjGuess.Core.Models.Graphing;
+using LpjGuess.Core.Extensions;
+using LpjGuess.Core.Interfaces.Graphing;
+using LpjGuess.Core.Interfaces.Graphing.Style;
+using LpjGuess.Frontend.Data;
+using LpjGuess.Core.Models.Graphing.Style.Identifiers;
+using LpjGuess.Frontend.Extensions;
 
 namespace LpjGuess.Frontend.Presenters;
 
@@ -26,6 +35,21 @@ public class ModelOutputPresenter : PresenterBase<IModelOutputView, ModelOutput>
     /// The instruction files in the workspace.
     /// </summary>
     private readonly IInstructionFilesProvider instructionFilesProvider;
+
+    /// <summary>
+    /// The presenter factory to use for creating filter presenters.
+    /// </summary>
+    private readonly IPresenterFactory presenterFactory;
+
+    /// <summary>
+    /// The reader to use for reading data from the data source.
+    /// </summary>
+    private readonly ModelOutputReader reader;
+
+    /// <summary>
+    /// The filter presenters.
+    /// </summary>
+    private List<IFilterPresenter> filterPresenters;
 
     /// <inheritdoc/>
     public ModelOutput DataSource { get; private init; }
@@ -46,17 +70,28 @@ public class ModelOutputPresenter : PresenterBase<IModelOutputView, ModelOutput>
     /// <param name="model">The data source being edited.</param>
     /// <param name="instructionFilesProvider">The instruction files provider.</param>
     /// <param name="registry">The command registry to use for command execution.</param>
+    /// <param name="presenterFactory">The presenter factory to use for creating filter presenters.</param>
+    /// <param name="reader">The reader to use for reading data from the data source.</param>
     public ModelOutputPresenter(
         IModelOutputView view,
         ModelOutput model,
         IInstructionFilesProvider instructionFilesProvider,
-        ICommandRegistry registry) : base(view, model, registry)
+        ICommandRegistry registry,
+        IPresenterFactory presenterFactory,
+        ModelOutputReader reader) : base(view, model, registry)
     {
+        filterPresenters = new List<IFilterPresenter>();
         DataSource = model;
         OnDataSourceChanged = new Event<ICommand>();
+
+        this.instructionFilesProvider = instructionFilesProvider;
+        this.presenterFactory = presenterFactory;
+        this.reader = reader;
+
         view.OnEditDataSource.ConnectTo(OnEditDataSource);
         view.OnFileTypeChanged.ConnectTo(OnFileTypeChanged);
-        this.instructionFilesProvider = instructionFilesProvider;
+        view.OnAddFilter.ConnectTo(OnAddFilter);
+        view.OnRemoveFilter.ConnectTo(OnRemoveFilter);
 
         RefreshView();
     }
@@ -92,13 +127,32 @@ public class ModelOutputPresenter : PresenterBase<IModelOutputView, ModelOutput>
             .Where(meta.Layers.IsDataLayer)
             .Except(["Date"]);
 
+        filterPresenters.ForEach(p => p.Dispose());
+        filterPresenters.Clear();
+
+        filterPresenters = model.Filters
+            .Select(presenterFactory.CreatePresenter<IFilterPresenter>)
+            .ToList();
+
+        filterPresenters.ForEach(p => p.Populate(reader.GetIdentities(model, p.Model.Strategy)));
+        filterPresenters.ForEach(p => p.OnFilterChanged.ConnectTo(OnDataSourceChanged));
+
         view.Populate(
             fileTypes,
             columns,
             ycols,
             outputFileType,
             DataSource.XAxisColumn,
-            DataSource.YAxisColumns);
+            DataSource.YAxisColumns,
+            filterPresenters.Select(p => p.GetView()));
+    }
+
+    /// <inheritdoc/>
+    public override void Dispose()
+    {
+        filterPresenters.ForEach(p => p.Dispose());
+        filterPresenters.Clear();
+        base.Dispose();
     }
 
     /// <summary>
@@ -183,6 +237,70 @@ public class ModelOutputPresenter : PresenterBase<IModelOutputView, ModelOutput>
     }
 
     /// <summary>
+    /// Get the set of valid series contexts for the data source.
+    /// </summary>
+    /// <returns>The set of valid series contexts.</returns>
+    private IEnumerable<SeriesContext> GetContexts()
+    {
+        // fixme - insanely inefficient
+        Task<IEnumerable<SeriesData>> task = reader.ReadAsync(model, CancellationToken.None);
+        task.Wait();
+        return task.Result.Select(s => s.Context);
+    }
+
+    /// <summary>
+    /// Get a list of allowed filter strategies.
+    /// </summary>
+    /// <returns>A list of allowed filter strategies.</returns>
+    private IEnumerable<StyleVariationStrategy> GetAllowedFilterStrategies()
+    {
+        // Doesn't make sense to filter by "fixed"
+        // Filtering by series is not yet implemented in an efficient way
+        // Filtering by layer doesn't make sense because the model output works
+        // by having the user explicitly choose which layers to plot.
+        return model.GetAllowedStyleVariationStrategies()
+            .Except([
+                StyleVariationStrategy.Fixed,
+                StyleVariationStrategy.BySeries,
+                StyleVariationStrategy.ByLayer])
+            .Except(model.Filters.OfType<DataFilter>().Select(f => f.Strategy))
+            .ToList();
+    }
+
+    /// <summary>
+    /// Get the filter with the given strategy.
+    /// </summary>
+    /// <param name="strategy">The strategy of the filter to get.</param>
+    /// <returns>The filter with the given strategy.</returns>
+    private IDataFilter GetFilter(StyleVariationStrategy strategy)
+    {
+        DataFilter? filter = model.Filters.OfType<DataFilter>().FirstOrDefault(f => f.Strategy == strategy);
+        if (filter == null)
+            throw new InvalidOperationException($"No filter with strategy {strategy} found.");
+        return filter;
+    }
+
+    /// <summary>
+    /// Get a description for the given filter strategy.
+    /// </summary>
+    /// <param name="strategy">The filter strategy.</param>
+    /// <returns>A description for the filter strategy.</returns>
+    private string GetFilterDescription(StyleVariationStrategy strategy)
+    {
+        return $"Filter {GetFilterName(strategy)}";
+    }
+
+    /// <summary>
+    /// Get a name for the given filter strategy.
+    /// </summary>
+    /// <param name="strategy">The filter strategy.</param>
+    /// <returns>A name for the filter strategy.</returns>
+    private string GetFilterName(StyleVariationStrategy strategy)
+    {
+        return Enum.GetName(strategy)!.PascalToHumanCase();
+    }
+
+    /// <summary>
     /// Called when the data source has been changed by the user.
     /// </summary>
     /// <param name="change">The action to perform on the data source.</param>
@@ -225,5 +343,44 @@ public class ModelOutputPresenter : PresenterBase<IModelOutputView, ModelOutput>
 
         ICommand command = new CompositeCommand(commands);
         OnDataSourceChanged.Invoke(command);
+    }
+
+    /// <summary>
+    /// Called when the user wants to add a filter.
+    /// </summary>
+    private void OnAddFilter()
+    {
+        AskUserDialog.RunFor(
+            GetAllowedFilterStrategies(),
+            GetFilterName,
+            GetFilterDescription,
+            "Select a Filter Type",
+            "Add",
+            OnAddFilterOfType);
+    }
+
+    /// <summary>
+    /// Called when the user wants to add a filter of the given strategy.
+    /// </summary>
+    /// <param name="strategy">The strategy to use for filtering.</param>
+    private void OnAddFilterOfType(StyleVariationStrategy strategy)
+    {
+        AddElementCommand<IDataFilter> command = new(
+            model.Filters,
+            new DataFilter(strategy, []));
+        OnDataSourceChanged.Invoke(command);
+        RefreshView();
+    }
+
+    /// <summary>
+    /// Called when the user wants to remove a filter.
+    /// </summary>
+    /// <param name="strategy">The strategy of the filter to remove.</param>
+    private void OnRemoveFilter(StyleVariationStrategy strategy)
+    {
+        IDataFilter filter = GetFilter(strategy);
+        RemoveElementCommand<IDataFilter> command = new(model.Filters, filter);
+        OnDataSourceChanged.Invoke(command);
+        RefreshView();
     }
 }

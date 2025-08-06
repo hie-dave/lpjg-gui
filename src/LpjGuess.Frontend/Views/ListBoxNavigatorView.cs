@@ -36,12 +36,17 @@ public abstract class ListBoxNavigatorView : ViewBase<Box>
         /// <summary>
         /// The view displaying the widget in the stack.
         /// </summary>
-        public IView FactorView { get; }
+        public IView ContentView { get; }
 
         /// <summary>
         /// Event which is raised when the user wants to remove the factor.
         /// </summary>
         public Event OnRemove { get; private init; }
+
+        /// <summary>
+        /// The ID of the row.
+        /// </summary>
+        public Guid Id { get; private init; }
 
         /// <summary>
         /// Create a new <see cref="RowWrapper"/> instance.
@@ -52,7 +57,7 @@ public abstract class ListBoxNavigatorView : ViewBase<Box>
         public RowWrapper(string name, IView view, Guid id) : base(new ListBoxRow())
         {
             OnRemove = new Event();
-            FactorView = view;
+            ContentView = view;
             label = Label.New(name);
             label.Halign = Align.Start;
             label.Hexpand = true;
@@ -75,6 +80,7 @@ public abstract class ListBoxNavigatorView : ViewBase<Box>
             // not (necessarily) rendered anywhere in the UI.
             widget.Child = rowBox;
             widget.Name = id.ToString();
+            Id = id;
 
             // Note that the ListBox has Hexpand = false, so this will not cause the
             // row widgets to grow beyond the width of the sidebar.
@@ -159,6 +165,16 @@ public abstract class ListBoxNavigatorView : ViewBase<Box>
     }
 
     /// <summary>
+    /// Whether this view should allow elements to be added. If set to false,
+    /// the add button will still be visible, but insensitive.
+    /// </summary>
+    public bool CanAdd
+    {
+        get => addButton.Sensitive;
+        set => addButton.Sensitive = value;
+    }
+
+    /// <summary>
     /// Create a new <see cref="ListBoxNavigatorView"/> instance.
     /// </summary>
     public ListBoxNavigatorView() : base(new Box())
@@ -189,7 +205,7 @@ public abstract class ListBoxNavigatorView : ViewBase<Box>
     /// Populate the view.
     /// </summary>
     /// <param name="views">The views to populate the view with.</param>
-    public void Populate(IEnumerable<INamedView> views)
+    public virtual void Populate(IEnumerable<INamedView> views)
     {
         // Remove the existing contents of the listbox.
         listBox.RemoveAll();
@@ -210,7 +226,7 @@ public abstract class ListBoxNavigatorView : ViewBase<Box>
     public void Rename(IView view, string name)
     {
         foreach (RowWrapper existingView in rows)
-            if (existingView.FactorView == view)
+            if (existingView.ContentView == view)
                 existingView.SetName(name);
     }
 
@@ -238,6 +254,35 @@ public abstract class ListBoxNavigatorView : ViewBase<Box>
     /// <param name="widget">The widget to add.</param>
     /// <returns>A Guid associated with the widget.</returns>
     protected abstract Widget AddChild(Widget widget);
+
+    /// <summary>
+    /// Get the row widget corresponding to the given content widget.
+    /// </summary>
+    /// <param name="contentWidget">A content widget.</param>
+    /// <returns>The row widget corresponding to the given content widget.</returns>
+    protected Widget GetRowWidget(Widget contentWidget)
+    {
+        KeyValuePair<Guid, Widget>? row = children.FirstOrDefault(c => c.Value == contentWidget);
+        if (row == null)
+            throw new ArgumentException("Content widget not found.");
+
+        // row.Value dereferences the nullable KeyValuePair.
+        return GetRowWidget(row.Value.Key);
+    }
+
+    /// <summary>
+    /// Get the row widget with the specified ID.
+    /// </summary>
+    /// <param name="id">The ID of the row widget.</param>
+    /// <returns>The row widget with the specified ID.</returns>
+    /// <exception cref="ArgumentException">Thrown if the row widget is not found.</exception>
+    private Widget GetRowWidget(Guid id)
+    {
+        RowWrapper? row = rows.FirstOrDefault(r => r.Id == id);
+        if (row == null)
+            throw new ArgumentException("Content widget not found.");
+        return row.GetWidget();
+    }
 
     /// <summary>
     /// Add a view to the listbox and stack.

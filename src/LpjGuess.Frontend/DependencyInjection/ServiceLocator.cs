@@ -53,6 +53,7 @@ public class ServiceLocator : IServiceLocator
         services.AddTransient<IDataProviderFactory, DataProviderFactory>();
         services.AddTransient<OxyPlotConverter>();
         services.AddTransient<IDataProvider<ModelOutput>, ModelOutputReader>();
+        services.AddTransient<ModelOutputReader>();
 
         // Register views.
         // TODO: make this configurable.

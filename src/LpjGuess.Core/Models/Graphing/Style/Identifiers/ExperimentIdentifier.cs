@@ -1,4 +1,5 @@
 using LpjGuess.Core.Interfaces.Graphing.Style;
+using LpjGuess.Core.Models.Factorial;
 
 namespace LpjGuess.Core.Models.Graphing.Style.Identifiers;
 
@@ -12,6 +13,16 @@ public class ExperimentIdentifier : ISeriesIdentifier
     public SeriesIdentityBase Identify(SeriesContext context)
     {
         return new StringIdentity(context.ExperimentName);
+    }
+
+    /// <summary>
+    /// Create a series identity for a given experiment.
+    /// </summary>
+    /// <param name="experiment">The experiment.</param>
+    /// <returns>The series identity.</returns>
+    public SeriesIdentityBase Identify(Experiment experiment)
+    {
+        return new StringIdentity(experiment.Name);
     }
 
     /// <inheritdoc />
