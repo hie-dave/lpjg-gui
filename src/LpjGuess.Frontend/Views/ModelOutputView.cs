@@ -69,6 +69,7 @@ public class ModelOutputView : IModelOutputView
         yAxisColumnView.OnSelectionChanged.ConnectTo(OnYAxisColumnChanged);
 
         filtersView = new ListBoxPopoverView();
+        filtersView.AddText = "Add Filter";
         filtersView.OnRemove.ConnectTo(OnFilterRemoved);
     }
 
