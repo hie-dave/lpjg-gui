@@ -10,7 +10,7 @@ clean:
 	rm -rf coverage src/LpjGuess.Tests/TestResults
 
 run:
-	dotnet run --project src/LpjGuess.Frontend $(SLN)
+	dotnet run --project src/LpjGuess.Frontend
 
 check:
 	dotnet test --collect:"XPlat Code Coverage" $(SLN)

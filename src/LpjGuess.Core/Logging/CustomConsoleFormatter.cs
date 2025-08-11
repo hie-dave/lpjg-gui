@@ -13,7 +13,7 @@ public class CustomConsoleFormatter : ConsoleFormatter
     /// <summary>
     /// The options for the formatter.
     /// </summary>
-    private readonly IOptionsMonitor<CustomConsoleFormatterOptions> _options;
+    private readonly IOptionsMonitor<CustomConsoleFormatterOptions> options;
 
     /// <summary>
     /// Create a new <see cref="CustomConsoleFormatter"/> instance.
@@ -22,7 +22,14 @@ public class CustomConsoleFormatter : ConsoleFormatter
     public CustomConsoleFormatter(IOptionsMonitor<CustomConsoleFormatterOptions> options)
         : base(CustomConsoleFormatterOptions.FormatterName)
     {
-        _options = options;
+        this.options = options;
+        this.options.OnChange((opts, _) => ValidateOptions(opts));
+    }
+
+    private static void ValidateOptions(CustomConsoleFormatterOptions opts)
+    {
+        if (opts.TimestampFormat != null && !opts.TimestampFormat.EndsWith(' '))
+            opts.TimestampFormat += ' ';
     }
 
     /// <inheritdoc />
@@ -35,9 +42,10 @@ public class CustomConsoleFormatter : ConsoleFormatter
         if (message == null)
             return;
 
-        CustomConsoleFormatterOptions options = _options.CurrentValue;
+        CustomConsoleFormatterOptions options = this.options.CurrentValue;
         string timestamp = DateTime.Now.ToString(options.TimestampFormat);
-        textWriter.Write($"{timestamp}{GetLogLevelString(logEntry.LogLevel)}:");
+        textWriter.Write($"[{timestamp}{GetLogLevelString(logEntry.LogLevel)}]");
+        textWriter.Write($" {logEntry.Category}:");
 
         if (options.IncludeScopes && scopeProvider != null)
         {

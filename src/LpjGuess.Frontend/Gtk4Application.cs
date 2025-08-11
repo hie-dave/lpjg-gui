@@ -59,11 +59,19 @@ public class Gtk4Application : IApplication
         this.factory = factory;
         this.logger = logger;
 
-        app = Application.New(appID, Gio.ApplicationFlags.FlagsNone);
+        app = Application.New(appID, Gio.ApplicationFlags.HandlesOpen);
         GLib.Functions.SetApplicationName(appName);
+        app.OnOpen += OnOpen;
         app.OnStartup += OnStartup;
         app.OnActivate += OnActivated;
         app.OnShutdown += OnShutdown;
+    }
+
+    private void OnOpen(Gio.Application sender, Gio.Application.OpenSignalArgs args)
+    {
+        logger.LogInformation("Open {n} files: [{args}]",
+            args.NFiles,
+            string.Join(", ", args.Files.Select(f => f.GetPath())));
     }
 
     /// <inheritdoc />
@@ -75,6 +83,9 @@ public class Gtk4Application : IApplication
     /// <inheritdoc />
     public void Run(string[] args)
     {
+        logger.LogInformation("Passing {n} arguments Gtk: [{args}]",
+            args.Length,
+            string.Join(", ", args));
         app.Run(args.Length, args);
     }
 

@@ -12,6 +12,7 @@ using LpjGuess.Core.Models;
 using Microsoft.Extensions.Logging;
 using LpjGuess.Frontend.Interfaces.Factories;
 using LpjGuess.Core.Logging;
+using LpjGuess.Frontend.Config;
 
 namespace LpjGuess.Frontend.DependencyInjection;
 
@@ -60,7 +61,7 @@ public class ServiceLocator : IServiceLocator
         services.AddTransient<ModelOutputReader>();
 
         // Configure logging to use our custom console formatter.
-        services.ConfigureLogging();
+        services.ConfigureLogging(Options.Instance.ToLoggingOptions());
 
         // Register views.
         // TODO: make this configurable.
