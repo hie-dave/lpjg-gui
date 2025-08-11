@@ -69,6 +69,8 @@ public class InstructionFilesProvider : IInstructionFilesProvider
             {
                 foreach (string insFile in instructionFiles)
                 {
+                    if (experiment.DisabledInsFiles.Contains(insFile))
+                        continue;
                     string generated = resolver.GenerateTargetInsFilePath(insFile, simulation);
                     concreteInsFiles.Add(new InstructionFile(generated, experiment.Name, simulation.Name));
                 }
