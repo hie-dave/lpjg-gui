@@ -102,7 +102,7 @@ public class ModelOutputPresenter : PresenterBase<IModelOutputView, ModelOutput>
     public void RefreshView()
     {
         IEnumerable<OutputFile> fileTypes = instructionFilesProvider.GetGeneratedInstructionFiles()
-            .Select(ModelOutputReader.GetSimulation)
+            .Select(reader.GetSimulation)
             .SelectMany(s => s.GetOutputFiles())
             .DistinctBy(o => o.Metadata.FileName);
 
@@ -163,7 +163,7 @@ public class ModelOutputPresenter : PresenterBase<IModelOutputView, ModelOutput>
     private IEnumerable<string> GetColumns(string fileType)
     {
         IEnumerable<string> fileTypes = instructionFilesProvider.GetGeneratedInstructionFiles()
-            .Select(ModelOutputReader.GetSimulation)
+            .Select(reader.GetSimulation)
             .SelectMany(s => s.GetOutputFiles())
             .DistinctBy(o => o.Metadata.FileName)
             .Select(o => o.Metadata.FileName);
@@ -177,7 +177,7 @@ public class ModelOutputPresenter : PresenterBase<IModelOutputView, ModelOutput>
         // Partially parse output file to get columns.
         // TODO: make this cancellable?
         IEnumerable<Task<IEnumerable<LayerMetadata>>> tasks = instructionFilesProvider.GetGeneratedInstructionFiles()
-            .Select(ModelOutputReader.GetSimulation)
+            .Select(reader.GetSimulation)
             .Select(s => s.ReadOutputFileMetadataAsync(fileType));
         Task.WaitAll(tasks);
         IEnumerable<LayerMetadata> metadata = tasks.SelectMany(t => t.Result).Distinct();

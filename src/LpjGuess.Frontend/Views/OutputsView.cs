@@ -4,6 +4,7 @@ using LpjGuess.Core.Models;
 using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.Extensions;
 using LpjGuess.Frontend.Interfaces.Views;
+using Microsoft.Extensions.Logging;
 
 namespace LpjGuess.Frontend.Views;
 
@@ -40,7 +41,8 @@ public class OutputsView : Box, IOutputsView
 	/// <summary>
 	/// Create a new <see cref="OutputsView"/> instance.
 	/// </summary>
-	public OutputsView()
+	/// <param name="factory">The logger factory.</param>
+	public OutputsView(ILoggerFactory factory)
 	{
 		OnExperimentSelected = new Event<string>();
 		OnSimulationSelected = new Event<string>();
@@ -81,7 +83,7 @@ public class OutputsView : Box, IOutputsView
 		outputsDropdown.GetWidget().Hexpand = true;
 		outputsDropdown.OnDataItemSelected.ConnectTo(OnOutputFileSelected);
 
-		dataView = new DataTableView();
+		dataView = new DataTableView(factory.CreateLogger<DataTableView>());
 		dataView.Hexpand = true;
 		dataView.Vexpand = true;
 		ScrolledWindow dataScroller = new ScrolledWindow();

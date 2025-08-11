@@ -5,9 +5,9 @@ using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.Events;
 using LpjGuess.Frontend.Interfaces;
 using LpjGuess.Frontend.Interfaces.Commands;
+using LpjGuess.Frontend.Interfaces.Factories;
 using LpjGuess.Frontend.Interfaces.Presenters;
 using LpjGuess.Frontend.Interfaces.Views;
-using LpjGuess.Frontend.Views;
 
 namespace LpjGuess.Frontend.Presenters;
 
@@ -37,6 +37,11 @@ public class InstructionFilePresenter : PresenterBase<IInstructionFileView, stri
     /// </summary>
     private readonly HashSet<string> changedFiles;
 
+    /// <summary>
+    /// The view factory.
+    /// </summary>
+    private readonly IViewFactory viewFactory;
+
     /// <inheritdoc />
     public Event<FileChangedArgs> OnFileChanged { get; private init; }
 
@@ -50,12 +55,15 @@ public class InstructionFilePresenter : PresenterBase<IInstructionFileView, stri
     /// <param name="view">The view to be controlled by this presenter.</param>
     /// <param name="insFile">The instruction file to display.</param>
     /// <param name="commandRegistry">The command registry.</param>
+    /// <param name="viewFactory">The view factory.</param>
     public InstructionFilePresenter(
         string insFile,
         IInstructionFileView view,
-        ICommandRegistry commandRegistry) : base(view, insFile, commandRegistry)
+        ICommandRegistry commandRegistry,
+        IViewFactory viewFactory) : base(view, insFile, commandRegistry)
     {
         this.insFile = insFile;
+        this.viewFactory = viewFactory;
         OnFileChanged = new Event<FileChangedArgs>();
         OnSaved = new Event<string>();
         editors = new List<Editor>();
@@ -148,7 +156,7 @@ public class InstructionFilePresenter : PresenterBase<IInstructionFileView, stri
     {
         // await File.ReadAllTextAsync(file, ct).ContinueWithOnMainThread(text => AddViewFromFileAsync(file, text));
         string text = await File.ReadAllTextAsync(file, ct).ContinueOnMainThread(ct);
-        EditorView child = new EditorView();
+        IEditorView child = viewFactory.CreateView<IEditorView>();
         child.Populate(text);
         view.AddView(Path.GetFileName(file), child);
         Editor editor = new Editor(file, child);
@@ -156,9 +164,14 @@ public class InstructionFilePresenter : PresenterBase<IInstructionFileView, stri
         editors.Add(editor);
     }
 
+    /// <summary>
+    /// Add a view for a child instruction file.
+    /// </summary>
+    /// <param name="file">The file to add.</param>
+    /// <param name="text">The text of the file.</param>
     private void AddViewFromFileAsync(string file, string text)
     {
-        EditorView child = new EditorView();
+        IEditorView child = viewFactory.CreateView<IEditorView>();
         child.Populate(text);
         view.AddView(Path.GetFileName(file), child);
         Editor editor = new Editor(file, child);

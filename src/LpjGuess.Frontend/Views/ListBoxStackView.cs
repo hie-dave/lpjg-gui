@@ -4,6 +4,7 @@ using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.Interfaces;
 using LpjGuess.Frontend.Interfaces.Views;
 using LpjGuess.Frontend.Utility.Gtk;
+using Microsoft.Extensions.Logging;
 
 namespace LpjGuess.Frontend.Views;
 
@@ -29,7 +30,8 @@ public class ListBoxStackView : ListBoxNavigatorView
     /// <summary>
     /// Create a new <see cref="ListBoxStackView"/> instance.
     /// </summary>
-    public ListBoxStackView() : base()
+    /// <param name="logger">The logger.</param>
+    public ListBoxStackView(ILogger<ListBoxNavigatorView> logger) : base(logger)
     {
         stack = new Stack();
         stack.Vexpand = true;

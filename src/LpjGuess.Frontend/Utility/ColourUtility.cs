@@ -1,5 +1,6 @@
 using System.Globalization;
 using LpjGuess.Core.Models.Graphing;
+using Microsoft.Extensions.Logging;
 using OxyPlot;
 
 namespace LpjGuess.Frontend.Utility;
@@ -149,14 +150,15 @@ public static class ColourUtility
     /// Convert a hex color string to a GDK RGBA.
     /// </summary>
     /// <param name="colour">The hex color string.</param>
+    /// <param name="logger">The logger.</param>
     /// <returns>The GDK RGBA.</returns>
-    public static Gdk.RGBA FromString(string colour)
+    public static Gdk.RGBA FromString(string colour, ILogger logger)
     {
         Gdk.RGBA rgba = new Gdk.RGBA();
         if (!rgba.Parse(colour))
         {
             // TODO: emit a warning?
-            Console.Error.WriteLine($"WARNING: failed to parse Gdk.RGBA from colour string: '{colour}'");
+            logger.LogWarning("Failed to parse Gdk.RGBA from colour string: '{colour}'", colour);
             rgba.Parse("black");
         }
         return rgba;

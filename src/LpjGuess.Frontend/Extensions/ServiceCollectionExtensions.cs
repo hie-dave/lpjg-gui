@@ -1,17 +1,35 @@
 using System.Reflection;
 using LpjGuess.Frontend.Attributes;
-using LpjGuess.Frontend.Data;
 using LpjGuess.Frontend.DependencyInjection;
 using LpjGuess.Frontend.Interfaces.Presenters;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace LpjGuess.Frontend.Extensions;
 
 /// <summary>
 /// Extension methods for <see cref="IServiceProvider"/>.
 /// </summary>
-public static class ServiceProviderExtensions
+public static class ServiceCollectionExtensions
 {
+    private static readonly Lock loggerLock = new();
+    private static ILogger logger = null!;
+
+    private static void InitLogger(IServiceCollection services)
+    {
+        if (logger == null)
+        {
+            lock (loggerLock)
+            {
+                if (logger == null)
+                {
+                    IServiceProvider serviceProvider = services.BuildServiceProvider();
+                    logger = serviceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("ServiceCollectionExtensions");
+                }
+            }
+        }
+    }
+
     /// <summary>
     /// Register all presenters in the specified assembly.
     /// </summary>
@@ -19,6 +37,8 @@ public static class ServiceProviderExtensions
     /// <param name="assembly">The assembly to scan for presenters.</param>
     public static void AddPresenters(this IServiceCollection services, Assembly assembly)
     {
+        InitLogger(services);
+
         // Get concrete presenter types.
         IEnumerable<Type> presenterTypes = assembly.GetTypes()
             .Where(t => !t.IsAbstract && !t.IsInterface)
@@ -31,6 +51,77 @@ public static class ServiceProviderExtensions
                 services.AddGenericPresenter(presenterType);
             else
                 services.AddPresenter(presenterType);
+        }
+    }
+    /// <summary>
+    /// Add all implementations of the specified type in the given assembly to
+    /// the service collection.
+    /// </summary>
+    /// <typeparam name="T">The type to find implementations of.</typeparam>
+    /// <param name="services">The service collection to add the implementations to.</param>
+    /// <param name="assembly">The assembly to scan for implementations.</param>
+    public static void AddInAssembly<T>(this IServiceCollection services, Assembly assembly)
+    {
+        InitLogger(services);
+
+        // services.AddTransient<IExperimentView, ExperimentView>();
+        // services.AddTransient<IFactorialView, FactorialView>();
+
+        // TODO: what about generic types?
+
+        // Find all interfaces that inherit from T.
+        List<Type> interfaces = assembly.GetTypes()
+            .Where(t => t.IsInterface && typeof(T).IsAssignableFrom(t) && t != typeof(T))
+            .ToList();
+
+        foreach (Type interfaceType in interfaces)
+        {
+            var implementations = assembly.GetTypes()
+                .Where(t => !t.IsAbstract &&
+                       interfaceType.IsAssignableFrom(t))
+                .ToList();
+
+            if (implementations.Count == 1)
+            {
+                // Register the single implementation
+                services.AddService(interfaceType, implementations[0]);
+            }
+            else if (interfaceType.IsGenericType)
+            {
+                List<Type> others = assembly.GetTypes()
+                    .Where(t => !t.IsAbstract &&
+                       t.GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == interfaceType))
+                    .ToList();
+                foreach (Type implementation in others)
+                {
+                    Type concreteInterface = implementation.GetInterfaces()
+                        .First(i => i.IsGenericType && i.GetGenericTypeDefinition() == interfaceType);
+                    services.AddService(concreteInterface, implementation);
+                }
+                if (others.Count == 0)
+                    logger.LogWarning($"Found un-implemented generic view interface: {interfaceType.ToFriendlyName()}");
+            }
+            else if (implementations.Count > 1)
+            {
+                // If exactly one implementation has the DefaultImplementation attribute, register it.
+                Type? defaultImplementation = implementations
+                    .FirstOrDefault(i => i.GetCustomAttribute<DefaultImplementationAttribute>() != null);
+                if (defaultImplementation != null)
+                {
+                    services.AddService(interfaceType, defaultImplementation);
+                }
+                else
+                {
+                    logger.LogWarning("Found {0} implementations of {1}: {2}. These will not be registered with this interface.",
+                        implementations.Count,
+                        interfaceType.ToFriendlyName(),
+                        string.Join(", ", implementations.Select(t => t.ToFriendlyName())));
+                }
+            }
+            else
+            {
+                logger.LogWarning("Found un-implemented view interface: {0}", interfaceType.ToFriendlyName());
+            }
         }
     }
 
@@ -100,7 +191,9 @@ public static class ServiceProviderExtensions
 
     private static void AddService(this IServiceCollection services, Type serviceType, Type implementationType)
     {
-        Console.WriteLine($"services.AddTransient<{serviceType.ToFriendlyName()}, {implementationType.ToFriendlyName()}>();");
+        IServiceProvider serviceProvider = services.BuildServiceProvider();
+        ILogger logger = serviceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("ServiceCollectionExtensions");
+        logger.LogInformation("services.AddTransient<{0}, {1}>();", serviceType.ToFriendlyName(), implementationType.ToFriendlyName());
         services.AddTransient(serviceType, implementationType);
     }
 }

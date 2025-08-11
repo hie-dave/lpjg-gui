@@ -38,6 +38,7 @@ using OxyLegendPlacement = OxyPlot.Legends.LegendPlacement;
 
 using LegendOrientation = LpjGuess.Core.Models.Graphing.LegendOrientation;
 using OxyLegendOrientation = OxyPlot.Legends.LegendOrientation;
+using Microsoft.Extensions.Logging;
 
 namespace LpjGuess.Frontend.Utility;
 
@@ -46,15 +47,25 @@ namespace LpjGuess.Frontend.Utility;
 /// </summary>
 public class OxyPlotConverter
 {
+    /// <summary>
+    /// The data provider factory.
+    /// </summary>
     private readonly IDataProviderFactory dataProviderFactory;
+
+    /// <summary>
+    /// The logger.
+    /// </summary>
+    private readonly ILogger<OxyPlotConverter> logger;
 
     /// <summary>
     /// Create a new <see cref="OxyPlotConverter"/> instance.
     /// </summary>
     /// <param name="dataProviderFactory">The data provider factory.</param>
-    public OxyPlotConverter(IDataProviderFactory dataProviderFactory)
+    /// <param name="logger">The logger.</param>
+    public OxyPlotConverter(IDataProviderFactory dataProviderFactory, ILogger<OxyPlotConverter> logger)
     {
         this.dataProviderFactory = dataProviderFactory;
+        this.logger = logger;
     }
 
     /// <summary>
@@ -67,7 +78,7 @@ public class OxyPlotConverter
     {
         // Leaving this here for now, as it's easy to get in here too often, and
         // easy to fix.
-        Console.WriteLine($"ToPlotModelAsync()");
+        logger.LogInformation("Converting Graph {GraphTitle} to an OxyPlot PlotModel", graph.Title);
 
         PlotModel plot = new PlotModel();
         plot.Title = GetPlotTitle(graph);

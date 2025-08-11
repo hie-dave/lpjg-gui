@@ -7,6 +7,7 @@ using LpjGuess.Frontend.Events;
 using LpjGuess.Frontend.Extensions;
 using LpjGuess.Frontend.Interfaces.Events;
 using LpjGuess.Frontend.Interfaces.Views;
+using Microsoft.Extensions.Logging;
 
 namespace LpjGuess.Frontend.Views;
 
@@ -50,7 +51,8 @@ public class ModelOutputView : IModelOutputView
     /// <summary>
     /// Create a new <see cref="ModelOutputView"/> instance.
     /// </summary>
-    public ModelOutputView()
+    /// <param name="factory">The logger factory.</param>
+    public ModelOutputView(ILoggerFactory factory)
     {
         OnEditDataSource = new Event<IModelChange<ModelOutput>>();
         OnFileTypeChanged = new Event<OutputFile>();
@@ -68,7 +70,7 @@ public class ModelOutputView : IModelOutputView
         yAxisColumnView.GetWidget().Hexpand = true;
         yAxisColumnView.OnSelectionChanged.ConnectTo(OnYAxisColumnChanged);
 
-        filtersView = new ListBoxPopoverView();
+        filtersView = new ListBoxPopoverView(factory.CreateLogger<ListBoxPopoverView>());
         filtersView.AddText = "Add Filter";
         filtersView.OnRemove.ConnectTo(OnFilterRemoved);
     }

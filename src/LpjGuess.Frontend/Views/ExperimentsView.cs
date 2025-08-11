@@ -1,6 +1,7 @@
 using Gtk;
 using LpjGuess.Core.Models.Factorial;
 using LpjGuess.Frontend.Interfaces.Views;
+using Microsoft.Extensions.Logging;
 
 namespace LpjGuess.Frontend.Views;
 
@@ -15,10 +16,16 @@ public class ExperimentsView : DynamicStackSidebar<Experiment>, IExperimentsView
     private readonly Dictionary<Experiment, Label> sidebarWidgets;
 
     /// <summary>
+    /// The logger.
+    /// </summary>
+    private readonly ILogger<ExperimentsView> logger;
+
+    /// <summary>
     /// Create a new <see cref="ExperimentsView"/> instance.
     /// </summary>
-    public ExperimentsView() : base(RenderLabel)
+    public ExperimentsView(ILogger<ExperimentsView> logger) : base(RenderLabel)
     {
+        this.logger = logger;
         AddText = "Add Experiment";
         sidebarWidgets = new Dictionary<Experiment, Label>();
     }
@@ -42,7 +49,7 @@ public class ExperimentsView : DynamicStackSidebar<Experiment>, IExperimentsView
         if (widget is Box box && box.GetFirstChild() is Label label)
             sidebarWidgets[data] = label;
         else
-            Console.WriteLine($"Unable to initialise experiment view sidebar widget, likely due to changes in the base class");
+            logger.LogError("Unable to initialise experiment view sidebar widget, likely due to changes in the base class");
         return widget;
     }
 

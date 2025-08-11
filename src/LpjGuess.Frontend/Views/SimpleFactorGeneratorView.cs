@@ -5,6 +5,7 @@ using LpjGuess.Frontend.Events;
 using LpjGuess.Frontend.Interfaces;
 using LpjGuess.Frontend.Interfaces.Events;
 using LpjGuess.Frontend.Interfaces.Views;
+using Microsoft.Extensions.Logging;
 
 namespace LpjGuess.Frontend.Views;
 
@@ -50,14 +51,15 @@ public class SimpleFactorGeneratorView : ViewBase<Box>, ISimpleFactorGeneratorVi
     /// <summary>
     /// Create a new <see cref="SimpleFactorGeneratorView"/> instance.
     /// </summary>
-    public SimpleFactorGeneratorView() : base(new Box())
+    /// <param name="factory">The logger factory.</param>
+    public SimpleFactorGeneratorView(ILoggerFactory factory) : base(new Box())
     {
         OnChanged = new Event<IModelChange<SimpleFactorGenerator>>();
 
         nameEntry = new Entry();
         nameEntry.Hexpand = true;
 
-        container = new ListBoxStackView();
+        container = new ListBoxStackView(factory.CreateLogger<ListBoxNavigatorView>());
         container.AddText = "Add Level";
 
         grid = new Grid();

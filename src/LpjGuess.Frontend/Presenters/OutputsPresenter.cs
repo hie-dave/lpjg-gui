@@ -38,7 +38,15 @@ public class OutputsPresenter : IOutputsPresenter
     /// </summary>
     private readonly IPathResolver pathResolver;
 
-    private IInstructionFilesProvider instructionFilesProvider;
+    /// <summary>
+    /// The instruction files provider.
+    /// </summary>
+    private readonly IInstructionFilesProvider instructionFilesProvider;
+
+    /// <summary>
+    /// The model output reader.
+    /// </summary>
+    private readonly ModelOutputReader reader;
 
     /// <summary>
     /// The cancellation token source for the output file parsing task.
@@ -52,16 +60,20 @@ public class OutputsPresenter : IOutputsPresenter
     /// <param name="provider">The experiment provider.</param>
     /// <param name="pathResolver">The path resolver.</param>
     /// <param name="instructionFilesProvider">The instruction files provider.</param>
+    /// <param name="reader">The model output reader.</param>
     public OutputsPresenter(
         IOutputsView view,
         IExperimentProvider provider,
         IPathResolver pathResolver,
-        IInstructionFilesProvider instructionFilesProvider)
+        IInstructionFilesProvider instructionFilesProvider,
+        ModelOutputReader reader)
     {
         this.view = view;
         this.provider = provider;
         this.pathResolver = pathResolver;
         this.instructionFilesProvider = instructionFilesProvider;
+        this.reader = reader;
+
         view.OnExperimentSelected.ConnectTo(OnExperimentSelected);
         view.OnSimulationSelected.ConnectTo(OnSimulationSelected);
         view.OnInstructionFileSelected.ConnectTo(OnInstructionFileSelected);
@@ -171,7 +183,7 @@ public class OutputsPresenter : IOutputsPresenter
     /// </summary>
     /// <param name="file">The instruction file selected by the user.</param>
     /// <returns>The output files available for the given instruction file.</returns>
-    private static IEnumerable<OutputFile> GetOutputFiles(InstructionFile file)
+    private IEnumerable<OutputFile> GetOutputFiles(InstructionFile file)
     {
         if (!File.Exists(file.FileName))
             return [];
@@ -179,7 +191,7 @@ public class OutputsPresenter : IOutputsPresenter
         // TODO: consolidate instruction file parsers in runner/benchmarks.
         // We are double parsing here (since we also parse when ins files are
         // selected by the user).
-        SimulationReader simulation = ModelOutputReader.GetSimulation(file);
+        SimulationReader simulation = reader.GetSimulation(file);
         return simulation.GetOutputFiles();
     }
 
@@ -255,7 +267,7 @@ public class OutputsPresenter : IOutputsPresenter
         string concreteInsFile = pathResolver.GenerateTargetInsFilePath(insFile, simulation);
 
         InstructionFile ins = new(concreteInsFile, experimentName, simulationName);
-        SimulationReader reader = ModelOutputReader.GetSimulation(ins);
+        SimulationReader reader = this.reader.GetSimulation(ins);
 
         // Cancel any existing tasks.
         cts.Cancel();

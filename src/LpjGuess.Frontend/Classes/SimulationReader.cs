@@ -24,6 +24,11 @@ public class SimulationReader
     private readonly HashSet<string> unknownFiles = [];
 
     /// <summary>
+    /// The log service.
+    /// </summary>
+    private readonly ILogger<SimulationReader> logger;
+
+    /// <summary>
     /// The instruction file.
     /// </summary>
     public InstructionFile InsFile { get; private init; }
@@ -52,27 +57,27 @@ public class SimulationReader
     /// Create a new <see cref="SimulationReader"/> instance.
     /// </summary>
     /// <param name="insFile">The instruction file.</param>
-    public SimulationReader(InstructionFile insFile)
+    /// <param name="loggerFactory">The logger factory.</param>
+    public SimulationReader(InstructionFile insFile, ILoggerFactory loggerFactory)
     {
         InsFile = insFile;
+        logger = loggerFactory.CreateLogger<SimulationReader>();
 
-        // TODO: dependency injection. Don't create an OutputParser every time.
-        var factory = new LoggerFactory();
-        var logger = new Logger<OutputFileTypeResolver>(factory);
-        var logger2 = new Logger<ModelOutputParser>(factory);
-        var logger3 = new Logger<InstructionFileHelper>(factory);
+        var logger2 = loggerFactory.CreateLogger<OutputFileTypeResolver>();
+        var logger3 = loggerFactory.CreateLogger<ModelOutputParser>();
+        var logger4 = loggerFactory.CreateLogger<InstructionFileHelper>();
 
         // TODO: proper async support.
         Parser = InstructionFileParser.FromFile(insFile.FileName);
-        Helper = new InstructionFileHelper(Parser, logger3);
+        Helper = new InstructionFileHelper(Parser, logger4);
 
         string gridlist = Helper.GetGridlist();
         Gridlist = new GridlistParser(gridlist);
 
-        Resolver = new OutputFileTypeResolver(logger);
+        Resolver = new OutputFileTypeResolver(logger2);
         Resolver.BuildLookupTable(Parser);
 
-        outputParser = new ModelOutputParser(logger2, Resolver);
+        outputParser = new ModelOutputParser(logger3, Resolver);
     }
 
     /// <summary>
@@ -104,7 +109,7 @@ public class SimulationReader
             lock (unknownFiles)
             {
                 if (!unknownFiles.Contains(outputFile))
-                    Console.WriteLine($"Output file not recognised: {outputFile}");
+                    logger.LogInformation("Output file not recognised: {outputFile}", outputFile);
                 unknownFiles.Add(outputFile);
             }
             return null;

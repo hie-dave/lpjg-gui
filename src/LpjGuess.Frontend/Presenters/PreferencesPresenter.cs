@@ -10,6 +10,7 @@ using LpjGuess.Frontend.Views;
 using LpjGuess.Frontend.Views.Dialogs;
 using LpjGuess.Frontend.Views.Runners;
 using LpjGuess.Runner.Models;
+using Microsoft.Extensions.Logging;
 
 namespace LpjGuess.Frontend.Presenters;
 
@@ -23,6 +24,11 @@ public class PreferencesPresenter : IPreferencesPresenter
 	/// The preferences object.
 	/// </summary>
 	private readonly Configuration preferences;
+
+	/// <summary>
+	/// The logger.
+	/// </summary>
+	private readonly ILogger<PreferencesPresenter> logger;
 
 	/// <summary>
 	/// The view object.
@@ -41,9 +47,13 @@ public class PreferencesPresenter : IPreferencesPresenter
 	/// Create a new <see cref="PreferencesPresenter"/> instance.
 	/// </summary>
 	/// <param name="preferences">The preferences object.</param>
-	public PreferencesPresenter(Configuration preferences)
+	/// <param name="logger">The logger.</param>
+	public PreferencesPresenter(
+		Configuration preferences,
+		ILogger<PreferencesPresenter> logger)
 	{
 		this.preferences = preferences;
+		this.logger = logger;
 
 		runnerPresenters = GetRunnerPresenters().ToList();
 		view = new PreferencesView(preferences.PreferDarkMode, preferences.GoToLogsTabOnRun, runnerPresenters.Select(p => p.GetMetadata()).ToList());
@@ -122,7 +132,8 @@ public class PreferencesPresenter : IPreferencesPresenter
 
 		if (i < 0 || i >= Configuration.Instance.Runners.Count)
 		{
-			Console.WriteLine($"WARNING: attempted to set default runner to{(isDefault ? "" : "not ")} {i}");
+			string not = isDefault ? "" : " not";
+			logger.LogWarning("Attempted to set default runner to{not} {i}", not, i);
 			return;
 		}
 

@@ -6,6 +6,7 @@ using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.Extensions;
 using LpjGuess.Frontend.Interfaces;
 using LpjGuess.Frontend.Utility;
+using Microsoft.Extensions.Logging;
 using SourceBuffer = GtkSource.Buffer;
 using SourceView = GtkSource.View;
 
@@ -51,6 +52,11 @@ public class EditorView : ViewBase<ScrolledWindow>, IEditorView
 	/// </summary>
 	private readonly Menu menu;
 
+	/// <summary>
+	/// The logger.
+	/// </summary>
+	private readonly ILogger<EditorView> logger;
+
 	/// <inheritdoc />
 	public bool Editable
 	{
@@ -65,8 +71,10 @@ public class EditorView : ViewBase<ScrolledWindow>, IEditorView
 	/// Create a new <see cref="EditorView"/> instance which displays the
 	/// specified text.
 	/// </summary>
-	public EditorView() : base(new ScrolledWindow())
+	public EditorView(ILogger<EditorView> logger) : base(new ScrolledWindow())
 	{
+		this.logger = logger;
+
 		OnChanged = new Event();
 
 		buffer = new SourceBuffer();
@@ -160,7 +168,8 @@ public class EditorView : ViewBase<ScrolledWindow>, IEditorView
 		// loaded (or the user hasn't set a style scheme).
 		if (style == null)
 		{
-			Console.WriteLine($"Failed to load default style '{name}'. Available schemes: {string.Join(", ", StyleSchemeManager.GetDefault().GetSchemeIds() ?? [])}");
+			string available = string.Join(", ", StyleSchemeManager.GetDefault().GetSchemeIds() ?? []);
+			logger.LogWarning("Failed to load default style '{name}'. Available schemes: {available}", name, available);
 			style = GetDefaultStyle();
 		}
 

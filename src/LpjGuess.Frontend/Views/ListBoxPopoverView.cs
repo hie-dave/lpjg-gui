@@ -1,5 +1,6 @@
 using Gtk;
 using LpjGuess.Frontend.Interfaces.Views;
+using Microsoft.Extensions.Logging;
 
 namespace LpjGuess.Frontend.Views;
 
@@ -17,7 +18,8 @@ public class ListBoxPopoverView : ListBoxNavigatorView
     /// <summary>
     /// Create a new <see cref="ListBoxPopoverView"/> instance.
     /// </summary>
-    public ListBoxPopoverView() : base()
+    /// <param name="logger">The logger.</param>
+    public ListBoxPopoverView(ILogger<ListBoxNavigatorView> logger) : base(logger)
     {
         popovers = new Dictionary<Widget, Popover>();
 

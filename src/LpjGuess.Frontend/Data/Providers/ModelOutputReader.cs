@@ -1,15 +1,14 @@
 using LpjGuess.Core.Extensions;
-using LpjGuess.Core.Interfaces.Graphing;
 using LpjGuess.Core.Interfaces.Graphing.Style;
 using LpjGuess.Core.Models;
 using LpjGuess.Core.Models.Entities;
-using LpjGuess.Core.Models.Graphing;
 using LpjGuess.Core.Models.Graphing.Style;
 using LpjGuess.Core.Models.Graphing.Style.Identifiers;
 using LpjGuess.Core.Models.Importer;
 using LpjGuess.Core.Services;
 using LpjGuess.Frontend.Classes;
 using LpjGuess.Frontend.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using OxyPlot.Axes;
 
 using OxyDataPoint = OxyPlot.DataPoint;
@@ -38,16 +37,24 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
     private readonly IExperimentProvider experimentProvider;
 
     /// <summary>
+    /// The logger factory.
+    /// </summary>
+    private readonly ILoggerFactory loggerFactory;
+
+    /// <summary>
     /// Create a new <see cref="ModelOutputReader"/> instance.
     /// </summary>
     /// <param name="insFilesProvider">The instruction files provider.</param>
     /// <param name="experimentProvider">The experiment provider.</param>
+    /// <param name="loggerFactory">The logger factory.</param>
     public ModelOutputReader(
         IInstructionFilesProvider insFilesProvider,
-        IExperimentProvider experimentProvider)
+        IExperimentProvider experimentProvider,
+        ILoggerFactory loggerFactory)
     {
         this.insFilesProvider = insFilesProvider;
         this.experimentProvider = experimentProvider;
+        this.loggerFactory = loggerFactory;
     }
 
     /// <inheritdoc />
@@ -66,12 +73,12 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
     /// </summary>
     /// <param name="instructionFile">The instruction file.</param>
     /// <returns>The simulation reader.</returns>
-    public static SimulationReader GetSimulation(InstructionFile instructionFile)
+    public SimulationReader GetSimulation(InstructionFile instructionFile)
     {
         var simulation = readers.FirstOrDefault(s => s.InsFile == instructionFile);
         if (simulation == null)
         {
-            simulation = new SimulationReader(instructionFile);
+            simulation = new SimulationReader(instructionFile, loggerFactory);
             lock (readers)
                 readers.Add(simulation);
         }

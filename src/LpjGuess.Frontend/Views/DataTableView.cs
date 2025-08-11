@@ -1,5 +1,6 @@
 using System.Data;
 using LpjGuess.Core.Extensions;
+using Microsoft.Extensions.Logging;
 
 namespace LpjGuess.Frontend.Views;
 
@@ -24,6 +25,11 @@ public class DataTableView : StringColumnView<DataRow>
     private const string hourlyFormat = "yyyy-MM-dd HH:mm:ss";
 
     /// <summary>
+    /// The logger.
+    /// </summary>
+    private readonly ILogger<DataTableView> logger;
+
+    /// <summary>
     /// Number of decimal digits to display in the table.
     /// </summary>
     public int Precision { get; set; } = 2;
@@ -32,6 +38,15 @@ public class DataTableView : StringColumnView<DataRow>
     /// The date format to be used.
     /// </summary>
     private string? dateFormat = null;
+
+    /// <summary>
+    /// Create a new <see cref="DataTableView"/> instance.
+    /// </summary>
+    /// <param name="logger">The logger.</param>
+    public DataTableView(ILogger<DataTableView> logger)
+    {
+        this.logger = logger;
+    }
 
     /// <summary>
     /// Populate the view.
@@ -48,8 +63,8 @@ public class DataTableView : StringColumnView<DataRow>
             dateFormat = GetDateFormat(data);
         }
 
-		foreach (DataColumn column in data.Columns)
-			AddColumn(column.ColumnName, row => RenderRow(row, column));
+        foreach (DataColumn column in data.Columns)
+            AddColumn(column.ColumnName, row => RenderRow(row, column));
         Populate(data.AsEnumerable());
     }
 
@@ -103,7 +118,7 @@ public class DataTableView : StringColumnView<DataRow>
             // If this starts throwing for some reason, we don't want thousands
             // of popup windows to appear. Therefore we just log to stdout for
             // now. Need to revisit to this.
-            Console.WriteLine(error);
+            logger.LogError(error, "Failed to render row");
             return string.Empty;
         }
     }

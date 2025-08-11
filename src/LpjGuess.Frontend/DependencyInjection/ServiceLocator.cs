@@ -9,6 +9,9 @@ using LpjGuess.Frontend.Services;
 using LpjGuess.Frontend.Data;
 using LpjGuess.Frontend.Utility;
 using LpjGuess.Core.Models;
+using Microsoft.Extensions.Logging;
+using LpjGuess.Frontend.Interfaces.Factories;
+using LpjGuess.Core.Logging;
 
 namespace LpjGuess.Frontend.DependencyInjection;
 
@@ -50,10 +53,14 @@ public class ServiceLocator : IServiceLocator
 
         // Register transient services.
         services.AddTransient<WorkspacePresenterFactory>();
+        services.AddTransient<IViewFactory, ViewFactory>();
         services.AddTransient<IDataProviderFactory, DataProviderFactory>();
         services.AddTransient<OxyPlotConverter>();
         services.AddTransient<IDataProvider<ModelOutput>, ModelOutputReader>();
         services.AddTransient<ModelOutputReader>();
+
+        // Configure logging to use our custom console formatter.
+        services.ConfigureLogging();
 
         // Register views.
         // TODO: make this configurable.

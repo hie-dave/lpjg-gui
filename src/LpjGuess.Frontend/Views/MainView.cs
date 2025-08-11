@@ -16,6 +16,7 @@ using ApplicationWindow = Adw.ApplicationWindow;
 using MessageDialog = Adw.MessageDialog;
 using FileChooserDialog = LpjGuess.Frontend.Views.Dialogs.FileChooserDialog;
 using StyleContext = Gtk.StyleContext;
+using Microsoft.Extensions.Logging;
 
 namespace LpjGuess.Frontend.Views;
 
@@ -38,6 +39,11 @@ public class MainView : ApplicationWindow, IMainView
 	/// Spacing (in px) between internal elements of the window.
 	/// </summary>
 	private const int spacing = 5;
+
+	/// <summary>
+	/// The logger.
+	/// </summary>
+	private readonly ILogger<MainView> logger;
 
 #pragma warning disable CS8618
 	/// <summary>
@@ -88,8 +94,10 @@ public class MainView : ApplicationWindow, IMainView
 	/// <summary>
 	/// Constructor.
 	/// </summary>
-	public MainView() : base()
+	/// <param name="logger">The logger.</param>
+	public MainView(ILogger<MainView> logger) : base()
 	{
+		this.logger = logger;
 		Instance = this;
 
 		OnOpen = new Event<string>();
@@ -235,7 +243,7 @@ public class MainView : ApplicationWindow, IMainView
 		if (error is TaskCanceledException || error is OperationCanceledException)
 			return;
 
-		Console.Error.WriteLine(error.ToString());
+		logger.LogError(error, "An exception has been thrown");
 
 		TextBuffer buffer = TextBuffer.New(null);
 		buffer.SetText(error.ToString(), Encoding.UTF8.GetByteCount(error.ToString()));
@@ -273,8 +281,6 @@ public class MainView : ApplicationWindow, IMainView
 		dialog.AddResponse("ok", "_Ok");
 		dialog.OnResponse += OnCloseErrorDialog;
 		dialog.Present();
-
-		// Console.Error.WriteLine(error);
 	}
 
 	private void OnCloseErrorDialog(MessageDialog sender, MessageDialog.ResponseSignalArgs args)
@@ -286,7 +292,7 @@ public class MainView : ApplicationWindow, IMainView
 		}
 		catch (Exception error)
 		{
-			Console.WriteLine(error);
+			logger.LogError(error, "Error closing error dialog");
 		}
 	}
 
@@ -363,8 +369,7 @@ public class MainView : ApplicationWindow, IMainView
 		}
 		catch (Exception error)
 		{
-			Console.Error.WriteLine($"Exception thrown in OnClosed callback:");
-			Console.Error.WriteLine(error);
+			logger.LogError(error, "Exception thrown in OnClosed callback");
 		}
 
 		// Returning true prevents other callbacks from executing, which

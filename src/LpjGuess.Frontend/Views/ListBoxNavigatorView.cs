@@ -3,6 +3,7 @@ using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.Interfaces;
 using LpjGuess.Frontend.Interfaces.Views;
 using LpjGuess.Frontend.Utility.Gtk;
+using Microsoft.Extensions.Logging;
 
 namespace LpjGuess.Frontend.Views;
 
@@ -136,6 +137,11 @@ public abstract class ListBoxNavigatorView : ViewBase<Box>
     private readonly Button addButton;
 
     /// <summary>
+    /// The logger.
+    /// </summary>
+    private readonly ILogger<ListBoxNavigatorView> logger;
+
+    /// <summary>
     /// The container for the ListBox and the add button.
     /// </summary>
     protected readonly Box mainPage;
@@ -177,8 +183,10 @@ public abstract class ListBoxNavigatorView : ViewBase<Box>
     /// <summary>
     /// Create a new <see cref="ListBoxNavigatorView"/> instance.
     /// </summary>
-    public ListBoxNavigatorView() : base(new Box())
+    /// <param name="logger">The logger.</param>
+    public ListBoxNavigatorView(ILogger<ListBoxNavigatorView> logger) : base(new Box())
     {
+        this.logger = logger;
         children = new Dictionary<Guid, Widget>();
         rows = new List<RowWrapper>();
 
@@ -351,13 +359,13 @@ public abstract class ListBoxNavigatorView : ViewBase<Box>
 
             if (!Guid.TryParse(id, out Guid guid))
             {
-                Console.WriteLine($"{nameof(ListBoxStackView)}: Invalid widget name in GtkListBox: {id}");
+                logger.LogWarning("Invalid widget name in GtkListBox: {id}", id);
                 return;
             }
 
             if (!children.TryGetValue(guid, out Widget? widget))
             {
-                Console.WriteLine($"{nameof(ListBoxStackView)}: Unknown GUID: {guid}");
+                logger.LogWarning("Unknown GUID: {guid}", guid);
                 return;
             }
 
@@ -369,4 +377,3 @@ public abstract class ListBoxNavigatorView : ViewBase<Box>
         }
     }
 }
-

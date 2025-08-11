@@ -4,6 +4,7 @@ using LpjGuess.Frontend.Interfaces;
 using LpjGuess.Frontend.Interfaces.Presenters;
 using LpjGuess.Frontend.Presenters;
 using LpjGuess.Frontend.Views;
+using Microsoft.Extensions.Logging;
 
 namespace LpjGuess.Frontend;
 
@@ -41,10 +42,23 @@ public class Gtk4Application : IApplication
     /// </summary>
     private readonly IPresenterFactory factory;
 
-    /// <inheritdoc />
-    public Gtk4Application(IPresenterFactory factory)
+    /// <summary>
+    /// The logger.
+    /// </summary>
+    private readonly ILogger<Gtk4Application> logger;
+
+    /// <summary>
+    /// Create a new <see cref="Gtk4Application"/> instance.
+    /// </summary>
+    /// <param name="factory">The presenter factory.</param>
+    /// <param name="logger">The logger.</param>
+    public Gtk4Application(
+        IPresenterFactory factory,
+        ILogger<Gtk4Application> logger)
     {
         this.factory = factory;
+        this.logger = logger;
+
         app = Application.New(appID, Gio.ApplicationFlags.FlagsNone);
         GLib.Functions.SetApplicationName(appName);
         app.OnStartup += OnStartup;
@@ -79,7 +93,7 @@ public class Gtk4Application : IApplication
         }
         catch (Exception error)
         {
-            Console.Error.WriteLine(error);
+            logger.LogError(error, "Failed to activate application");
             MainView.Instance.ReportError(error);
             app.Quit();
         }

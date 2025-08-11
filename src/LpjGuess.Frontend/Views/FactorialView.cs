@@ -6,6 +6,7 @@ using LpjGuess.Frontend.Interfaces;
 using LpjGuess.Frontend.Interfaces.Events;
 using LpjGuess.Frontend.Interfaces.Views;
 using LpjGuess.Frontend.Utility.Gtk;
+using Microsoft.Extensions.Logging;
 
 namespace LpjGuess.Frontend.Views;
 
@@ -51,12 +52,13 @@ public class FactorialView : ViewBase<Box>, IFactorialView
     /// <summary>
     /// Create a new <see cref="FactorialView"/> instance.
     /// </summary>
-    public FactorialView() : base(new Box())
+    /// <param name="loggerFactory">The logger factory.</param>
+    public FactorialView(ILoggerFactory loggerFactory) : base(new Box())
     {
         nrow = 0;
         OnChanged = new Event<IModelChange<FactorialGenerator>>();
 
-        factorsContainer = new ListBoxRevealerView();
+        factorsContainer = new ListBoxRevealerView(loggerFactory.CreateLogger<ListBoxNavigatorView>());
         factorsContainer.AddText = "Add Factor";
 
         // Configure container.

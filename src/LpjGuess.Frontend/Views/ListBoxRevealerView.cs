@@ -1,5 +1,6 @@
 using Gtk;
 using LpjGuess.Frontend.Utility.Gtk;
+using Microsoft.Extensions.Logging;
 
 namespace LpjGuess.Frontend.Views;
 
@@ -27,7 +28,8 @@ public class ListBoxRevealerView : ListBoxNavigatorView
     /// <summary>
     /// Create a new <see cref="ListBoxRevealerView"/> instance.
     /// </summary>
-    public ListBoxRevealerView() : base()
+    /// <param name="logger">The logger.</param>
+    public ListBoxRevealerView(ILogger<ListBoxNavigatorView> logger) : base(logger)
     {
         children = new List<Widget>();
 
