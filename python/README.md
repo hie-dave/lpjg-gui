@@ -16,8 +16,8 @@ pip install lpjguess
 from lpjguess import *
 
 run_settings = RunSettings.Local(
-    "/path/to/guess/executable,
-    "/path/to/output/directory,
+    "/path/to/guess/executable",
+    "/path/to/output/directory",
     "nc",   # input module
     4,      # cpu count
     "job_name")

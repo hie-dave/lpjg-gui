@@ -52,7 +52,7 @@ publish:
 # Stage managed payload into the Python package rids/<rid>
 stage: publish
 	mkdir -p $(PKG_RIDS_DIR)
-	cp -v $(PUBLISH_OUT)/*.dll $(PKG_RIDS_DIR)/
+	cp -v $(PUBLISH_OUT)/* $(PKG_RIDS_DIR)/
 
 # Build the wheel
 wheel: stage
