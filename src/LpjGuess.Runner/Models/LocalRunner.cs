@@ -28,6 +28,7 @@ public class LocalRunner : IMonitorableRunner
     /// Create a new <see cref="LocalRunner"/> instance.
     /// </summary>
     /// <param name="settings">Configuration parameters controlling how the job should be run.</param>
+    /// <param name="inputModule">The input module to use.</param>
     public LocalRunner(LocalRunnerConfiguration settings, string inputModule)
     {
         this.settings = settings;
@@ -51,7 +52,7 @@ public class LocalRunner : IMonitorableRunner
         proc.StartInfo.FileName = settings.GuessPath;
         proc.StartInfo.ArgumentList.Add("-input");
         proc.StartInfo.ArgumentList.Add(inputModule);
-        proc.StartInfo.ArgumentList.Add(job.InsFile);
+        proc.StartInfo.ArgumentList.Add(Path.GetFileName(job.InsFile));
         proc.StartInfo.WorkingDirectory = Path.GetDirectoryName(job.InsFile);
         proc.StartInfo.RedirectStandardOutput = true;
         proc.StartInfo.RedirectStandardError = true;

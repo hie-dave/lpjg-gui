@@ -71,7 +71,6 @@ public class JobManager
 	/// <summary>
 	/// Run all of the jobs.
 	/// </summary>
-	/// <param name="jobs">Jobs to be run.</param>
 	/// <param name="ct">Cancellation token.</param>
 	public async Task RunAllAsync(CancellationToken ct)
 	{

@@ -60,18 +60,17 @@ public class PbsRunnerConfiguration : IRunnerConfiguration
     /// <summary>
     /// Create a new <see cref="PbsRunnerConfiguration"/> instance.
     /// </summary>
-    /// <param name="guessPath"></param>
-    /// <param name="name"></param>
-    /// <param name="jobName"></param>
-    /// <param name="dryRun"></param>
-    /// <param name="outputDirectory"></param>
-    /// <param name="cpuCount"></param>
-    /// <param name="walltime"></param>
-    /// <param name="memory"></param>
-    /// <param name="queue"></param>
-    /// <param name="project"></param>
-    /// <param name="emailNotifications"></param>
-    /// <param name="emailAddress"></param>
+    /// <param name="guessPath">Path to the lpj-guess executable.</param>
+    /// <param name="name">Name of the runner.</param>
+    /// <param name="dryRun">True to create job directory tree but not submit job. False to additionally submit the job to PBS for execution.</param>
+    /// <param name="outputDirectory">Job output directory.</param>
+    /// <param name="cpuCount">Number of CPUs to allocate to the job.</param>
+    /// <param name="walltime">Maximum walltime allowed for the job.</param>
+    /// <param name="memory">Amount of memory to be allocated to the job.</param>
+    /// <param name="queue">Queue to which the job should be submitted.</param>
+    /// <param name="project">PBS project under which the job should be submitted.</param>
+    /// <param name="emailNotifications">True to send email notifications.</param>
+    /// <param name="emailAddress">Email address to which notifications should be sent.</param>
     public PbsRunnerConfiguration(
         string guessPath,
         string name,

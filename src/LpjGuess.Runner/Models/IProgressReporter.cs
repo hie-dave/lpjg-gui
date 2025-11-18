@@ -1,5 +1,8 @@
 namespace LpjGuess.Runner.Models;
 
+/// <summary>
+/// Interface for progress reporters.
+/// </summary>
 public interface IProgressReporter
 {
     /// <summary>

@@ -32,6 +32,7 @@ public class LocalRunnerConfiguration : IRunnerConfiguration
         Name = "";
     }
 
+    /// <inheritdoc />
     public IRunner CreateRunner(string inputModule)
     {
         return new LocalRunner(this, inputModule);

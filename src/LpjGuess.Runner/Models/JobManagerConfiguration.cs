@@ -1,5 +1,8 @@
 namespace LpjGuess.Runner.Models;
 
+/// <summary>
+/// Configuration parameters for a job manager.
+/// </summary>
 public class JobManagerConfiguration
 {
     /// <summary>

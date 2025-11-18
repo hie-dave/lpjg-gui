@@ -58,6 +58,7 @@ public class SimulationService : ISimulationService
 	/// Generate all jobs to be run for the specified instruction file.
 	/// </summary>
 	/// <param name="insFile">Path to the instruction file.</param>
+	/// <param name="ct">Cancellation token.</param>
 	private IEnumerable<Job> GenerateJobs(string insFile, CancellationToken ct)
 	{
 		IEnumerable<ISimulation> query = config.Simulations;

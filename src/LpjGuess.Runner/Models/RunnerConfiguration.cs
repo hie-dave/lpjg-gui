@@ -33,6 +33,7 @@ public class RunnerConfiguration
     /// <param name="settings">Run settings.</param>
     /// <param name="factors">Factorial combinations.</param>
     /// <param name="insFiles">Input files.</param>
+    /// <param name="pfts">PFTs.</param>
     public RunnerConfiguration(
         RunSettings settings,
         IEnumerable<ISimulation> factors,

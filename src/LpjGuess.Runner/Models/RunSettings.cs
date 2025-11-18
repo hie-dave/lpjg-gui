@@ -85,13 +85,16 @@ public class RunSettings
 	/// </summary>
 	public bool FullFactorial { get; private init; }
 
+	/// <summary>
+	/// Parameters to be passed to the model.
+	/// </summary>
 	public Dictionary<string, object> Parameters { get; private init; }
-
 
 	/// <summary>
 	/// Create a new <see cref="RunSettings"/> instance.
 	/// </summary>
 	/// <param name="dryRun">Iff true, the run directory will be created but the job will not be submitted.</param>
+	/// <param name="runLocal">Iff true, the job will be run locally. Otherwise, it will be submitted to PBS.</param>
 	/// <param name="outputDirectory">Output directory of the run.</param>
 	/// <param name="guessPath">Path to the LPJ-Guess executable.</param>
 	/// <param name="inputModule">Input module to be used by LPJ-Guess.</param>
@@ -123,6 +126,50 @@ public class RunSettings
 		Parameters = [];
 	}
 
+	/// <summary>
+	/// Create a new <see cref="RunSettings"/> instance for local execution.
+	/// </summary>
+	/// <param name="guessPath">Path to the LPJ-Guess executable.</param>
+	/// <param name="outputDirectory">Output directory of the run.</param>
+	/// <param name="inputModule">Input module to be used by LPJ-Guess.</param>
+	/// <param name="cpuCount">Number of CPUs to be allocated to the job.</param>
+	/// <param name="jobName">Name of the job.</param>
+	/// <remarks>
+	/// This is only necessary/useful because this class contains parameters for
+	/// both local and remote runs, some of which are useful only in remote runs
+	/// or vice versa. We should really refactor that abstraction out of this
+	/// class, but for now, this serves as a convenience method to create a
+	/// <see cref="RunSettings"/> instance for local execution, accepting only
+	/// parameters that are meaningful in that context.
+	/// </remarks>
+	public static RunSettings Local(
+		string guessPath,
+		string outputDirectory,
+		string inputModule,
+		ushort cpuCount,
+		string jobName)
+	{
+		return new RunSettings(
+			false,
+			true,
+			outputDirectory,
+			guessPath,
+			inputModule,
+			cpuCount,
+			TimeSpan.FromHours(1),
+			1,
+			"local",
+			"local",
+			false,
+			"",
+			jobName,
+			true);
+	}
+
+	/// <summary>
+	/// Convert this run settings to a job manager configuration.
+	/// </summary>
+	/// <returns>A <see cref="JobManagerConfiguration"/> instance.</returns>
 	public JobManagerConfiguration ToJobManagerConfig()
 	{
 		IRunnerConfiguration runConfig = CreateRunConfig();

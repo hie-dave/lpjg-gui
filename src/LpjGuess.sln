@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LpjGuess.Tests", "LpjGuess.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LpjGuess.Runner", "LpjGuess.Runner\LpjGuess.Runner.csproj", "{5D9471F2-050F-4506-B61C-B8885CB2A9A6}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LpjGuess.Runner.CLI", "LpjGuess.Runner.CLI\LpjGuess.Runner.CLI.csproj", "{202B384C-1931-4D5D-9911-4DAB9A4CE96A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -36,5 +38,9 @@ Global
 		{5D9471F2-050F-4506-B61C-B8885CB2A9A6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5D9471F2-050F-4506-B61C-B8885CB2A9A6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5D9471F2-050F-4506-B61C-B8885CB2A9A6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{202B384C-1931-4D5D-9911-4DAB9A4CE96A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{202B384C-1931-4D5D-9911-4DAB9A4CE96A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{202B384C-1931-4D5D-9911-4DAB9A4CE96A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{202B384C-1931-4D5D-9911-4DAB9A4CE96A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
