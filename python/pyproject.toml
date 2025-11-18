@@ -1,0 +1,45 @@
+# python/pyproject.toml
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lpjguess"
+# If you’d like version auto from git tags, use setuptools_scm instead (see note below)
+version = "0.1.0"
+description = "Python wrapper for LPJ-Guess experiment runner (via pythonnet + .NET 9)"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [
+  { name = "Drew Holzworth", email = "d.holzworth@westernsydney.edu.au" }
+]
+keywords = ["LPJ-Guess", "ecosystem", "vegetation", "simulation", "experiments",
+            "DGVM", "dynamic", "model"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: C#",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: POSIX :: Linux",
+  "Operating System :: Microsoft :: Windows",
+  "Operating System :: MacOS",
+]
+
+dependencies = [
+  "pythonnet>=3.0.1",
+]
+
+[project.urls]
+Homepage = "https://github.com/hie-dave/lpjg-gui"
+Source = "https://github.com/hie-dave/lpjg-gui"
+Issues = "https://github.com/hie-dave/lpjg-gui/issues"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.package-data]
+lpjguess = ["rids/**"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["lpjguess"]

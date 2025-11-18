@@ -2,4 +2,9 @@ bin
 obj
 coverage
 TestResults
-
+publish/
+python/build
+python/dist
+python/lpjguess/rids
+python/lpjguess/__pycache__
+*.egg-info
