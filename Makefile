@@ -1,11 +1,24 @@
 SLN=src/LpjGuess.sln
 
-.PHONY: clean build run check coverage
+# Defaults (override on CLI):
+RID ?= linux-x64
+TFM ?= net9.0
+PUBLISH_OUT := publish/$(RID)
+PKG_RIDS_DIR := python/lpjguess/rids/$(RID)
+DIST_DIR := python/dist
+BUILD_DIR := python/build
+EGG_INFO := python/lpjguess.egg-info
+PY_CACHE := python/lpjguess/__pycache__
+RIDS_ROOT := python/lpjguess/rids
+VENV ?= .venv
+
+
+.PHONY: clean build run check coverage clean-py publish stage wheel install dev install-venv install-user clean-venv
 
 build:
 	dotnet build $(SLN)
 
-clean:
+clean: clean-py
 	dotnet clean $(SLN)
 	rm -rf coverage src/LpjGuess.Tests/TestResults
 
@@ -19,3 +32,47 @@ check:
 coverage: check
 	reportgenerator -reports:"**/coverage.cobertura.xml" -targetdir:"coverage" -reporttypes:Html
 	xdg-open coverage/index.html
+
+# -----------------------------
+# Packaging for Python (wheel)
+# -----------------------------
+
+clean-py: clean-venv
+	# Remove last publish output and all staged RID payloads
+	rm -rf $(PUBLISH_OUT) $(RIDS_ROOT)
+	# Remove Python build artifacts
+	rm -rf $(DIST_DIR) $(BUILD_DIR) $(EGG_INFO) $(PY_CACHE)
+	# Also remove any stray egg-info under python/ (defensive)
+	find python -maxdepth 1 -type d -name "*.egg-info" -exec rm -rf {} +
+
+# Publish .NET Runner framework-dependent for the given RID/TFM
+publish:
+	dotnet publish src/LpjGuess.Runner -c Release -f $(TFM) -r $(RID) --self-contained false -o $(PUBLISH_OUT)
+
+# Stage managed payload into the Python package rids/<rid>
+stage: publish
+	mkdir -p $(PKG_RIDS_DIR)
+	cp -v $(PUBLISH_OUT)/*.dll $(PKG_RIDS_DIR)/
+
+# Build the wheel
+wheel: stage
+	cd python && python -m build --wheel
+
+venv:
+	python -m venv $(VENV)
+	. $(VENV)/bin/activate && python -m pip install -U pip
+
+# Remove local virtual environment (optional)
+clean-venv:
+	rm -rf $(VENV)
+
+# Install the wheel into a local virtual environment
+install-venv: wheel venv
+	. $(VENV)/bin/activate && pip install --force-reinstall $(DIST_DIR)/*.whl
+
+# Install the wheel for the current user (avoids system site-packages)
+install-user: wheel
+	pip install --user --force-reinstall $(DIST_DIR)/*.whl
+
+# Convenience: one-shot local dev flow (no install)
+dev: clean-py publish stage wheel
