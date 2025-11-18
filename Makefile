@@ -4,12 +4,12 @@ SLN=src/LpjGuess.sln
 RID ?= linux-x64
 TFM ?= net9.0
 PUBLISH_OUT := publish/$(RID)
-PKG_RIDS_DIR := python/lpjguess/rids/$(RID)
+PKG_RIDS_DIR := python/lpjguess_runner/rids/$(RID)
 DIST_DIR := python/dist
 BUILD_DIR := python/build
-EGG_INFO := python/lpjguess.egg-info
-PY_CACHE := python/lpjguess/__pycache__
-RIDS_ROOT := python/lpjguess/rids
+EGG_INFO := python/lpjguess_runner.egg-info
+PY_CACHE := python/lpjguess_runner/__pycache__
+RIDS_ROOT := python/lpjguess_runner/rids
 VENV ?= .venv
 
 

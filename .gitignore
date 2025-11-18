@@ -5,6 +5,6 @@ TestResults
 publish/
 python/build
 python/dist
-python/lpjguess/rids
-python/lpjguess/__pycache__
+python/lpjguess_runner/rids
+python/lpjguess_runner/__pycache__
 *.egg-info

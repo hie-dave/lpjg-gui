@@ -1,4 +1,4 @@
-# lpjguess
+# lpjguess-runner
 
 Python wrapper for LPJ-Guess experiment runner (via pythonnet + .NET 9)
 
@@ -7,13 +7,13 @@ Python wrapper for LPJ-Guess experiment runner (via pythonnet + .NET 9)
 - Prerequisites: .NET 9 runtime
 
 ```bash
-pip install lpjguess
+pip install lpjguess-runner
 ```
 
 ## Example Usage
 
 ```python
-from lpjguess import *
+from lpjguess_runner import *
 
 run_settings = RunSettings.Local(
     "/path/to/guess/executable",
