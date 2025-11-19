@@ -13,6 +13,7 @@ PY_CACHE := python/lpjguess_runner/__pycache__
 RIDS_ROOT := python/lpjguess_runner/rids
 VENV ?= .venv
 
+WHEEL := $(DIST_DIR)/lpjguess_runner-*-none-$(PLAT).whl
 
 .PHONY: clean build run check coverage clean-py publish stage wheel install dev install-venv install-user clean-venv
 
@@ -71,15 +72,15 @@ clean-venv:
 
 # Install the wheel into the current Python environment
 install: wheel
-	python -m pip install --force-reinstall $(DIST_DIR)/*.whl
+	python -m pip install --force-reinstall $(WHEEL)
 
 # Install the wheel into a local virtual environment
 install-venv: wheel venv
-	. $(VENV)/bin/activate && pip install --force-reinstall $(DIST_DIR)/*.whl
+	. $(VENV)/bin/activate && pip install --force-reinstall $(WHEEL)
 
 # Install the wheel for the current user (avoids system site-packages)
 install-user: wheel
-	pip install --user --force-reinstall $(DIST_DIR)/*.whl
+	pip install --user --force-reinstall $(WHEEL)
 
 # Convenience: one-shot local dev flow (no install)
 dev: clean-py publish stage wheel
