@@ -41,3 +41,6 @@ lpjguess_runner = ["rids/**"]
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["lpjguess_runner"]
+
+[tool.setuptools_scm]
+root = ".."
