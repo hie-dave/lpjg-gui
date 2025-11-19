@@ -10,7 +10,7 @@ dynamic = ["version"]
 description = "Python wrapper for LPJ-Guess experiment runner (via pythonnet + .NET 9)"
 readme = "README.md"
 requires-python = ">=3.9"
-license = { text = "MIT" }
+license = "MIT"
 authors = [
   { name = "Drew Holzworth", email = "d.holzworth@westernsydney.edu.au" }
 ]
