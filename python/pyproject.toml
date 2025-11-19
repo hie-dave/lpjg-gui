@@ -1,12 +1,12 @@
 # python/pyproject.toml
 [build-system]
-requires = ["setuptools>=68", "wheel"]
+requires = ["setuptools>=68", "wheel", "setuptools-scm>=8"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "lpjguess-runner"
-# If you’d like version auto from git tags, use setuptools_scm instead (see note below)
-version = "0.1.0"
+# Version is managed by setuptools-scm from Git tags
+dynamic = ["version"]
 description = "Python wrapper for LPJ-Guess experiment runner (via pythonnet + .NET 9)"
 readme = "README.md"
 requires-python = ">=3.9"
