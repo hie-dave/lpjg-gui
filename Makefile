@@ -22,7 +22,7 @@ build:
 
 clean: clean-py
 	dotnet clean $(SLN)
-	rm -rf coverage src/LpjGuess.Tests/TestResults
+	rm -rf coverage src/LpjGuess.Tests/TestResults publish
 
 run:
 	dotnet run --project src/LpjGuess.Frontend
