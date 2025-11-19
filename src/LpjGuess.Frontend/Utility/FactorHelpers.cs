@@ -32,7 +32,7 @@ internal static class FactorHelpers
             case FactorType.TopLevel:
                 return new TopLevelParameter("wateruptake", "wcont");
             case FactorType.Block:
-                return new BlockParameter("sla", "pft", "TeBE", "30");
+                return new BlockParameter("pft", "TeBE", "sla", "30");
             case FactorType.Composite:
                 return new CompositeFactor([]);
             case FactorType.Dummy:

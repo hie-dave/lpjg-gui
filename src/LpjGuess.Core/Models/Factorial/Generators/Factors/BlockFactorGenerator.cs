@@ -39,6 +39,6 @@ public class BlockFactorGenerator : TopLevelFactorGenerator
     {
         return Values
             .GenerateStrings(CultureInfo.InvariantCulture)
-            .Select(v => new BlockParameter(Name, BlockType, BlockName, v));
+            .Select(v => new BlockParameter(BlockType, BlockName, Name, v));
     }
 }

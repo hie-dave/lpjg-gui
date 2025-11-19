@@ -49,11 +49,11 @@ run_settings = RunSettings.Local(
 simulations = [
     simulation("nindiv_max_0_sla_26", [           # Run all .ins files with:
         TopLevelParameter("nindiv_max", "0"),     # - nindiv_max = 0
-        BlockParameter("sla", "pft", "MRS", "26") # - SLA of "MRS" pft set to 26
+        BlockParameter("pft", "MRS", "sla", "26") # - SLA of "MRS" pft set to 26
     ]),
     simulation("nindiv_max_1_sla_39", [           # Run all .ins files with:
         TopLevelParameter("nindiv_max", "1"),     # - nindiv_max = 1
-        BlockParameter("sla", "pft", "MRS", "39") # - SLA of "MRS" pft set to 39
+        BlockParameter("pft", "MRS", "sla", "39") # - SLA of "MRS" pft set to 39
     ]),
 ]
 

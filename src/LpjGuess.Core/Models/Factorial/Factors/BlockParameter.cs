@@ -20,11 +20,11 @@ public class BlockParameter : TopLevelParameter
     /// <summary>
     /// Create a new <see cref="BlockParameter"/> instance.
     /// </summary>
-    /// <param name="name">The name of the parameter.</param>
     /// <param name="blockType">The type of the block to which the parameter belongs.</param>
     /// <param name="blockName">The name of the block to which the parameter belongs.</param>
+    /// <param name="name">The name of the parameter.</param>
     /// <param name="value">The value to be applied to the parameter.</param>
-    public BlockParameter(string name, string blockType, string blockName, string value)
+    public BlockParameter(string blockType, string blockName, string name, string value)
         : base(name, value)
     {
         BlockType = blockType;
@@ -39,7 +39,7 @@ public class BlockParameter : TopLevelParameter
     /// <param name="value">The value to be applied to the parameter.</param>
     /// <returns>The <see cref="BlockParameter"/> instance.</returns>
     public static BlockParameter Pft(string pft, string parameter, string value)
-        => new(parameter, "pft", pft, value);
+        => new("pft", pft, parameter, value);
 
     /// <inheritdoc />
     public override void Apply(InstructionFileParser instructionFile)
