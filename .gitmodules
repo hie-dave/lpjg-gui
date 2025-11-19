@@ -1,0 +1,3 @@
+[submodule "src/External/oxyplot-gtksharp"]
+	path = src/External/oxyplot-gtksharp
+	url = git@github.com:hol430/oxyplot-gtksharp.git
