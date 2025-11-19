@@ -2,6 +2,7 @@ SLN=src/LpjGuess.sln
 
 # Defaults (override on CLI):
 RID ?= linux-x64
+PLAT ?= manylinux2014_x86_64
 TFM ?= net9.0
 PUBLISH_OUT := publish/$(RID)
 PKG_RIDS_DIR := python/lpjguess_runner/rids/$(RID)
@@ -57,6 +58,8 @@ stage: publish
 # Build the wheel
 wheel: stage
 	cd python && python -m build --wheel
+	python -m wheel tags --platform-tag $(PLAT) $(DIST_DIR)/lpjguess_runner-*-none-any.whl
+	rm $(DIST_DIR)/lpjguess_runner-*-none-any.whl
 
 venv:
 	python -m venv $(VENV)

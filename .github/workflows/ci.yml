@@ -51,17 +51,9 @@ jobs:
       - name: Test (Makefile)
         run: make check
 
-      - name: Build staged payload via Makefile
-        run: |
-          make clean-py
-          make stage RID=${{ matrix.rid }} TFM=net9.0
-
-      - name: Build platform wheel with explicit tag
+      - name: Build wheel via Makefile
         working-directory: python
-        run: |
-          python -m pip install -U pip wheel build
-          # Use pip wheel to force a platform tag; avoids py3-none-any collisions
-          python -m pip wheel . -w dist --no-deps --plat-name ${{ matrix.plat }}
+        run: make wheel RID=${{ matrix.rid }} TFM=net9.0 PLAT=${{ matrix.plat }}
 
       - name: Smoke test import from built wheel
         working-directory: python
