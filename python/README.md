@@ -1,5 +1,7 @@
 # lpjguess-runner
 
+[![CI](https://github.com/hie-dave/lpjg-gui/actions/workflows/ci.yml/badge.svg)](https://github.com/hie-dave/lpjg-gui/actions/workflows/ci.yml)
+
 Python wrapper for LPJ-Guess experiment runner (via pythonnet + .NET 9)
 
 ## Build
@@ -62,7 +64,7 @@ result = run_simulations(run_settings,
                             simulations,
                             ins,
                             pfts,
-                            ConsoleProgressReporter(), # Write progres messages to stdout
+                            ConsoleProgressReporter(), # Write progress messages to stdout
                             ConsoleOutputHelper())     # Propagate subprocess output to stdout
 
 print(f"Total jobs: {result.TotalJobs}")
