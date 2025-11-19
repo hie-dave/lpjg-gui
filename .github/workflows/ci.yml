@@ -44,6 +44,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: 'pip' # caching pip dependencies
 
       - name: Install Python build tooling
         run: python -m pip install -U wheel build
@@ -59,7 +60,7 @@ jobs:
 
       - name: Smoke test import from built wheel
         run: |
-          make install
+          python -m pip install python/dist/*.whl
           python -c "import lpjguess_runner as m; print('Imported:', m.__name__)"
 
       - name: Upload wheel artifact
