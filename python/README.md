@@ -2,12 +2,34 @@
 
 Python wrapper for LPJ-Guess experiment runner (via pythonnet + .NET 9)
 
+## Build
+
+Prerequisites:
+- .NET 9 SDK
+- Python 3.11 (if building wheel)
+
+```bash
+# Clone the repository with submodules
+git clone --recurse-submodules git@github.com:hie-dave/lpjg-gui.git
+make
+```
+
 ## Install
 
 - Prerequisites: .NET 9 runtime
 
+### From PyPI
+
 ```bash
 pip install lpjguess-runner
+```
+
+### From Source
+
+```bash
+make install                 # install globally
+make install-venv VENV=.venv # install into a local virtual environment
+make install-user            # install for the current user
 ```
 
 ## Example Usage
