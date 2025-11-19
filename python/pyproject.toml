@@ -14,8 +14,8 @@ license = "MIT"
 authors = [
   { name = "Drew Holzworth", email = "d.holzworth@westernsydney.edu.au" }
 ]
-keywords = ["LPJ-Guess", "ecosystem", "vegetation", "simulation", "experiments",
-            "DGVM", "dynamic", "model"]
+keywords = ["LPJ-Guess", "dynamic", "vegetation", "model", "DGVM", "ecosystem",
+            "simulation", "experiments"]
 classifiers = [
   "Programming Language :: Python :: 3",
   "Operating System :: POSIX :: Linux",
@@ -33,7 +33,7 @@ Source = "https://github.com/hie-dave/lpjg-gui"
 Issues = "https://github.com/hie-dave/lpjg-gui/issues"
 
 [tool.setuptools]
-include-package-data = true
+include-package-data = false
 
 [tool.setuptools.package-data]
 lpjguess_runner = ["rids/**"]
