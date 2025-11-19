@@ -69,6 +69,10 @@ venv:
 clean-venv:
 	rm -rf $(VENV)
 
+# Install the wheel into the current Python environment
+install: wheel
+	python -m pip install --force-reinstall $(DIST_DIR)/*.whl
+
 # Install the wheel into a local virtual environment
 install-venv: wheel venv
 	. $(VENV)/bin/activate && pip install --force-reinstall $(DIST_DIR)/*.whl
