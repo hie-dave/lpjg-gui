@@ -44,3 +44,4 @@ include = ["lpjguess_runner"]
 
 [tool.setuptools_scm]
 root = ".."
+local_scheme = "no-local-version"
