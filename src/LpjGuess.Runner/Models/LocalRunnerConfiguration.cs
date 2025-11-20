@@ -13,14 +13,21 @@ public class LocalRunnerConfiguration : IRunnerConfiguration
     public string Name { get; set; }
 
     /// <summary>
+    /// Whether to use CPU affinity to pin the process to a single CPU.
+    /// </summary>
+    public bool UseCpuAffinity { get; set; }
+
+    /// <summary>
     /// Create a new <see cref="LocalRunnerConfiguration"/> instance.
     /// </summary>
     /// <param name="guessPath">Path to the lpj-guess executable.</param>
     /// <param name="name">Name of the runner.</param>
-    public LocalRunnerConfiguration(string guessPath, string name)
+    /// <param name="useCpuAffinity">Whether to use CPU affinity to pin the process to a single CPU.</param>
+    public LocalRunnerConfiguration(string guessPath, string name, bool useCpuAffinity)
     {
         GuessPath = guessPath;
         Name = name;
+        UseCpuAffinity = useCpuAffinity;
     }
 
     /// <summary>
@@ -30,6 +37,7 @@ public class LocalRunnerConfiguration : IRunnerConfiguration
     {
         GuessPath = "";
         Name = "";
+        UseCpuAffinity = true;
     }
 
     /// <inheritdoc />

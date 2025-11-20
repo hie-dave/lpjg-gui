@@ -240,7 +240,7 @@ public class PreferencesPresenter : IPreferencesPresenter
 	{
 		// fixme
 		if (name == "Local")
-			return new LocalRunnerConfiguration("", "New Local Runner");
+			return new LocalRunnerConfiguration("", "New Local Runner", true);
 		throw new InvalidOperationException($"Unknown runner type: {name}");
 	}
 }

@@ -86,7 +86,8 @@ run_settings = RunSettings.Local(
     "/path/to/output/directory",
     "nc",   # input module
     4,      # cpu count
-    "job_name")
+    "job_name",
+    True)   # Whether to allow context switching of LPJ-Guess processes between CPUs (recommended: True)
 
 simulations = [
     simulation("nindiv_max_0_sla_26", [               # Run all .ins files with:

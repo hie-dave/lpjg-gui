@@ -79,6 +79,8 @@ internal class TomlParser : IParser
 		bool emailNotifications = ParseBool(model, "email_notifications");
 		string emailAddress = ParseString(model, "email_address", !emailNotifications);
 
+		bool useCpuAffinity = ParseBool(model, "use_cpu_affinity");
+
 		return new RunSettings(
 			dryRun,
 			runLocal,
@@ -93,7 +95,8 @@ internal class TomlParser : IParser
 			emailNotifications,
 			emailAddress,
 			jobName,
-			fullFactorial
+			fullFactorial,
+			useCpuAffinity
 		);
 	}
 

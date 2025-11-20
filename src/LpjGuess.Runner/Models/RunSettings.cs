@@ -91,6 +91,13 @@ public class RunSettings
 	public Dictionary<string, object> Parameters { get; private init; }
 
 	/// <summary>
+	/// True to use CPU affinity to pin each LPJ-Guess process to a single CPU
+	/// (ie prevent context-switching of a guess process between CPUs). No
+	/// effect on MacOS. Recommended: true.
+	/// </summary>
+	public bool UseCpuAffinity { get; private init; }
+
+	/// <summary>
 	/// Create a new <see cref="RunSettings"/> instance.
 	/// </summary>
 	/// <param name="dryRun">Iff true, the run directory will be created but the job will not be submitted.</param>
@@ -107,7 +114,8 @@ public class RunSettings
 	/// <param name="emailAddress">Email address to be used for the job. Only used if emailNotifications is true.</param>
 	/// <param name="jobName">Name of the job.</param>
 	/// <param name="fullFactorial">Iff true, all combinations of parameters will be run.</param>
-	public RunSettings(bool dryRun, bool runLocal, string outputDirectory, string guessPath, string inputModule, ushort cpuCount, TimeSpan walltime, uint memory, string queue, string project, bool emailNotifications, string emailAddress, string jobName, bool fullFactorial)
+	/// <param name="useCpuAffinity">True to use CPU affinity to pin each LPJ-Guess process to a single CPU (ie prevent context-switching of a guess process between CPUs). No effect on MacOS. Recommended: true.</param>
+	public RunSettings(bool dryRun, bool runLocal, string outputDirectory, string guessPath, string inputModule, ushort cpuCount, TimeSpan walltime, uint memory, string queue, string project, bool emailNotifications, string emailAddress, string jobName, bool fullFactorial, bool useCpuAffinity)
 	{
 		DryRun = dryRun;
 		RunLocal = runLocal;
@@ -124,6 +132,7 @@ public class RunSettings
 		JobName = jobName;
 		FullFactorial = fullFactorial;
 		Parameters = [];
+		UseCpuAffinity = useCpuAffinity;
 	}
 
 	/// <summary>
@@ -134,12 +143,17 @@ public class RunSettings
 	/// <param name="inputModule">Input module to be used by LPJ-Guess.</param>
 	/// <param name="cpuCount">Number of CPUs to be allocated to the job.</param>
 	/// <param name="jobName">Name of the job.</param>
+	/// <param name="useCpuAffinity">True to use CPU affinity to pin each
+	/// LPJ-Guess process to a single CPU (ie prevent context-switching of a
+	/// guess process between CPUs). No effect on MacOS. Recommended:
+	/// true.
+	/// </param>
 	/// <remarks>
 	/// This is only necessary/useful because this class contains parameters for
 	/// both local and remote runs, some of which are useful only in remote runs
 	/// or vice versa. We should really refactor that abstraction out of this
-	/// class, but for now, this serves as a convenience method to create a
-	/// <see cref="RunSettings"/> instance for local execution, accepting only
+	/// class, but for now, this serves as a convenience method to create a <see
+	/// cref="RunSettings"/> instance for local execution, accepting only
 	/// parameters that are meaningful in that context.
 	/// </remarks>
 	public static RunSettings Local(
@@ -147,7 +161,8 @@ public class RunSettings
 		string outputDirectory,
 		string inputModule,
 		ushort cpuCount,
-		string jobName)
+		string jobName,
+		bool useCpuAffinity)
 	{
 		return new RunSettings(
 			false,
@@ -163,7 +178,8 @@ public class RunSettings
 			false,
 			"",
 			jobName,
-			true);
+			true,
+			useCpuAffinity);
 	}
 
 	/// <summary>
@@ -184,7 +200,7 @@ public class RunSettings
     private IRunnerConfiguration CreateRunConfig()
     {
         if (RunLocal)
-			return new LocalRunnerConfiguration(GuessPath, "Local Runner");
+			return new LocalRunnerConfiguration(GuessPath, "Local Runner", UseCpuAffinity);
 
 		// Not "local" - assume PBS job submission.
 		return new PbsRunnerConfiguration(

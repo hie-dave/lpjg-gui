@@ -50,8 +50,9 @@ public class LocalRunnerConfigurationPresenter : IRunnerPresenter
 	/// <inheritdoc />
 	public IGroupView CreateView()
 	{
-		view = new LocalRunnerConfigurationGroupView(config.GuessPath);
+		view = new LocalRunnerConfigurationGroupView(config.GuessPath, config.UseCpuAffinity);
 		view.OnGuessPathChanged.ConnectTo(p => config.GuessPath = p);
+		view.OnCpuAffinityChanged.ConnectTo(b => config.UseCpuAffinity = b);
 		return view;
 	}
 

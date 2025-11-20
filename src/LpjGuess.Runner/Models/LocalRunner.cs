@@ -62,7 +62,8 @@ public class LocalRunner : IMonitorableRunner
         proc.Start();
 
         using CpuAffinity cpu = CpuAffinity.Acquire();
-        cpu.SetAffinity(proc);
+        if (settings.UseCpuAffinity)
+            cpu.SetAffinity(proc);
 
         // Start output parsing task
         Task stdoutTask = ParseOutputAsync(proc.StandardOutput, job.Name, ct);
