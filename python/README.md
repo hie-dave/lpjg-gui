@@ -48,6 +48,12 @@ optionally customises how progress and model output are handled.
   block parameters). The helper `simulation(name, factors)` creates these
   objects.
 
+  Parameter typing note: All parameter values passed to
+  `TopLevelParameter(...)` and `BlockParameter(...)` must be strings. For
+  example, use `TopLevelParameter("nindiv_max", "1")` rather than
+  `TopLevelParameter("nindiv_max", 1)`. When constructing simulations
+  programmatically, convert values explicitly with `str(value)`.
+
 - **Instruction files and PFTs**: A list of `.ins` files and PFT names to run.
   Each instruction file will be run once for each defined simulation.
 
@@ -75,6 +81,10 @@ Notes for Python users:
   `ConsoleOutputHelper()` and skip writing custom classes.
 - To customise behavior, subclass the provided bases rather than implementing
   .NET interfaces directly.
+
+- Parameter values for `TopLevelParameter` and `BlockParameter` are string
+  typed. Convert numeric or boolean values with `str(...)` when building
+  simulation lists programmatically.
 
 ## Example Usage
 
