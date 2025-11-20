@@ -112,5 +112,6 @@ jobs:
           print-hash: true
           repository-url: https://test.pypi.org/legacy/
           skip-existing: true
+          verbose: true
         # NOTE: TestPyPI also requires configuring a Trusted Publisher.
         # Ensure the project exists on TestPyPI and that versions are unique per upload.
