@@ -48,6 +48,14 @@ optionally customises how progress and model output are handled.
   block parameters). The helper `simulation(name, factors)` creates these
   objects.
 
+  `factors` should be a list of `IFactor` objects, which each represent a
+  change to an instruction file parameter. This may be either a top-level
+  parameter (e.g. `npatch`, `wateruptake`, etc) or a block parameter (e.g.
+  `sla` within a PFT block, etc). These factors may be constructed via
+  `TopLevelParameter(name, value)` and
+  `BlockParameter(block_type, block_name, parameter_name, parameter_value)`
+  respectively. See the examples below for details.
+
   Parameter typing note: All parameter values passed to
   `TopLevelParameter(...)` and `BlockParameter(...)` must be strings. For
   example, use `TopLevelParameter("nindiv_max", "1")` rather than
@@ -167,6 +175,38 @@ out = MyOutput()
 pr = MyProgress()
 
 result = run_simulations(run_settings, simulations, ins, pfts, pr, out)
+```
+
+### Programmatic construction of simulations
+
+Many workflows define a small grid of parameter values and generate one
+simulation per combination. The following example shows a minimal pattern using
+`itertools.product`. Note the explicit conversion of parameter values to
+strings.
+
+```python
+from itertools import product
+from lpjguess_runner import simulation, TopLevelParameter, BlockParameter
+
+param_grid = {
+    "wateruptake": ["wcont", "rootdist"],
+    "npatch": range(1, 50, 10)
+}
+
+sims = []
+for (wu, npatch) in product(param_grid["wateruptake"], param_grid["npatch"]):
+    factors = [
+        TopLevelParameter("wateruptake", str(wu)),
+        TopLevelParameter("npatch", str(npatch))
+    ]
+    name = f"wu_{wu}_npatch_{npatch}"
+    sims.append(simulation(name, factors))
+# sims now contains one Simulation per combination.
+
+for sim in sims:
+    print(f"# {sim.Name}")
+    print("\n".join([f"- {c.GetName()}" for c in sim.Changes]))
+    print()
 ```
 
 Notes
