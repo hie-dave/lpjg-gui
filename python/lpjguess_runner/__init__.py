@@ -3,7 +3,7 @@
 from ._loader import ensure_loaded
 ensure_loaded() # TODO: lazy loading?
 
-from System import Array
+from System import Array, Object
 from typing import Optional
 
 # Import selected .NET symbols
@@ -23,6 +23,8 @@ __all__ = [
     "ConsoleProgressReporter", "ConsoleOutputHelper",
     # Python helpers
     "simulation", "runner_config", "run_simulations",
+    # Python base classes for extensibility
+    "CustomOutputHelper", "CustomProgressReporter",
 ]
 
 #
@@ -61,3 +63,48 @@ def run_simulations(run_settings: RunSettings,
                     output_helper: Optional[IOutputHelper] = None) -> ExperimentResult:
     cfg = runner_config(run_settings, simulations, ins, pfts)
     return ExperimentRunner().Run(cfg, progress_reporter, output_helper)
+
+class CustomOutputHelper(Object, IOutputHelper):
+    """
+    Base class for implementing custom output handling in Python.
+
+    Notes:
+    - Methods may be called from background threads; keep handlers fast and
+      thread-safe.
+    - Output can be frequent; consider buffering or filtering.
+    """
+    __namespace__ = "LpjGuess.Runner.Python"
+
+    def __init__(self):
+        Object.__init__(self)
+
+    def ReportOutput(self, jobName: str, output: str) -> None:
+        """Handle a stdout line for a job."""
+        raise NotImplementedError("ReportOutput must be overridden.")
+
+    def ReportError(self, jobName: str, output: str) -> None:
+        """Handle a stderr line for a job."""
+        raise NotImplementedError("ReportError must be overridden.")
+
+class CustomProgressReporter(Object, IProgressReporter):
+    """
+    Base class for implementing custom progress reporting in Python.
+
+    Parameters:
+    - percent: current overall progress as float in [0, 100].
+    - elapsed: System.TimeSpan (total wall-clock time since start).
+    - ncomplete: int (number of completed jobs).
+    - njob: int (total number of jobs).
+    """
+    __namespace__ = "LpjGuess.Runner.Python"
+
+    def __init__(self):
+        Object.__init__(self)
+
+    def ReportProgress(self,
+                       percent: float,
+                       elapsed,  # System.TimeSpan
+                       ncomplete: int,
+                       njob: int) -> None:
+        """Handle a progress update."""
+        raise NotImplementedError("ReportProgress must be overridden.")
