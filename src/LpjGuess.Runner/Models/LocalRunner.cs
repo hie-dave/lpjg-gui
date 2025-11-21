@@ -66,8 +66,8 @@ public class LocalRunner : IMonitorableRunner
             cpu.SetAffinity(proc);
 
         // Start output parsing task
-        Task stdoutTask = ParseOutputAsync(proc.StandardOutput, job.Name, ct);
-        Task stderrTask = ParseErrorAsync(proc.StandardError, job.Name, ct);
+        Task stdoutTask = ParseOutputAsync(proc.StandardOutput, job, ct);
+        Task stderrTask = ParseErrorAsync(proc.StandardError, job, ct);
 
         // Wait for process completion
         await proc.WaitForExitAsync(ct);
@@ -81,18 +81,18 @@ public class LocalRunner : IMonitorableRunner
         ct.ThrowIfCancellationRequested();
     }
 
-    private async Task ParseErrorAsync(StreamReader errorStream, string jobName, CancellationToken ct)
+    private async Task ParseErrorAsync(StreamReader errorStream, Job job, CancellationToken ct)
     {
         string? line;
         while ((line = await errorStream.ReadLineAsync()) != null &&
                !ct.IsCancellationRequested)
         {
             output.AppendLine(line);
-            ErrorReceived?.Invoke(this, new OutputEventArgs(jobName, line));
+            ErrorReceived?.Invoke(this, new OutputEventArgs(job.Name, line));
         }
     }
 
-    private async Task ParseOutputAsync(StreamReader outputStream, string jobName, CancellationToken ct)
+    private async Task ParseOutputAsync(StreamReader outputStream, Job job, CancellationToken ct)
     {
         string? line;
         while ((line = await outputStream.ReadLineAsync()) != null &&
@@ -104,19 +104,19 @@ public class LocalRunner : IMonitorableRunner
             // Parse progress from output (example format: "Progress: 50%")
             Match match = Regex.Match(line, @"([0-9]+)%[ \t]complete,[ \t]+([0-9]+:[0-9]+:[0-9]+)[ \t]+elapsed,[ \t]+([0-9]+:[0-9]+:[0-9]+)[ \t]remaining");
             if (match.Success && int.TryParse(match.Groups[1].Value, out int percentage))
-                ReportProgress(jobName, percentage);
+                ReportProgress(job, percentage);
             else
             {
                 output.AppendLine(line);
-                OutputReceived?.Invoke(this, new OutputEventArgs(jobName, line));
+                OutputReceived?.Invoke(this, new OutputEventArgs(job.Name, line));
                 if (line.Contains("Finished"))
-                    ReportProgress(jobName, 100);
+                    ReportProgress(job, 100);
             }
         }
     }
 
-    private void ReportProgress(string jobName, int progress)
+    private void ReportProgress(Job job, int progress)
     {
-        ProgressChanged?.Invoke(this, new ProgressEventArgs(progress, jobName));
+        ProgressChanged?.Invoke(this, new ProgressEventArgs(progress, job));
     }
 }

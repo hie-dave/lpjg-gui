@@ -13,16 +13,16 @@ public class ProgressEventArgs : EventArgs
 	/// <summary>
 	/// Job name.
 	/// </summary>
-	public string JobName { get; private init; }
+	public Job Source { get; private init; }
 
     /// <summary>
     /// Create a new <see cref="ProgressEventArgs"/> instance.
     /// </summary>
     /// <param name="percentage">Job progress as a percentage.</param>
-    /// <param name="jobName">Name of the job.</param>
-    public ProgressEventArgs(int percentage, string jobName)
+    /// <param name="job">The job which sent this progress update.</param>
+    public ProgressEventArgs(int percentage, Job job)
     {
         Percentage = percentage;
-        JobName = jobName;
+        Source = job;
     }
 }

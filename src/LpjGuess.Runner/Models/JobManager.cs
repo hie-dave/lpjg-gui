@@ -26,9 +26,9 @@ public class JobManager
 	private readonly IReadOnlyList<Job> jobs;
 
 	/// <summary>
-	/// Dictionary mapping job names, to those jobs' progres percentages.
+	/// Dictionary mapping jobs to those jobs' progress percentages.
 	/// </summary>
-	private readonly IDictionary<string, int> jobProgress;
+	private readonly IDictionary<Job, int> jobProgress;
 
 	/// <summary>
 	/// Start time of the job manager.
@@ -58,7 +58,7 @@ public class JobManager
 		this.progressReporter = progressReporter;
 		this.outputHandler = outputHandler;
 
-		jobProgress = new Dictionary<string, int>();
+		jobProgress = new Dictionary<Job, int>();
 		startTime = DateTime.Now;
 		lastUpdate = DateTime.MinValue;
 
@@ -82,8 +82,9 @@ public class JobManager
 
 		// Set progress to 0 for all jobs. If we don't do this, only those jobs
 		// which have run or are running will exist in jobProgress.
+		jobProgress.Clear();
 		foreach (var job in jobs)
-			jobProgress[job.Name] = 0;
+			jobProgress[job] = 0;
 
 		await Parallel.ForEachAsync(
 			jobs,
@@ -151,13 +152,16 @@ public class JobManager
     /// Handle a progress message written by a job and intercepted by a job
     /// runner.
     /// </summary>
-    /// <param name="sender">A job runner instance.</param>
+    /// <param name="sender">The job to which this progress pertains.</param>
     /// <param name="e">The event data.</param>
     private void HandleProgress(object? sender, ProgressEventArgs e)
 	{
 		lock (jobProgress)
 		{
-			jobProgress[e.JobName] = e.Percentage;
+			if (e.Percentage < jobProgress[e.Source])
+				return;
+
+			jobProgress[e.Source] = e.Percentage;
 
 			// Only update if at least 1 second passed
 			if ((DateTime.Now - lastUpdate).TotalSeconds >= 1)
