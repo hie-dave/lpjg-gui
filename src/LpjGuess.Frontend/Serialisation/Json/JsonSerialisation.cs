@@ -1,6 +1,8 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using LpjGuess.Runner.Models;
+using System.Runtime.Serialization;
+using Newtonsoft.Json.Serialization;
 
 namespace LpjGuess.Frontend.Serialisation.Json;
 
@@ -17,10 +19,11 @@ public static class JsonSerialisation
         Formatting = Formatting.Indented,
         NullValueHandling = NullValueHandling.Ignore,
         TypeNameHandling = TypeNameHandling.Auto,
-        Converters = 
+        Converters =
         {
             new StringEnumConverter()
-        }
+        },
+        SerializationBinder = new CollectionNormaliser(new DefaultSerializationBinder())
     };
 
     /// <summary>

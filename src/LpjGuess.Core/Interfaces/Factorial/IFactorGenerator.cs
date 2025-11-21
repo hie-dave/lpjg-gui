@@ -1,5 +1,3 @@
-using System.Globalization;
-
 namespace LpjGuess.Core.Interfaces.Factorial;
 
 /// <summary>
