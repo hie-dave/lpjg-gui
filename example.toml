@@ -32,6 +32,9 @@ full_factorial = false
 # If running in PBS mode, this is the number of CPUs allocated to each run.
 cpu_count = 1
 
+# True to pin each process to a single CPU. No effect on MacOS.
+use_cpu_affinity = true
+
 ################################################################################
 # PBS Settings - Optional when run_local is true
 ################################################################################
