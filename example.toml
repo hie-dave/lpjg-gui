@@ -1,0 +1,66 @@
+# PFTs to be used in the run. This can be omitted to run all PFTs.
+# pfts = ["C3G_perennial", "C4G_perennial"]
+
+# Instruction files to be run.
+insfiles = ["/x.ins", "/y.ins"]
+
+# If true, the run directories will be created but not submitted to PBS.
+dry_run = false
+
+# Output directory. Outputs and run configuration will be written here.
+output_directory = "/path/to/output/directory"
+
+# Path to the guess executable.
+guess_path = "/path/to/guess"
+
+# Input module to be used by LPJ-Guess.
+input_module = "nc"
+
+# Base name of all jobs. Each factorial will have a unique suffix appended to
+# this name. Outputs will be saved in ${output_directory}/${job_name}/
+job_name = "example"
+
+# True to run locally, false to submit to PBS. This will run all simulations in
+# parallel.
+run_local = true
+
+# If true, all combinations of parameters will be run. If false, one simulation
+# will be run for each parameter value.
+full_factorial = false
+
+# If running locally, this is the number of guess instances to run in parallel.
+# If running in PBS mode, this is the number of CPUs allocated to each run.
+cpu_count = 1
+
+################################################################################
+# PBS Settings - Optional when run_local is true
+################################################################################
+
+# Maximum amount of walltime for each run.
+walltime = "01:00:00"
+
+# Amount of memory to be allocated to each run, in GiB.
+memory = 1
+
+# PBS queue to be used for running the jobs.
+queue = "normal"
+
+# NCI project to be used for running the jobs.
+project = "pt17"
+
+# true to receive email notifications of job status, false otherwise.
+email_notifications = true
+
+# Email address which should receive email notifications. May be omitted iff
+# email_notifications is false.
+email_address = "me@example.com"
+
+################################################################################
+# Parameters
+################################################################################
+
+# List of parameter changes to be applied. Each instruction file will be run for
+# all combinations of these changes.
+[parameters]
+temperature_delta = [0, 3]
+co2_delta = [0, 50]
