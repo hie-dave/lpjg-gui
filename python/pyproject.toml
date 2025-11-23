@@ -9,7 +9,7 @@ name = "lpjguess-runner"
 dynamic = ["version"]
 description = "Python wrapper for LPJ-Guess experiment runner (via pythonnet + .NET 9)"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10, <3.14"
 license = "MIT"
 authors = [
   { name = "Drew Holzworth", email = "d.holzworth@westernsydney.edu.au" }
