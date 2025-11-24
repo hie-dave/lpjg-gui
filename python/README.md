@@ -177,6 +177,16 @@ pr = MyProgress()
 result = run_simulations(run_settings, simulations, ins, pfts, pr, out)
 ```
 
+Notes
+
+- Methods may be called from background threads; keep handlers fast and
+  thread-safe.
+- Output can be frequent; consider buffering or filtering.
+- Advanced: if implementing the .NET interfaces directly instead of subclassing
+  these bases, the class must inherit from `System.Object`, call
+  `Object.__init__`, and set a valid `__namespace__` (for example
+  `"LpjGuess.Runner.Python"`). Using the provided base classes is recommended.
+
 ### Programmatic construction of simulations
 
 Many workflows define a small grid of parameter values and generate one
@@ -208,16 +218,6 @@ for sim in sims:
     print("\n".join([f"- {c.GetName()}" for c in sim.Changes]))
     print()
 ```
-
-Notes
-
-- Methods may be called from background threads; keep handlers fast and
-  thread-safe.
-- Output can be frequent; consider buffering or filtering.
-- Advanced: if implementing the .NET interfaces directly instead of subclassing
-  these bases, the class must inherit from `System.Object`, call
-  `Object.__init__`, and set a valid `__namespace__` (for example
-  `"LpjGuess.Runner.Python"`). Using the provided base classes is recommended.
 
 ## Results and Outputs
 
