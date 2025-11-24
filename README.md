@@ -39,12 +39,26 @@ Install the following packages:
 
 ## Build
 
+Prerequisites:
+- .NET 9 SDK
+- Python 3.11 (if building wheel)
+
 The solution may be built in an IDE of choice, or using the provided Makefile
 or .NET CLI:
 
 ```bash
+# Clone the repository with submodules
+git clone --recurse-submodules git@github.com:hie-dave/lpjg-gui.git
+
 make
 # dotnet build src/LpjGuess.sln
+```
+
+Unit tests may be run using the provided Makefile or .NET CLI:
+
+```bash
+make check
+# dotnet test src/LpjGuess.sln
 ```
 
 ## Run
