@@ -31,6 +31,16 @@ public class JobManager
 	private readonly IDictionary<Job, int> jobProgress;
 
 	/// <summary>
+	/// Dictionary mapping jobs to those jobs' start times.
+	/// </summary>
+	private readonly IDictionary<Job, DateTime> jobStartTime;
+
+	/// <summary>
+	/// Dictionary mapping jobs to those jobs' end times.
+	/// </summary>
+	private readonly IDictionary<Job, DateTime> jobEndTime;
+
+	/// <summary>
 	/// Start time of the job manager.
 	/// </summary>
 	private readonly DateTime startTime;
@@ -59,6 +69,8 @@ public class JobManager
 		this.outputHandler = outputHandler;
 
 		jobProgress = new Dictionary<Job, int>();
+		jobStartTime = new Dictionary<Job, DateTime>();
+		jobEndTime = new Dictionary<Job, DateTime>();
 		startTime = DateTime.Now;
 		lastUpdate = DateTime.MinValue;
 
@@ -100,6 +112,18 @@ public class JobManager
 	}
 
 	/// <summary>
+	/// Get the duration of a job.
+	/// </summary>
+	/// <param name="job">The job to get the duration of.</param>
+	/// <returns>The duration of the job.</returns>
+	public TimeSpan GetJobDuration(Job job)
+	{
+		lock (jobEndTime)
+			lock (jobStartTime)
+				return jobEndTime[job] - jobStartTime[job];
+	}
+
+	/// <summary>
 	/// Run a job asynchronously.
 	/// </summary>
 	/// <param name="job">The job to run.</param>
@@ -115,10 +139,14 @@ public class JobManager
 		}
 		try
 		{
+			lock (jobStartTime)
+				jobStartTime[job] = DateTime.Now;
 			await runner.RunAsync(job, cancellationToken);
 		}
 		finally
 		{
+			lock (jobEndTime)
+				jobEndTime[job] = DateTime.Now;
 			if (runner is IMonitorableRunner monitor)
 			{
 				monitor.ProgressChanged -= HandleProgress;

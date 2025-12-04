@@ -57,7 +57,9 @@ public sealed class ExperimentRunner
             nsuccess = Math.Max(0, jobs.Count - nfail);
         }
 
-        var result = new ExperimentResult(jobs.Count, nsuccess, nfail, exception?.Message);
+        var result = new ExperimentResult(jobs.Count, nsuccess, nfail,
+                                          jobs.Select(j => (j.Name, jobManager.GetJobDuration(j))).ToDictionary(),
+                                          exception?.Message);
         return result;
     }
 

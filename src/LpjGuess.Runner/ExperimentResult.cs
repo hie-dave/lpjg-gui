@@ -26,17 +26,26 @@ public sealed class ExperimentResult
     public string? Error { get; private init; }
 
     /// <summary>
+    /// Dictionary mapping job names to their durations.
+    /// </summary>
+    public Dictionary<string, TimeSpan> JobDurations { get; private init; }
+
+    /// <summary>
     /// Create a new <see cref="ExperimentResult"/> instance.
     /// </summary>
     /// <param name="totalJobs">Total number of jobs submitted.</param>
     /// <param name="successfulJobs">Number of jobs that completed successfully.</param>
     /// <param name="failedJobs">Number of jobs that failed.</param>
+    /// <param name="jobDurations">Dictionary mapping job names to their durations.</param>
     /// <param name="error">Error message, if any.</param>
-    public ExperimentResult(int totalJobs, int successfulJobs, int failedJobs, string? error)
+    public ExperimentResult(int totalJobs, int successfulJobs, int failedJobs,
+                            Dictionary<string, TimeSpan> jobDurations,
+                            string? error)
     {
         TotalJobs = totalJobs;
         SuccessfulJobs = successfulJobs;
         FailedJobs = failedJobs;
         Error = error;
+        JobDurations = jobDurations;
     }
 }
