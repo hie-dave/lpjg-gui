@@ -103,6 +103,8 @@ public class InstructionFileNormaliser
 			return file;
 
         string relative = Path.GetDirectoryName(FilePath) ?? Directory.GetCurrentDirectory();
+		if (!Path.IsPathRooted(relative))
+			relative = Path.GetFullPath(relative, Directory.GetCurrentDirectory());
 		return Path.GetFullPath(file, relative);
     }
 
