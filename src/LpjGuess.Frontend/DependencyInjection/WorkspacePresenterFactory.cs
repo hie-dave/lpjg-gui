@@ -40,7 +40,7 @@ public class WorkspacePresenterFactory : PresenterFactory, IDisposable
         var experimentProvider = (ExperimentProvider)scope.ServiceProvider.GetRequiredService<IExperimentProvider>();
         experimentProvider.UpdateExperiments(workspace.Experiments);
 
-        IPathResolver pathResolver = scope.ServiceProvider.GetRequiredService<IPathResolver>();
+        IWorkspacePathHelper pathResolver = scope.ServiceProvider.GetRequiredService<IWorkspacePathHelper>();
         if (pathResolver is not WorkspacePathResolver resolver)
             throw new InvalidOperationException("Path resolver is not a workspace path resolver.");
         resolver.Initialise(workspace.GetOutputDirectory());
@@ -53,9 +53,9 @@ public class WorkspacePresenterFactory : PresenterFactory, IDisposable
     /// <summary>
     /// Get the path resolver.
     /// </summary>
-    public IPathResolver GetPathResolver()
+    public IWorkspacePathHelper GetPathHelper()
     {
-        return scope.ServiceProvider.GetRequiredService<IPathResolver>();
+        return scope.ServiceProvider.GetRequiredService<IWorkspacePathHelper>();
     }
 
     /// <inheritdoc />

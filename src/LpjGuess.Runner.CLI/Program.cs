@@ -25,14 +25,20 @@ Console.CancelKeyPress += (_, args) =>
 	args.Cancel = true;
 };
 
+// TODO: make naming strategy and path resolver configurable.
+ISimulationNamingStrategy namingStrategy = new ManualNamingStrategy();
+IPathResolver pathResolver = new StaticPathResolver(config.Settings.OutputDirectory, namingStrategy);
+
 SimulationGeneratorConfig generatorConfig = new SimulationGeneratorConfig(
-	config.Settings.OutputDirectory,
 	config.Settings.Parallel,
 	config.Settings.CpuCount,
 	config.Factors,
 	config.InsFiles,
-	config.Pfts);
-SimulationService generator = new SimulationService(generatorConfig);
+	config.Pfts,
+	namingStrategy,
+	new ResultCatalog());
+
+SimulationService generator = new SimulationService(pathResolver, generatorConfig);
 IEnumerable<Job> jobs = generator.GenerateAllJobs(cancellation.Token);
 IProgressReporter progress = new ConsoleProgressReporter();
 

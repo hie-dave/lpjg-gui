@@ -13,6 +13,7 @@ using LpjGuess.Core.Interfaces.Factorial;
 using LpjGuess.Runner.Services;
 using LpjGuess.Frontend.Extensions;
 using LpjGuess.Frontend.Views;
+using LpjGuess.Frontend.Services;
 
 namespace LpjGuess.Frontend.Presenters;
 
@@ -34,9 +35,9 @@ public class OutputsPresenter : IOutputsPresenter
     private readonly IExperimentProvider provider;
 
     /// <summary>
-    /// The path resolver.
+    /// The workspace path helper.
     /// </summary>
-    private readonly IPathResolver pathResolver;
+    private readonly IWorkspacePathHelper pathHelper;
 
     /// <summary>
     /// The instruction files provider.
@@ -58,19 +59,19 @@ public class OutputsPresenter : IOutputsPresenter
     /// </summary>
     /// <param name="view">The view object.</param>
     /// <param name="provider">The experiment provider.</param>
-    /// <param name="pathResolver">The path resolver.</param>
+    /// <param name="helper">The workspace path helper.</param>
     /// <param name="instructionFilesProvider">The instruction files provider.</param>
     /// <param name="reader">The model output reader.</param>
     public OutputsPresenter(
         IOutputsView view,
         IExperimentProvider provider,
-        IPathResolver pathResolver,
+        IWorkspacePathHelper helper,
         IInstructionFilesProvider instructionFilesProvider,
         ModelOutputReader reader)
     {
         this.view = view;
         this.provider = provider;
-        this.pathResolver = pathResolver;
+        pathHelper = helper;
         this.instructionFilesProvider = instructionFilesProvider;
         this.reader = reader;
 
@@ -149,7 +150,9 @@ public class OutputsPresenter : IOutputsPresenter
 
         Experiment experiment = GetExperiment(experimentName);
         ISimulation simulation = GetSimulation(experiment, simulationName);
-        string concreteInsFile = pathResolver.GenerateTargetInsFilePath(insFile, simulation);
+        IPathResolver resolver = pathHelper.CreatePathResolver(experiment);
+
+        string concreteInsFile = resolver.GenerateTargetInsFilePath(insFile, simulation);
         InstructionFile ins = new(concreteInsFile, experimentName, simulationName);
         IEnumerable<OutputFile> outputFiles = GetOutputFiles(ins);
         view.PopulateOutputFiles(outputFiles);
@@ -264,7 +267,8 @@ public class OutputsPresenter : IOutputsPresenter
             return;
 
         ISimulation simulation = GetSimulation(experiment, simulationName);
-        string concreteInsFile = pathResolver.GenerateTargetInsFilePath(insFile, simulation);
+        IPathResolver resolver = pathHelper.CreatePathResolver(experiment);
+        string concreteInsFile = resolver.GenerateTargetInsFilePath(insFile, simulation);
 
         InstructionFile ins = new(concreteInsFile, experimentName, simulationName);
         SimulationReader reader = this.reader.GetSimulation(ins);

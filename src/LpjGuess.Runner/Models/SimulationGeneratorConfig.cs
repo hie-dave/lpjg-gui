@@ -1,4 +1,5 @@
 using LpjGuess.Core.Interfaces.Factorial;
+using LpjGuess.Runner.Services;
 
 namespace LpjGuess.Runner.Models;
 
@@ -7,11 +8,6 @@ namespace LpjGuess.Runner.Models;
 /// </summary>
 public class SimulationGeneratorConfig
 {
-    /// <summary>
-    /// Output directory into which jobs will be generated.
-    /// </summary>
-    public string OutputDirectory { get; private init; }
-
     /// <summary>
     /// Whether to generate jobs in parallel.
     /// </summary>
@@ -38,27 +34,40 @@ public class SimulationGeneratorConfig
     public IReadOnlyList<string> Pfts { get; private init; }
 
     /// <summary>
+    /// The naming strategy to use.
+    /// </summary>
+    public ISimulationNamingStrategy NamingStrategy { get; private init; }
+
+    /// <summary>
+    /// Simulation manifest reader/writer.
+    /// </summary>
+    public IResultCatalog Catalog { get; private init; }
+
+    /// <summary>
     /// Create a new runner configuration.
     /// </summary>
-    /// <param name="outputDirectory">Output directory into which jobs will be generated.</param>
     /// <param name="parallel">Whether to generate jobs in parallel.</param>
     /// <param name="cpuCount">Number of CPUs to use for job generation if parallel generation is enabled.</param>
     /// <param name="simulations">Simulations to generate from each instruction file.</param>
     /// <param name="insFiles">Instruction files.</param>
     /// <param name="pfts">The PFTs to enable.</param>
+    /// <param name="namingStrategy">The naming strategy to use.</param>
+    /// <param name="catalog">The result catalog to use.</param>
     public SimulationGeneratorConfig(
-        string outputDirectory,
         bool parallel,
         ushort cpuCount,
         IEnumerable<ISimulation> simulations,
         IEnumerable<string> insFiles,
-        IEnumerable<string> pfts)
+        IEnumerable<string> pfts,
+        ISimulationNamingStrategy namingStrategy,
+        IResultCatalog catalog)
     {
-        OutputDirectory = outputDirectory;
         Parallel = parallel;
         CpuCount = cpuCount;
         Simulations = simulations.ToList();
         InsFiles = insFiles.ToList();
         Pfts = pfts.ToList();
+        NamingStrategy = namingStrategy;
+        Catalog = catalog;
     }
 }

@@ -86,7 +86,19 @@ public class OutputsView : Box, IOutputsView
 		dataView = new DataTableView(factory.CreateLogger<DataTableView>());
 		dataView.Hexpand = true;
 		dataView.Vexpand = true;
+
+		// Populate with a tiny placeholder so the ColumnView doesn't start with
+		// zero columns/rows, which can trigger gtk_adjustment_configure warnings
+		// when embedded in a ScrolledWindow during initial allocation.
+		var placeholder = new DataTable();
+		placeholder.Columns.Add(" ");
+		var placeholderRow = placeholder.NewRow();
+		placeholder.Rows.Add(placeholderRow);
+		dataView.Populate(placeholder);
+
 		ScrolledWindow dataScroller = new ScrolledWindow();
+		dataScroller.Hexpand = true;
+		dataScroller.Vexpand = true;
 		dataScroller.Child = dataView;
 
 		Grid grid = new Grid();

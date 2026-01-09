@@ -3,6 +3,7 @@ using LpjGuess.Core.Models.Factorial;
 using LpjGuess.Frontend.Classes;
 using LpjGuess.Frontend.Data.Providers;
 using LpjGuess.Frontend.Delegates;
+using LpjGuess.Frontend.Services;
 using LpjGuess.Runner.Services;
 
 namespace LpjGuess.Frontend.DependencyInjection;
@@ -20,7 +21,7 @@ public class InstructionFilesProvider : IInstructionFilesProvider
     /// <summary>
     /// The path resolver.
     /// </summary>
-    private readonly IPathResolver resolver;
+    private readonly IWorkspacePathHelper pathHelper;
 
     /// <summary>
     /// The instruction files in the workspace.
@@ -35,10 +36,14 @@ public class InstructionFilesProvider : IInstructionFilesProvider
     /// <summary>
     /// Create a new <see cref="InstructionFilesProvider"/> instance.
     /// </summary>
-    public InstructionFilesProvider(IExperimentProvider provider, IPathResolver resolver)
+    /// <param name="provider">The experiment provider.</param>
+    /// <param name="resolver">The path resolver.</param>
+    public InstructionFilesProvider(
+        IExperimentProvider provider,
+        IWorkspacePathHelper resolver)
     {
         experimentsProvider = provider;
-        this.resolver = resolver;
+        this.pathHelper = resolver;
         OnInstructionFilesChanged = new Event<IEnumerable<string>>();
         instructionFiles = [];
     }
@@ -65,12 +70,13 @@ public class InstructionFilesProvider : IInstructionFilesProvider
         List<InstructionFile> concreteInsFiles = [];
         foreach (Experiment experiment in experimentsProvider.GetExperiments())
         {
-            foreach (ISimulation simulation in experiment.SimulationGenerator.Generate())
+            IPathResolver resolver = pathHelper.CreatePathResolver(experiment);
+            List<ISimulation> simulations = experiment.SimulationGenerator.Generate().ToList();
+            List<string> insFiles = instructionFiles.Where(i => !experiment.DisabledInsFiles.Contains(i)).ToList();
+            foreach (ISimulation simulation in simulations)
             {
-                foreach (string insFile in instructionFiles)
+                foreach (string insFile in insFiles)
                 {
-                    if (experiment.DisabledInsFiles.Contains(insFile))
-                        continue;
                     string generated = resolver.GenerateTargetInsFilePath(insFile, simulation);
                     concreteInsFiles.Add(new InstructionFile(generated, experiment.Name, simulation.Name));
                 }

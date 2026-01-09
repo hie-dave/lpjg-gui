@@ -18,4 +18,9 @@ public interface ISimulation
     /// <param name="targetFile">Path to the instruction file to be generated.</param>
     /// <param name="pfts">List of PFTs to enable. All others will be disabled.</param>
     void Generate(string insFile, string targetFile, IEnumerable<string> pfts);
+
+    /// <summary>
+    /// List of factors to be applied to the simulation.
+    /// </summary>
+    IEnumerable<IFactor> Changes { get; }
 }

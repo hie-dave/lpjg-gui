@@ -16,6 +16,10 @@ public static class OutputFileDefinitions
     {
         var builder = ImmutableDictionary.CreateBuilder<string, OutputFileMetadata>();
 
+        // Daily gridcell-level outputs
+        AddPftOutput(builder, "file_agb", "AGB", "Above-Ground Biomass", "kg/m2", AggregationLevel.Gridcell, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_agb_tree", "AGB", "Above-Ground Tree Biomass", "kg/m2", AggregationLevel.Gridcell, TemporalResolution.Daily);
+
         // Daily PFT-level outputs
         AddPftOutput(builder, "file_dave_lai", "LAI", "Leaf Area Index", "m2/m2", AggregationLevel.Patch, TemporalResolution.Daily);
         AddPftOutput(builder, "file_dave_fpc", "FPC", "Foliar Projective Cover", "", AggregationLevel.Patch, TemporalResolution.Daily);

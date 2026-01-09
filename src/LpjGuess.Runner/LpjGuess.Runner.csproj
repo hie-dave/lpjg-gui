@@ -9,6 +9,7 @@
 
 	<ItemGroup>
 		<ProjectReference Include="../LpjGuess.Core/LpjGuess.Core.csproj" />
+		<PackageReference Include="Tomlyn" Version="0.16.2" />
 	</ItemGroup>
 
 </Project>

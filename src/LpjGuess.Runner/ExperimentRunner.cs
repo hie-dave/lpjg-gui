@@ -12,24 +12,29 @@ public sealed class ExperimentRunner
     /// Asynchronously runs an experiment.
     /// </summary>
     /// <param name="config">Configuration for the experiment.</param>
+    /// <param name="resolver">Optional path resolver. If null, a static resolver is used.</param>
     /// <param name="reporter">Optional progress reporter. If null, progress is ignored.</param>
     /// <param name="helper">Optional output helper. If null, output is ignored.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>An <see cref="ExperimentResult"/> with summary information.</returns>
     public async Task<ExperimentResult> RunAsync(
         RunnerConfiguration config,
+        IPathResolver? resolver,
         IProgressReporter? reporter,
         IOutputHelper? helper,
         CancellationToken ct)
     {
+        // TODO: make simulation naming strategy configurable.
         SimulationGeneratorConfig generatorConfig = new SimulationGeneratorConfig(
-            config.Settings.OutputDirectory,
             config.Settings.Parallel,
             config.Settings.CpuCount,
             config.Factors,
             config.InsFiles,
-            config.Pfts);
-        SimulationService generator = new SimulationService(generatorConfig);
+            config.Pfts,
+            new ManualNamingStrategy(),
+            new ResultCatalog());
+        resolver ??= new StaticPathResolver(config.Settings.OutputDirectory, generatorConfig.NamingStrategy);
+        SimulationService generator = new SimulationService(resolver, generatorConfig);
         List<Job> jobs = generator.GenerateAllJobs(ct).ToList();
 
         // Use provided reporter/output, or sensible no-op defaults for library
@@ -67,7 +72,7 @@ public sealed class ExperimentRunner
     /// Asynchronously runs an experiment with default reporter/output.
     /// </summary>
     public Task<ExperimentResult> RunAsync(RunnerConfiguration config, CancellationToken ct)
-        => RunAsync(config, reporter: null, helper: null, ct);
+        => RunAsync(config, resolver: null, reporter: null, helper: null, ct);
 
     /// <summary>
     /// Runs an experiment synchronously.
@@ -82,6 +87,6 @@ public sealed class ExperimentRunner
         IOutputHelper? output = null)
     {
         using CancellationTokenSource cts = new CancellationTokenSource();
-        return RunAsync(config, progress, output, cts.Token).GetAwaiter().GetResult();
+        return RunAsync(config, resolver: null, progress, output, cts.Token).GetAwaiter().GetResult();
     }
 }

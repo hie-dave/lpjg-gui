@@ -50,7 +50,7 @@ public class ServiceLocator : IServiceLocator
         // Add scoped services.
         services.AddScoped<IInstructionFilesProvider, InstructionFilesProvider>();
         services.AddScoped<IExperimentProvider, ExperimentProvider>();
-        services.AddScoped<IPathResolver, WorkspacePathResolver>();
+        services.AddScoped<IWorkspacePathHelper, WorkspacePathResolver>();
 
         // Register transient services.
         services.AddTransient<WorkspacePresenterFactory>();

@@ -13,6 +13,7 @@ using LpjGuess.Frontend.Interfaces;
 using LpjGuess.Frontend.Interfaces.Commands;
 using LpjGuess.Frontend.Interfaces.Presenters;
 using LpjGuess.Frontend.Interfaces.Views;
+using LpjGuess.Frontend.Services;
 using LpjGuess.Frontend.Views;
 using LpjGuess.Runner.Models;
 using LpjGuess.Runner.Services;
@@ -68,14 +69,14 @@ public class WorkspacePresenter : PresenterBase<IWorkspaceView, Workspace>, IWor
 	private readonly WorkspacePresenterFactory presenterFactory;
 
 	/// <summary>
+	/// The path helper.
+	/// </summary>
+	private readonly IWorkspacePathHelper pathHelper;
+
+	/// <summary>
 	/// The instruction files provider.
 	/// </summary>
     private readonly InstructionFilesProvider insFilesProvider;
-
-	/// <summary>
-	/// The path resolver.
-	/// </summary>
-	private readonly IPathResolver pathResolver;
 
     /// <summary>
     /// Cancellation token used to cancel running simulations.
@@ -98,7 +99,11 @@ public class WorkspacePresenter : PresenterBase<IWorkspaceView, Workspace>, IWor
 		this.presenterFactory = presenterFactory;
 
 		insFilesProvider = presenterFactory.Initialise(workspace);
-		pathResolver = presenterFactory.GetPathResolver();
+
+		// Workspace scope isn't defined until construction of the workspace
+		// presenter factory. Therefore, we can't inject the path helper
+		// automatically, so we get it from the factory instead.
+		pathHelper = presenterFactory.GetPathHelper();
 
 		// Construct child presenters.
 		insFilesPresenter = presenterFactory.CreatePresenter<IInstructionFilesPresenter>();
@@ -257,16 +262,26 @@ public class WorkspacePresenter : PresenterBase<IWorkspaceView, Workspace>, IWor
 		foreach (Experiment experiment in model.Experiments)
 		{
 			// Store simulations for this experiment in a subdirectory.
+			// fixme: this logic is duplicated in InstructionFilesProvider.
 			string directory = Path.Combine(outputDirectory, experiment.Name);
 
 			// Get the instruction files to be used for this experiment.
 			IEnumerable<string> insFiles = model.InstructionFiles.Where(i => !experiment.DisabledInsFiles.Contains(i));
 
 			// Generate parameter overrides for this experiment.
-			IEnumerable<ISimulation> factors = experiment.SimulationGenerator.Generate();
+			IEnumerable<ISimulation> simulations = experiment.SimulationGenerator.Generate();
 
 			// Generate jobs for this experiment.
-			SimulationGeneratorConfig config = new(directory, true, cpuCount, factors, insFiles, experiment.Pfts);
+			SimulationGeneratorConfig config = new(
+				true,
+				cpuCount,
+				simulations,
+				insFiles,
+				experiment.Pfts,
+				pathHelper.GetNamingStrategy(experiment),
+				new ResultCatalog());
+
+			IPathResolver pathResolver = pathHelper.CreatePathResolver(experiment);
 			SimulationService generator = new(pathResolver, config);
 			jobs.AddRange(generator.GenerateAllJobs(cancellationTokenSource.Token));
 		}

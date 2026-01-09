@@ -108,7 +108,7 @@ public class RunSettings
 	/// <param name="cpuCount">Number of CPUs to be allocated to the job.</param>
 	/// <param name="walltime">Maximum walltime allowed for the job.</param>
 	/// <param name="memory">Amount of memory to be allocated to the job.</param>
-	/// <param name="queue">Queue to which the job shoudl be submitted.</param>
+	/// <param name="queue">Queue to which the job should be submitted.</param>
 	/// <param name="project">PBS project under which the job should be submitted.</param>
 	/// <param name="emailNotifications">True to enable email notifications for the job, false otherwise.</param>
 	/// <param name="emailAddress">Email address to be used for the job. Only used if emailNotifications is true.</param>
