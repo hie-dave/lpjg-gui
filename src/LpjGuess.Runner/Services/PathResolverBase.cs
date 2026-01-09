@@ -51,12 +51,21 @@ public abstract class PathResolverBase : IPathResolver
     }
 
     /// <inheritdoc/>
+    public string GetAbsolutePath(string relative)
+    {
+        // This will yield the original path if it's rooted. Otherwise, the path
+        // will be assumed to be relative to output directory, and an absolute
+        // path will be generated.
+        return Path.GetFullPath(relative, outputDirectory);
+    }
+
+    /// <inheritdoc/>
     public string GetRelativePath(string path)
     {
-        // This will return path if it's fully qualified (rooted). Otherwise,
-        // path will be assumed to be relative to output directory, and an
-        // absolute path will be returned.
-        return Path.GetFullPath(path, outputDirectory);
+        string absolute = GetAbsolutePath(path);
+
+        // Return the path of absolute relative to outputDirectory.
+        return Path.GetRelativePath(outputDirectory, absolute);
     }
 
     /// <summary>

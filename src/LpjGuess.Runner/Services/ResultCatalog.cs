@@ -65,7 +65,10 @@ public class ResultCatalog : IResultCatalog
     /// <param name="index">The index to write.</param>
     public async Task WriteIndexAsync(IPathResolver pathResolver, SimulationIndex index)
     {
-        string indexPath = pathResolver.GetRelativePath(indexFileName);
+        // Get the absolute path to the index file.
+        string indexPath = pathResolver.GetAbsolutePath(indexFileName);
+
+        // Write the index to disk.
         TomlModelOptions opts = GetSerialisationOptions();
         await File.WriteAllTextAsync(indexPath, Toml.FromModel(index, opts));
     }

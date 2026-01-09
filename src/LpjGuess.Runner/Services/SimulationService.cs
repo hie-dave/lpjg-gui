@@ -44,7 +44,17 @@ public class SimulationService : ISimulationService
 						 .WithCancellation(ct);
 		}
 
-		return query.SelectMany(ins => GenerateJobs(ins, ct));
+		List<Job> jobs = query.SelectMany(ins => GenerateJobs(ins, ct)).ToList();
+
+		// Convert simulation paths to relative paths.
+		List<string> paths = jobs
+			.Select(j => pathResolver.GetRelativePath(j.Manifest.Path))
+			.ToList();
+
+		SimulationIndex index = new SimulationIndex(paths);
+		config.Catalog.WriteIndex(pathResolver, index);
+
+		return jobs;
 	}
 
 	/// <summary>
@@ -64,18 +74,7 @@ public class SimulationService : ISimulationService
 		}
 
 		// Force greedy evaluation.
-		IEnumerable<Job> jobs = query.Select(f => GenerateSimulation(insFile, f))
-									 .ToList();
-
-		// Convert simulation paths to relative paths.
-		List<string> paths = jobs
-			.Select(j => pathResolver.GetRelativePath(j.Manifest.Path))
-			.ToList();
-
-		SimulationIndex index = new SimulationIndex(paths);
-		config.Catalog.WriteIndex(pathResolver, index);
-
-		return jobs;
+		return query.Select(f => GenerateSimulation(insFile, f));
 	}
 
     /// <summary>

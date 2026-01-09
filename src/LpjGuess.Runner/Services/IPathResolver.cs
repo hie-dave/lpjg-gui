@@ -16,6 +16,13 @@ public interface IPathResolver
     string GenerateTargetInsFilePath(string insFile, ISimulation simulation);
 
     /// <summary>
+    /// Convert a path relative to the output directory to an absolute path.
+    /// </summary>
+    /// <param name="relative">The relative path.</param>
+    /// <returns>The absolute path.</returns>
+    string GetAbsolutePath(string relative);
+
+    /// <summary>
     /// Convert the specified path to a relative path, relative to the output
     /// directory.
     /// </summary>
