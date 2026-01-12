@@ -46,7 +46,7 @@ public class SimpleFactorGeneratorView : ViewBase<Box>, ISimpleFactorGeneratorVi
     public Event OnAddLevel => container.OnAdd;
 
     /// <inheritdoc />
-    public Event<string> OnRemoveLevel => container.OnRemove;
+    public Event<IView> OnRemoveLevel => container.OnRemove;
 
     /// <summary>
     /// Create a new <see cref="SimpleFactorGeneratorView"/> instance.

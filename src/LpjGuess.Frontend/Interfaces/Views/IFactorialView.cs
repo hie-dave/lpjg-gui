@@ -21,9 +21,9 @@ public interface IFactorialView : IView
 
     /// <summary>
     /// Event which is raised when the user wants to remove a factor. The event
-    /// parameter is the name of the factor to be removed.
+    /// parameter is the factor to be removed.
     /// </summary>
-    Event<string> OnRemoveFactor { get; }
+    Event<IView> OnRemoveFactor { get; }
 
     /// <summary>
     /// Populate the view with the given factorial generator.

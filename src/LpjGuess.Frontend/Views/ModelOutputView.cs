@@ -5,6 +5,7 @@ using LpjGuess.Core.Models.Graphing.Style;
 using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.Events;
 using LpjGuess.Frontend.Extensions;
+using LpjGuess.Frontend.Interfaces;
 using LpjGuess.Frontend.Interfaces.Events;
 using LpjGuess.Frontend.Interfaces.Views;
 using Microsoft.Extensions.Logging;
@@ -36,6 +37,11 @@ public class ModelOutputView : IModelOutputView
     /// </summary>
     private readonly ListBoxPopoverView filtersView;
 
+    /// <summary>
+    /// The lookup table for the filter views.
+    /// </summary>
+    private readonly IDictionary<IView, StyleVariationStrategy> strategyLookup;
+
     /// <inheritdoc/>
     public Event<IModelChange<ModelOutput>> OnEditDataSource { get; private init; }
 
@@ -57,6 +63,8 @@ public class ModelOutputView : IModelOutputView
         OnEditDataSource = new Event<IModelChange<ModelOutput>>();
         OnFileTypeChanged = new Event<OutputFile>();
         OnRemoveFilter = new Event<StyleVariationStrategy>();
+
+        strategyLookup = new Dictionary<IView, StyleVariationStrategy>();
 
         fileTypeView = new OutputFilesDropDownView();
         fileTypeView.GetWidget().Hexpand = true;
@@ -122,18 +130,20 @@ public class ModelOutputView : IModelOutputView
 
         filtersView.Populate(filterViews
             .Select(v => new NamedView(v, Enum.GetName(v.Strategy)!.PascalToHumanCase())));
+        strategyLookup.Clear();
+        foreach (IFilterView view in filterViews)
+            strategyLookup.Add(view, view.Strategy);
     }
 
     /// <summary>
     /// Called when the user removes a filter. Propagates the event back up to the
     /// owner of this view.
     /// </summary>
-    /// <param name="name">The name of the filter to remove.</param>
-    private void OnFilterRemoved(string name)
+    /// <param name="view">The view of the filter to remove.</param>
+    private void OnFilterRemoved(IView view)
     {
-        // TODO: Double check this. Unsure how reliable this is in principle.
-        string enumName = name.Replace(" ", "");
-        StyleVariationStrategy strategy = Enum.Parse<StyleVariationStrategy>(enumName);
+        if (!strategyLookup.TryGetValue(view, out StyleVariationStrategy strategy))
+            throw new ArgumentException($"Style variation strategy corresponding to filter view not found in lookup table.");
         OnRemoveFilter.Invoke(strategy);
     }
 

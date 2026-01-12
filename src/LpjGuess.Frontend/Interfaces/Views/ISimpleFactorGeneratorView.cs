@@ -21,10 +21,10 @@ public interface ISimpleFactorGeneratorView : IView
 
     /// <summary>
     /// Event which is raised when the user wants to remove a factor level. The
-    /// event parameter is the name of the factor view corresponding to the
-    /// factor to be removed.
+    /// event parameter is the factor view corresponding to the factor to be
+    /// removed.
     /// </summary>
-    Event<string> OnRemoveLevel { get; }
+    Event<IView> OnRemoveLevel { get; }
 
     /// <summary>
     /// Populate the view with the given simple factor generator.

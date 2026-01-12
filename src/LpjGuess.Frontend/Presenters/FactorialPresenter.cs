@@ -158,11 +158,11 @@ public class FactorialPresenter : PresenterBase<IFactorialView, FactorialGenerat
     /// <summary>
     /// Called when the user wants to delete the factor with the specified name.
     /// </summary>
-    /// <param name="name">Name of the factor.</param>
-    private void OnRemoveFactor(string name)
+    /// <param name="view">The view of the factor to delete.</param>
+    private void OnRemoveFactor(IView view)
     {
         List<IFactorGenerator> filtered = presenters
-            .Where(p => p.Name != name)
+            .Where(p => !ReferenceEquals(p.GetView(), view))
             .Select(p => p.Model)
             .ToList();
 

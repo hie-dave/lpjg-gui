@@ -156,13 +156,13 @@ public class SimpleFactorGeneratorPresenter : PresenterBase<ISimpleFactorGenerat
     /// <summary>
     /// Handle the user removing a level.
     /// </summary>
-    /// <param name="name">The name of the level to remove.</param>
-    private void OnRemoveLevel(string name)
+    /// <param name="view">The view of the level to remove.</param>
+    private void OnRemoveLevel(IView view)
     {
         ICommand command = new PropertyChangeCommand<SimpleFactorGenerator, IEnumerable<IFactor>>(
             model,
             model.Levels,
-            model.Levels.Where(f => f.GetName() != name).ToList(),
+            factorPresenters.Where(p => p.GetView() != view).Select(p => p.Model).ToList(),
             (f, levels) => f.Levels = levels
         );
         InvokeCommand(command);

@@ -149,7 +149,7 @@ public abstract class ListBoxNavigatorView : ViewBase<Box>
     /// <summary>
     /// The rows in the list box.
     /// </summary>
-    private List<RowWrapper> rows;
+    private readonly List<RowWrapper> rows;
 
     /// <summary>
     /// The event which is raised when the user wants to add a new child view.
@@ -159,7 +159,7 @@ public abstract class ListBoxNavigatorView : ViewBase<Box>
     /// <summary>
     /// The event which is raised when the user wants to remove a child view.
     /// </summary>
-    public Event<string> OnRemove { get; private init; }
+    public Event<IView> OnRemove { get; private init; }
 
     /// <summary>
     /// The text to display on the add button.
@@ -191,7 +191,7 @@ public abstract class ListBoxNavigatorView : ViewBase<Box>
         rows = new List<RowWrapper>();
 
         OnAdd = new Event();
-        OnRemove = new Event<string>();
+        OnRemove = new Event<IView>();
 
         listBox = new ListBox();
         listBox.AddCssClass("navigation-sidebar");
@@ -275,21 +275,21 @@ public abstract class ListBoxNavigatorView : ViewBase<Box>
             throw new ArgumentException("Content widget not found.");
 
         // row.Value dereferences the nullable KeyValuePair.
-        return GetRowWidget(row.Value.Key);
+        return GetRow(row.Value.Key).GetWidget();
     }
 
     /// <summary>
-    /// Get the row widget with the specified ID.
+    /// Get the row with the specified ID.
     /// </summary>
-    /// <param name="id">The ID of the row widget.</param>
-    /// <returns>The row widget with the specified ID.</returns>
-    /// <exception cref="ArgumentException">Thrown if the row widget is not found.</exception>
-    private Widget GetRowWidget(Guid id)
+    /// <param name="id">The ID of the row.</param>
+    /// <returns>The row with the specified ID.</returns>
+    /// <exception cref="ArgumentException">Thrown if the row is not found.</exception>
+    private RowWrapper GetRow(Guid id)
     {
         RowWrapper? row = rows.FirstOrDefault(r => r.Id == id);
         if (row == null)
             throw new ArgumentException("Content widget not found.");
-        return row.GetWidget();
+        return row;
     }
 
     /// <summary>
@@ -304,7 +304,7 @@ public abstract class ListBoxNavigatorView : ViewBase<Box>
         children[id] = child;
 
         RowWrapper row = new RowWrapper(name, view, id);
-        row.OnRemove.ConnectTo(() => OnRemove.Invoke(name));
+        row.OnRemove.ConnectTo(() => OnRemove.Invoke(view));
         listBox.Append(row.GetWidget());
         rows.Add(row);
     }

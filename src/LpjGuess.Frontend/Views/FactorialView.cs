@@ -47,7 +47,7 @@ public class FactorialView : ViewBase<Box>, IFactorialView
     public Event OnAddFactor => factorsContainer.OnAdd;
 
     /// <inheritdoc />
-    public Event<string> OnRemoveFactor => factorsContainer.OnRemove;
+    public Event<IView> OnRemoveFactor => factorsContainer.OnRemove;
 
     /// <summary>
     /// Create a new <see cref="FactorialView"/> instance.
