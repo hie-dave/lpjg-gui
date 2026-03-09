@@ -125,9 +125,127 @@ public static class OutputFileDefinitions
         AddPftOutput(builder, "file_dave_sw", "Soil Water", "Soil Water Fraction Full", "mm", AggregationLevel.Patch, TemporalResolution.Daily);
         AddPftOutput(builder, "file_dave_swmm", "Soil Water", "Soil Water Content", "mm", AggregationLevel.Patch, TemporalResolution.Daily);
         AddPftOutput(builder, "file_dave_swvol", "Soil Water", "Volumetric Soil Water Content", "m3/m3", AggregationLevel.Patch, TemporalResolution.Daily);
-        AddPftOutput(builder, "file_dave_cfluxes_patch", "Patch C Fluxes", "Daily patch-level carbon fluxes", "gC/m2/day", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_cfluxes_patch", "Patch C Fluxes", "Carbon fluxes", "gC/m2/day", AggregationLevel.Patch, TemporalResolution.Daily);
         AddPftOutput(builder, "file_dave_cfluxes_pft", "PFT C Fluxes", "Daily PFT-level carbon fluxes", "gC/m2/day", AggregationLevel.Patch, TemporalResolution.Daily);
         AddPftOutput(builder, "file_dave_anetps_ff_max", "Max Forest Floor Net Photosynthesis", "Maximum Recorded Annual Net Forest-Floor Photosynthesis", "kgC/m2", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_absolute_alpha_leaf", "Absolute Alpha Leaf", "Absolute Alpha Leaf", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_absolute_alpha_root", "Absolute Alpha Root", "Absolute Alpha Root", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_absolute_alpha_sap", "Absolute Alpha Sap", "Absolute Alpha Sap", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_absolute_alpha_storage", "Absolute Alpha Storage", "Absolute Alpha Storage", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_alpha_storage", "Alpha Storage", "Alpha Storage", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_cdeficit_leaf", "Cdeficit Leaf", "Cdeficit Leaf", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_cdeficit_root", "Cdeficit Root", "Cdeficit Root", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_cdeficit_sap", "Cdeficit Sap", "Cdeficit Sap", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_cdeficit_storage", "Cdeficit Storage", "Cdeficit Storage", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_cgrazed_brown_leaf", "Cgrazed Brown Leaf", "Cgrazed Brown Leaf", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_cgrazed_green_leaf", "Cgrazed Green Leaf", "Cgrazed Green Leaf", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_cgrazed_repr", "Cgrazed Repr", "Cgrazed Repr", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_cgrow_pot", "Cgrow Pot", "Cgrow Pot", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_cgrow_storage", "Cgrow Storage", "Cgrow Storage", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_clitter", "Clitter", "Clitter", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_cmass_germ", "Cmass Germ", "Cmass Germ", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_cmass_standing_heart", "Cmass Standing Heart", "Cmass Standing Heart", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_cmass_standing_leaf", "Cmass Standing Leaf", "Cmass Standing Leaf", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_cmass_standing_repr", "Cmass Standing Repr", "Cmass Standing Repr", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_cmass_standing_root", "Cmass Standing Root", "Cmass Standing Root", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_cmass_standing_sap", "Cmass Standing Sap", "Cmass Standing Sap", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_cmass_storage_dynam", "Cmass Storage Dynam", "Cmass Storage Dynam", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_cpool", "Cpool", "Cpool", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_creturn", "Creturn", "Creturn", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_csenesc", "Csenesc", "Csenesc", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_cton_crown", "Cton Crown", "Cton Crown", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_cton_heart", "Cton Heart", "Cton Heart", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_cton_leaf", "Cton Leaf", "Cton Leaf", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_cton_root", "Cton Root", "Cton Root", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_cton_sap", "Cton Sap", "Cton Sap", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_cton_storage", "Cton Storage", "Cton Storage", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_cturnover_crown", "Cturnover Crown", "Cturnover Crown", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_cturnover_leaf", "Cturnover Leaf", "Cturnover Leaf", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_cturnover_repr", "Cturnover Repr", "Cturnover Repr", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_cturnover_root", "Cturnover Root", "Cturnover Root", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_cturnover_sap", "Cturnover Sap", "Cturnover Sap", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_dncohort", "Dncohort", "Dncohort", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_dnpool", "Dnpool", "Dnpool", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_dphen", "Dphen", "Dphen", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_dresponse_window", "Dresponse Window", "Dresponse Window", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_fevap", "Fevap", "Fevap", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_fnuptake", "Fnuptake", "Fnuptake", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_fphoto", "Fphoto", "Fphoto", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_frepr_cstorage", "Frepr Cstorage", "Frepr Cstorage", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_fstorage", "Fstorage", "Fstorage", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_ftemp", "Ftemp", "Ftemp", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_fwater", "Fwater", "Fwater", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_g1", "G1", "G1", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_jmax25", "Jmax25", "Jmax25", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_kmax_drought_affected", "Kmax Drought Affected", "Kmax Drought Affected", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_ksoil_layer", "Ksoil Layer", "Ksoil Layer", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_lai_today", "Lai Today", "Lai Today", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_layerwise_an", "Layerwise An", "Layerwise An", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_max_k_loss", "Max K Loss", "Max K Loss", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_meanleafage", "Meanleafage", "Meanleafage", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_meanrootage", "Meanrootage", "Meanrootage", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_meansapage", "Meansapage", "Meansapage", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_met_par_max", "Met Par Max", "Met Par Max", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_ngrazed_brown_leaf", "Ngrazed Brown Leaf", "Ngrazed Brown Leaf", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_ngrazed_green_leaf", "Ngrazed Green Leaf", "Ngrazed Green Leaf", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_ngrazed_repr", "Ngrazed Repr", "Ngrazed Repr", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_nitrogen_budget_annual", "Nitrogen Budget Annual", "Nitrogen Budget Annual", "", AggregationLevel.Patch, TemporalResolution.Annual);
+        AddPftOutput(builder, "file_dave_nitrogen_budget_daily", "Nitrogen Budget Daily", "Nitrogen Budget Daily", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_nlitter", "Nlitter", "Nlitter", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_nmass_crown", "Nmass Crown", "Nmass Crown", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_nmass_standing_heart", "Nmass Standing Heart", "Nmass Standing Heart", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_nmass_standing_leaf", "Nmass Standing Leaf", "Nmass Standing Leaf", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_nmass_standing_repr", "Nmass Standing Repr", "Nmass Standing Repr", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_nmass_standing_root", "Nmass Standing Root", "Nmass Standing Root", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_nmass_standing_sap", "Nmass Standing Sap", "Nmass Standing Sap", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_nretranslocated", "Nretranslocated", "Nretranslocated", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_nstorage_drawdown", "Nstorage Drawdown", "Nstorage Drawdown", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_nturnover_crown", "Nturnover Crown", "Nturnover Crown", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_nturnover_leaf", "Nturnover Leaf", "Nturnover Leaf", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_nturnover_repr", "Nturnover Repr", "Nturnover Repr", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_nturnover_root", "Nturnover Root", "Nturnover Root", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_nturnover_sap", "Nturnover Sap", "Nturnover Sap", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_par_grass", "Par Grass", "Par Grass", "", AggregationLevel.Patch, TemporalResolution.Annual);
+        AddPftOutput(builder, "file_dave_patch_ba", "Patch Ba", "Patch Ba", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_pet", "Pet", "Pet", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_phen", "Phen", "Phen", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_rel_par", "Rel Par", "Rel Par", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_resp_crown", "Resp Crown", "Resp Crown", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_resp_leaf", "Resp Leaf", "Resp Leaf", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_resp_repr", "Resp Repr", "Resp Repr", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_resp_root", "Resp Root", "Resp Root", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_resp_sap", "Resp Sap", "Resp Sap", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_root_beta", "Root Beta", "Root Beta", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_rpc", "Rpc", "Rpc", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_Rs_r", "Rs R", "Rs R", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_soil_nh4_mass", "Soil Nh4 Mass", "Soil Nh4 Mass", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_soil_no3_mass", "Soil No3 Mass", "Soil No3 Mass", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_soil_psi", "Soil Psi", "Soil Psi", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_soil_psi_layer", "Soil Psi Layer", "Soil Psi Layer", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_soiltemp25", "Soiltemp25", "Soiltemp25", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_sompool_decay_reduction", "Sompool Decay Reduction", "Sompool Decay Reduction", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_sompool_frac_remaining", "Sompool Frac Remaining", "Sompool Frac Remaining", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_sompool_nimmob", "Sompool Nimmob", "Sompool Nimmob", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_sompool_nmin_gross", "Sompool Nmin Gross", "Sompool Nmin Gross", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_sompool_ntoc", "Sompool Ntoc", "Sompool Ntoc", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_spft_cmass_repr", "Spft Cmass Repr", "Spft Cmass Repr", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_standing_dead", "Standing Dead", "Standing Dead", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_storage_dynam_14sum", "Storage Dynam 14sum", "Storage Dynam 14sum", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_subdaily_lwp", "Subdaily Lwp", "Subdaily Lwp", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_subdaily_Vl", "Subdaily Vl", "Subdaily Vl", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_swavail_100", "Swavail 100", "Swavail 100", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_swmm_10", "Swmm 10", "Swmm 10", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_swmm_100", "Swmm 100", "Swmm 100", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_swmm_600", "Swmm 600", "Swmm 600", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_turnover_leaf", "Turnover Leaf", "Turnover Leaf", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_vcmax", "Vcmax", "Vcmax", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_vcmax25", "Vcmax25", "Vcmax25", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_water_budget_annual", "Water Budget Annual", "Water Budget Annual", "", AggregationLevel.Patch, TemporalResolution.Annual);
+        AddPftOutput(builder, "file_dave_water_budget_daily", "Water Budget Daily", "Water Budget Daily", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_water_uptake", "Water Uptake", "Water Uptake", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_wcont_upper", "Wcont Upper", "Wcont Upper", "", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_weighted_psi", "Weighted Psi", "Weighted Psi", "", AggregationLevel.Patch, TemporalResolution.Daily);
+
 
         // These aren't really PFT outputs, but they have dynamic column names
         // (one column per timestep). Therefore, for now I'm treating them as
@@ -147,15 +265,50 @@ public static class OutputFileDefinitions
         AddOutput(builder, "file_dave_met_insol", "Insolation", "Insolation", "", ["insol"], AggregationLevel.Patch, TemporalResolution.Daily);
         AddOutput(builder, "file_dave_met_precip", "Precipitation", "precipitation", "mm", ["precip"], AggregationLevel.Patch, TemporalResolution.Daily);
 
+        // Annual individual-level outputs.
+        AddOutput(builder, "file_dave_indiv_age", "Age", "Plant Age", "Years", ["age"], AggregationLevel.Individual, TemporalResolution.Annual);
+        AddOutput(builder, "file_dave_indiv_c_d_dbh", "DBH", "Change in DBH", "m", ["d_dbh"], AggregationLevel.Individual, TemporalResolution.Annual);
+        AddOutput(builder, "file_dave_indiv_mort", "Mortality", "Mortality Fractions", "0-1", ["mort_age", "mort_greff"], AggregationLevel.Individual, TemporalResolution.Annual);
+
         // Daily individual-level outputs.
         AddOutput(builder, "file_dave_indiv_cpool", "C Pools", "Vegetation Carbon Pools", "kgC/m2", ["cmass_leaf", "cmass_root", "cmass_crown", "cmass_sap", "cmass_heart", "cmass_repr", "cmass_storage"], AggregationLevel.Individual, TemporalResolution.Daily);
         AddOutput(builder, "file_dave_indiv_npool", "N Pools", "Vegetation Nitrogen Pools", "kgN/m2", ["nmass_leaf", "nmass_root", "nmass_crown", "nmass_sap", "nmass_heart", "nmass_repr", "nmass_storage"], AggregationLevel.Individual, TemporalResolution.Daily);
         AddOutput(builder, "file_dave_indiv_lai", "LAI", "Leaf Area Index", "m2/m2", ["lai"], AggregationLevel.Individual, TemporalResolution.Daily);
+        AddOutput(builder, "file_dave_hydraulics", "Hydraulics", "Hydraulics Diagnostics", "", ["kmax", "lai", "minimum_lwp"], AggregationLevel.Individual, TemporalResolution.Daily);
+        AddOutput(builder, "file_dave_indiv_alpha_leaf", "Alpha Leaf", "Leaf Sink Strength", "0-1", ["alpha_leaf"], AggregationLevel.Individual, TemporalResolution.Daily);
+        AddOutput(builder, "file_dave_indiv_alpha_root", "Alpha Root", "Root Sink Strength", "0-1", ["alpha_root"], AggregationLevel.Individual, TemporalResolution.Daily);
+        AddOutput(builder, "file_dave_indiv_alpha_sap", "Alpha Sap", "Sapwood Sink Strength", "0-1", ["alpha_sap"], AggregationLevel.Individual, TemporalResolution.Daily);
+        AddOutput(builder, "file_dave_indiv_alpha_storage", "Alpha Storage", "Storage Sink Strength", "0-1", ["alpha_storage"], AggregationLevel.Individual, TemporalResolution.Daily);
+        AddOutput(builder, "file_dave_indiv_cgrow", "Total C Demand", "Total C Demand", "kgC/m2", ["cgrow"], AggregationLevel.Individual, TemporalResolution.Daily);
+        AddOutput(builder, "file_dave_indiv_cgrow_leaf", "Leaf C Demand", "Leaf C Demand", "kgC/m2", ["cgrow_leaf"], AggregationLevel.Individual, TemporalResolution.Daily);
+        AddOutput(builder, "file_dave_indiv_cgrow_repr", "Reproductive C Demand", "Reproductive C Demand", "kgC/m2", ["cgrow_repr"], AggregationLevel.Individual, TemporalResolution.Daily);
+        AddOutput(builder, "file_dave_indiv_cgrow_root", "Root C Demand", "Root C Demand", "kgC/m2", ["cgrow_root"], AggregationLevel.Individual, TemporalResolution.Daily);
+        AddOutput(builder, "file_dave_indiv_cgrow_sap", "Sapwood C Demand", "Sapwood C Demand", "kgC/m2", ["cgrow_sap"], AggregationLevel.Individual, TemporalResolution.Daily);
+        AddOutput(builder, "file_dave_indiv_cgrow_storage", "Storage C Demand", "Storage C Demand", "kgC/m2", ["cgrow_storage"], AggregationLevel.Individual, TemporalResolution.Daily);
+        AddOutput(builder, "file_dave_indiv_crownarea", "Crown Area", "Crown Area", "m2", ["crownarea"], AggregationLevel.Individual, TemporalResolution.Daily);
+        AddOutput(builder, "file_dave_indiv_dbh", "DBH", "Diameter at Bole Height", "m", ["diam", "delta_diam"], AggregationLevel.Individual, TemporalResolution.Daily);
+        AddOutput(builder, "file_dave_indiv_density", "Density", "Tree Density", "/m2", ["density"], AggregationLevel.Individual, TemporalResolution.Daily);
+        AddOutput(builder, "file_dave_indiv_fpar", "FPAR", "Fraction of PAR Absorbed by Foliage", "-", ["fpar"], AggregationLevel.Individual, TemporalResolution.Daily);
+        AddOutput(builder, "file_dave_indiv_fpc", "FPC", "Foliar Projective Cover", "-", ["fpc"], AggregationLevel.Individual, TemporalResolution.Daily);
+        AddOutput(builder, "file_dave_indiv_height", "Height", "Plant Height", "m", ["height"], AggregationLevel.Individual, TemporalResolution.Daily);
+        AddOutput(builder, "file_dave_indiv_litter_pools", "Litter Pools", "Litter Pools", "kgC/m2", ["Leaf", "Root", "Sap", "Heart", "Repr"], AggregationLevel.Individual, TemporalResolution.Daily);
+        AddOutput(builder, "file_dave_indiv_respiration", "Respiration", "Indiv Respiration", "kgC/m2", ["resp_leaf", "resp_root", "resp_sap", "resp_crown", "resp_repr", "resp_maintenance", "resp_growth", "total"], AggregationLevel.Individual, TemporalResolution.Daily);
+        AddOutput(builder, "file_dave_indiv_tree_cpool", "Tree Carbon Pools", "Indiv Tree Cpool", "kgC/m2", [
+            "cmass_leaf",
+            "cmass_root",
+            "cmass_sap",
+            "cmass_heart",
+            "cmass_repr",
+            "cmass_storage",
+            "cmass_leaf_limit",
+            "cmass_root_limit",
+            "cmass_sap_limit",
+            "cmass_storage_limit"], AggregationLevel.Individual, TemporalResolution.Daily);
 
         // Annual patch-level outputs
         AddOutput(builder, "file_dave_patch_age", "Patch Age", "Time Since Disturbance", "years", ["age"], AggregationLevel.Patch, TemporalResolution.Annual);
-        AddOutput(builder, "file_dave_arunoff", "Runoff", "Annual Runoff", "mm", ["runoff"], AggregationLevel.Patch, TemporalResolution.Annual);
-        AddOutput(builder, "file_dave_globfirm", "Globfirm", "Annual GLOBFIRM Outputs", [
+        AddOutput(builder, "file_dave_arunoff", "Runoff", "Runoff", "mm", ["runoff"], AggregationLevel.Patch, TemporalResolution.Annual);
+        AddOutput(builder, "file_dave_globfirm", "Globfirm", "GLOBFIRM Outputs", [
             ("fireprob", "0-1")
         ], AggregationLevel.Patch, TemporalResolution.Annual);
 
@@ -283,6 +436,25 @@ public static class OutputFileDefinitions
         AddPftOutput(builder, "file_dave_acalloc_repr", "Repr C Allocation", "Carbon Allocation to Repr", "kgC/m2", AggregationLevel.Patch, TemporalResolution.Annual);
         AddPftOutput(builder, "file_dave_acalloc_sap", "Sapwood C Allocation", "Carbon Allocation to Sapwood", "kgC/m2", AggregationLevel.Patch, TemporalResolution.Annual);
         AddPftOutput(builder, "file_dave_acalloc_crown", "Crown C Allocation", "Carbon Allocation to Crown", "kgC/m2", AggregationLevel.Patch, TemporalResolution.Annual);
+        AddPftOutput(builder, "file_dave_acalloc_storage", "Acalloc Storage", "Acalloc Storage", "", AggregationLevel.Patch, TemporalResolution.Annual);
+        AddPftOutput(builder, "file_dave_acmass_germ", "Acmass Germ", "Acmass Germ", "", AggregationLevel.Patch, TemporalResolution.Annual);
+        AddPftOutput(builder, "file_dave_acue", "Acue", "Acue", "", AggregationLevel.Patch, TemporalResolution.Annual);
+        AddPftOutput(builder, "file_dave_amort_age", "Amort Age", "Amort Age", "", AggregationLevel.Patch, TemporalResolution.Annual);
+        AddPftOutput(builder, "file_dave_amort_greff", "Amort Greff", "Amort Greff", "", AggregationLevel.Patch, TemporalResolution.Annual);
+        AddPftOutput(builder, "file_dave_anee", "Anee", "Anee", "", AggregationLevel.Patch, TemporalResolution.Annual);
+        AddPftOutput(builder, "file_dave_anflux", "Anflux", "Anflux", "", AggregationLevel.Patch, TemporalResolution.Annual);
+        AddPftOutput(builder, "file_dave_anretranslocated", "Anretranslocated", "Anretranslocated", "", AggregationLevel.Patch, TemporalResolution.Annual);
+        AddPftOutput(builder, "file_dave_ansapling", "Ansapling", "Ansapling", "", AggregationLevel.Patch, TemporalResolution.Annual);
+        AddPftOutput(builder, "file_dave_ansapling_year", "Ansapling Year", "Ansapling Year", "", AggregationLevel.Patch, TemporalResolution.Annual);
+        AddPftOutput(builder, "file_dave_anstorage_drawdown", "Anstorage Drawdown", "Anstorage Drawdown", "", AggregationLevel.Patch, TemporalResolution.Annual);
+        AddPftOutput(builder, "file_dave_aresponse_window", "Aresponse Window", "Aresponse Window", "", AggregationLevel.Patch, TemporalResolution.Annual);
+        AddPftOutput(builder, "file_dave_cton_leaf_max", "Cton Leaf Max", "Cton Leaf Max", "", AggregationLevel.Patch, TemporalResolution.Annual);
+        AddPftOutput(builder, "file_dave_cton_leaf_min", "Cton Leaf Min", "Cton Leaf Min", "", AggregationLevel.Patch, TemporalResolution.Annual);
+        AddPftOutput(builder, "file_dave_cton_root_max", "Cton Root Max", "Cton Root Max", "", AggregationLevel.Patch, TemporalResolution.Annual);
+        AddPftOutput(builder, "file_dave_cton_root_min", "Cton Root Min", "Cton Root Min", "", AggregationLevel.Patch, TemporalResolution.Annual);
+        AddPftOutput(builder, "file_dave_cton_sap_max", "Cton Sap Max", "Cton Sap Max", "", AggregationLevel.Patch, TemporalResolution.Annual);
+        AddPftOutput(builder, "file_dave_cton_sap_min", "Cton Sap Min", "Cton Sap Min", "", AggregationLevel.Patch, TemporalResolution.Annual);
+
 
         // Annual stand-level outputs
         AddOutput(builder, "file_dave_stand_frac", "Stand Fraction", "Fraction of the gridcell occupied by each stand", "", ["fraction"], AggregationLevel.Stand, TemporalResolution.Annual);
@@ -297,6 +469,8 @@ public static class OutputFileDefinitions
         AddPftOutput(builder, "file_lai", "LAI", "Leaf Area Index", "m2/m2", AggregationLevel.Gridcell, TemporalResolution.Annual);
 
         // Annual gridcell-level outputs.
+        AddOutput(builder, "file_dave_amet_prec", "Precipitation", "Precipitation", "mm/year", ["prec"], AggregationLevel.Gridcell, TemporalResolution.Annual);
+        AddOutput(builder, "file_dave_amet_par", "PAR", "Photosynthetically Active Radiation", "J/m2/year", ["par"], AggregationLevel.Gridcell, TemporalResolution.Annual);
         AddOutput(builder, "file_cflux", "Carbon Fluxes", "Carbon Fluxes", "kgC/m2/year", [
             "Veg",
             "Repr",
