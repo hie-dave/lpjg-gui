@@ -65,6 +65,7 @@ public static class ModelConstants
         // annual outputs like to use that.
         if (resolution == TemporalResolution.Annual ||
             resolution == TemporalResolution.Daily ||
+            resolution == TemporalResolution.Monthly ||
             resolution == TemporalResolution.Subdaily)
             layers.Add(DayLayer);
 
