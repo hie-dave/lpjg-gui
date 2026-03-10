@@ -4,24 +4,53 @@ namespace LpjGuess.Tests.Runner.Services;
 
 public class PathResolverTests
 {
-    [Theory]
-    [InlineData("/a/b", "index.txt", "index.txt")]
-    [InlineData("/x/y", "/x/y/z/test.txt", "z/test.txt")]
-    public void TestGetRelativePath(string outputDirectory, string path, string expected)
+    [Fact]
+    public void TestGetRelativePath_NonRootedPath()
     {
-        IPathResolver resolver = CreatePathResolver(outputDirectory);
+        using TempDirectory temp = TempDirectory.Create();
+        const string path = "index.txt";
+        IPathResolver resolver = CreatePathResolver(temp.AbsolutePath);
         string result = resolver.GetRelativePath(path);
-        Assert.Equal(expected, result);
+        Assert.Equal(path, result);
     }
 
-    [Theory]
-    [InlineData("/p/q/r", "xyz", "/p/q/r/xyz")]
-    [InlineData("/a/s/d/f", "/x/y/z", "/x/y/z")]
-    public void TestGetAbsolutePath(string outputDirectory, string relative, string expected)
+    [Fact]
+    public void TestGetRelativePath_RootedPath()
     {
-        IPathResolver resolver = CreatePathResolver(outputDirectory);
+        using TempDirectory temp = TempDirectory.Create();
+        string path = Path.Combine(temp.AbsolutePath, "subdir", "file.dat");
+        IPathResolver resolver = CreatePathResolver(temp.AbsolutePath);
+        string result = resolver.GetRelativePath(path);
+        Assert.Equal(Path.Combine("subdir", "file.dat"), result);
+    }
+
+    [Fact]
+    public void TestGetAbsolutePath_NonRootedPath()
+    {
+        using TempDirectory temp = TempDirectory.Create();
+        const string relative = "xyz";
+        IPathResolver resolver = CreatePathResolver(temp.AbsolutePath);
         string result = resolver.GetAbsolutePath(relative);
-        Assert.Equal(expected, result);
+        Assert.Equal(Path.Combine(temp.AbsolutePath, relative), result);
+    }
+
+    [Fact]
+    public void TestGetAbsolutePath_RootedPath()
+    {
+        const string relative = "abc.def";
+
+        // /tmp/asdf
+        using TempDirectory temp = TempDirectory.Create();
+
+        // /tmp/asdf/abc.def
+        string rooted = Path.Combine(temp.AbsolutePath, relative);
+
+        // Attempt to resolve the fully rooted path to an absolute path.
+        IPathResolver resolver = CreatePathResolver(temp.AbsolutePath);
+        string result = resolver.GetAbsolutePath(rooted);
+
+        // Should return the original path.
+        Assert.Equal(rooted, result);
     }
 
     private IPathResolver CreatePathResolver(string outputDirectory)
