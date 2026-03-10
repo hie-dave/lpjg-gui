@@ -99,7 +99,7 @@ public class ResultCatalog : IResultCatalog
     /// <exception cref="NotImplementedException"></exception>
     public async Task<SimulationIndex> ReadIndexAsync(IPathResolver pathResolver)
     {
-        string indexPath = pathResolver.GetRelativePath(indexFileName);
+        string indexPath = pathResolver.GetAbsolutePath(indexFileName);
         if (!File.Exists(indexPath))
             throw new FileNotFoundException(indexPath);
 
