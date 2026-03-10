@@ -19,6 +19,35 @@ public static class OutputFileDefinitions
         // Daily gridcell-level outputs
         AddPftOutput(builder, "file_agb", "AGB", "Above-Ground Biomass", "kg/m2", AggregationLevel.Gridcell, TemporalResolution.Daily);
         AddPftOutput(builder, "file_agb_tree", "AGB", "Above-Ground Tree Biomass", "kg/m2", AggregationLevel.Gridcell, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dlai", "LAI", "Leaf Area Index", "m2/m2", AggregationLevel.Gridcell, TemporalResolution.Daily);
+        AddOutput(builder, "file_dflux", "C Fluxes", "Carbon Fluxes", [
+            ("Veg", "kgC/m2/day"),
+            ("Repr", "kgC/m2/day"),
+            ("Soil", "kgC/m2/day"),
+            ("Fire", "kgC/m2/day"),
+            ("Est", "kgC/m2/day"),
+            ("NEE", "kgC/m2/day"),
+        ], AggregationLevel.Gridcell, TemporalResolution.Daily);
+        AddOutput(builder, "file_dcmass_grass", "Grass C Mass", "Grass Carbon Mass", [
+            ("L0", "kgC/m2/day"),
+            ("L1", "kgC/m2/day"),
+            ("L2", "kgC/m2/day"),
+            ("L3", "kgC/m2/day"),
+            ("Ltot", "kgC/m2/day"),
+            ("R", "kgC/m2/day"),
+            ("LRtot", "kgC/m2/day"),
+            ("Cstore", "kgC/m2/day"),
+            ("NPP", "kgC/m2/day"),
+            ("g_fac", "kgC/m2/day"),
+            ("gpp_fac", "kgC/m2/day"),
+            ("sb_fac", "kgC/m2/day"),
+            ("wscal_fac", "kgC/m2/day"),
+            ("tscal_fac", "kgC/m2/day"),
+            ("s_fac", "kgC/m2/day"),
+            ("frost_sen", "kgC/m2/day"),
+            ("wscal_sen", "kgC/m2/day"),
+            ("tscal_sen", "kgC/m2/day"),
+        ], AggregationLevel.Gridcell, TemporalResolution.Daily);
 
         // Daily PFT-level outputs
         AddPftOutput(builder, "file_dave_lai", "LAI", "Leaf Area Index", "m2/m2", AggregationLevel.Patch, TemporalResolution.Daily);
@@ -47,10 +76,11 @@ public static class OutputFileDefinitions
         AddPftOutput(builder, "file_dave_cmass_sap_limit", "Sap Limit", "Optimum Sap C Mass", "kgC/m2", AggregationLevel.Patch, TemporalResolution.Daily);
         AddPftOutput(builder, "file_dave_cmass_repr_limit", "Reproductive Limit", "Optimum Reproductive C Mass", "kgC/m2", AggregationLevel.Patch, TemporalResolution.Daily);
         AddPftOutput(builder, "file_dave_cmass_storage_limit", "Storage Limit", "Optimum Storage C Mass", "kgC/m2", AggregationLevel.Patch, TemporalResolution.Daily);
-        AddPftOutput(builder, "file_dave_cgrow_leaf", "Leaf Growth", "Leaf Carbon Allocation", "kgC/m2", AggregationLevel.Patch, TemporalResolution.Daily);
-        AddPftOutput(builder, "file_dave_cgrow_root", "Root Growth", "Root Carbon Allocation", "kgC/m2", AggregationLevel.Patch, TemporalResolution.Daily);
-        AddPftOutput(builder, "file_dave_cgrow_sap", "Sap Growth", "Sap Carbon Allocation", "kgC/m2", AggregationLevel.Patch, TemporalResolution.Daily);
-        AddPftOutput(builder, "file_dave_cgrow_repr", "Reproductive Growth", "Reproductive Carbon Allocation", "kgC/m2", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_cgrow", "C Demand", "Total Carbon Demand", "kgC/m2", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_cgrow_leaf", "Leaf C Demand", "Leaf Carbon Demand", "kgC/m2", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_cgrow_root", "Root C Demand", "Root Carbon Demand", "kgC/m2", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_cgrow_sap", "Sap C Demand", "Sap Carbon Demand", "kgC/m2", AggregationLevel.Patch, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_cgrow_repr", "Reproductive C Demand", "Reproductive Carbon Demand", "kgC/m2", AggregationLevel.Patch, TemporalResolution.Daily);
         AddPftOutput(builder, "file_dave_diameter_inc", "Diameter Increment", "Diameter Increment", "m/day", AggregationLevel.Patch, TemporalResolution.Daily);
         AddPftOutput(builder, "file_dave_height_inc", "Height Increment", "Height Increment", "m/day", AggregationLevel.Patch, TemporalResolution.Daily);
         AddPftOutput(builder, "file_dave_height", "Height", "Plant Height", "m", AggregationLevel.Patch, TemporalResolution.Daily);
@@ -286,7 +316,7 @@ public static class OutputFileDefinitions
         AddOutput(builder, "file_dave_indiv_cgrow_sap", "Sapwood C Demand", "Sapwood C Demand", "kgC/m2", ["cgrow_sap"], AggregationLevel.Individual, TemporalResolution.Daily);
         AddOutput(builder, "file_dave_indiv_cgrow_storage", "Storage C Demand", "Storage C Demand", "kgC/m2", ["cgrow_storage"], AggregationLevel.Individual, TemporalResolution.Daily);
         AddOutput(builder, "file_dave_indiv_crownarea", "Crown Area", "Crown Area", "m2", ["crownarea"], AggregationLevel.Individual, TemporalResolution.Daily);
-        AddOutput(builder, "file_dave_indiv_dbh", "DBH", "Diameter at Bole Height", "m", ["diam", "delta_diam"], AggregationLevel.Individual, TemporalResolution.Daily);
+        AddOutput(builder, "file_dave_indiv_dbh", "DBH", "Diameter at Bole Height", "m", ["diam", "deltadiam"], AggregationLevel.Individual, TemporalResolution.Daily);
         AddOutput(builder, "file_dave_indiv_density", "Density", "Tree Density", "/m2", ["density"], AggregationLevel.Individual, TemporalResolution.Daily);
         AddOutput(builder, "file_dave_indiv_fpar", "FPAR", "Fraction of PAR Absorbed by Foliage", "-", ["fpar"], AggregationLevel.Individual, TemporalResolution.Daily);
         AddOutput(builder, "file_dave_indiv_fpc", "FPC", "Foliar Projective Cover", "-", ["fpc"], AggregationLevel.Individual, TemporalResolution.Daily);
@@ -307,56 +337,95 @@ public static class OutputFileDefinitions
 
         // Annual patch-level outputs
         AddOutput(builder, "file_dave_patch_age", "Patch Age", "Time Since Disturbance", "years", ["age"], AggregationLevel.Patch, TemporalResolution.Annual);
-        AddOutput(builder, "file_dave_arunoff", "Runoff", "Runoff", "mm", ["runoff"], AggregationLevel.Patch, TemporalResolution.Annual);
+        AddOutput(builder, "file_dave_arunoff", "Runoff", "Runoff", "mm", [
+            "Surf",
+            "Drain",
+            "Base",
+            "Precip",
+            "NetInf"
+        ], AggregationLevel.Patch, TemporalResolution.Annual);
         AddOutput(builder, "file_dave_globfirm", "Globfirm", "GLOBFIRM Outputs", [
             ("fireprob", "0-1")
         ], AggregationLevel.Patch, TemporalResolution.Annual);
 
         AddOutput(builder, "file_dave_acpool", "C Pools", "Carbon Pools", "kgC/m2", [
-            "cmass_veg",
-            "cmass_litter",
-            "cmass_soil",
+            "VegC",
+            "StandingC",
+            // ifcentury
+            "LittC",
+            "SoilfC",
+            "SoilsC",
+            // !ifcentury
+            "LitterC",
+            "SoilC",
+            // run_landcover && ifslowharvestpool
+            "HarvSlowC",
             "total"
         ], AggregationLevel.Patch, TemporalResolution.Annual);
 
         AddOutput(builder, "file_dave_anpool", "N Pools", "Nitrogen Pools", "kgN/m2", [
-            "nmass_veg",
-            "nmass_litter",
-            "nmass_soil",
-            "total"
+            "VegN",
+            "StandingN",
+            "LitterN",
+            "SoilN",
+            "AvailN"
         ], AggregationLevel.Patch, TemporalResolution.Annual);
 
-        AddOutput(builder, "file_dave_acflux", "C Fluxes", "Carbon Fluxes", "gC/m2", [
-            "npp",
-            "gpp",
-            "ra",
-            "rh"
+        AddOutput(builder, "file_dave_acflux", "C Fluxes", "Carbon Fluxes", "kgC/m2", [
+            "Veg",
+            "Repr",
+            "Soil",
+            "Fire",
+            "Est",
+            // if (run_landcover)
+            "Seed",
+            "Harvest",
+            "LU_ch",
+            "Slow_h",
+            "NEE", // always
         ], AggregationLevel.Patch, TemporalResolution.Annual);
 
         AddMonthlyOutput(builder, "file_dave_mwcont_upper", "Water Content", "Water Content Fraction of Upper Soil Layer", "0-1", AggregationLevel.Patch);
         AddMonthlyOutput(builder, "file_dave_mwcont_lower", "Water Content", "Water Content Fraction of Lower Soil Layer", "0-1", AggregationLevel.Patch);
         AddOutput(builder, "file_dave_apet", "PET", "Potential Evapotranspiration", "mm", ["pet"], AggregationLevel.Patch, TemporalResolution.Annual);
         AddOutput(builder, "file_dave_asimfire", "Simfire", "Simfire analysis", [
-            ("burned_area", "fraction"),
-            ("fire_carbon", "gC/m2")
+            // ("burned_area", "fraction"),
+            // ("fire_carbon", "gC/m2")
+            ("Biome", "-"),
+            ("MxNest", "-"),
+            ("CurrentNesterov", "-"),
+            ("PopDens", "inhabitants/km2"),
+            ("AMxFApar", "0-1"),
+            ("FireProb", "0-1"),
+            ("Region", "-"),
+            ("PBiome", "-"),
+            ("PFpar", "0-1"),
+            ("PMxNest", "-"),
+            ("PPopDens", "inhabitants/km2"),
+            ("MFireChance", "0-1"),
+            ("DFireChance", "0-1"),
+            ("avail_fuel", "g/m2"),
+            ("SimfireBurntArea", "0-1"),
+            ("ABurntArea", "sum(0-1)")
         ], AggregationLevel.Patch, TemporalResolution.Annual);
 
-        AddOutput(builder, "file_dave_afuel", "Fuel", "Blaze fuel availability", "gC/m2", ["fuel"], AggregationLevel.Patch, TemporalResolution.Annual);
-        AddOutput(builder, "file_dave_acoarse_woody_debris", "CWD", "Coarse Woody Debris", "gC/m2", ["cwd"], AggregationLevel.Patch, TemporalResolution.Annual);
-        AddOutput(builder, "file_dave_amet_year", "Met Year", "Current year of met data being used", "year", ["year"], AggregationLevel.Patch, TemporalResolution.Annual);
+        AddOutput(builder, "file_dave_afuel", "Fuel", "Blaze fuel availability", "gC/m2", ["FineLitter", "FineWood", "CoarseWood", "GrassCMass", "avail_fuel"], AggregationLevel.Patch, TemporalResolution.Annual);
+        AddOutput(builder, "file_dave_acoarse_woody_debris", "CWD", "Coarse Woody Debris", "gC/m2", ["LitterHeart", "som", "k_tun_litter"], AggregationLevel.Patch, TemporalResolution.Annual);
+        AddOutput(builder, "file_dave_amet_year", "Met Year", "Current year of met data being used", "year", ["met_year"], AggregationLevel.Patch, TemporalResolution.Annual);
         AddOutput(builder, "file_dave_aco2", "CO2", "Atmospheric CO2 Concentration", "ppm", ["co2"], AggregationLevel.Patch, TemporalResolution.Annual);
         AddOutput(builder, "file_dave_aminleach", "Mineral N Leaching", "Leaching of Soil Mineral N", "kgN/m2/yr", ["aminleach"], AggregationLevel.Patch, TemporalResolution.Annual);
         AddOutput(builder, "file_dave_sompool_acmass", "SOM Pool C Mass", "Surface Organic Matter Carbon Mass by Pool", "kgC/m2", [
             "SURFSTRUCT",
             "SOILSTRUCT",
             "SOILMICRO",
-            "SOILACTIVE",
-            "SOILSLOW",
-            "SOILPASSIVE",
-            "SURFMETA",
+            "SURFHUMUS",
             "SURFMICRO",
+            "SURFMETA",
             "SURFFWD",
             "SURFCWD",
+            "SOILMETA",
+            "SLOWSOM",
+            "PASSIVESOM",
             "total"
         ], AggregationLevel.Patch, TemporalResolution.Annual);
 
@@ -364,13 +433,14 @@ public static class OutputFileDefinitions
             "SURFSTRUCT",
             "SOILSTRUCT",
             "SOILMICRO",
-            "SOILACTIVE",
-            "SOILSLOW",
-            "SOILPASSIVE",
-            "SURFMETA",
+            "SURFHUMUS",
             "SURFMICRO",
+            "SURFMETA",
             "SURFFWD",
             "SURFCWD",
+            "SOILMETA",
+            "SLOWSOM",
+            "PASSIVESOM",
             "total"
         ], AggregationLevel.Patch, TemporalResolution.Annual);
 
@@ -387,28 +457,41 @@ public static class OutputFileDefinitions
 
         // Daily patch-level outputs
         AddOutput(builder, "file_dave_daylength", "Day Length", "Day Length", "h", ["daylength"], AggregationLevel.Patch, TemporalResolution.Daily);
-        AddOutput(builder, "file_dave_soil_nmass_avail", "Available Soil N", "Soil N Mass Available for Plant Uptake", "kgN/m2", ["soil_nmass_avail"], AggregationLevel.Patch, TemporalResolution.Daily);
+        AddOutput(builder, "file_dave_soil_nmass_avail", "Available Soil N", "Soil N Mass Available for Plant Uptake", "kgN/m2", ["nmass"], AggregationLevel.Patch, TemporalResolution.Daily);
         AddOutput(builder, "file_dave_dsimfire", "Simfire", "Simfire Analysis", [
-            ("burned_area", "fraction"),
-            ("fire_carbon", "gC/m2") 
-        ], AggregationLevel.Patch, TemporalResolution.Daily);
+            ("Biome", @"0=NOVEG, 1=CROP, 2=NEEDLELEAF, 3=BROADLEAF, 4=MIXED_FOREST, 5=SHRUBS, 6=SAVANNA, 7=TUNDRA, 8=BARREN"),
+            ("MxNest", "-"),
+            ("CurrentNesterov", "-"),
+            ("PopDens", "inhabitants/km2"),
+            ("AMxFApar", "0-1"),
+            ("FireProb", "0-1"),
+            ("Region", "-"),
+            ("PBiome", "-"),
+            ("PFpar", "0-1"),
+            ("PMxNest", "-"),
+            ("PPopDens", "inhabitants/km2"),
+            ("MFireChance", "0-1"),
+            ("DFireChance", "0-1"),
+            ("avail_fuel", "g/m2"),
+            ("SimfireBurntArea", "0-1"),
+            ("ABurntArea", "sum(0-1)")], AggregationLevel.Patch, TemporalResolution.Daily);
 
         AddOutput(builder, "file_dave_sompool_cmass", "SOM Pool C Mass", "Surface Organic Matter Carbon Mass by Pool", "kgC/m2", ["cmass"], AggregationLevel.Patch, TemporalResolution.Daily);
         AddOutput(builder, "file_dave_sompool_nmass", "SOM Pool N Mass", "Surface Organic Matter Nitrogen Mass by Pool", "kgN/m2", ["nmass"], AggregationLevel.Patch, TemporalResolution.Daily);
-        AddOutput(builder, "file_dave_ninput", "N Input", "Nitrogen Deposition", "kgN/m2", ["ninput"], AggregationLevel.Patch, TemporalResolution.Daily);
+        AddOutput(builder, "file_dave_ninput", "N Input", "Nitrogen Deposition", "kgN/m2", ["dNO3dep", "dNH4dep", "nfert", "total"], AggregationLevel.Patch, TemporalResolution.Daily);
         AddOutput(builder, "file_dave_fpar_ff", "Forest-Floor FPAR", "Fraction of Photosynthetically Active Radiation Reaching the Forest Floor", "0-1", ["fpar_ff"], AggregationLevel.Patch, TemporalResolution.Daily);
         AddOutput(builder, "file_dave_aet", "ET", "Evaporation and Transpiration", "mm", ["evap", "transp"], AggregationLevel.Patch, TemporalResolution.Daily);
-        AddOutput(builder, "file_dave_resp_heterotrophic", "Heterotrophic Respiration", "Heterotrophic respiration", "gC/m2/day", ["resp_h"], AggregationLevel.Patch, TemporalResolution.Daily);
+        AddOutput(builder, "file_dave_resp_heterotrophic", "Heterotrophic Respiration", "Heterotrophic respiration", "gC/m2/day", ["resp_heterotrophic"], AggregationLevel.Patch, TemporalResolution.Daily);
         AddOutput(builder, "file_dave_resp", "Respiration", "Ecosystem Respiration", "gC/m2/day", ["resp"], AggregationLevel.Patch, TemporalResolution.Daily);
         AddOutput(builder, "file_dave_gpp", "GPP", "Gross Primary Productivity", "gC/m2/day", ["gpp"], AggregationLevel.Patch, TemporalResolution.Daily);
         AddOutput(builder, "file_dave_npp", "NPP", "Net Primary Productivity", "gC/m2/day", ["npp"], AggregationLevel.Patch, TemporalResolution.Daily);
         AddOutput(builder, "file_dave_nee", "NEE", "Net Ecosystem Exchange", "gC/m2/day", ["nee"], AggregationLevel.Patch, TemporalResolution.Daily);
         AddOutput(builder, "file_dave_evaporation", "Evaporation", "Evaporation", "mm/day", ["evaporation", "interception", "transpiration", "evapotranspiration"], AggregationLevel.Patch, TemporalResolution.Daily);
-        AddOutput(builder, "file_dave_soilc", "Soil Carbon", "Soil Carbon Carbon Mass", "kgC/m2", ["soilc"], AggregationLevel.Patch, TemporalResolution.Daily);
-        AddOutput(builder, "file_dave_soiln", "Soil Nitrogen", "Soil Nitrogen Nitrogen Mass", "kgN/m2", ["soiln"], AggregationLevel.Patch, TemporalResolution.Daily);
+        AddOutput(builder, "file_dave_soilc", "Soil Carbon", "Soil Carbon Carbon Mass", "kgC/m2", ["surfsoillitterc", "cwdc", "centuryc", "total"], AggregationLevel.Patch, TemporalResolution.Daily);
+        AddOutput(builder, "file_dave_soiln", "Soil Nitrogen", "Soil Nitrogen Nitrogen Mass", "kgN/m2", ["surfsoillittern", "cwdn", "centuryn", "mineraln", "total"], AggregationLevel.Patch, TemporalResolution.Daily);
         AddOutput(builder, "file_dave_soil_nflux", "Soil N Flux", "Soil Nitrogen Flux", "kgN/m2/day", ["nflux"], AggregationLevel.Patch, TemporalResolution.Daily);
-        AddOutput(builder, "file_dave_dfuel", "Fuel Availability", "Fuel Availability for Blaze", "kgC/m2", ["fuel"], AggregationLevel.Patch, TemporalResolution.Daily);
-        AddOutput(builder, "file_dave_dcoarse_woody_debris", "CWD", "Coarse Woody Debris Carbon Mass", "gC/m2", ["cwd"], AggregationLevel.Patch, TemporalResolution.Daily);
+        AddOutput(builder, "file_dave_dfuel", "Fuel Availability", "Fuel Availability for Blaze", "kgC/m2", ["FineLitter", "FineWood", "CoarseWood", "GrassCMass", "avail_fuel"], AggregationLevel.Patch, TemporalResolution.Daily);
+        AddOutput(builder, "file_dave_dcoarse_woody_debris", "CWD", "Coarse Woody Debris Carbon Mass", "gC/m2", ["LitterHeart", "som", "k_tun_litter"], AggregationLevel.Patch, TemporalResolution.Daily);
 
         // Annual patch-level PFT outputs.
         AddPftOutput(builder, "file_dave_alai", "LAI", "Leaf Area Index", "m2/m2", AggregationLevel.Patch, TemporalResolution.Annual);
@@ -467,6 +550,7 @@ public static class OutputFileDefinitions
         AddPftOutput(builder, "file_fpc", "FPC", "Foliage Projective Cover", "0-1", AggregationLevel.Gridcell, TemporalResolution.Annual);
         AddPftOutput(builder, "file_aaet", "AET", "Actual Evapotranspiration", "mm/year", AggregationLevel.Gridcell, TemporalResolution.Annual);
         AddPftOutput(builder, "file_lai", "LAI", "Leaf Area Index", "m2/m2", AggregationLevel.Gridcell, TemporalResolution.Annual);
+        AddPftOutput(builder, "file_aagb", "AGB", "Above-Ground Biomass", "kg/m2", AggregationLevel.Gridcell, TemporalResolution.Annual);
 
         // Annual gridcell-level outputs.
         AddOutput(builder, "file_dave_amet_prec", "Precipitation", "Precipitation", "mm/year", ["prec"], AggregationLevel.Gridcell, TemporalResolution.Annual);
