@@ -480,7 +480,7 @@ public static class OutputFileDefinitions
         AddOutput(builder, "file_dave_sompool_nmass", "SOM Pool N Mass", "Surface Organic Matter Nitrogen Mass by Pool", "kgN/m2", ["nmass"], AggregationLevel.Patch, TemporalResolution.Daily);
         AddOutput(builder, "file_dave_ninput", "N Input", "Nitrogen Deposition", "kgN/m2", ["dNO3dep", "dNH4dep", "nfert", "total"], AggregationLevel.Patch, TemporalResolution.Daily);
         AddOutput(builder, "file_dave_fpar_ff", "Forest-Floor FPAR", "Fraction of Photosynthetically Active Radiation Reaching the Forest Floor", "0-1", ["fpar_ff"], AggregationLevel.Patch, TemporalResolution.Daily);
-        AddOutput(builder, "file_dave_aet", "ET", "Evaporation and Transpiration", "mm", ["evap", "transp"], AggregationLevel.Patch, TemporalResolution.Daily);
+        AddOutput(builder, "file_dave_aet", "ET", "Evaporation and Transpiration", "mm", ["evap", "transp", "total"], AggregationLevel.Patch, TemporalResolution.Daily);
         AddOutput(builder, "file_dave_resp_heterotrophic", "Heterotrophic Respiration", "Heterotrophic respiration", "gC/m2/day", ["resp_heterotrophic"], AggregationLevel.Patch, TemporalResolution.Daily);
         AddOutput(builder, "file_dave_resp", "Respiration", "Ecosystem Respiration", "gC/m2/day", ["resp"], AggregationLevel.Patch, TemporalResolution.Daily);
         AddOutput(builder, "file_dave_gpp", "GPP", "Gross Primary Productivity", "gC/m2/day", ["gpp"], AggregationLevel.Patch, TemporalResolution.Daily);
