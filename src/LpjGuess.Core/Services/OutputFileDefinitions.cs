@@ -338,7 +338,7 @@ public static class OutputFileDefinitions
         AddOutput(builder, "file_dave_apet", "PET", "Potential Evapotranspiration", "mm", ["pet"], AggregationLevel.Patch, TemporalResolution.Annual);
         AddOutput(builder, "file_dave_asimfire", "Simfire", "Simfire analysis", [
             ("burned_area", "fraction"),
-            ("fire_carbon", "gC/m2") 
+            ("fire_carbon", "gC/m2")
         ], AggregationLevel.Patch, TemporalResolution.Annual);
 
         AddOutput(builder, "file_dave_afuel", "Fuel", "Blaze fuel availability", "gC/m2", ["fuel"], AggregationLevel.Patch, TemporalResolution.Annual);
