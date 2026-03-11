@@ -5,7 +5,7 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
-			"name": ".NET Core Launch (console)",
+			"name": "Debug GUI",
 			"type": "coreclr",
 			"request": "launch",
 			"preLaunchTask": "build",
@@ -16,9 +16,17 @@
 			"stopAtEntry": false
 		},
 		{
-			"name": ".NET Core Attach",
+			"name": "Debug Runner (DotRush)",
 			"type": "coreclr",
-			"request": "attach"
-		}
+			"request": "launch",
+			"preLaunchTask": "build",
+			"program": "${workspaceFolder}/src/LpjGuess.Runner.CLI/bin/Debug/net9.0/lpjg-experiment.dll",
+			"args": [
+				"${workspaceFolder}/debug.toml"
+			],
+			"cwd": "${workspaceFolder}",
+			"console": "internalConsole",
+			"stopAtEntry": false
+		},
 	]
 }
