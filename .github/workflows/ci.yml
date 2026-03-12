@@ -63,7 +63,7 @@ jobs:
           python -c "import lpjguess_runner as m; print('Imported:', m.__name__)"
 
       - name: Upload wheel artifact
-        uses: actions/upload-artifact@v8
+        uses: actions/upload-artifact@v7
         with:
           name: wheel-${{ matrix.rid }}
           path: python/dist/*.whl
