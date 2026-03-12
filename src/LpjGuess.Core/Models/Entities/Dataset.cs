@@ -54,4 +54,18 @@ public abstract class Dataset
     /// The ID of the group this dataset belongs to, if any.
     /// </summary>
     public int? GroupId { get; set; }
+
+    /// <summary>
+    /// The simulation ID associated with this dataset. This is a well-defined
+    /// name that is persistent through time. It's not associated with a
+    /// specific run of the model, but rather is used to match data from a run
+    /// of the model with this simulation ID, to data from an observation
+    /// dataset with this simulation ID.
+    /// </summary>
+    /// <remarks>
+    /// E.g. "CumberlandPlain" for the CumberlandPlain site, or
+    /// "dave-barra2-1deg" for a (hypothetical) 1-degree continental model run
+    /// using the BARRA2 dataset.
+    /// </remarks>
+    public string SimulationId { get; set; } = string.Empty;
 }

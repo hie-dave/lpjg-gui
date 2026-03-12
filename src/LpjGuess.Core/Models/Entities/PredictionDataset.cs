@@ -30,6 +30,16 @@ public class PredictionDataset : Dataset
     public byte[] Patches { get; set; } = Array.Empty<byte>();
 
     /// <summary>
+    /// Stable identifier for the channel (ie branch) to which these predictions
+    /// belong, used for baseline resolution.
+    /// </summary>
+    /// <remarks>
+    /// This is used to cause predictions from a particular branch to be
+    /// compared to the accepted predictions *of that same branch*.
+    /// </remarks>
+    public string BaselineChannel { get; set; } = string.Empty;
+
+    /// <summary>
     /// Set the patches for this dataset.
     /// </summary>
     /// <param name="patches">The patches to set.</param>

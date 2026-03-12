@@ -39,6 +39,19 @@ public class CreateDatasetRequest
     public string TemporalResolution { get; set; } = string.Empty;
 
     /// <summary>
+    /// Stable identifier for the simulation scope used for evaluation baseline resolution.
+    /// </summary>
+    [Required]
+    public string SimulationId { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Baseline channel (for example, branch/environment scope) for evaluation
+    /// baseline resolution.
+    /// </summary>
+    [Required]
+    public string BaselineChannel { get; set; } = string.Empty;
+
+    /// <summary>
     /// Compressed code patches applied to the model.
     /// </summary>
     [Required]
