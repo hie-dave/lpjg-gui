@@ -5,7 +5,7 @@ namespace LpjGuess.Runner.Models;
 /// </summary>
 public class ConsoleProgressReporter : IProgressReporter
 {
-    /// <inheritdoc /> 
+    /// <inheritdoc />
     public void ReportProgress(double percent, TimeSpan elapsed, int ncomplete, int njob)
     {
         double progress = percent / 100.0;

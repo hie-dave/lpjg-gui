@@ -15,7 +15,7 @@ public static class StringExtensions
     /// <param name="allowSingleQuotes">Whether to allow single quotes as quotes.</param>
     /// <remarks>
     /// Examples:
-    /// 
+    ///
     /// a,b,c -> ["a", "b", "c"]
     /// a,"b, c",d -> ["a", "b, c", "d"]
     /// </remarks>

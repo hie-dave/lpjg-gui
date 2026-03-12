@@ -60,7 +60,7 @@ public static class ModelConstants
     public static string[] GetMetadataLayers(AggregationLevel level, TemporalResolution resolution)
     {
         List<string> layers = new() { LonLayer, LatLayer, YearLayer };
-        
+
         // Allow for a day column in annual outputs, because apparently some
         // annual outputs like to use that.
         if (resolution == TemporalResolution.Annual ||

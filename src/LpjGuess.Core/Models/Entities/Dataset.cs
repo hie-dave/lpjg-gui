@@ -12,17 +12,17 @@ public abstract class Dataset
     /// Unique identifier for this dataset.
     /// </summary>
     public int Id { get; set; }
-    
+
     /// <summary>
     /// Name of this dataset.
     /// </summary>
     public string Name { get; set; } = string.Empty;
-    
+
     /// <summary>
     /// Description of this dataset.
     /// </summary>
     public string Description { get; set; } = string.Empty;
-    
+
     /// <summary>
     /// The time this dataset was created.
     /// </summary>
@@ -32,7 +32,7 @@ public abstract class Dataset
     /// The spatial resolution of this dataset.
     /// </summary>
     public string SpatialResolution { get; set; } = string.Empty;
-    
+
     /// <summary>
     /// The temporal resolution of this dataset.
     /// </summary>
@@ -49,7 +49,7 @@ public abstract class Dataset
     /// The group this dataset belongs to, if any.
     /// </summary>
     public DatasetGroup? Group { get; set; }
-    
+
     /// <summary>
     /// The ID of the group this dataset belongs to, if any.
     /// </summary>

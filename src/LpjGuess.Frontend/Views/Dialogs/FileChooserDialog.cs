@@ -62,7 +62,7 @@ public class FileChooserDialog
         fileChooser.TransientFor = MainView.Instance;
         if (Configuration.Instance.PreviousDirectory != null)
         {
-            Gio.File path = Gio.Functions.FileNewForPath(Configuration.Instance.PreviousDirectory); 
+            Gio.File path = Gio.Functions.FileNewForPath(Configuration.Instance.PreviousDirectory);
             fileChooser.SetCurrentFolder(path);
         }
 

@@ -33,7 +33,7 @@ public class RecentFilesPresenter : PresenterBase<IRecentFilesView, Configuratio
 		view.OnClick.ConnectTo(OnOpenFile);
 	}
 
-	/// <inheritdoc /> 
+	/// <inheritdoc />
     public override void Dispose()
     {
 		OnOpenFile.Dispose();

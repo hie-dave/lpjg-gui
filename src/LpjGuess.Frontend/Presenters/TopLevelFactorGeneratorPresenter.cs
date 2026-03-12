@@ -21,7 +21,7 @@ namespace LpjGuess.Frontend.Presenters;
 /// A presenter for a top-level factor generator.
 /// </summary>
 [RegisterPresenter(typeof(TopLevelFactorGenerator), typeof(IFactorGeneratorPresenter))]
-public class TopLevelFactorGeneratorPresenter : 
+public class TopLevelFactorGeneratorPresenter :
     PresenterBase<ITopLevelFactorGeneratorView, TopLevelFactorGenerator>,
     IFactorGeneratorPresenter
 {

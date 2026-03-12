@@ -29,13 +29,13 @@ public class CustomOutputHelper : IOutputHelper
         this.errorCallback = errorCallback;
     }
 
-    /// <inheritdoc /> 
+    /// <inheritdoc />
     public void ReportError(string jobName, string output)
     {
         errorCallback(jobName, output);
     }
 
-    /// <inheritdoc /> 
+    /// <inheritdoc />
     public void ReportOutput(string jobName, string output)
     {
         outputCallback(jobName, output);

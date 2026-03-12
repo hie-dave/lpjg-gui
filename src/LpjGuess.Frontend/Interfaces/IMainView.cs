@@ -41,9 +41,9 @@ public interface IMainView : IView
 	/// The format for keyboard shortcuts looks like "&lt;Control&gt;a" or
 	/// "&lt;Shift&gt;&lt;Alt&gt;F1". The parser is not case-sensitive, and is liberal
 	/// enough to accept abbreviations such as "&lt;Ctrl&gt;" and "&lt;Ctl&gt;".
-	/// 
+	///
 	/// Keyboard shortcut syntax is described here:
-	/// 
+	///
 	/// https://docs.gtk.org/gtk4/func.accelerator_parse.html
 	/// </remarks>
 	void AddMenuItem(string name, Action callback, string? hotkey = null);

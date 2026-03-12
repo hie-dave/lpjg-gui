@@ -88,7 +88,7 @@ public class MainView : ApplicationWindow, IMainView
 	/// <inheritdoc />
 	public Event<string> OnNew { get; private init; }
 
-	/// <inheritdoc /> 
+	/// <inheritdoc />
 	public Event OnClose { get; private init; }
 
 	/// <summary>

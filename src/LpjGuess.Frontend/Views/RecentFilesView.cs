@@ -51,7 +51,7 @@ public class RecentFilesView : Box, IRecentFilesView
 		Append(container);
 	}
 
-    /// <inheritdoc />	
+    /// <inheritdoc />
     public Event<string> OnClick { get; private init; }
 
     /// <inheritdoc />

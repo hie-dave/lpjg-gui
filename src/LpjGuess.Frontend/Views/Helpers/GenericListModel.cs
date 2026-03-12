@@ -102,6 +102,6 @@ public class GenericListModel<T> : Object, ListModel where T : Object
         // Emit the ItemsChanged signal to notify listeners that the model has changed.
         // This should be called after modifying the items collection.
         // GObject.Signal.EmitSignal(this, changedSignal, position, removed, added);
-        
+
     }
 }

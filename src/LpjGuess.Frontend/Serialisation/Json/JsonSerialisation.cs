@@ -66,7 +66,7 @@ public static class JsonSerialisation
 
             string json = File.ReadAllText(file);
             T? result = JsonConvert.DeserializeObject<T>(json, settings ?? DefaultSettings);
-            
+
             return result ?? new T();
         }
         catch (Exception error)

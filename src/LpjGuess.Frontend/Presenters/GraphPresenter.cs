@@ -221,7 +221,7 @@ public class GraphPresenter : PresenterBase<IGraphView, Graph>, IGraphPresenter
     {
         // Remove the series from the graph
         graph.Series.Remove(series);
-        
+
         // Update the plot model
         RefreshData();
     }

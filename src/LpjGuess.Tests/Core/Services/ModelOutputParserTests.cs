@@ -26,7 +26,7 @@ public class ModelOutputParserTests : IAsyncLifetime
 
         // Setup resolver to return known file types
         _resolver.Setup(r => r.GetFileType(It.IsAny<string>()))
-            .Returns<string>(filename => 
+            .Returns<string>(filename =>
             {
                 string name = Path.GetFileNameWithoutExtension(filename);
                 return name switch
@@ -152,7 +152,7 @@ public class ModelOutputParserTests : IAsyncLifetime
         // Act & Assert
         var ex = await Assert.ThrowsAsync<InvalidDataException>(
             () => _parser.ParseOutputFileAsync(filePath));
-        
+
         Assert.Contains("Invalid number of columns", ex.Message);
 
         // Verify error was logged
@@ -178,7 +178,7 @@ public class ModelOutputParserTests : IAsyncLifetime
         // Act & Assert
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(
             () => _parser.ParseOutputFileAsync(filePath));
-        
+
         Assert.Contains("Unknown file type", ex.Message);
     }
 
@@ -194,7 +194,7 @@ public class ModelOutputParserTests : IAsyncLifetime
         // Act & Assert
         var ex = await Assert.ThrowsAsync<InvalidDataException>(
             () => _parser.ParseOutputFileAsync(filePath));
-        
+
         Assert.Contains("failed to parse double", ex.Message);
 
         // Verify error was logged
@@ -218,7 +218,7 @@ public class ModelOutputParserTests : IAsyncLifetime
         // Act & Assert
         var ex = await Assert.ThrowsAsync<InvalidDataException>(
             () => _parser.ParseOutputFileAsync(filePath));
-        
+
         Assert.Contains("at least a header row", ex.Message);
 
         // Verify error was logged
@@ -242,7 +242,7 @@ public class ModelOutputParserTests : IAsyncLifetime
         // Act & Assert
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(
             () => _parser.ParseOutputFileAsync(filePath));
-        
+
         Assert.Contains("Unknown file type", ex.Message);
     }
 }

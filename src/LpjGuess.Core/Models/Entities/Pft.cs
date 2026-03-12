@@ -16,7 +16,7 @@ public class Pft
     /// The name of this PFT.
     /// </summary>
     public string Name { get; set; } = string.Empty;
-    
+
     /// <summary>
     /// Navigation property for individuals of this PFT.
     /// </summary>

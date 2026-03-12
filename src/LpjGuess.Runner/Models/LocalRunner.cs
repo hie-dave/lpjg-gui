@@ -36,16 +36,16 @@ public class LocalRunner : IMonitorableRunner
         output = new StringBuilder();
     }
 
-    /// <inheritdoc /> 
+    /// <inheritdoc />
     public event EventHandler<ProgressEventArgs>? ProgressChanged;
 
-    /// <inheritdoc /> 
+    /// <inheritdoc />
     public event EventHandler<OutputEventArgs>? OutputReceived;
 
-    /// <inheritdoc /> 
+    /// <inheritdoc />
     public event EventHandler<OutputEventArgs>? ErrorReceived;
 
-    /// <inheritdoc /> 
+    /// <inheritdoc />
     public async Task RunAsync(Job job, CancellationToken ct)
     {
         using Process proc = new Process();
@@ -100,7 +100,7 @@ public class LocalRunner : IMonitorableRunner
         {
             if (string.IsNullOrEmpty(line))
                 continue;
-            
+
             // Parse progress from output (example format: "Progress: 50%")
             Match match = Regex.Match(line, @"([0-9]+)%[ \t]complete,[ \t]+([0-9]+:[0-9]+:[0-9]+)[ \t]+elapsed,[ \t]+([0-9]+:[0-9]+:[0-9]+)[ \t]remaining");
             if (match.Success && int.TryParse(match.Groups[1].Value, out int percentage))

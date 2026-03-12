@@ -43,13 +43,13 @@ public class PredictionDataset : Dataset
     /// Set the patches for this dataset.
     /// </summary>
     /// <param name="patches">The patches to set.</param>
-    public void SetPatches(string patches) => 
+    public void SetPatches(string patches) =>
         Patches = CompressionUtility.CompressText(patches);
-    
+
     /// <summary>
     /// Get the patches for this dataset.
     /// </summary>
     /// <returns>The patches for this dataset.</returns>
-    public string GetPatches() => 
+    public string GetPatches() =>
         CompressionUtility.DecompressToText(Patches);
 }

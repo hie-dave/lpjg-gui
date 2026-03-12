@@ -35,7 +35,7 @@ public static class ExceptionHelper
             callerFilePath,
             callerLineNumber,
             message);
-        
+
         throw exception;
     }
 
@@ -63,7 +63,7 @@ public static class ExceptionHelper
             callerFilePath,
             callerLineNumber,
             exception.Message);
-        
+
         throw exception;
     }
 }

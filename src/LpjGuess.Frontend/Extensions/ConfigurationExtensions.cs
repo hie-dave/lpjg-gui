@@ -13,7 +13,7 @@ public static class ConfigurationExtensions
 	/// <param name="instance">A configuration settings instance.</param>
 	public static IRunnerConfiguration? GetDefaultRunner(this Configuration instance)
 	{
-		if (instance.DefaultRunnerIndex >= instance.Runners.Count || 
+		if (instance.DefaultRunnerIndex >= instance.Runners.Count ||
 			instance.DefaultRunnerIndex < 0)
 			return null;
 

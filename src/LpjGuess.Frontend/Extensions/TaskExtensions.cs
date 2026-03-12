@@ -60,12 +60,12 @@ public static class TaskExtensions
     {
         // 1. Await original task, get result, continue on thread pool.
         TResult result = await task.ConfigureAwait(false);
-        
+
         // 2. Await a new task that completes ON the main thread and returns the result.
         //    Same logic as above: tcs.SetResult() in MainThreadHelper happens on the main thread,
         //    capturing the main thread's SynchronizationContext for this await.
         return await MainThreadHelper.RunOnMainThreadAsync(() => result, ct);
-        
+
         // The Task<TResult> returned by THIS ContinueOnMainThread method
         // will transition to its completed state (with the result) while the
         // SynchronizationContext is the main thread's.

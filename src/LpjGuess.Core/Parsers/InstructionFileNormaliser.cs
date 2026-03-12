@@ -43,7 +43,7 @@ public class InstructionFileNormaliser
 	/// </summary>
 	/// <remarks>
 	/// Normalisation consists of:
-	/// 
+	///
 	/// - Flattening the import hierarchy, recursively
 	/// - Converting all relative paths to absolute paths
 	/// </remarks>

@@ -11,7 +11,7 @@ public interface ISelectionView : IView
     /// The event that is raised when the selection is changed by the user.
     /// </summary>
     Event<IEnumerable<string>> OnSelectionChanged { get; }
-    
+
     /// <summary>
     /// Populate the view with the given items.
     /// </summary>

@@ -93,7 +93,7 @@ public class PbsRunner : IRunner
 			const string jobName = "JOB_NAME";
 			const string outDir = "OUT_DIR";
 			const string insfile = "INSFILE";
-			const string inputModule = "INPUT_MODULE";		
+			const string inputModule = "INPUT_MODULE";
 			const string experiment = "EXPERIMENT";
 
 			string name = Path.GetFileNameWithoutExtension(insFile);

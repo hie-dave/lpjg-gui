@@ -188,7 +188,7 @@ sla 53.1
         string generatedContent = parser.GenerateContent();
 
         var newParser = new InstructionFileParser(generatedContent, string.Empty);
-        
+
         // Check modified values
         var g0Value = newParser.GetBlockParameter("group", "C3G", "g0");
         Assert.True(g0Value!.TryGetDouble(out double g0));
@@ -243,7 +243,7 @@ sla 53.1     ! override value
 
         // Parse the modified content and verify values
         var newParser = new InstructionFileParser(generatedContent, string.Empty);
-        
+
         // Check that the last values were modified
         g0Value = newParser.GetBlockParameter("group", "C3G", "g0");
         Assert.True(g0Value!.TryGetDouble(out g0));
@@ -332,7 +332,7 @@ sla 53.1
         string generatedContent = parser.GenerateContent();
 
         var newParser = new InstructionFileParser(generatedContent, string.Empty);
-        
+
         // Check that the new parameters were added with correct values
         var newParamValue = newParser.GetBlockParameter("group", "C3G", "newparam");
         Assert.True(newParamValue!.TryGetDouble(out double value));

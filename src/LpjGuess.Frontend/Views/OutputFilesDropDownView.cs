@@ -11,7 +11,7 @@ public class OutputFilesDropDownView : GroupedDropDownView<OutputFile>
     /// <summary>
     /// Create a new <see cref="OutputFilesDropDownView"/> instance.
     /// </summary>
-    public OutputFilesDropDownView() 
+    public OutputFilesDropDownView()
         : base(
             file => file.Metadata.Name,
             // TODO: do we want description or name?

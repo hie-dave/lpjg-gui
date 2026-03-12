@@ -11,27 +11,27 @@ public class Variable
     /// Unique identifier for this variable.
     /// </summary>
     public int Id { get; set; }
-    
+
     /// <summary>
     /// Name of this variable.
     /// </summary>
     public string Name { get; set; } = string.Empty;
-    
+
     /// <summary>
     /// Description of this variable.
     /// </summary>
     public string Description { get; set; } = string.Empty;
-    
+
     /// <summary>
     /// Units of this variable.
     /// </summary>
     public string Units { get; set; } = string.Empty;
-    
+
     /// <summary>
     /// Aggregation level of this variable.
     /// </summary>
     public AggregationLevel Level { get; set; }
-    
+
     // Navigation properties
 
     /// <summary>

@@ -9,12 +9,12 @@ public class VariableLayer
     /// Unique identifier for this layer.
     /// </summary>
     public int Id { get; set; }
-    
+
     /// <summary>
     /// Name of this layer.
     /// </summary>
     public string Name { get; set; } = string.Empty;
-    
+
     /// <summary>
     /// Description of this layer.
     /// </summary>
