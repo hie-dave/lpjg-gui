@@ -5,6 +5,7 @@ using LpjGuess.Core.Models.Entities;
 using LpjGuess.Core.Models.Graphing.Style;
 using LpjGuess.Core.Models.Graphing.Style.Identifiers;
 using LpjGuess.Core.Models.Importer;
+using LpjGuess.Core.Parsers;
 using LpjGuess.Core.Services;
 using LpjGuess.Frontend.Classes;
 using LpjGuess.Frontend.DependencyInjection;
@@ -42,19 +43,27 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
     private readonly ILoggerFactory loggerFactory;
 
     /// <summary>
+    /// A gridlist file parser.
+    /// </summary>
+    private readonly IGridlistParser gridlistParser;
+
+    /// <summary>
     /// Create a new <see cref="ModelOutputReader"/> instance.
     /// </summary>
     /// <param name="insFilesProvider">The instruction files provider.</param>
     /// <param name="experimentProvider">The experiment provider.</param>
     /// <param name="loggerFactory">The logger factory.</param>
+    /// <param name="gridlistParser">The gridlist parser.</param>
     public ModelOutputReader(
         IInstructionFilesProvider insFilesProvider,
         IExperimentProvider experimentProvider,
-        ILoggerFactory loggerFactory)
+        ILoggerFactory loggerFactory,
+        IGridlistParser gridlistParser)
     {
         this.insFilesProvider = insFilesProvider;
         this.experimentProvider = experimentProvider;
         this.loggerFactory = loggerFactory;
+        this.gridlistParser = gridlistParser;
     }
 
     /// <inheritdoc />
@@ -78,7 +87,7 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
         var simulation = readers.FirstOrDefault(s => s.InsFile == instructionFile);
         if (simulation == null)
         {
-            simulation = new SimulationReader(instructionFile, loggerFactory);
+            simulation = new SimulationReader(instructionFile, loggerFactory, gridlistParser);
             lock (readers)
                 readers.Add(simulation);
         }
@@ -167,7 +176,7 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
         // Technically, the generated simulations could have different
         // gridcells, even though this is probably very rare in practice.
         return insFilesProvider.GetGeneratedInstructionFiles()
-            .SelectMany(f => GetSimulation(f).Gridlist.Gridcells)
+            .SelectMany(f => GetSimulation(f).GridList.Gridcells)
             .Select(identifier.Identify)
             .Distinct();
     }
@@ -394,7 +403,7 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
     {
         // FIXME: this will throw for coordinates not in the gridlist. Would it
         // be better to use the fallback name (lat, lon) in that case?
-        string name = simulation.Gridlist.GetName(datapoint.Longitude, datapoint.Latitude);
+        string name = simulation.GridList.GetName(datapoint.Longitude, datapoint.Latitude);
         string? pft = null;
         if (datapoint.Individual != null)
         {

@@ -11,6 +11,9 @@ public class Gridcell
     /// <summary>
     /// Tolerance for floating point comparison.
     /// </summary>
+    /// <remarks>
+    /// This should probably be refactored out of gridcell.
+    /// </remarks>
     private readonly double eps;
 
     /// <summary>

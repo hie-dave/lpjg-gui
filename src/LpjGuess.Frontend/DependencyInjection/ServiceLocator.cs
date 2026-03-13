@@ -13,6 +13,7 @@ using Microsoft.Extensions.Logging;
 using LpjGuess.Frontend.Interfaces.Factories;
 using LpjGuess.Core.Logging;
 using LpjGuess.Frontend.Config;
+using LpjGuess.Core.Parsers;
 
 namespace LpjGuess.Frontend.DependencyInjection;
 
@@ -59,6 +60,7 @@ public class ServiceLocator : IServiceLocator
         services.AddTransient<OxyPlotConverter>();
         services.AddTransient<IDataProvider<ModelOutput>, ModelOutputReader>();
         services.AddTransient<ModelOutputReader>();
+        services.AddTransient<IGridlistParser, GridlistParser>();
 
         // Configure logging to use our custom console formatter.
         services.ConfigureLogging(Options.Instance.ToLoggingOptions());

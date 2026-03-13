@@ -29,6 +29,11 @@ public class SimulationReader
     private readonly ILogger<SimulationReader> logger;
 
     /// <summary>
+    /// The gridlist parser.
+    /// </summary>
+    private readonly IGridlistParser gridlistParser;
+
+    /// <summary>
     /// The instruction file.
     /// </summary>
     public InstructionFile InsFile { get; private init; }
@@ -51,17 +56,21 @@ public class SimulationReader
     /// <summary>
     /// Gridlist parser.
     /// </summary>
-    public GridlistParser Gridlist { get; private init; }
+    public Gridlist GridList { get; private init; }
 
     /// <summary>
     /// Create a new <see cref="SimulationReader"/> instance.
     /// </summary>
     /// <param name="insFile">The instruction file.</param>
     /// <param name="loggerFactory">The logger factory.</param>
-    public SimulationReader(InstructionFile insFile, ILoggerFactory loggerFactory)
+    /// <param name="gridlistParser">The gridlist parser.</param>
+    public SimulationReader(InstructionFile insFile,
+                            ILoggerFactory loggerFactory,
+                            IGridlistParser gridlistParser)
     {
         InsFile = insFile;
         logger = loggerFactory.CreateLogger<SimulationReader>();
+        this.gridlistParser = gridlistParser;
 
         var logger2 = loggerFactory.CreateLogger<OutputFileTypeResolver>();
         var logger3 = loggerFactory.CreateLogger<ModelOutputParser>();
@@ -72,7 +81,7 @@ public class SimulationReader
         Helper = new InstructionFileHelper(Parser, logger4);
 
         string gridlist = Helper.GetGridlist();
-        Gridlist = new GridlistParser(gridlist);
+        GridList = new Gridlist(gridlist, gridlistParser);
 
         Resolver = new OutputFileTypeResolver(logger2);
         Resolver.BuildLookupTable(Parser);
