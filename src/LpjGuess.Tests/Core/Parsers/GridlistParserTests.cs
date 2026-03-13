@@ -90,20 +90,24 @@ public class GridlistParserTests : IDisposable
         Assert.Contains("failed to parse latitude", error.Message);
     }
 
-    [Fact]
-    public async Task ParseAsync_Throws_ForLongitudeOutOfRange()
+    [Theory]
+    [InlineData("181 20 SiteA")]
+    [InlineData("-181 20 SiteA")]
+    public async Task ParseAsync_Throws_ForLongitudeOutOfRange(string content)
     {
-        string path = await CreateGridlistFile("181 20 SiteA");
+        string path = await CreateGridlistFile(content);
 
         InvalidDataException error = await Assert.ThrowsAsync<InvalidDataException>(() => parser.ParseAsync(path));
 
         Assert.Contains("longitude must be in range [-180, 180]", error.Message);
     }
 
-    [Fact]
-    public async Task ParseAsync_Throws_ForLatitudeOutOfRange()
+    [Theory]
+    [InlineData("10 91 SiteA")]
+    [InlineData("10 -91 SiteA")]
+    public async Task ParseAsync_Throws_ForLatitudeOutOfRange(string content)
     {
-        string path = await CreateGridlistFile("10 91 SiteA");
+        string path = await CreateGridlistFile(content);
 
         InvalidDataException error = await Assert.ThrowsAsync<InvalidDataException>(() => parser.ParseAsync(path));
 

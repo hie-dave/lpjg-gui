@@ -56,6 +56,6 @@ public class GridlistTests
 
         var error = Assert.ThrowsAny<Exception>(() => new Gridlist(path, parser));
 
-        Assert.Contains("Invalid gridlist line", error.ToString());
+        Assert.Contains("must contain at least 2", error.ToString());
     }
 }
