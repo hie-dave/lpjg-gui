@@ -12,14 +12,14 @@ public class ModelOutputParserTests : IAsyncLifetime
     /// </summary>
     const double eps = 0.001;
 
-    private readonly string _testDir;
+    private readonly TempDirectory _testDir;
     private readonly ModelOutputParser _parser;
     private readonly Mock<ILogger<ModelOutputParser>> _logger;
     private readonly Mock<IOutputFileTypeResolver> _resolver;
 
     public ModelOutputParserTests()
     {
-        _testDir = Path.Combine(Path.GetTempPath(), "output_tests");
+        _testDir = TempDirectory.Create("output_tests");
         _logger = new Mock<ILogger<ModelOutputParser>>();
         _resolver = new Mock<IOutputFileTypeResolver>();
         _parser = new ModelOutputParser(_logger.Object, _resolver.Object);
@@ -40,13 +40,12 @@ public class ModelOutputParserTests : IAsyncLifetime
 
     public Task InitializeAsync()
     {
-        Directory.CreateDirectory(_testDir);
         return Task.CompletedTask;
     }
 
     public Task DisposeAsync()
     {
-        Directory.Delete(_testDir, recursive: true);
+        _testDir.Dispose();
         return Task.CompletedTask;
     }
 
@@ -57,7 +56,7 @@ public class ModelOutputParserTests : IAsyncLifetime
 151.25 -33.25 2000 2.5 1.8
 151.25 -33.75 2000 2.6 1.9
 151.50 -33.75 2000 1.8 1.7";
-        string filePath = Path.Combine(_testDir, "lai.out");
+        string filePath = Path.Combine(_testDir.AbsolutePath, "lai.out");
         await File.WriteAllTextAsync(filePath, content);
 
         Quantity quantity = await _parser.ParseOutputFileAsync(filePath);
@@ -124,7 +123,7 @@ public class ModelOutputParserTests : IAsyncLifetime
 131.15   -12.50    2003       4              0              0             20             TrBE     3.74640696
 131.15   -12.50    2003       5              0              0             20             TrBE     3.74126464";
 
-        string filePath = Path.Combine(_testDir, "indiv_lai.out");
+        string filePath = Path.Combine(_testDir.AbsolutePath, "indiv_lai.out");
         await File.WriteAllTextAsync(filePath, content);
 
         Quantity quantity = await _parser.ParseOutputFileAsync(filePath);
@@ -146,7 +145,7 @@ public class ModelOutputParserTests : IAsyncLifetime
         // Arrange
         var content = @"Invalid Header Format
 151.25 -33.75 2000 1 2.5 10.2";
-        var filePath = Path.Combine(_testDir, "lai.out");
+        var filePath = Path.Combine(_testDir.AbsolutePath, "lai.out");
         await File.WriteAllTextAsync(filePath, content);
 
         // Act & Assert
@@ -172,7 +171,7 @@ public class ModelOutputParserTests : IAsyncLifetime
         // Arrange
         var content = @"Lon Lat Year Day LAI NPP
 151.25 -33.75 2000 1 invalid 10.2";
-        var filePath = Path.Combine(_testDir, "laif");
+        var filePath = Path.Combine(_testDir.AbsolutePath, "laif");
         await File.WriteAllTextAsync(filePath, content);
 
         // Act & Assert
@@ -188,7 +187,7 @@ public class ModelOutputParserTests : IAsyncLifetime
         // Arrange
         var content = @"Lon Lat Year Day LAI NPP
 151.25 -33.75 2000 1 invalid 10.2";
-        var filePath = Path.Combine(_testDir, "lai.out");
+        var filePath = Path.Combine(_testDir.AbsolutePath, "lai.out");
         await File.WriteAllTextAsync(filePath, content);
 
         // Act & Assert
@@ -212,7 +211,7 @@ public class ModelOutputParserTests : IAsyncLifetime
     public async Task ParseOutputFile_EmptyFile_ThrowsException()
     {
         // Arrange
-        var filePath = Path.Combine(_testDir, "lai.out");
+        var filePath = Path.Combine(_testDir.AbsolutePath, "lai.out");
         await File.WriteAllTextAsync(filePath, string.Empty);
 
         // Act & Assert
@@ -236,7 +235,7 @@ public class ModelOutputParserTests : IAsyncLifetime
     public async Task ParseOutputFile_UnknownFileKind_ThrowsException()
     {
         // Arrange
-        var filePath = Path.Combine(_testDir, "empty.out");
+        var filePath = Path.Combine(_testDir.AbsolutePath, "empty.out");
         await File.WriteAllTextAsync(filePath, string.Empty);
 
         // Act & Assert
