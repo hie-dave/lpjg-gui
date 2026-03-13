@@ -7,30 +7,31 @@ namespace LpjGuess.Tests.Core.Models.Dtos;
 
 public class SimulationManifestDtoTests
 {
-    private static IReadOnlyList<string> Pfts => new[] { "pine", "oak" };
+    private static IReadOnlyList<string> Pfts => ["pine", "oak"];
 
-    private static IReadOnlyList<IFactor> Factors => new IFactor[]
-    {
+    private static IReadOnlyList<IFactor> Factors =>
+    [
         new TopLevelParameter("spinupyears", "1000"),
         BlockParameter.Pft("pine", "sla", "3.4")
-    };
+    ];
 
     [Fact]
     public void RoundTrip_Preserves_All_Scalar_Fields()
     {
+        using TempDirectory temp = TempDirectory.Create(GetType().Name);
         var manifest = new SimulationManifest(
             Key: "sim-abc123",
             Name: "my-sim",
-            Path: "/tmp/out/ins1/sim-abc123",
+            Path: Path.Combine(temp.AbsolutePath, "out", "ins1", "sim-abc123"),
             BaseIns: "ins1",
-            InsFile: "/tmp/out/ins1/sim-abc123/input.ins",
+            InsFile: Path.Combine(temp.AbsolutePath, "out", "ins1", "sim-abc123", "input.ins"),
             Pfts: Pfts,
             Factors: Factors,
             GeneratedAtUtc: new DateTime(2024, 1, 2, 3, 4, 5, DateTimeKind.Utc)
         );
 
         var dto = SimulationManifestDto.FromSimulationManifest(manifest);
-        var roundTrip = dto.ToSimulationManifest();
+        SimulationManifest roundTrip = dto.ToSimulationManifest();
 
         Assert.Equal(manifest.Key, roundTrip.Key);
         Assert.Equal(manifest.Name, roundTrip.Name);
@@ -43,19 +44,20 @@ public class SimulationManifestDtoTests
     [Fact]
     public void RoundTrip_Preserves_Pfts_And_Factors()
     {
+        using TempDirectory temp = TempDirectory.Create(GetType().Name);
         var manifest = new SimulationManifest(
             Key: "sim-xyz789",
             Name: "another-sim",
-            Path: "/tmp/out/ins2/sim-xyz789",
+            Path: Path.Combine(temp.AbsolutePath, "out", "ins2", "sim-xyz789"),
             BaseIns: "ins2",
-            InsFile: "/tmp/out/ins2/sim-xyz789/input.ins",
+            InsFile: Path.Combine(temp.AbsolutePath, "out", "ins2", "sim-xyz789", "input.ins"),
             Pfts: Pfts,
             Factors: Factors,
             GeneratedAtUtc: DateTime.UtcNow
         );
 
         var dto = SimulationManifestDto.FromSimulationManifest(manifest);
-        var roundTrip = dto.ToSimulationManifest();
+        SimulationManifest roundTrip = dto.ToSimulationManifest();
 
         Assert.Equal(Pfts.Count, roundTrip.Pfts.Count);
         Assert.True(Pfts.SequenceEqual(roundTrip.Pfts));

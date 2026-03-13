@@ -17,10 +17,12 @@ public class SimpleModelTypesTests
             level: AggregationLevel.Gridcell,
             resolution: TemporalResolution.Daily);
 
-        var file = new OutputFile(metadata, "/tmp/lai.out");
+        using TempDirectory tmp = TempDirectory.Create();
+        string filePath = Path.Combine(tmp.AbsolutePath, "lai.out");
+        var file = new OutputFile(metadata, filePath);
 
         Assert.Equal("file_lai", file.ToString());
-        Assert.Equal("/tmp/lai.out", file.Path);
+        Assert.Equal(filePath, file.Path);
         Assert.Equal(metadata, file.Metadata);
     }
 
@@ -53,7 +55,8 @@ public class SimpleModelTypesTests
     [Fact]
     public void Workspace_ForInsFile_ConfiguresBaselineAndFilePath()
     {
-        string insFile = Path.Combine("/tmp", "example.ins");
+        using TempDirectory temp = TempDirectory.Create();
+        string insFile = Path.Combine(temp.AbsolutePath, "example.ins");
 
         Workspace workspace = Workspace.ForInsFile(insFile);
 
@@ -67,11 +70,14 @@ public class SimpleModelTypesTests
     [Fact]
     public void Workspace_GetOutputDirectory_UsesWorkspaceDirectory()
     {
-        var workspace = new Workspace { FilePath = "/tmp/work/test.lpj" };
+        using TempDirectory temp = TempDirectory.Create();
+        string filePath = Path.Combine(temp.AbsolutePath, "work", "test.lpj");
+        var workspace = new Workspace { FilePath = filePath };
 
         string outputDirectory = workspace.GetOutputDirectory();
 
-        Assert.Equal(Path.Combine("/tmp/work", ".simulations"), outputDirectory);
+        string expect = Path.Combine(temp.AbsolutePath, "work", ".simulations");
+        Assert.Equal(expect, outputDirectory);
     }
 
     [Fact]

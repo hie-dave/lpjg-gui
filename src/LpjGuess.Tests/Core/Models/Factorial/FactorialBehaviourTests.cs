@@ -74,7 +74,9 @@ public class FactorialBehaviourTests
             outputdirectory "old"
             """;
 
-        var parser = new InstructionFileParser(content, "/tmp/test.ins");
+        using TempDirectory temp = TempDirectory.Create(GetType().Name);
+        string path = Path.Combine(temp.AbsolutePath, "test.ins");
+        var parser = new InstructionFileParser(content, path);
         var composite = new CompositeFactor([
             new TopLevelParameter("npatch", "7"),
             new TopLevelParameter("outputdirectory", "\"new\"")
