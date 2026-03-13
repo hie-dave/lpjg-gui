@@ -6,14 +6,13 @@ using Microsoft.Extensions.Logging;
 
 using TemporalResolution = LpjGuess.Core.Models.Entities.TemporalResolution;
 using AggregationLevel = LpjGuess.Core.Models.Entities.AggregationLevel;
-using System.Text;
 
 namespace LpjGuess.Core.Services;
 
 /// <summary>
 /// Parser for LPJ-GUESS model output files.
 /// </summary>
-public class ModelOutputParser
+public class ModelOutputParser : IModelOutputParser
 {
     private readonly ILogger logger;
     private readonly IOutputFileTypeResolver resolver;
@@ -29,12 +28,7 @@ public class ModelOutputParser
         this.resolver = resolver;
     }
 
-    /// <summary>
-    /// Parses an output file.
-    /// </summary>
-    /// <param name="filePath">Path to the output file.</param>
-    /// <param name="ct">The cancellation token.</param>
-    /// <returns>A task representing the parse operation.</returns>
+    /// <inheritdoc /> 
     public async Task<Quantity> ParseOutputFileAsync(
         string filePath,
         CancellationToken ct = default)
@@ -54,14 +48,7 @@ public class ModelOutputParser
         }
     }
 
-    /// <summary>
-    /// Parse the header row of the specified output file.
-    /// TODO: refactor the main parse method to call this one. At the moment, we
-    /// have duplicated logic.
-    /// </summary>
-    /// <param name="filePath">Path to the file to be read.</param>
-    /// <param name="ct">The cancellation token.</param>
-    /// <returns>Collection of layer metadata, if any is found.</returns>
+    /// <inheritdoc />
     public async Task<IEnumerable<LayerMetadata>> ParseOutputFileHeaderAsync(string filePath, CancellationToken ct)
     {
         logger.LogDebug("Retrieving output file type");
