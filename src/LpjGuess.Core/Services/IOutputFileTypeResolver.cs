@@ -20,5 +20,5 @@ public interface IOutputFileTypeResolver
     /// <summary>
     /// Builds the lookup table for output file types.
     /// </summary>
-    void BuildLookupTable(InstructionFileParser parser);
+    void BuildLookupTable(IInstructionFileParser parser);
 }

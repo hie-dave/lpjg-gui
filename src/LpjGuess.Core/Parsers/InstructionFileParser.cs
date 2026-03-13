@@ -9,7 +9,7 @@ namespace LpjGuess.Core.Parsers;
 /// <summary>
 /// Parser for LPJ-GUESS instruction files that handles nested blocks, parameters, and comments.
 /// </summary>
-public partial class InstructionFileParser
+public partial class InstructionFileParser : IInstructionFileParser
 {
     /// <summary>
     /// The character used to mark a comment in an instruction file.
@@ -94,11 +94,7 @@ public partial class InstructionFileParser
         }
     }
 
-    /// <summary>
-    /// Get the names of all blocks with the specified name.
-    /// </summary>
-    /// <param name="blockType">Type of the block (e.g., "group", "pft")</param>
-    /// <returns>The names of all blocks with the specified type.</returns>
+    /// <inheritdoc /> 
     public IEnumerable<string> GetBlockNames(string blockType)
     {
         return items
@@ -107,59 +103,32 @@ public partial class InstructionFileParser
             .Select(b => b.Name);
     }
 
-    /// <summary>
-    /// Gets the value of a parameter within a specific block.
-    /// </summary>
-    /// <param name="blockType">Type of the block (e.g., "group", "pft")</param>
-    /// <param name="blockName">Name of the block</param>
-    /// <param name="paramName">Name of the parameter</param>
-    /// <returns>Parameter value if found, null otherwise</returns>
+    /// <inheritdoc />
     public InstructionParameter? GetBlockParameter(string blockType, string blockName, string paramName)
     {
         Block? block = GetBlock(blockType, blockName);
         return block?.Parameters.GetValueOrDefault(paramName);
     }
 
-    /// <summary>
-    /// Gets the raw string value of a parameter within a specific block.
-    /// </summary>
-    /// <param name="blockType">Type of the block (e.g., "group", "pft")</param>
-    /// <param name="blockName">Name of the block</param>
-    /// <param name="paramName">Name of the parameter</param>
-    /// <returns>Parameter value if found, null otherwise</returns>
+    /// <inheritdoc />
     public string? GetBlockParameterValue(string blockType, string blockName, string paramName)
     {
         return GetBlockParameter(blockType, blockName, paramName)?.AsString();
     }
 
-    /// <summary>
-    /// Gets the top-level parameter with the specified name.
-    /// </summary>
-    /// <param name="name">Name of the parameter</param>
-    /// <returns>The parameter if found, null otherwise.</returns>
+    /// <inheritdoc />
     public InstructionParameter? GetTopLevelParameter(string name)
     {
         return GetTopLevelParameterOccurrence(name)?.Value;
     }
 
-    /// <summary>
-    /// Gets the raw string value of a top-level parameter.
-    /// </summary>
-    /// <param name="paramName">Name of the parameter</param>
-    /// <returns>Parameter value if found, null otherwise</returns>
+    /// <inheritdoc />
     public string? GetTopLevelParameterValue(string paramName)
     {
         return GetTopLevelParameter(paramName)?.AsString();
     }
 
-    /// <summary>
-    /// Sets a parameter value within a specific block.
-    /// </summary>
-    /// <param name="blockType">Type of the block (e.g., "group", "pft")</param>
-    /// <param name="blockName">Name of the block</param>
-    /// <param name="paramName">Name of the parameter</param>
-    /// <param name="value">New value</param>
-    /// <returns>True if parameter was found and updated, false otherwise</returns>
+    /// <inheritdoc />
     public void SetBlockParameterValue(string blockType, string blockName, string paramName, string value)
     {
         Block? block = GetBlock(blockType, blockName);
@@ -169,12 +138,7 @@ public partial class InstructionFileParser
         SetBlockParameterValue(block, paramName, value);
     }
 
-    /// <summary>
-    /// Sets a top-level parameter value.
-    /// </summary>
-    /// <param name="paramName">Name of the parameter</param>
-    /// <param name="value">New value</param>
-    /// <returns>True if parameter was found and updated, false otherwise</returns>
+    /// <inheritdoc />
     public bool SetTopLevelParameterValue(string paramName, string value)
     {
         // We could add a new top-level parameter if it doesn't exist. For now,
@@ -189,38 +153,26 @@ public partial class InstructionFileParser
         return true;
     }
 
-    /// <summary>
-    /// Enable the PFT with the specified name. Throws if it's not defined.
-    /// </summary>
-    /// <param name="pft">Name of the PFT to be enabled.</param>
+    /// <inheritdoc />
     public void EnablePft(string pft)
     {
         SetBlockParameterValue(blockPft, pft, includeParameter, "1");
     }
 
-    /// <summary>
-    /// Disable all PFTs defined in the instruction file.
-    /// </summary>
+    /// <inheritdoc />
     public void DisableAllPfts()
     {
         foreach (Block block in GetPfts())
             SetBlockParameterValue(block, includeParameter, "0");
     }
 
-    /// <summary>
-    /// Check whether a PFT is defined with the given name.
-    /// </summary>
-    /// <param name="name">Name of the PFT.</param>
-    /// <returns>True iff the PFT is defined.</returns>
+    /// <inheritdoc /> 
     public bool IsPft(string name)
     {
         return GetPfts().Any(b => b.Name == name);
     }
 
-    /// <summary>
-    /// Generates the updated file content with any parameter modifications.
-    /// </summary>
-    /// <returns>The complete file content as a string</returns>
+    /// <inheritdoc /> 
     public string GenerateContent()
     {
         if (items.Count == 0)

@@ -31,7 +31,7 @@ public class OutputFileTypeResolver : IOutputFileTypeResolver
     /// Builds a lookup table mapping output filenames to their corresponding
     /// file types.
     /// </summary>
-    public void BuildLookupTable(InstructionFileParser parser)
+    public void BuildLookupTable(IInstructionFileParser parser)
     {
         // Get all known output file types.
         logger.LogTrace("Building output file name lookup table");

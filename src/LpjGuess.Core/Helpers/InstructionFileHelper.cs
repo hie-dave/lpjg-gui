@@ -70,7 +70,7 @@ public class InstructionFileHelper
     /// <summary>
     /// The parser used to parse the instruction file.
     /// </summary>
-    private readonly InstructionFileParser parser;
+    private readonly IInstructionFileParser parser;
 
     /// <summary>
     /// The logger used to log messages.
@@ -82,7 +82,7 @@ public class InstructionFileHelper
     /// </summary>
     /// <param name="parser">The parser used to parse the instruction file.</param>
     /// <param name="logger">The logger used to log messages.</param>
-    public InstructionFileHelper(InstructionFileParser parser, ILogger<InstructionFileHelper> logger)
+    public InstructionFileHelper(IInstructionFileParser parser, ILogger<InstructionFileHelper> logger)
     {
         this.parser = parser;
         this.logger = logger;
