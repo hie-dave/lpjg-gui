@@ -20,6 +20,8 @@ public static class OutputFileDefinitions
         AddPftOutput(builder, "file_agb", "AGB", "Above-Ground Biomass", "kg/m2", AggregationLevel.Gridcell, TemporalResolution.Daily);
         AddPftOutput(builder, "file_agb_tree", "AGB", "Above-Ground Tree Biomass", "kg/m2", AggregationLevel.Gridcell, TemporalResolution.Daily);
         AddPftOutput(builder, "file_dlai", "LAI", "Leaf Area Index", "m2/m2", AggregationLevel.Gridcell, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_lai_ymax", "LAI", "Max annual Leaf Area Index", "m2/m2", AggregationLevel.Gridcell, TemporalResolution.Annual);
+        AddPftOutput(builder, "file_dave_agb_ymax", "AGB", "Max annual Above-Ground Biomass", "kg/m2", AggregationLevel.Gridcell, TemporalResolution.Annual);
         AddOutput(builder, "file_dflux", "C Fluxes", "Carbon Fluxes", [
             ("Veg", "kgC/m2/day"),
             ("Repr", "kgC/m2/day"),
