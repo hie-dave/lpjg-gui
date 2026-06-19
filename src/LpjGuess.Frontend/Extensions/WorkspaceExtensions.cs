@@ -22,6 +22,8 @@ public static class WorkspaceExtensions
 	/// <param name="filePath">Path to the serialised file.</param>
 	public static Workspace LoadWorkspace(this string filePath)
 	{
-		return JsonSerialisation.DeserialiseFrom<Workspace>(filePath);
+		Workspace workspace = JsonSerialisation.DeserialiseFrom<Workspace>(filePath);
+		workspace.FilePath = filePath;
+		return workspace;
 	}
 }

@@ -1,6 +1,7 @@
 using LpjGuess.Core.Interfaces.Graphing;
 using LpjGuess.Core.Models.Factorial;
 using LpjGuess.Core.Models.Graphing;
+using Newtonsoft.Json;
 
 namespace LpjGuess.Core.Models;
 
@@ -28,6 +29,7 @@ public class Workspace
 	/// <summary>
 	/// Path to this workspace.
 	/// </summary>
+	[JsonIgnore]
 	public string FilePath { get; set; }
 
 	/// <summary>
