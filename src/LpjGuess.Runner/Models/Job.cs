@@ -8,11 +8,6 @@ namespace LpjGuess.Runner.Models;
 public class Job
 {
     /// <summary>
-    /// A unique identifier for the job.
-    /// </summary>
-    public Guid Id { get; private init; } = Guid.NewGuid();
-
-    /// <summary>
     /// The name of the job.
     /// </summary>
     public string Name { get; private init; }

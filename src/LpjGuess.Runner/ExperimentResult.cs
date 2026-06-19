@@ -30,7 +30,7 @@ public sealed class ExperimentResult
     /// <summary>
     /// Collection of job results.
     /// </summary>
-    public IEnumerable<JobResult> Results { get; private init; }
+    public IReadOnlyList<JobResult> Results { get; private init; }
 
     /// <summary>
     /// Create a new <see cref="ExperimentResult"/> instance.
@@ -48,6 +48,6 @@ public sealed class ExperimentResult
         SuccessfulJobs = successfulJobs;
         FailedJobs = failedJobs;
         Error = error;
-        Results = results;
+        Results = results.ToList();
     }
 }
