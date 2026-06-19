@@ -39,7 +39,7 @@ public class DynamicPathResolver : PathResolverBase
     }
 
     /// <inheritdoc/>
-    public override string GenerateJobName(string simulationName, string insName)
+    protected override string GenerateJobName(string simulationName, string insName)
     {
         if (nsimulation == 1)
             // 1 simulation - disambiguate ins file.

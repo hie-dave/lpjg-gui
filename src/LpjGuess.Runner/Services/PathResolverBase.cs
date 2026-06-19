@@ -72,8 +72,13 @@ public abstract class PathResolverBase : IPathResolver
         return Path.GetRelativePath(outputDirectory, absolute);
     }
 
-    /// <inheritdoc />
-    public abstract string GenerateJobName(string simulationName, string insName);
+    /// <summary>
+    /// Generate a job name for a simulation.
+    /// </summary>
+    /// <param name="simulationName">The simulation name.</param>
+    /// <param name="insName">The instruction file name.</param>
+    /// <returns>The job name.</returns>
+    protected abstract string GenerateJobName(string simulationName, string insName);
 
     /// <summary>
     /// Get the job directory for a simulation.

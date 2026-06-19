@@ -29,12 +29,4 @@ public interface IPathResolver
     /// <param name="path">The path.</param>
     /// <returns>The path relative to the output directory.</returns>
     string GetRelativePath(string path);
-
-    /// <summary>
-    /// Generate a job name for a simulation.
-    /// </summary>
-    /// <param name="simulationName">The simulation name.</param>
-    /// <param name="insName">The instruction file name.</param>
-    /// <returns>The job name.</returns>
-    string GenerateJobName(string simulationName, string insName);
 }

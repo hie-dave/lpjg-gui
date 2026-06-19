@@ -110,8 +110,7 @@ public class SimulationService : ISimulationService
 		config.Catalog.WriteSimulation(manifest);
 
 		// Return a job object encapsulating this information.
-		string insName = Path.GetFileNameWithoutExtension(insFile);
-		string jobName = pathResolver.GenerateJobName(simulation.Name, insName);
+		string jobName = Path.GetFileNameWithoutExtension(targetInsFile);
 		return new Job(jobName, targetInsFile, manifest);
 	}
 }
