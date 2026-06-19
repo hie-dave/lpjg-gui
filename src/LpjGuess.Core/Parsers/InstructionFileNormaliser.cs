@@ -121,7 +121,8 @@ public class InstructionFileNormaliser
 			"file_gridlist",
 			"file_soildata",
 			"file_co2",
-			"file_disturb"
+			"file_disturb",
+			"file_thome"
 		};
 		string[] paramsToFix = new[]
 		{
