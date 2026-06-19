@@ -126,7 +126,28 @@ public class InstructionFileNormaliser
 		string[] paramsToFix = new[]
 		{
 			"file_soildata",
-			"file_ndep"
+			"file_ndep",
+			"file_soildepth",
+			"file_soilslope",
+			"file_soilclay",
+			"file_soilsand",
+			"file_soilcoarse",
+			"file_soilpH",
+			"file_simfire",
+			"file_disturbance",
+            "file_disturbance_st",
+            "file_elevation_st",
+            "file_lu",
+            "file_grossLUC",
+            "file_lucrop",
+            "file_lupasture",
+            "file_lunatural",
+            "file_luforest",
+            "file_woodharv_frac",
+            "file_woodharv_cmass",
+            "file_Nfert_st",
+            "file_cutinterval_st",
+            "file_firstmanageyear_st"
 		};
 		// TODO: add support for CF input? Would need to add params like
 		// file_temp, file_prec, file_insol, etc.
