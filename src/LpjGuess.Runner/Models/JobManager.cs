@@ -78,6 +78,13 @@ public class JobManager
             throw new NotImplementedException("TODO: use platform-specific API to suppost >64 CPUs");
         if (settings.CpuCount > Environment.ProcessorCount)
             throw new NotImplementedException($"cpu_count must be < NCPUs ({Environment.ProcessorCount} in this case), but is: {settings.CpuCount}");
+
+		List<string> duplicates = jobs.GroupBy(j => j.Name)
+									  .Where(g => g.Count() > 1)
+									  .Select(g => g.Key)
+									  .ToList();
+		if (duplicates.Any())
+			throw new ArgumentException($"Duplicate job names: {string.Join(", ", duplicates)}. Please disambiguate .ins file and/or simulation names.");
 	}
 
 	/// <summary>
