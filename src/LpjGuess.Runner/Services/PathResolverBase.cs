@@ -25,6 +25,10 @@ public abstract class PathResolverBase : IPathResolver
     /// <param name="namingStrategy">The naming strategy.</param>
     public PathResolverBase(string outputDirectory, ISimulationNamingStrategy namingStrategy)
     {
+        // Ensure output directory is absolute.
+        if (!Path.IsPathRooted(outputDirectory))
+            outputDirectory = Path.GetFullPath(outputDirectory);
+
         this.outputDirectory = outputDirectory;
         this.namingStrategy = namingStrategy;
     }
@@ -68,13 +72,8 @@ public abstract class PathResolverBase : IPathResolver
         return Path.GetRelativePath(outputDirectory, absolute);
     }
 
-    /// <summary>
-    /// Generate a job name for a simulation.
-    /// </summary>
-    /// <param name="simulationName">The simulation name.</param>
-    /// <param name="insName">The instruction file name.</param>
-    /// <returns>The job name.</returns>
-    protected abstract string GenerateJobName(string simulationName, string insName);
+    /// <inheritdoc />
+    public abstract string GenerateJobName(string simulationName, string insName);
 
     /// <summary>
     /// Get the job directory for a simulation.

@@ -21,7 +21,7 @@ public class StaticPathResolver : PathResolverBase
     }
 
     /// <inheritdoc/>
-    protected override string GenerateJobName(string simulationName, string insName)
+    public override string GenerateJobName(string simulationName, string insName)
     {
         // Multiple ins files, multiple simulations - disambiguate both.
         return $"{insName}-{simulationName}";

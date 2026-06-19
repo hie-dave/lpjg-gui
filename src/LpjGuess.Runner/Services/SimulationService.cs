@@ -74,7 +74,7 @@ public class SimulationService : ISimulationService
 		}
 
 		// Force greedy evaluation.
-		return query.Select(f => GenerateSimulation(insFile, f));
+		return query.Select(f => CreateJob(insFile, f));
 	}
 
     /// <summary>
@@ -83,7 +83,7 @@ public class SimulationService : ISimulationService
     /// <param name="insFile">Path to the instruction file.</param>
     /// <param name="simulation">The simulation.</param>
     /// <returns>A job encapsulating the generated simulation.</returns>
-    private Job GenerateSimulation(string insFile, ISimulation simulation)
+    private Job CreateJob(string insFile, ISimulation simulation)
 	{
 		// Choose an instruction file name and path.
 		string targetInsFile = pathResolver.GenerateTargetInsFilePath(insFile, simulation);
@@ -110,6 +110,8 @@ public class SimulationService : ISimulationService
 		config.Catalog.WriteSimulation(manifest);
 
 		// Return a job object encapsulating this information.
-		return new Job(simulation.Name, targetInsFile, manifest);
+		string insName = Path.GetFileNameWithoutExtension(insFile);
+		string jobName = pathResolver.GenerateJobName(simulation.Name, insName);
+		return new Job(jobName, targetInsFile, manifest);
 	}
 }

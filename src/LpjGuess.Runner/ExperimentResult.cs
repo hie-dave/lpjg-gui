@@ -1,3 +1,5 @@
+using LpjGuess.Runner.Models;
+
 namespace LpjGuess.Runner;
 
 /// <summary>
@@ -26,9 +28,9 @@ public sealed class ExperimentResult
     public string? Error { get; private init; }
 
     /// <summary>
-    /// Dictionary mapping job names to their durations.
+    /// Collection of job results.
     /// </summary>
-    public Dictionary<string, TimeSpan> JobDurations { get; private init; }
+    public IEnumerable<JobResult> Results { get; private init; }
 
     /// <summary>
     /// Create a new <see cref="ExperimentResult"/> instance.
@@ -36,16 +38,16 @@ public sealed class ExperimentResult
     /// <param name="totalJobs">Total number of jobs submitted.</param>
     /// <param name="successfulJobs">Number of jobs that completed successfully.</param>
     /// <param name="failedJobs">Number of jobs that failed.</param>
-    /// <param name="jobDurations">Dictionary mapping job names to their durations.</param>
+    /// <param name="results">Collection of job results.</param>
     /// <param name="error">Error message, if any.</param>
     public ExperimentResult(int totalJobs, int successfulJobs, int failedJobs,
-                            Dictionary<string, TimeSpan> jobDurations,
+                            IEnumerable<JobResult> results,
                             string? error)
     {
         TotalJobs = totalJobs;
         SuccessfulJobs = successfulJobs;
         FailedJobs = failedJobs;
         Error = error;
-        JobDurations = jobDurations;
+        Results = results;
     }
 }

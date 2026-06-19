@@ -1,3 +1,4 @@
+using System.Globalization;
 using LpjGuess.Core.Parsers;
 
 namespace LpjGuess.Core.Models.Factorial.Factors;
@@ -30,6 +31,27 @@ public class BlockParameter : TopLevelParameter
         BlockType = blockType;
         BlockName = blockName;
     }
+
+    /// <summary>
+    /// Create a new <see cref="BlockParameter"/> instance with an integer
+    /// value.
+    /// </summary>
+    /// <param name="blockType">The type of the block to which the parameter belongs.</param>
+    /// <param name="blockName">The name of the block to which the parameter belongs.</param>
+    /// <param name="name">The name of the parameter.</param>
+    /// <param name="value">The integer value to be applied to the parameter.</param>
+    public BlockParameter(string blockType, string blockName, string name, int value)
+        : this(blockType, blockName, name, value.ToString(CultureInfo.InvariantCulture)) { }
+
+    /// <summary>
+    /// Create a new <see cref="BlockParameter"/> instance with a double value.
+    /// </summary>
+    /// <param name="blockType">The type of the block to which the parameter belongs.</param>
+    /// <param name="blockName">The name of the block to which the parameter belongs.</param>
+    /// <param name="name">The name of the parameter.</param>
+    /// <param name="value">The double value to be applied to the parameter.</param>
+    public BlockParameter(string blockType, string blockName, string name, double value)
+        : this(blockType, blockName, name, value.ToString(CultureInfo.InvariantCulture)) { }
 
     /// <summary>
     /// Create a new <see cref="BlockParameter"/> instance for a PFT parameter.
