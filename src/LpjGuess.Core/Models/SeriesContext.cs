@@ -100,4 +100,13 @@ public readonly struct SeriesContext
     {
         return HashCode.Combine(ExperimentName, SimulationName, Gridcell, Layer, Stand, Patch, Individual, Pft);
     }
+
+    /// <inheritdoc />
+    public override string ToString()
+    {        return $"{ExperimentName} - {SimulationName} - {Gridcell} - {Layer}" +
+               (Stand.HasValue ? $" - Stand {Stand.Value}" : "") +
+               (Patch.HasValue ? $" - Patch {Patch.Value}" : "") +
+               (Individual.HasValue ? $" - Individual {Individual.Value}" : "") +
+               (!string.IsNullOrEmpty(Pft) ? $" - PFT {Pft}" : "");
+    }
 }
