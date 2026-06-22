@@ -301,6 +301,7 @@ public static class OutputFileDefinitions
         AddOutput(builder, "file_dave_indiv_age", "Age", "Plant Age", "Years", ["age"], AggregationLevel.Individual, TemporalResolution.Annual);
         AddOutput(builder, "file_dave_indiv_c_d_dbh", "DBH", "Change in DBH", "m", ["d_dbh"], AggregationLevel.Individual, TemporalResolution.Annual);
         AddOutput(builder, "file_dave_indiv_mort", "Mortality", "Mortality Fractions", "0-1", ["mort_age", "mort_greff"], AggregationLevel.Individual, TemporalResolution.Annual);
+        AddOutput(builder, "file_dave_indiv_cstarv", "Mortality", "Daily Carbon Starvation", "0-1", ["target", "previous", "storage_frac", "storage_frac_actual"], AggregationLevel.Individual, TemporalResolution.Daily);
 
         // Daily individual-level outputs.
         AddOutput(builder, "file_dave_indiv_cpool", "C Pools", "Vegetation Carbon Pools", "kgC/m2", ["cmass_leaf", "cmass_root", "cmass_crown", "cmass_sap", "cmass_heart", "cmass_repr", "cmass_storage"], AggregationLevel.Individual, TemporalResolution.Daily);
