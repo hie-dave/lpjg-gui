@@ -67,6 +67,22 @@ public class FactorialBehaviourTests
     }
 
     [Fact]
+    public void FactorialGenerator_DoesNotBuildFullFactorial_WhenDisabled()
+    {
+        var a = new SimpleFactorGenerator("A", [new TopLevelParameter("a", "1"), new TopLevelParameter("a", "2")]);
+        var b = new SimpleFactorGenerator("B", [new TopLevelParameter("b", "x"), new TopLevelParameter("b", "y")]);
+
+        var generator = new FactorialGenerator(false, [a, b]);
+        ISimulation[] simulations = generator.Generate().ToArray();
+
+        Assert.Equal(4, simulations.Length);
+        Assert.Contains(simulations, s => s.Name == "a-1");
+        Assert.Contains(simulations, s => s.Name == "a-2");
+        Assert.Contains(simulations, s => s.Name == "b-x");
+        Assert.Contains(simulations, s => s.Name == "b-y");
+    }
+
+    [Fact]
     public void CompositeFactor_AppliesAllChangesAndAggregatesNames()
     {
         string content = """

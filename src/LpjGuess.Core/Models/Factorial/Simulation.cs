@@ -31,6 +31,13 @@ public class Simulation : ISimulation
     /// <summary>
     /// Create a new <see cref="Simulation"/> instance.
     /// </summary>
+    /// <param name="factor">The factor.</param>
+    public Simulation(IFactor factor)
+        : this(factor.GetName(), [factor]) { }
+
+    /// <summary>
+    /// Create a new <see cref="Simulation"/> instance.
+    /// </summary>
     /// <param name="factors">The factors.</param>
     public Simulation(IEnumerable<IFactor> factors)
         : this(factors.Select(f => f.GetName()).Aggregate((x, y) => $"{x}_{y}"), factors) { }

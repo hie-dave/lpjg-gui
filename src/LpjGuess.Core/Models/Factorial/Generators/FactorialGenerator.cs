@@ -37,7 +37,8 @@ public class FactorialGenerator : ISimulationGenerator
 
         var factors = Factors.Select(f => f.Generate());
         if (FullFactorial)
-            factors = factors.AllCombinations();
-        return factors.Select(f => new Simulation(f));
+            return factors.AllCombinations().Select(f => new Simulation(f));
+        else
+            return factors.SelectMany(f => f).Select(f => new Simulation(f));
     }
 }
