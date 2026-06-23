@@ -1,6 +1,8 @@
 using LpjGuess.Core.Services;
 using LpjGuess.Core.Extensions;
+using LpjGuess.Core.Interfaces;
 using LpjGuess.Core.Interfaces.Graphing;
+using LpjGuess.Core.Interfaces.Graphing.Style;
 using LpjGuess.Core.Models;
 using LpjGuess.Core.Models.Graphing;
 using LpjGuess.Core.Models.Graphing.Series;
@@ -17,6 +19,7 @@ using LpjGuess.Frontend.Interfaces.Events;
 using LpjGuess.Frontend.Interfaces.Presenters;
 using LpjGuess.Frontend.Interfaces.Views;
 using LpjGuess.Frontend.Utility;
+using LpjGuess.Frontend.Views.Dialogs;
 using LpjGuess.Frontend.Views;
 using Microsoft.Extensions.Logging;
 using OxyPlot;
@@ -195,22 +198,74 @@ public class GraphPresenter : PresenterBase<IGraphView, Graph>, IGraphPresenter
     /// </summary>
     private void OnAddSeries()
     {
-        // TODO: ask user which type of series to add.
-        // For now, create a model output series.
-        LineSeries series = new LineSeries(
-            string.Empty,
-            new DynamicStyleProvider<Colour>(new GridcellIdentifier(), new ColourStrategy()),
-            new ModelOutput("file_lai", "Date", ["Total"], []),
-            AxisPosition.Bottom,
-            AxisPosition.Left,
-            new FixedStyleProvider<LineType>(LineType.Solid),
-            new FixedStyleProvider<LineThickness>(LineThickness.Regular));
+        AskUserDialog.RunFor(
+            Enum.GetValues<SeriesType>(),
+            GetSeriesTypeName,
+            GetSeriesTypeDescription,
+            "Select series type",
+            "Add",
+            AddSeries);
+    }
 
-        // Add the series to the graph
-        graph.Series.Add(series);
-
-        // Update the plot model
+    /// <summary>
+    /// Add a new series of the requested type.
+    /// </summary>
+    /// <param name="type">The type of series to add.</param>
+    private void AddSeries(SeriesType type)
+    {
+        graph.Series.Add(CreateSeries(type));
         RefreshData();
+    }
+
+    /// <summary>
+    /// Create a series with the default data source and styling.
+    /// </summary>
+    /// <param name="type">The type of series to create.</param>
+    /// <returns>The newly-created series.</returns>
+    internal static ISeries CreateSeries(SeriesType type)
+    {
+        IStyleProvider<Colour> colourProvider =
+            new DynamicStyleProvider<Colour>(new GridcellIdentifier(), new ColourStrategy());
+        IDataSource dataSource = new ModelOutput("file_lai", "Date", ["Total"], []);
+
+        return type switch
+        {
+            SeriesType.Line => new LineSeries(
+                string.Empty,
+                colourProvider,
+                dataSource,
+                AxisPosition.Bottom,
+                AxisPosition.Left,
+                new FixedStyleProvider<LineType>(LineType.Solid),
+                new FixedStyleProvider<LineThickness>(LineThickness.Regular)),
+            SeriesType.Points => new ScatterSeries(
+                string.Empty,
+                colourProvider,
+                dataSource,
+                AxisPosition.Bottom,
+                AxisPosition.Left),
+            _ => throw new ArgumentOutOfRangeException(nameof(type), type, "Unknown series type")
+        };
+    }
+
+    private static string GetSeriesTypeName(SeriesType type)
+    {
+        return type switch
+        {
+            SeriesType.Line => "Line",
+            SeriesType.Points => "Points",
+            _ => type.ToString()
+        };
+    }
+
+    private static string GetSeriesTypeDescription(SeriesType type)
+    {
+        return type switch
+        {
+            SeriesType.Line => "Connect data points with lines.",
+            SeriesType.Points => "Render data values as unconnected points.",
+            _ => string.Empty
+        };
     }
 
     /// <summary>

@@ -15,7 +15,7 @@ namespace LpjGuess.Frontend.Presenters;
 /// <summary>
 /// Presenter for managing series editing.
 /// </summary>
-[GenericPresenter(typeof(LineSeries))] // todo: automatically discover all implementations?
+[GenericPresenter(typeof(LineSeries), typeof(ScatterSeries))] // todo: automatically discover all implementations?
 [RegisterPresenter(typeof(ISeries), typeof(ISeriesPresenter))]
 public class SeriesPresenter<T> : PresenterBase<ISeriesView<T>, T>, ISeriesPresenter<T> where T : ISeries
 {

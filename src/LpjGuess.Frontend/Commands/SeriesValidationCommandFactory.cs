@@ -19,7 +19,7 @@ public class SeriesValidationCommandFactory
         return series switch
         {
             LineSeries lineSeries => new LineSeriesValidationCommand(lineSeries),
-            // Add cases for other series types as needed
+            ScatterSeries scatterSeries => new ScatterSeriesValidationCommand(scatterSeries),
             _ => throw new ArgumentException($"Unsupported series type: {series.GetType().Name}")
         };
     }

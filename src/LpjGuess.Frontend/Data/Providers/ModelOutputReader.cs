@@ -357,19 +357,13 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
         var xgroups = xlayer.Data.GroupBy(d => GetContext(simulation, xlayer, d, pftMappings)).ToList();
         var ygroups = ylayer.Data.GroupBy(d => GetContext(simulation, ylayer, d, pftMappings)).ToList();
 
-        IEnumerable<SeriesContext> contexts = xgroups.Select(g => g.Key).ToList();
+        IEnumerable<SeriesContext> contexts = ygroups.Select(g => g.Key).ToList();
 
         // Now we can zip the groups together.
         foreach (IGrouping<SeriesContext, DataPoint> xgroup in xgroups)
         {
-            SeriesContext context = xgroup.Key;
-
-            // Ignore this series if it is filtered.
-            if (source.Filters.Any(f => f.IsFiltered(context)))
-                continue;
-
             IGrouping<SeriesContext, DataPoint>? ygroup = ygroups
-                .FirstOrDefault(g => g.Key.Equals(context));
+                .FirstOrDefault(g => AreSameSeries(xgroup.Key, g.Key));
 
             if (ygroup == null)
             {
@@ -378,6 +372,14 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
                 // are coming from the same output file.
                 continue;
             }
+
+            // The output series represents the Y layer. This is also the
+            // context which should be used for filtering, styling, and naming.
+            SeriesContext context = ygroup.Key;
+
+            // Ignore this series if it is filtered.
+            if (source.Filters.Any(f => f.IsFiltered(context)))
+                continue;
 
             string name = GenerateSeriesName(source, context, contexts, ylayer);
 
@@ -389,6 +391,25 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
                 predicates: (x, y) => x.Timestamp == y.Timestamp).ToList();
             yield return new SeriesData(name, context, data);
         }
+    }
+
+    /// <summary>
+    /// Determine whether two layer contexts describe the same series.
+    /// </summary>
+    /// <remarks>
+    /// X and Y columns from the same output file have different layer names,
+    /// but all other context dimensions must match for their points to be
+    /// plotted together.
+    /// </remarks>
+    internal static bool AreSameSeries(SeriesContext x, SeriesContext y)
+    {
+        return x.ExperimentName == y.ExperimentName &&
+               x.SimulationName == y.SimulationName &&
+               x.Gridcell.Equals(y.Gridcell) &&
+               x.Stand == y.Stand &&
+               x.Patch == y.Patch &&
+               x.Individual == y.Individual &&
+               x.Pft == y.Pft;
     }
 
     /// <summary>
@@ -473,7 +494,7 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
             if (includeIndiv)
                 // Pft should never be null in indiv-level outputs. This will
                 // get better once we do the coordinate/context refactor.
-                contextSpecifiers.Add(context.Pft!);
+                contextSpecifiers.Add($"indiv {context.Individual!} ({context.Pft!})");
             name = $"{name} ({string.Join(", ", contextSpecifiers)})";
         }
 

@@ -18,6 +18,8 @@ using OxySeries = OxyPlot.Series.Series;
 
 using LineSeries = LpjGuess.Core.Models.Graphing.Series.LineSeries;
 using OxyLineSeries = OxyPlot.Series.LineSeries;
+using ScatterSeries = LpjGuess.Core.Models.Graphing.Series.ScatterSeries;
+using OxyScatterSeries = OxyPlot.Series.ScatterSeries;
 
 using AxisPosition = LpjGuess.Core.Models.Graphing.AxisPosition;
 using OxyAxisPosition = OxyPlot.Axes.AxisPosition;
@@ -298,10 +300,28 @@ public class OxyPlotConverter
         // Create the appropriate series type
         if (series is LineSeries line)
             return CreateLineSeries(line, data, context);
-        // else if (series is ScatterSeries scatterSeries)
-        //     scatterSeries2.MarkerFill = ColorUtility.HexToOxyColor(series.Colour);
+        else if (series is ScatterSeries scatter)
+            return CreateScatterSeries(scatter, data, context);
         else
             throw new NotImplementedException($"Unsupported series type: {series.GetType().Name}");
+    }
+
+    private OxyScatterSeries CreateScatterSeries(
+        ScatterSeries series,
+        SeriesData data,
+        StyleContext context)
+    {
+        OxyScatterSeries scatterSeries = new();
+        scatterSeries.Title = string.IsNullOrWhiteSpace(series.Title)
+            ? data.Name
+            : series.Title;
+        scatterSeries.MarkerFill = context.GetStyle(series.ColourProvider, data).ToOxyColor();
+        scatterSeries.MarkerType = MarkerType.Circle;
+
+        foreach (DataPoint point in data.Data)
+            scatterSeries.Points.Add(new ScatterPoint(point.X, point.Y));
+
+        return scatterSeries;
     }
 
     private OxyLineSeries CreateLineSeries(
