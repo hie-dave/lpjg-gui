@@ -16,14 +16,14 @@ public class ResultCatalogTests
         var manifest = new SimulationManifest(
             Key: "sim-1",
             Name: "name",
-            Path: "/non/existent/path",
             BaseIns: "base",
             InsFile: "input.ins",
             Pfts: [],
             Factors: [],
             GeneratedAtUtc: DateTime.UtcNow);
 
-        var ex = Assert.Throws<AggregateException>(() => catalog.WriteSimulation(manifest));
+        var ex = Assert.Throws<AggregateException>(() =>
+            catalog.WriteSimulation("/non/existent/path", manifest));
         Assert.IsType<DirectoryNotFoundException>(ex.InnerException);
     }
 
@@ -43,19 +43,17 @@ public class ResultCatalogTests
         var manifest = new SimulationManifest(
             Key: "sim-abc",
             Name: "Name A",
-            Path: simDir.AbsolutePath,
-            BaseIns: "ins1",
-            InsFile: Path.Combine(simDir.AbsolutePath, "input.ins"),
+            BaseIns: Path.Combine(temp.AbsolutePath, "ins1"),
+            InsFile: "input.ins",
             Pfts: ["oak"],
             Factors: factors,
             GeneratedAtUtc: new DateTime(2024, 5, 1, 13, 15, 0, DateTimeKind.Utc));
 
-        catalog.WriteSimulation(manifest);
+        catalog.WriteSimulation(simDir.AbsolutePath, manifest);
         var loaded = catalog.ReadManifest(simDir.AbsolutePath);
 
         Assert.Equal(manifest.Key, loaded.Key);
         Assert.Equal(manifest.Name, loaded.Name);
-        Assert.Equal(manifest.Path, loaded.Path);
         Assert.Equal(manifest.BaseIns, loaded.BaseIns);
         Assert.Equal(manifest.InsFile, loaded.InsFile);
         Assert.True(manifest.Pfts.SequenceEqual(loaded.Pfts));
@@ -63,6 +61,54 @@ public class ResultCatalogTests
         Assert.IsType<TopLevelParameter>(loaded.Factors[0]);
         Assert.IsType<BlockParameter>(loaded.Factors[1]);
         Assert.Equal(manifest.GeneratedAtUtc, loaded.GeneratedAtUtc);
+    }
+
+    [Fact]
+    public void WriteSimulation_Writes_Portable_Manifest_Paths()
+    {
+        using TempDirectory temp = TempDirectory.Create();
+        using TempDirectory simDir = TempDirectory.Relative(temp, "ins1", "sim-abc");
+        string baseIns = Path.Combine(temp.AbsolutePath, "base.ins");
+        var catalog = new ResultCatalog();
+        var manifest = new SimulationManifest(
+            Key: "sim-abc",
+            Name: "Name A",
+            BaseIns: baseIns,
+            InsFile: "generated.ins",
+            Pfts: [],
+            Factors: [],
+            GeneratedAtUtc: new DateTime(2024, 5, 1, 13, 15, 0, DateTimeKind.Utc));
+
+        catalog.WriteSimulation(simDir.AbsolutePath, manifest);
+
+        string content = File.ReadAllText(
+            Path.Combine(simDir.AbsolutePath, "manifest.toml"));
+        Assert.Contains($"base_ins = \"{baseIns}\"", content);
+        Assert.Contains("ins_file = \"generated.ins\"", content);
+        Assert.DoesNotContain("path =", content);
+        Assert.DoesNotContain(simDir.AbsolutePath, content);
+    }
+
+    [Fact]
+    public void ReadManifest_Accepts_Legacy_Path_Key()
+    {
+        using TempDirectory simDir = TempDirectory.Create();
+        string content = """
+            key = "sim-abc"
+            name = "Name A"
+            path = "/old/non-portable/location"
+            base_ins = "/source/base.ins"
+            ins_file = "generated.ins"
+            generated_at_utc = 2024-05-01T13:15:00Z
+            pfts = []
+            factors = []
+            """;
+        File.WriteAllText(Path.Combine(simDir.AbsolutePath, "manifest.toml"), content);
+
+        SimulationManifest loaded = new ResultCatalog().ReadManifest(simDir.AbsolutePath);
+
+        Assert.Equal("sim-abc", loaded.Key);
+        Assert.Equal("generated.ins", loaded.InsFile);
     }
 
     [Fact]
@@ -79,9 +125,8 @@ public class ResultCatalogTests
         var m1 = new SimulationManifest(
             Key: "sim-1",
             Name: "Name1",
-            Path: sim1Dir.AbsolutePath,
-            BaseIns: "insA",
-            InsFile: Path.Combine(sim1Dir.AbsolutePath, "input.ins"),
+            BaseIns: Path.Combine(temp.AbsolutePath, "insA"),
+            InsFile: "input.ins",
             Pfts: ["pine"],
             Factors: [new TopLevelParameter("param", "1")],
             GeneratedAtUtc: DateTime.UtcNow);
@@ -89,18 +134,20 @@ public class ResultCatalogTests
         var m2 = new SimulationManifest(
             Key: "sim-2",
             Name: "Name2",
-            Path: sim2Dir.AbsolutePath,
-            BaseIns: "insB",
-            InsFile: Path.Combine(sim2Dir.AbsolutePath, "input.ins"),
+            BaseIns: Path.Combine(temp.AbsolutePath, "insB"),
+            InsFile: "input.ins",
             Pfts: ["oak"],
             Factors: [new TopLevelParameter("param", "2")],
             GeneratedAtUtc: DateTime.UtcNow);
 
         // Ensure manifests are written (and directories exist)
-        catalog.WriteSimulation(m1);
-        catalog.WriteSimulation(m2);
+        catalog.WriteSimulation(sim1Dir.AbsolutePath, m1);
+        catalog.WriteSimulation(sim2Dir.AbsolutePath, m2);
 
-        SimulationIndex index = new SimulationIndex([m1.Path, m2.Path]);
+        SimulationIndex index = new SimulationIndex([
+            "insA/sim-1",
+            "insB/sim-2"
+        ]);
         catalog.WriteIndex(resolver, index);
 
         SimulationIndex loaded = catalog.ReadIndex(resolver);

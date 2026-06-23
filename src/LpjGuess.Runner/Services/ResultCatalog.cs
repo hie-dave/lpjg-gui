@@ -38,22 +38,26 @@ public class ResultCatalog : IResultCatalog
     }
 
     /// <inheritdoc/>
-    public void WriteSimulation(SimulationManifest manifest)
+    public void WriteSimulation(string simulationDirectory, SimulationManifest manifest)
     {
-        WriteSimulationAsync(manifest).Wait();
+        WriteSimulationAsync(simulationDirectory, manifest).Wait();
     }
 
     /// <summary>
     /// Writes a simulation manifest to disk asynchronously.
     /// </summary>
+    /// <param name="simulationDirectory">Directory in which to write the
+    /// manifest.</param>
     /// <param name="manifest">The manifest to write.</param>
     /// <exception cref="DirectoryNotFoundException">Thrown if the simulation directory does not exist.</exception>
-    public async Task WriteSimulationAsync(SimulationManifest manifest)
+    public async Task WriteSimulationAsync(
+        string simulationDirectory,
+        SimulationManifest manifest)
     {
-        if (!Directory.Exists(manifest.Path))
-            throw new DirectoryNotFoundException(manifest.Path);
+        if (!Directory.Exists(simulationDirectory))
+            throw new DirectoryNotFoundException(simulationDirectory);
 
-        string manifestPath = Path.Combine(manifest.Path, manifestFileName);
+        string manifestPath = Path.Combine(simulationDirectory, manifestFileName);
         TomlModelOptions opts = GetSerialisationOptions();
         await File.WriteAllTextAsync(manifestPath, Toml.FromModel(manifest, opts));
     }
@@ -86,7 +90,7 @@ public class ResultCatalog : IResultCatalog
             throw new FileNotFoundException(manifestPath);
 
         string content = await File.ReadAllTextAsync(manifestPath);
-        TomlModelOptions opts = GetSerialisationOptions();
+        TomlModelOptions opts = GetDeserialisationOptions();
         return Toml.ToModel<SimulationManifestDto>(content, manifestPath, opts)
                    .ToSimulationManifest();
     }
@@ -104,7 +108,7 @@ public class ResultCatalog : IResultCatalog
             throw new FileNotFoundException(indexPath);
 
         string content = await File.ReadAllTextAsync(indexPath);
-        TomlModelOptions opts = GetSerialisationOptions();
+        TomlModelOptions opts = GetDeserialisationOptions();
         return Toml.ToModel<SimulationIndexDto>(content, indexPath, opts)
                    .ToSimulationIndex();
     }
@@ -116,5 +120,18 @@ public class ResultCatalog : IResultCatalog
     private static TomlModelOptions GetSerialisationOptions()
     {
         return new TomlModelOptions();
+    }
+
+    /// <summary>
+    /// Gets options for reading persisted metadata. Unknown properties are
+    /// ignored so manifests remain readable when fields are removed from the
+    /// schema.
+    /// </summary>
+    private static TomlModelOptions GetDeserialisationOptions()
+    {
+        return new TomlModelOptions
+        {
+            IgnoreMissingProperties = true
+        };
     }
 }

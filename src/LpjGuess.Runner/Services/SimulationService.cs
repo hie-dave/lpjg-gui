@@ -48,7 +48,10 @@ public class SimulationService : ISimulationService
 
 		// Convert simulation paths to relative paths.
 		List<string> paths = jobs
-			.Select(j => pathResolver.GetRelativePath(j.Manifest.Path))
+			.Select(j => pathResolver.GetRelativePath(
+				Path.GetDirectoryName(j.InsFile)
+					?? throw new InvalidOperationException(
+						$"Generated instruction file has no directory: {j.InsFile}")))
 			.ToList();
 
 		SimulationIndex index = new SimulationIndex(paths);
@@ -101,13 +104,12 @@ public class SimulationService : ISimulationService
 		SimulationManifest manifest = new SimulationManifest(
 			config.NamingStrategy.GenerateName(simulation),
 			simulation.Name,
-			directory,
-			insFile,
-			targetInsFile,
+			Path.GetFullPath(insFile),
+			Path.GetRelativePath(directory, targetInsFile),
 			config.Pfts,
 			simulation.Changes.ToList(),
-			DateTime.Now);
-		config.Catalog.WriteSimulation(manifest);
+			DateTime.UtcNow);
+		config.Catalog.WriteSimulation(directory, manifest);
 
 		// Return a job object encapsulating this information.
 		string jobName = Path.GetFileNameWithoutExtension(targetInsFile);

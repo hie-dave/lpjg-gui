@@ -16,11 +16,6 @@ public class SimulationManifestDto
     public string Name { get; set; }
 
     /// <summary>
-    /// The path to the simulation directory.
-    /// </summary>
-    public string Path { get; set; }
-
-    /// <summary>
     /// The path to the base instruction file.
     /// </summary>
     public string BaseIns { get; set; }
@@ -52,7 +47,6 @@ public class SimulationManifestDto
     {
         Key = string.Empty;
         Name = string.Empty;
-        Path = string.Empty;
         BaseIns = string.Empty;
         InsFile = string.Empty;
         Pfts = [];
@@ -71,7 +65,6 @@ public class SimulationManifestDto
         {
             Key = manifest.Key,
             Name = manifest.Name,
-            Path = manifest.Path,
             BaseIns = manifest.BaseIns,
             InsFile = manifest.InsFile,
             Pfts = manifest.Pfts.ToList(),
@@ -89,7 +82,6 @@ public class SimulationManifestDto
         return new SimulationManifest(
             Key,
             Name,
-            Path,
             BaseIns,
             InsFile,
             Pfts,

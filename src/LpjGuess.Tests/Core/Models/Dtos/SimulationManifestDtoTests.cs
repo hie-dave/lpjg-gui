@@ -22,9 +22,8 @@ public class SimulationManifestDtoTests
         var manifest = new SimulationManifest(
             Key: "sim-abc123",
             Name: "my-sim",
-            Path: Path.Combine(temp.AbsolutePath, "out", "ins1", "sim-abc123"),
-            BaseIns: "ins1",
-            InsFile: Path.Combine(temp.AbsolutePath, "out", "ins1", "sim-abc123", "input.ins"),
+            BaseIns: Path.Combine(temp.AbsolutePath, "ins1"),
+            InsFile: "input.ins",
             Pfts: Pfts,
             Factors: Factors,
             GeneratedAtUtc: new DateTime(2024, 1, 2, 3, 4, 5, DateTimeKind.Utc)
@@ -35,7 +34,6 @@ public class SimulationManifestDtoTests
 
         Assert.Equal(manifest.Key, roundTrip.Key);
         Assert.Equal(manifest.Name, roundTrip.Name);
-        Assert.Equal(manifest.Path, roundTrip.Path);
         Assert.Equal(manifest.BaseIns, roundTrip.BaseIns);
         Assert.Equal(manifest.InsFile, roundTrip.InsFile);
         Assert.Equal(manifest.GeneratedAtUtc, roundTrip.GeneratedAtUtc);
@@ -48,9 +46,8 @@ public class SimulationManifestDtoTests
         var manifest = new SimulationManifest(
             Key: "sim-xyz789",
             Name: "another-sim",
-            Path: Path.Combine(temp.AbsolutePath, "out", "ins2", "sim-xyz789"),
-            BaseIns: "ins2",
-            InsFile: Path.Combine(temp.AbsolutePath, "out", "ins2", "sim-xyz789", "input.ins"),
+            BaseIns: Path.Combine(temp.AbsolutePath, "ins2"),
+            InsFile: "input.ins",
             Pfts: Pfts,
             Factors: Factors,
             GeneratedAtUtc: DateTime.UtcNow

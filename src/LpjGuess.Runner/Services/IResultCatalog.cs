@@ -17,10 +17,12 @@ public interface IResultCatalog
     void WriteIndex(IPathResolver pathResolver, SimulationIndex index);
 
     /// <summary>
-    /// Record a generated simulation by writing a per-simulation manifest and updating the run index.
+    /// Record a generated simulation by writing a per-simulation manifest.
     /// </summary>
+    /// <param name="simulationDirectory">Directory in which to write the
+    /// manifest.</param>
     /// <param name="manifest">The simulation manifest to write.</param>
-    void WriteSimulation(SimulationManifest manifest);
+    void WriteSimulation(string simulationDirectory, SimulationManifest manifest);
 
     /// <summary>
     /// Read a per-simulation manifest from a simulation directory.
