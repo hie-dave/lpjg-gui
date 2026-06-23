@@ -1,5 +1,6 @@
 using LpjGuess.Core.Interfaces.Factorial;
 using LpjGuess.Core.Models.Factorial.Factors;
+using LpjGuess.Core.Models.Factorial;
 using LpjGuess.Core.Models.Factorial.Generators.Factors;
 using LpjGuess.Frontend.Attributes;
 using LpjGuess.Frontend.Commands;
@@ -33,6 +34,7 @@ public class SimpleFactorGeneratorPresenter : PresenterBase<ISimpleFactorGenerat
     /// The presenters responsible for managing the factor levels.
     /// </summary>
     private List<IFactorPresenter> factorPresenters;
+    private IReadOnlyList<ParameterTarget> targetSuggestions;
 
     /// <inheritdoc />
     public string Name => model.Name;
@@ -61,12 +63,21 @@ public class SimpleFactorGeneratorPresenter : PresenterBase<ISimpleFactorGenerat
     {
         this.presenterFactory = presenterFactory;
         factorPresenters = new List<IFactorPresenter>();
+        targetSuggestions = [];
         OnRenamed = new Event<string>();
         OnChanged = new Event();
         view.OnChanged.ConnectTo(OnModelChanged);
         view.OnAddLevel.ConnectTo(OnAddLevel);
         view.OnRemoveLevel.ConnectTo(OnRemoveLevel);
         RefreshView();
+    }
+
+    /// <inheritdoc />
+    public void SetTargetSuggestions(IEnumerable<ParameterTarget> targets)
+    {
+        targetSuggestions = targets.ToList();
+        foreach (IFactorPresenter presenter in factorPresenters)
+            presenter.SetTargetSuggestions(targetSuggestions);
     }
 
     /// <inheritdoc />
@@ -87,7 +98,13 @@ public class SimpleFactorGeneratorPresenter : PresenterBase<ISimpleFactorGenerat
     private void RefreshView()
     {
         List<IFactorPresenter> presenters = model.Levels.Select(CreateFactorPresenter).ToList();
-        view.Populate(model.Name, presenters.Select(p => new NamedView(p.GetView(), p.Model.GetName())));
+        presenters.ForEach(presenter => presenter.SetTargetSuggestions(targetSuggestions));
+        view.Populate(model.Name, presenters.Select((presenter, index) =>
+            new NamedView(
+                presenter.GetView(),
+                string.IsNullOrWhiteSpace(presenter.Model.GetName())
+                    ? $"Scenario {index + 1}"
+                    : presenter.Model.GetName())));
         presenters.ForEach(p => p.OnRenamed.ConnectTo(n => OnChildNameChanged(n, p)));
         presenters.ForEach(p => p.OnChanged.ConnectTo(OnChanged));
 
@@ -126,23 +143,10 @@ public class SimpleFactorGeneratorPresenter : PresenterBase<ISimpleFactorGenerat
     /// </summary>
     private void OnAddLevel()
     {
-        // Ask the user which kind of factor they want to add.
-        AskUserDialog.RunFor(
-            Enum.GetValues<FactorType>(),
-            GetFactorTypeName,
-            GetFactorTypeDescription,
-            "Select a Factor Type",
-            "Add",
-            OnAddLevel);
-    }
-
-    /// <summary>
-    /// Handle the user adding a new level.
-    /// </summary>
-    /// <param name="type">The type of factor to add.</param>
-    private void OnAddLevel(FactorType type)
-    {
-        IFactor factor = CreateDefaultFactor(type);
+        int number = model.Levels.Count() + 1;
+        IFactor factor = new CompositeFactor([
+            new TopLevelParameter(string.Empty, string.Empty)
+        ]) { Name = $"Scenario {number}" };
         PropertyChangeCommand<SimpleFactorGenerator, IEnumerable<IFactor>> command = new(
             model,
             model.Levels,

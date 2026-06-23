@@ -104,7 +104,8 @@ public class ModelOutputPresenter : PresenterBase<IModelOutputView, ModelOutput>
         IEnumerable<OutputFile> fileTypes = instructionFilesProvider.GetGeneratedInstructionFiles()
             .Select(reader.GetSimulation)
             .SelectMany(s => s.GetOutputFiles())
-            .DistinctBy(o => o.Metadata.FileName);
+            .DistinctBy(o => o.Metadata.FileName)
+            .OrderBy(o => o.Metadata.Description);
 
         OutputFile? outputFileType = fileTypes
             .FirstOrDefault(o => o.Metadata.FileName == DataSource.OutputFileType);

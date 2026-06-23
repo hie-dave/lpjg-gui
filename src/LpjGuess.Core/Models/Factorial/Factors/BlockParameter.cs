@@ -1,5 +1,6 @@
 using System.Globalization;
 using LpjGuess.Core.Parsers;
+using Newtonsoft.Json;
 
 namespace LpjGuess.Core.Models.Factorial.Factors;
 
@@ -25,6 +26,7 @@ public class BlockParameter : TopLevelParameter
     /// <param name="blockName">The name of the block to which the parameter belongs.</param>
     /// <param name="name">The name of the parameter.</param>
     /// <param name="value">The value to be applied to the parameter.</param>
+    [JsonConstructor]
     public BlockParameter(string blockType, string blockName, string name, string value)
         : base(name, value)
     {

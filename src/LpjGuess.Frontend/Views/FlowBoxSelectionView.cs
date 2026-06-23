@@ -98,13 +98,17 @@ public class FlowBoxSelectionView : ViewBase<Box>, ISelectionView
     /// <inheritdoc />
     public void Select(IEnumerable<string> items)
     {
-        foreach (string item in items)
+        HashSet<string> selected = items.ToHashSet();
+        foreach (string item in selected)
         {
-            if (!checkboxes.TryGetValue(item, out CheckButton? checkbox))
+            if (!checkboxes.ContainsKey(item))
                 throw new ArgumentException($"Item {item} not found.");
+        }
 
+        foreach ((string item, CheckButton checkbox) in checkboxes)
+        {
             checkbox.OnToggled -= OnCheckboxToggled;
-            checkbox.Active = true;
+            checkbox.Active = selected.Contains(item);
             checkbox.OnToggled += OnCheckboxToggled;
         }
     }

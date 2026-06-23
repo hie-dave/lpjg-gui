@@ -30,6 +30,11 @@ public abstract class ListBoxNavigatorView : ViewBase<Box>
         private readonly Label label;
 
         /// <summary>
+        /// Secondary text describing the item.
+        /// </summary>
+        private readonly Label subtitle;
+
+        /// <summary>
         /// The button which deletes the factor.
         /// </summary>
         private readonly Button deleteButton;
@@ -52,28 +57,40 @@ public abstract class ListBoxNavigatorView : ViewBase<Box>
         /// <summary>
         /// Create a new <see cref="RowWrapper"/> instance.
         /// </summary>
-        /// <param name="name">The name of the factor.</param>
-        /// <param name="view">The view to add.</param>
+        /// <param name="namedView">The named view to add.</param>
         /// <param name="id">The ID of the row.</param>
-        public RowWrapper(string name, IView view, Guid id) : base(new ListBoxRow())
+        public RowWrapper(INamedView namedView, Guid id) : base(new ListBoxRow())
         {
             OnRemove = new Event();
-            ContentView = view;
-            label = Label.New(name);
+            ContentView = namedView.View;
+            label = Label.New(namedView.Name);
             label.Halign = Align.Start;
             label.Hexpand = true;
 
+            string subtitleText = GetSubtitle(namedView);
+            subtitle = Label.New(subtitleText);
+            subtitle.Halign = Align.Start;
+            subtitle.Xalign = 0;
+            subtitle.Wrap = true;
+            subtitle.Visible = !string.IsNullOrEmpty(subtitleText);
+            subtitle.AddCssClass(StyleClasses.Subtitle);
+
             deleteButton = Button.NewFromIconName(Icons.Delete);
             deleteButton.AddCssClass(StyleClasses.DestructiveAction);
-            deleteButton.Name = name;
+            deleteButton.Name = namedView.Name;
             deleteButton.OnClicked += OnDeleteFactor;
 
             Image icon = Image.NewFromIconName(Icons.GoNext);
             icon.Halign = Align.End;
             icon.Valign = Align.Center;
 
+            Box text = Box.New(Orientation.Vertical, 2);
+            text.Hexpand = true;
+            text.Append(label);
+            text.Append(subtitle);
+
             Box rowBox = Box.New(Orientation.Horizontal, spacing);
-            rowBox.Append(label);
+            rowBox.Append(text);
             rowBox.Append(deleteButton);
             rowBox.Append(icon);
 
@@ -93,6 +110,28 @@ public abstract class ListBoxNavigatorView : ViewBase<Box>
         /// </summary>
         /// <param name="name"></param>
         public void SetName(string name) => label.SetText(name);
+
+        /// <summary>
+        /// Update both the title and summary of this row.
+        /// </summary>
+        public void Update(INamedView namedView)
+        {
+            label.SetText(namedView.Name);
+            string subtitleText = GetSubtitle(namedView);
+            subtitle.SetText(subtitleText);
+            subtitle.Visible = !string.IsNullOrEmpty(subtitleText);
+        }
+
+        private static string GetSubtitle(INamedView namedView)
+        {
+            if (namedView is not IValueGeneratorView variation)
+                return string.Empty;
+
+            string target = string.IsNullOrWhiteSpace(variation.Target)
+                ? variation.Kind
+                : $"{variation.Kind} · {variation.Target}";
+            return $"{target}\n{variation.LevelCount:N0} levels · {variation.ValueSummary}";
+        }
 
         /// <inheritdoc />
         public override void Dispose()
@@ -215,6 +254,9 @@ public abstract class ListBoxNavigatorView : ViewBase<Box>
     /// <param name="views">The views to populate the view with.</param>
     public virtual void Populate(IEnumerable<INamedView> views)
     {
+        ClearChildWidgets();
+        children.Clear();
+
         // Remove the existing contents of the listbox.
         listBox.RemoveAll();
         foreach (RowWrapper row in rows)
@@ -223,7 +265,7 @@ public abstract class ListBoxNavigatorView : ViewBase<Box>
 
         // Populate the listbox with the given factor views.
         foreach (INamedView view in views)
-            AddView(view.Name, view.View);
+            AddView(view);
     }
 
     /// <summary>
@@ -238,9 +280,21 @@ public abstract class ListBoxNavigatorView : ViewBase<Box>
                 existingView.SetName(name);
     }
 
+    /// <summary>
+    /// Update the row corresponding to a named view.
+    /// </summary>
+    public void Update(INamedView view)
+    {
+        foreach (RowWrapper row in rows)
+            if (ReferenceEquals(row.ContentView, view.View))
+                row.Update(view);
+    }
+
     /// <inheritdoc />
     public override void Dispose()
     {
+        ClearChildWidgets();
+        children.Clear();
         OnAdd.Dispose();
         OnRemove.Dispose();
         DisconnectEvents();
@@ -262,6 +316,14 @@ public abstract class ListBoxNavigatorView : ViewBase<Box>
     /// <param name="widget">The widget to add.</param>
     /// <returns>A Guid associated with the widget.</returns>
     protected abstract Widget AddChild(Widget widget);
+
+    /// <summary>
+    /// Remove wrappers created by <see cref="AddChild"/> without disposing the
+    /// content views, which are owned by their presenters.
+    /// </summary>
+    protected virtual void ClearChildWidgets()
+    {
+    }
 
     /// <summary>
     /// Get the row widget corresponding to the given content widget.
@@ -295,16 +357,15 @@ public abstract class ListBoxNavigatorView : ViewBase<Box>
     /// <summary>
     /// Add a view to the listbox and stack.
     /// </summary>
-    /// <param name="name">The name of the view.</param>
     /// <param name="view">The view to add.</param>
-    private void AddView(string name, IView view)
+    private void AddView(INamedView view)
     {
-        Widget child = AddChild(view.GetWidget());
+        Widget child = AddChild(view.View.GetWidget());
         Guid id = Guid.NewGuid();
         children[id] = child;
 
-        RowWrapper row = new RowWrapper(name, view, id);
-        row.OnRemove.ConnectTo(() => OnRemove.Invoke(view));
+        RowWrapper row = new RowWrapper(view, id);
+        row.OnRemove.ConnectTo(() => OnRemove.Invoke(view.View));
         listBox.Append(row.GetWidget());
         rows.Add(row);
     }

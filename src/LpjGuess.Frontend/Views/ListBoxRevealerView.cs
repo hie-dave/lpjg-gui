@@ -6,24 +6,19 @@ namespace LpjGuess.Frontend.Views;
 
 /// <summary>
 /// A view with a listbox widget allowing navigation between a list of other
-/// widgets displayed in a collapsible GtkRevealer.
+/// widgets displayed in a collapsible, scrollable editor pane.
 /// </summary>
 public class ListBoxRevealerView : ListBoxNavigatorView
 {
     /// <summary>
-    /// The revealer widget.
-    /// </summary>
-    private readonly Revealer revealer;
-
-    /// <summary>
-    /// The scrolled window containing the contents of the collapsible revealer.
+    /// The scrolled window containing the selected editor.
     /// </summary>
     private readonly ScrolledWindow rhs;
 
     /// <summary>
     /// The child widgets.
     /// </summary>
-    private readonly List<Widget> children;
+    private readonly List<(Box Container, Widget Content, Button HideButton)> children;
 
     /// <summary>
     /// Create a new <see cref="ListBoxRevealerView"/> instance.
@@ -31,33 +26,27 @@ public class ListBoxRevealerView : ListBoxNavigatorView
     /// <param name="logger">The logger.</param>
     public ListBoxRevealerView(ILogger<ListBoxNavigatorView> logger) : base(logger)
     {
-        children = new List<Widget>();
+        children = [];
 
         rhs = new ScrolledWindow();
-        rhs.PropagateNaturalHeight = true;
-        rhs.PropagateNaturalWidth = true;
+        rhs.PropagateNaturalHeight = false;
+        rhs.PropagateNaturalWidth = false;
+        rhs.Hexpand = true;
+        rhs.Vexpand = true;
+        rhs.MinContentWidth = 360;
         rhs.Name = "rhs";
-
-        revealer = new Revealer();
-        revealer.TransitionType = RevealerTransitionType.SlideRight;
-        revealer.TransitionDuration = 250; // ms
-        revealer.RevealChild = false;
-        revealer.Hexpand = false;
-        revealer.SetChild(rhs);
+        rhs.Visible = false;
 
         widget.SetOrientation(Orientation.Horizontal);
         widget.Spacing = 6;
+        widget.Vexpand = true;
         widget.Append(mainPage);
-        widget.Append(revealer);
+        widget.Append(rhs);
     }
 
     /// <inheritdoc />
     public override void Dispose()
     {
-        rhs.Child = null;
-        foreach (Widget widget in children)
-            widget.Dispose();
-        children.Clear();
         base.Dispose();
     }
 
@@ -71,20 +60,34 @@ public class ListBoxRevealerView : ListBoxNavigatorView
         Box box = Box.New(Orientation.Vertical, 6);
         box.Append(hideButton);
         box.Append(widget);
-        children.Add(box);
+        children.Add((box, widget, hideButton));
         return box;
+    }
+
+    /// <inheritdoc />
+    protected override void ClearChildWidgets()
+    {
+        rhs.Visible = false;
+        rhs.Child = null;
+
+        foreach ((Box container, Widget content, Button hideButton) in children)
+        {
+            hideButton.OnClicked -= OnHideRevealer;
+            container.Remove(content);
+            container.Dispose();
+        }
+        children.Clear();
     }
 
     /// <inheritdoc />
     protected override void OnChildSelected(Widget widget)
     {
-        revealer.Child = widget;
-        if (!revealer.RevealChild)
-            revealer.RevealChild = true;
+        rhs.Child = widget;
+        rhs.Visible = true;
     }
 
     private void OnHideRevealer(Button sender, EventArgs args)
     {
-        revealer.RevealChild = false;
+        rhs.Visible = false;
     }
 }

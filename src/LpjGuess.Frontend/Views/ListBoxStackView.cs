@@ -26,6 +26,7 @@ public class ListBoxStackView : ListBoxNavigatorView
     /// The stack widget.
     /// </summary>
     private readonly Stack stack;
+    private readonly List<(Box Container, Widget Content, Button BackButton)> children;
 
     /// <summary>
     /// Create a new <see cref="ListBoxStackView"/> instance.
@@ -34,6 +35,7 @@ public class ListBoxStackView : ListBoxNavigatorView
     public ListBoxStackView(ILogger<ListBoxNavigatorView> logger) : base(logger)
     {
         stack = new Stack();
+        children = [];
         stack.Vexpand = true;
 
         // ListBox goes into the stack, stack goes into the main widget.
@@ -68,7 +70,22 @@ public class ListBoxStackView : ListBoxNavigatorView
         container.Append(widget);
 
         stack.AddChild(container);
+        children.Add((container, widget, backButton));
         return container;
+    }
+
+    /// <inheritdoc />
+    protected override void ClearChildWidgets()
+    {
+        stack.VisibleChild = mainPage;
+        foreach ((Box container, Widget content, Button backButton) in children)
+        {
+            backButton.OnClicked -= OnShowListBox;
+            container.Remove(content);
+            stack.Remove(container);
+            container.Dispose();
+        }
+        children.Clear();
     }
 
     /// <summary>

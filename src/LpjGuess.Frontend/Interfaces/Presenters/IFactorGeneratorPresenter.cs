@@ -1,4 +1,5 @@
 using LpjGuess.Core.Interfaces.Factorial;
+using LpjGuess.Core.Models.Factorial;
 using LpjGuess.Frontend.Delegates;
 
 namespace LpjGuess.Frontend.Interfaces.Presenters;
@@ -22,4 +23,9 @@ public interface IFactorGeneratorPresenter : IPresenter<IFactorGenerator>
     /// Called when the factor generator has changed.
     /// </summary>
     Event OnChanged { get; }
+
+    /// <summary>
+    /// Set optional parameter target suggestions for this editor.
+    /// </summary>
+    void SetTargetSuggestions(IEnumerable<ParameterTarget> targets);
 }

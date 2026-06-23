@@ -1,4 +1,5 @@
 using LpjGuess.Core.Models.Factorial.Generators.Factors;
+using LpjGuess.Core.Models.Factorial;
 using LpjGuess.Frontend.Attributes;
 using LpjGuess.Frontend.DependencyInjection;
 using LpjGuess.Frontend.Interfaces.Commands;
@@ -54,6 +55,12 @@ public class BlockFactorGeneratorPresenter : TopLevelFactorGeneratorPresenter
             return;
         base.RefreshView();
         view.Populate(block.BlockType, block.BlockName);
+    }
+
+    /// <inheritdoc />
+    public override void SetTargetSuggestions(IEnumerable<ParameterTarget> targets)
+    {
+        view.SetTargetSuggestions(targets);
     }
 
     /// <summary>

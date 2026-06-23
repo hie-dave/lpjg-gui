@@ -30,9 +30,9 @@ internal static class FactorHelpers
         switch (type)
         {
             case FactorType.TopLevel:
-                return new TopLevelParameter("wateruptake", "wcont");
+                return new TopLevelParameter(string.Empty, string.Empty);
             case FactorType.Block:
-                return new BlockParameter("pft", "TeBE", "sla", "30");
+                return new BlockParameter("pft", string.Empty, string.Empty, string.Empty);
             case FactorType.Composite:
                 return new CompositeFactor([]);
             case FactorType.Dummy:
@@ -52,11 +52,11 @@ internal static class FactorHelpers
         switch (type)
         {
             case FactorType.TopLevel:
-                return "Override a single top-level parameter (e.g. wateruptake)";
+                return "Change one global instruction-file parameter";
             case FactorType.Block:
-                return "Override a single block (e.g. PFT)-level parameter (e.g. sla)";
+                return "Change one parameter inside a named PFT, stand, or other block";
             case FactorType.Composite:
-                return "Change multiple parameters at once";
+                return "Group several parameter changes into one scenario";
             case FactorType.Dummy:
                 return "Make no changes";
             default:
@@ -74,11 +74,11 @@ internal static class FactorHelpers
         switch (type)
         {
             case FactorType.TopLevel:
-                return "Top-Level";
+                return "Global parameter";
             case FactorType.Block:
-                return "Block";
+                return "Block parameter";
             case FactorType.Composite:
-                return "Composite";
+                return "Multi-parameter scenario";
             case FactorType.Dummy:
                 return "Identity";
             default:

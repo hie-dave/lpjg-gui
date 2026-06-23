@@ -32,6 +32,8 @@ public class PreferencesView : IPreferencesView
 	/// The button used to display the 'go to logs tab' input.
 	/// </summary>
 	private readonly Switch goToLogsTabButton;
+	private readonly Entry previewColumnLimitEntry;
+	private readonly EntryCommitter previewColumnLimitCommitter;
 
 	/// <summary>
 	/// Preferencse page which displays runner configurations.
@@ -43,6 +45,9 @@ public class PreferencesView : IPreferencesView
 
 	/// <inheritdoc />
 	public Event<bool> GoToLogsTabChanged { get; private init; }
+
+	/// <inheritdoc />
+	public Event<int> SimulationPreviewParameterColumnLimitChanged { get; private init; }
 
 	/// <inheritdoc />
 	public Event OnClose { get; private init; }
@@ -70,13 +75,30 @@ public class PreferencesView : IPreferencesView
 	/// </summary>
 	/// <param name="darkMode">The initial value of the 'prefer dark mode' property.</param>
 	/// <param name="goToLogs">The initial value of the 'go to logs tab' property.</param>
+	/// <param name="previewParameterColumnLimit">Maximum dedicated parameter columns in experiment previews.</param>
 	/// <param name="runnerMetadata">The runners' metadata.</param>
-	public PreferencesView(bool darkMode, bool goToLogs, IReadOnlyList<IRunnerMetadata> runnerMetadata)
+	public PreferencesView(
+		bool darkMode,
+		bool goToLogs,
+		int previewParameterColumnLimit,
+		IReadOnlyList<IRunnerMetadata> runnerMetadata)
 	{
 		darkModeButton = new Switch();
 		darkModeButton.Valign = Align.Center;
 		goToLogsTabButton = new Switch();
 		goToLogsTabButton.Valign = Align.Center;
+		previewColumnLimitEntry = new Entry()
+		{
+			InputPurpose = InputPurpose.Digits,
+			MaxWidthChars = 4,
+			WidthChars = 4,
+			Halign = Align.End
+		};
+		previewColumnLimitEntry.SetText(Math.Max(0, previewParameterColumnLimit).ToString());
+		previewColumnLimitCommitter = new EntryCommitter(
+			previewColumnLimitEntry,
+			OnPreviewColumnLimitChanged,
+			ValidatePreviewColumnLimit);
 
 		ActionRow darkModeRow = new ActionRow();
 		darkModeRow.Title = "Prefer dark mode";
@@ -88,9 +110,16 @@ public class PreferencesView : IPreferencesView
 		goToLogsTabRow.Subtitle = "Iff true, the logs tab will automatically be selected when a simulation is run.";
 		goToLogsTabRow.AddSuffix(goToLogsTabButton);
 
+		ActionRow previewColumnLimitRow = new ActionRow();
+		previewColumnLimitRow.Title = "Preview parameter-column limit";
+		previewColumnLimitRow.Subtitle =
+			"Use dedicated parameter columns up to this count. Set to 0 to always group changes.";
+		previewColumnLimitRow.AddSuffix(previewColumnLimitEntry);
+
 		PreferencesGroup generalGroup = new PreferencesGroup();
 		generalGroup.Add(darkModeRow);
 		generalGroup.Add(goToLogsTabRow);
+		generalGroup.Add(previewColumnLimitRow);
 
 		PreferencesPage generalPage = new PreferencesPage();
 		generalPage.Title = "Settings";
@@ -107,6 +136,7 @@ public class PreferencesView : IPreferencesView
 
 		DarkModeChanged = new Event<bool>();
 		GoToLogsTabChanged = new Event<bool>();
+		SimulationPreviewParameterColumnLimitChanged = new Event<int>();
 		OnClose = new Event();
 		OnAddRunner = new Event();
 		OnDeleteRunner = new Event<int>();
@@ -142,6 +172,7 @@ public class PreferencesView : IPreferencesView
 	public void Dispose()
 	{
 		DisconnectEvents();
+		previewColumnLimitCommitter.Dispose();
 		OnClose.Dispose();
 		runnersPage.Dispose();
 		window.Dispose();
@@ -168,6 +199,8 @@ public class PreferencesView : IPreferencesView
 		goToLogsTabButton.OnStateSet -= OnToggleGoToLogsTab;
 		window.OnCloseRequest -= OnWindowClosed;
 		DarkModeChanged.DisconnectAll();
+		GoToLogsTabChanged.DisconnectAll();
+		SimulationPreviewParameterColumnLimitChanged.DisconnectAll();
 		OnClose.DisconnectAll();
 		DisconnectRunnerEvents();
 	}
@@ -246,5 +279,17 @@ public class PreferencesView : IPreferencesView
 			MainView.Instance.ReportError(error);
 		}
 		return false;
+	}
+
+	private void OnPreviewColumnLimitChanged(string value)
+	{
+		SimulationPreviewParameterColumnLimitChanged.Invoke(int.Parse(value));
+	}
+
+	private static string? ValidatePreviewColumnLimit(string value)
+	{
+		return int.TryParse(value, out int limit) && limit >= 0
+			? null
+			: "Column limit must be a whole number of zero or greater.";
 	}
 }

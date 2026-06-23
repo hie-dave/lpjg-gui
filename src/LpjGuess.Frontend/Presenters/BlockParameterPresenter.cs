@@ -1,4 +1,5 @@
 using LpjGuess.Core.Models.Factorial.Factors;
+using LpjGuess.Core.Models.Factorial;
 using LpjGuess.Frontend.Attributes;
 using LpjGuess.Frontend.Interfaces.Commands;
 using LpjGuess.Frontend.Interfaces.Events;
@@ -49,6 +50,12 @@ public class BlockParameterPresenter : TopLevelParameterPresenter, IFactorPresen
         if (block == null || blockView == null)
             return;
         blockView.Populate(block.Name, block.BlockType, block.BlockName, block.Value);
+    }
+
+    /// <inheritdoc />
+    public override void SetTargetSuggestions(IEnumerable<ParameterTarget> targets)
+    {
+        blockView.SetTargetSuggestions(targets);
     }
 
     /// <summary>

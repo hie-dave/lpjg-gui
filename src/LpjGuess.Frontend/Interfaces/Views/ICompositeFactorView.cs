@@ -21,10 +21,9 @@ public interface ICompositeFactorView : IView
 
     /// <summary>
     /// Event which is raised when the user wants to remove a factor. The
-    /// event parameter is the name of the factor view corresponding to the
-    /// factor to be removed.
+    /// event parameter is the factor view to remove.
     /// </summary>
-    Event<string> OnRemoveFactor { get; }
+    Event<IView> OnRemoveFactor { get; }
 
     /// <summary>
     /// Populate the view.

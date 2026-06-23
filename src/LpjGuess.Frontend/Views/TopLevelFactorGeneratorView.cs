@@ -8,6 +8,7 @@ using LpjGuess.Frontend.Extensions;
 using LpjGuess.Frontend.Interfaces;
 using LpjGuess.Frontend.Interfaces.Events;
 using LpjGuess.Frontend.Interfaces.Views;
+using LpjGuess.Frontend.Utility.Gtk;
 
 namespace LpjGuess.Frontend.Views;
 
@@ -20,17 +21,12 @@ public class TopLevelFactorGeneratorView : ViewBase<Box>, ITopLevelFactorGenerat
     /// <summary>
     /// The entry containing the factor name.
     /// </summary>
-    private readonly Entry nameEntry;
-
-    /// <summary>
-    /// The label for the value generator.
-    /// </summary>
-    private readonly Label valuesLabel;
+    protected readonly SuggestionEntryView nameEntry;
 
     /// <summary>
     /// The dropdown for selecting the value generator type.
     /// </summary>
-    private readonly EnumDropDownView<ValueGeneratorType> valuesTypeView;
+    protected readonly EnumDropDownView<ValueGeneratorType> valuesTypeView;
 
     /// <summary>
     /// The container for the value generator view.
@@ -41,16 +37,12 @@ public class TopLevelFactorGeneratorView : ViewBase<Box>, ITopLevelFactorGenerat
     /// The grid containing the scalar input controls.
     /// </summary>
     private readonly Grid grid;
+    private readonly List<Label> controlLabels;
 
     /// <summary>
     /// The view for the value generator.
     /// </summary>
     private IView? valuesView;
-
-    /// <summary>
-    /// Number of rows in the grid.
-    /// </summary>
-    private int nrow;
 
     /// <inheritdoc />
     public Event<IModelChange<TopLevelFactorGenerator>> OnChanged { get; private init; }
@@ -63,26 +55,22 @@ public class TopLevelFactorGeneratorView : ViewBase<Box>, ITopLevelFactorGenerat
     /// </summary>
     public TopLevelFactorGeneratorView() : base(Box.New(Orientation.Vertical, 6))
     {
-        nrow = 0;
         OnChanged = new Event<IModelChange<TopLevelFactorGenerator>>();
         OnValuesTypeChanged = new Event<ValueGeneratorType>();
+        controlLabels = [];
 
         // Create an input widget for the factor name.
-        nameEntry = new Entry();
-        nameEntry.Hexpand = true;
+        nameEntry = new SuggestionEntryView("e.g. npatch", showHint: true);
+        nameEntry.OnCommitted.ConnectTo(OnNameChanged);
 
         valuesTypeView = new EnumDropDownView<ValueGeneratorType>();
         valuesTypeView.OnSelectionChanged.ConnectTo(OnValuesTypeChanged);
 
         grid = new Grid();
         grid.RowSpacing = grid.ColumnSpacing = 6;
-
-        valuesLabel = Label.New("Values:");
-        valuesLabel.Halign = Align.Start;
-        grid.Attach(valuesLabel, 0, nrow, 1, 1);
-        grid.Attach(valuesTypeView.GetWidget(), 1, nrow, 1, 1);
-
-        AddControl("Parameter Name", nameEntry);
+        SetControls(
+            ("Parameter Name", nameEntry.GetWidget()),
+            ("Values", valuesTypeView.GetWidget()));
 
         valuesContainer = new Box();
         valuesView = null;
@@ -117,26 +105,38 @@ public class TopLevelFactorGeneratorView : ViewBase<Box>, ITopLevelFactorGenerat
     public override void Dispose()
     {
         DisconnectEvents();
+        nameEntry.Dispose();
         base.Dispose();
     }
 
-    /// <summary>
-    /// Add a widget to the grid containing the scalar input controls.
-    /// </summary>
-    protected void AddControl(string name, Widget widget)
+    /// <inheritdoc />
+    public virtual void SetTargetSuggestions(IEnumerable<ParameterTarget> targets)
     {
-        grid.Remove(valuesLabel);
-        grid.Remove(valuesTypeView.GetWidget());
+        nameEntry.SetSuggestions(targets
+            .Where(target => target.BlockType is null)
+            .Select(target => target.ParameterName));
+    }
 
-        Label label = Label.New($"{name}:");
-        label.Halign = Align.Start;
-        grid.Attach(label, 0, nrow, 1, 1);
-        grid.Attach(widget, 1, nrow, 1, 1);
-        nrow++;
+    /// <summary>
+    /// Set the scalar controls and their order in the grid.
+    /// </summary>
+    protected void SetControls(params (string Title, Widget Control)[] controls)
+    {
+        Widget? child;
+        while ((child = grid.GetFirstChild()) != null)
+            grid.Remove(child);
+        controlLabels.ForEach(label => label.Dispose());
+        controlLabels.Clear();
 
-        // Ensure the values label is always at the bottom of the grid.
-        grid.Attach(valuesLabel, 0, nrow, 1, 1);
-        grid.Attach(valuesTypeView.GetWidget(), 1, nrow, 1, 1);
+        for (int row = 0; row < controls.Length; row++)
+        {
+            (string title, Widget control) = controls[row];
+            Label label = Label.New($"{title}:");
+            label.Halign = Align.Start;
+            controlLabels.Add(label);
+            grid.Attach(label, 0, row, 1, 1);
+            grid.Attach(control, 1, row, 1, 1);
+        }
     }
 
     /// <summary>
@@ -144,7 +144,6 @@ public class TopLevelFactorGeneratorView : ViewBase<Box>, ITopLevelFactorGenerat
     /// </summary>
     private void ConnectEvents()
     {
-        nameEntry.OnActivate += OnNameChanged;
     }
 
     /// <summary>
@@ -152,27 +151,17 @@ public class TopLevelFactorGeneratorView : ViewBase<Box>, ITopLevelFactorGenerat
     /// </summary>
     private void DisconnectEvents()
     {
-        nameEntry.OnActivate -= OnNameChanged;
     }
 
     /// <summary>
-    /// Called when the name entry is activated.
+    /// Commit a changed parameter name.
     /// </summary>
-    /// <param name="sender">The name entry.</param>
-    /// <param name="args">The event arguments.</param>
-    private void OnNameChanged(Entry sender, EventArgs args)
+    /// <param name="value">The new parameter name.</param>
+    private void OnNameChanged(string value)
     {
-        try
-        {
-            OnChanged.Invoke(new ModelChangeEventArgs<TopLevelFactorGenerator, string>(
-                f => f.Name,
-                (f, name) => f.Name = name,
-                nameEntry.GetText()
-            ));
-        }
-        catch (Exception error)
-        {
-            MainView.Instance.ReportError(error);
-        }
+        OnChanged.Invoke(new ModelChangeEventArgs<TopLevelFactorGenerator, string>(
+            factor => factor.Name,
+            (factor, name) => factor.Name = name,
+            value));
     }
 }

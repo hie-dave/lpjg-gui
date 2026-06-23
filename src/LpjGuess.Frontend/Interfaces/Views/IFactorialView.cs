@@ -38,4 +38,9 @@ public interface IFactorialView : IView
     /// <param name="view">The view of the factor to rename.</param>
     /// <param name="name">The new name of the factor.</param>
     void RenameFactor(IView view, string name);
+
+    /// <summary>
+    /// Update the summary shown for an existing factor editor.
+    /// </summary>
+    void UpdateFactor(IValueGeneratorView factorView);
 }

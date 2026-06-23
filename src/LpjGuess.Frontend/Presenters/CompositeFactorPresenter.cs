@@ -1,10 +1,12 @@
 using LpjGuess.Core.Interfaces.Factorial;
 using LpjGuess.Core.Models.Factorial.Factors;
+using LpjGuess.Core.Models.Factorial;
 using LpjGuess.Frontend.Attributes;
 using LpjGuess.Frontend.Commands;
 using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.DependencyInjection;
 using LpjGuess.Frontend.Extensions;
+using LpjGuess.Frontend.Interfaces;
 using LpjGuess.Frontend.Interfaces.Commands;
 using LpjGuess.Frontend.Interfaces.Events;
 using LpjGuess.Frontend.Interfaces.Presenters;
@@ -31,6 +33,7 @@ public class CompositeFactorPresenter : PresenterBase<ICompositeFactorView, Comp
     /// The presenters responsible for managing the individual factors.
     /// </summary>
     private List<IFactorPresenter> factorPresenters;
+    private IReadOnlyList<ParameterTarget> targetSuggestions;
 
     /// <inheritdoc />
     IFactor IPresenter<IFactor>.Model => model;
@@ -55,6 +58,7 @@ public class CompositeFactorPresenter : PresenterBase<ICompositeFactorView, Comp
         IPresenterFactory presenterFactory) : base(view, model, registry)
     {
         factorPresenters = new List<IFactorPresenter>();
+        targetSuggestions = [];
         OnRenamed = new Event<string>();
         OnChanged = new Event();
         this.presenterFactory = presenterFactory;
@@ -62,6 +66,14 @@ public class CompositeFactorPresenter : PresenterBase<ICompositeFactorView, Comp
         view.OnAddFactor.ConnectTo(OnAddFactor);
         view.OnRemoveFactor.ConnectTo(OnRemoveFactor);
         RefreshView();
+    }
+
+    /// <inheritdoc />
+    public void SetTargetSuggestions(IEnumerable<ParameterTarget> targets)
+    {
+        targetSuggestions = targets.ToList();
+        foreach (IFactorPresenter presenter in factorPresenters)
+            presenter.SetTargetSuggestions(targetSuggestions);
     }
 
     /// <inheritdoc />
@@ -87,6 +99,7 @@ public class CompositeFactorPresenter : PresenterBase<ICompositeFactorView, Comp
     private void RefreshView()
     {
         List<IFactorPresenter> presenters = model.Factors.Select(CreateFactorPresenter).ToList();
+        presenters.ForEach(presenter => presenter.SetTargetSuggestions(targetSuggestions));
         view.Populate(model.GetName(), presenters.Select(p => new NamedView(p.GetView(), p.Model.GetName())));
         presenters.ForEach(p => p.OnRenamed.ConnectTo(_ => OnPresenterRenamed()));
         presenters.ForEach(p => p.OnChanged.ConnectTo(OnChanged));
@@ -120,14 +133,17 @@ public class CompositeFactorPresenter : PresenterBase<ICompositeFactorView, Comp
     /// <summary>
     /// Called when the user wants to remove a factor.
     /// </summary>
-    /// <param name="name">The name of the factor view corresponding to the factor to be removed.</param>
-    private void OnRemoveFactor(string name)
+    /// <param name="view">The factor view to remove.</param>
+    private void OnRemoveFactor(IView view)
     {
         PropertyChangeCommand<CompositeFactor, IEnumerable<IFactor>> command =
             new PropertyChangeCommand<CompositeFactor, IEnumerable<IFactor>>(
                 model,
                 model.Factors,
-                model.Factors.Where(f => f.GetName() != name).ToList(),
+                factorPresenters
+                    .Where(presenter => !ReferenceEquals(presenter.GetView(), view))
+                    .Select(presenter => presenter.Model)
+                    .ToList(),
                 (f, factors) => f.Factors = factors
             );
         InvokeCommand(command);
@@ -142,7 +158,7 @@ public class CompositeFactorPresenter : PresenterBase<ICompositeFactorView, Comp
             [FactorType.TopLevel, FactorType.Block],
             GetFactorTypeName,
             GetFactorTypeDescription,
-            "Select a Factor Type",
+            "What parameter should this scenario change?",
             "Add",
             OnAddFactor
         );

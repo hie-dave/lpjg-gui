@@ -1,5 +1,6 @@
 using LpjGuess.Core.Interfaces.Factorial;
 using LpjGuess.Core.Models.Factorial.Factors;
+using LpjGuess.Core.Models.Factorial;
 using LpjGuess.Frontend.Attributes;
 using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.Interfaces.Commands;
@@ -19,6 +20,12 @@ public class DummyFactorPresenter : PresenterBase<IDummyFactorView, DummyFactor>
 
     /// <inheritdoc />
     public Event OnChanged { get; }
+
+    /// <inheritdoc />
+    public void SetTargetSuggestions(IEnumerable<ParameterTarget> targets)
+    {
+        _ = targets;
+    }
 
     /// <inheritdoc />
     IFactor IPresenter<IFactor>.Model => Model;

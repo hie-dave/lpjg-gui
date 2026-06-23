@@ -1,6 +1,8 @@
 using Gtk;
+using System.Globalization;
 using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.Interfaces.Views;
+using LpjGuess.Frontend.Utility.Gtk;
 
 namespace LpjGuess.Frontend.Views;
 
@@ -23,16 +25,19 @@ public class RangeValuesView : ViewBase<Box>, IRangeValuesView
     /// The entry widget for the start value.
     /// </summary>
     private readonly Entry startEntry;
+    private readonly EntryCommitter startCommitter;
 
     /// <summary>
     /// The entry widget for the number of values.
     /// </summary>
     private readonly Entry nEntry;
+    private readonly EntryCommitter nCommitter;
 
     /// <summary>
     /// The entry widget for the step value.
     /// </summary>
     private readonly Entry stepEntry;
+    private readonly EntryCommitter stepCommitter;
 
     /// <summary>
     /// The label widget displaying the values which would be generated.
@@ -63,8 +68,19 @@ public class RangeValuesView : ViewBase<Box>, IRangeValuesView
         OnStepChanged = new Event<string>();
 
         startEntry = new Entry() { Halign = Align.Fill, Hexpand = true };
-        nEntry = new Entry() { Halign = Align.Fill, Hexpand = true };
+        nEntry = new Entry()
+        {
+            Halign = Align.Fill,
+            Hexpand = true,
+            InputPurpose = InputPurpose.Digits
+        };
         stepEntry = new Entry() { Halign = Align.Fill, Hexpand = true };
+        startCommitter = new EntryCommitter(startEntry, OnStartValueChanged);
+        nCommitter = new EntryCommitter(
+            nEntry,
+            OnNValueChanged,
+            ValidateNumberOfValues);
+        stepCommitter = new EntryCommitter(stepEntry, OnStepValueChanged);
         valuesHint = new Label();
         valuesHint.Halign = Align.Start;
         valuesHint.Ellipsize = Pango.EllipsizeMode.Middle;
@@ -86,9 +102,9 @@ public class RangeValuesView : ViewBase<Box>, IRangeValuesView
     /// <inheritdoc />
     public void Populate(string start, int n, string step, IEnumerable<string> values)
     {
-        startEntry.SetText(start);
-        nEntry.SetText(n.ToString());
-        stepEntry.SetText(step);
+        startCommitter.SetText(start);
+        nCommitter.SetText(n.ToString());
+        stepCommitter.SetText(step);
         valuesHint.SetText($"Values: {string.Join(", ", values)}");
     }
 
@@ -112,6 +128,9 @@ public class RangeValuesView : ViewBase<Box>, IRangeValuesView
         OnNChanged.Dispose();
         OnStepChanged.Dispose();
         DisconnectEvents();
+        startCommitter.Dispose();
+        nCommitter.Dispose();
+        stepCommitter.Dispose();
         base.Dispose();
     }
 
@@ -134,9 +153,6 @@ public class RangeValuesView : ViewBase<Box>, IRangeValuesView
     /// </summary>
     private void ConnectEvents()
     {
-        startEntry.OnActivate += OnStartValueChanged;
-        nEntry.OnActivate += OnNValueChanged;
-        stepEntry.OnActivate += OnStepValueChanged;
     }
 
     /// <summary>
@@ -144,60 +160,51 @@ public class RangeValuesView : ViewBase<Box>, IRangeValuesView
     /// </summary>
     private void DisconnectEvents()
     {
-        startEntry.OnActivate -= OnStartValueChanged;
-        nEntry.OnActivate -= OnNValueChanged;
-        stepEntry.OnActivate -= OnStepValueChanged;
     }
 
     /// <summary>
-    /// Called when the start value has been changed by the user.
+    /// Commit a changed start value.
     /// </summary>
-    /// <param name="sender">The entry widget.</param>
-    /// <param name="args">The event arguments.</param>
-    private void OnStartValueChanged(Entry sender, EventArgs args)
+    /// <param name="value">The new start value.</param>
+    private void OnStartValueChanged(string value)
     {
-        try
-        {
-            OnStartChanged.Invoke(sender.GetText());
-        }
-        catch (Exception error)
-        {
-            MainView.Instance.ReportError(error);
-        }
+        OnStartChanged.Invoke(value);
     }
 
     /// <summary>
-    /// Called when the number of values has been changed by the user.
+    /// Commit a changed number of values.
     /// </summary>
-    /// <param name="sender">The entry widget.</param>
-    /// <param name="args">The event arguments.</param>
-    private void OnNValueChanged(Entry sender, EventArgs args)
+    /// <param name="value">The new count.</param>
+    private void OnNValueChanged(string value)
     {
-        try
-        {
-            if (int.TryParse(sender.GetText(), out int n))
-                OnNChanged.Invoke(n);
-        }
-        catch (Exception error)
-        {
-            MainView.Instance.ReportError(error);
-        }
+        int n = int.Parse(value, NumberStyles.None, CultureInfo.InvariantCulture);
+        OnNChanged.Invoke(n);
     }
 
     /// <summary>
-    /// Called when the step value has been changed by the user.
+    /// Validate the number of values without throwing from a GTK callback.
     /// </summary>
-    /// <param name="sender">The entry widget.</param>
-    /// <param name="args">The event arguments.</param>
-    private void OnStepValueChanged(Entry sender, EventArgs args)
+    private static string? ValidateNumberOfValues(string value)
     {
-        try
+        if (!int.TryParse(
+                value,
+                NumberStyles.None,
+                CultureInfo.InvariantCulture,
+                out int n) ||
+            n <= 0)
         {
-            OnStepChanged.Invoke(sender.GetText());
+            return "Number of values must be a positive whole number.";
         }
-        catch (Exception error)
-        {
-            MainView.Instance.ReportError(error);
-        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Commit a changed step value.
+    /// </summary>
+    /// <param name="value">The new step value.</param>
+    private void OnStepValueChanged(string value)
+    {
+        OnStepChanged.Invoke(value);
     }
 }

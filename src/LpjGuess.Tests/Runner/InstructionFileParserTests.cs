@@ -43,6 +43,25 @@ public class InstructionFileParserTests
     }
 
     [Fact]
+    public void Parser_EnumeratesDiscoverableParameterTargets()
+    {
+        const string content = """
+            npatch 1
+            pft "TeBE" (
+                include 1
+                sla 27
+            )
+            """;
+        var parser = new InstructionFileParser(content, "memory.ins");
+
+        Assert.Contains("npatch", parser.GetTopLevelParameterNames());
+        Assert.Contains(("pft", "TeBE"), parser.GetBlocks());
+        Assert.Equal(
+            new[] { "include", "sla" },
+            parser.GetBlockParameterNames("pft", "TeBE"));
+    }
+
+    [Fact]
     public void Parse_C3GFile_HandlesExclamationInString()
     {
         string file = GetTestFilePath("c3g.ins");

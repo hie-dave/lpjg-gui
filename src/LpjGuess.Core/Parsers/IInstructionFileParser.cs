@@ -20,6 +20,21 @@ public interface IInstructionFileParser
     IEnumerable<string> GetBlockNames(string blockType);
 
     /// <summary>
+    /// Get all block type/name pairs defined in the file.
+    /// </summary>
+    IEnumerable<(string BlockType, string BlockName)> GetBlocks();
+
+    /// <summary>
+    /// Get parameter names defined inside a named block.
+    /// </summary>
+    IEnumerable<string> GetBlockParameterNames(string blockType, string blockName);
+
+    /// <summary>
+    /// Get top-level parameter names defined in the file.
+    /// </summary>
+    IEnumerable<string> GetTopLevelParameterNames();
+
+    /// <summary>
     /// Gets the value of a parameter within a specific block.
     /// </summary>
     /// <param name="blockType">Type of the block (e.g., "group", "pft")</param>

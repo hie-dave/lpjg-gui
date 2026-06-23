@@ -2,6 +2,8 @@ using LpjGuess.Core.Extensions;
 using LpjGuess.Core.Interfaces.Factorial;
 using LpjGuess.Core.Models;
 using LpjGuess.Core.Models.Factorial;
+using LpjGuess.Core.Models.Factorial.Generators;
+using LpjGuess.Core.Services;
 using LpjGuess.Core.Models.Graphing;
 using LpjGuess.Frontend.Attributes;
 using LpjGuess.Frontend.Commands;
@@ -266,9 +268,32 @@ public class WorkspacePresenter : PresenterBase<IWorkspaceView, Workspace>, IWor
 			string directory = Path.Combine(outputDirectory, experiment.Name);
 
 			// Get the instruction files to be used for this experiment.
-			IEnumerable<string> insFiles = model.InstructionFiles.Where(i => !experiment.DisabledInsFiles.Contains(i));
+			List<string> insFiles = model.InstructionFiles
+				.Where(i => !experiment.DisabledInsFiles.Contains(i))
+				.ToList();
 
 			// Generate parameter overrides for this experiment.
+			if (experiment.SimulationGenerator is FactorialGenerator factorial)
+			{
+				ExperimentDesignAnalysis analysis = ExperimentDesignAnalyser.Analyse(
+					factorial,
+					insFiles.Count);
+				analysis = analysis with
+				{
+					Issues = analysis.Issues
+						.Concat(ExperimentInstructionFileAnalyser.Analyse(
+							factorial,
+							insFiles,
+							experiment.Pfts))
+						.ToList()
+				};
+				if (!analysis.IsValid)
+				throw new InvalidOperationException(
+					$"Experiment '{experiment.Name}' is not ready to run: " +
+					string.Join(" ", analysis.Issues
+						.Where(issue => issue.Severity == ExperimentDesignIssueSeverity.Error)
+						.Select(issue => issue.Message)));
+			}
 			IEnumerable<ISimulation> simulations = experiment.SimulationGenerator.Generate();
 
 			// Generate jobs for this experiment.

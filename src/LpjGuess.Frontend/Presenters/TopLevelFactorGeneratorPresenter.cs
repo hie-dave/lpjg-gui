@@ -51,6 +51,12 @@ public class TopLevelFactorGeneratorPresenter :
     /// <inheritdoc />
     IFactorGenerator IPresenter<IFactorGenerator>.Model => model;
 
+    /// <inheritdoc />
+    public virtual void SetTargetSuggestions(IEnumerable<ParameterTarget> targets)
+    {
+        view.SetTargetSuggestions(targets);
+    }
+
     /// <summary>
     /// Create a new <see cref="TopLevelFactorGeneratorPresenter"/> instance.
     /// </summary>

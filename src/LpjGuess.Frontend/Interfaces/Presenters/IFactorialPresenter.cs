@@ -17,6 +17,11 @@ public interface IFactorialPresenter : IPresenter<IFactorialView, FactorialGener
     Event OnChanged { get; }
 
     /// <summary>
+    /// Set the instruction files used for parameter-target discovery.
+    /// </summary>
+    void SetInstructionFiles(IEnumerable<string> instructionFiles);
+
+    /// <summary>
     /// Populate the presenter with the given factorial generator.
     /// </summary>
     void Refresh();

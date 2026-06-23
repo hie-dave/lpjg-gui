@@ -1,5 +1,6 @@
 using LpjGuess.Core.Interfaces.Factorial;
 using LpjGuess.Core.Models.Factorial.Factors;
+using LpjGuess.Core.Models.Factorial;
 using LpjGuess.Frontend.Attributes;
 using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.Interfaces;
@@ -27,6 +28,12 @@ public class TopLevelParameterPresenter : PresenterBase<ITopLevelParameterView, 
 
     /// <inheritdoc />
     public Event OnChanged { get; private init; }
+
+    /// <inheritdoc />
+    public virtual void SetTargetSuggestions(IEnumerable<ParameterTarget> targets)
+    {
+        view.SetTargetSuggestions(targets);
+    }
 
     /// <summary>
     /// Create a new <see cref="TopLevelParameterPresenter"/> instance.

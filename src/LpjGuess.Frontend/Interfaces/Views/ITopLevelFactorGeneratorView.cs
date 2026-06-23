@@ -27,4 +27,10 @@ public interface ITopLevelFactorGeneratorView : IView
     /// <param name="valueGeneratorType">The type of value generator.</param>
     /// <param name="valueGeneratorView">The view to be used to display the values generator.</param>
     void Populate(string name, ValueGeneratorType valueGeneratorType, IView valueGeneratorView);
+
+    /// <summary>
+    /// Set optional parameter target suggestions. Arbitrary names remain
+    /// accepted.
+    /// </summary>
+    void SetTargetSuggestions(IEnumerable<ParameterTarget> targets);
 }

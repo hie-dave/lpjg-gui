@@ -27,28 +27,23 @@ public class ListBoxPopoverView : ListBoxNavigatorView
     }
 
     /// <inheritdoc/>
-    public override void Populate(IEnumerable<INamedView> views)
-    {
-        RemovePopovers();
-        base.Populate(views);
-    }
-
-    /// <inheritdoc/>
-    public override void Dispose()
-    {
-        RemovePopovers();
-        base.Dispose();
-    }
-
     /// <summary>
     /// Remove all popovers and free native resources.
     /// </summary>
     private void RemovePopovers()
     {
         foreach (Popover popover in popovers.Values)
+        {
+            popover.Child = null;
+            if (popover.Parent != null)
+                popover.Unparent();
             popover.Dispose();
+        }
         popovers.Clear();
     }
+
+    /// <inheritdoc />
+    protected override void ClearChildWidgets() => RemovePopovers();
 
     /// <inheritdoc/>
     protected override void OnChildSelected(Widget widget)

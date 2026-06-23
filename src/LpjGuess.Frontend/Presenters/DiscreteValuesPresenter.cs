@@ -120,7 +120,10 @@ public class DiscreteValuesPresenter<T> : PresenterBase<IDiscreteValuesView, Dis
             values.ToList(),
             (m, v) => m.Values = v
         );
-        InvokeCommand(command);
+        // The entry already contains the committed text. Rebuilding the list
+        // here would destroy and recreate the focused row on every edit.
+        base.InvokeCommand(command);
+        OnChanged.Invoke();
     }
 
     /// <summary>

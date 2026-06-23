@@ -1,4 +1,5 @@
 using LpjGuess.Core.Models.Factorial.Factors;
+using LpjGuess.Core.Models.Factorial;
 using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.Interfaces.Events;
 
@@ -20,4 +21,10 @@ public interface ITopLevelParameterView : IView
     /// <param name="name">The name of the parameter.</param>
     /// <param name="value">The value of the parameter.</param>
     void Populate(string name, string value);
+
+    /// <summary>
+    /// Set optional parameter target suggestions. Arbitrary names remain
+    /// accepted.
+    /// </summary>
+    void SetTargetSuggestions(IEnumerable<ParameterTarget> targets);
 }

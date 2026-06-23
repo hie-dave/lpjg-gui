@@ -104,6 +104,32 @@ public partial class InstructionFileParser : IInstructionFileParser
     }
 
     /// <inheritdoc />
+    public IEnumerable<(string BlockType, string BlockName)> GetBlocks()
+    {
+        return items
+            .OfType<Block>()
+            .Select(block => (block.Type, block.Name));
+    }
+
+    /// <inheritdoc />
+    public IEnumerable<string> GetBlockParameterNames(
+        string blockType,
+        string blockName)
+    {
+        Block? block = GetBlock(blockType, blockName);
+        return block is null ? [] : block.Parameters.Keys;
+    }
+
+    /// <inheritdoc />
+    public IEnumerable<string> GetTopLevelParameterNames()
+    {
+        return items
+            .OfType<ParameterOccurrence>()
+            .Select(parameter => parameter.Name)
+            .Distinct();
+    }
+
+    /// <inheritdoc />
     public InstructionParameter? GetBlockParameter(string blockType, string blockName, string paramName)
     {
         Block? block = GetBlock(blockType, blockName);

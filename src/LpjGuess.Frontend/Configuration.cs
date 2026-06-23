@@ -66,6 +66,12 @@ public class Configuration
 	public bool GoToLogsTabOnRun { get; set; }
 
 	/// <summary>
+	/// Maximum number of distinct parameters shown as dedicated columns in the
+	/// experiment preview. Zero always uses the grouped changes column.
+	/// </summary>
+	public int SimulationPreviewParameterColumnLimit { get; set; } = 6;
+
+	/// <summary>
 	/// Maximum number of workspaces to remember in "recent workspaces".
 	/// </summary>
 	public int MaxHistoryLength { get; set; } = 20;

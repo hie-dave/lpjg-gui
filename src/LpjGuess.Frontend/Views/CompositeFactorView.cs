@@ -1,5 +1,3 @@
-using System.ComponentModel;
-using GLib;
 using Gtk;
 using LpjGuess.Core.Models.Factorial.Factors;
 using LpjGuess.Frontend.Delegates;
@@ -70,9 +68,10 @@ public class CompositeFactorView : ViewBase<Box>, ICompositeFactorView
     private const int spacing = 6;
 
     /// <summary>
-    /// The label for the name of the factor.
+    /// The entry for the scenario name.
     /// </summary>
-    private readonly Label nameLabel;
+    private readonly Entry nameEntry;
+    private readonly EntryCommitter nameCommitter;
 
     /// <summary>
     /// The list box containing the factor views.
@@ -96,7 +95,7 @@ public class CompositeFactorView : ViewBase<Box>, ICompositeFactorView
     public Event OnAddFactor { get; private init; }
 
     /// <inheritdoc />
-    public Event<string> OnRemoveFactor { get; private init; }
+    public Event<IView> OnRemoveFactor { get; private init; }
 
     /// <summary>
     /// Create a new <see cref="CompositeFactorView"/> instance.
@@ -107,20 +106,27 @@ public class CompositeFactorView : ViewBase<Box>, ICompositeFactorView
 
         OnChanged = new Event<IModelChange<CompositeFactor>>();
         OnAddFactor = new Event();
-        OnRemoveFactor = new Event<string>();
+        OnRemoveFactor = new Event<IView>();
 
-        nameLabel = new Label();
-        nameLabel.Halign = Align.Start;
+        nameEntry = new Entry() { Hexpand = true };
+        nameEntry.PlaceholderText = "e.g. Baseline, Moderate warming";
+        nameCommitter = new EntryCommitter(nameEntry, OnNameChanged);
 
         listBox = new ListBox();
         listBox.SelectionMode = SelectionMode.None;
 
-        addButton = Button.NewWithLabel("Add Factor");
+        addButton = Button.NewWithLabel("Add parameter change");
+        addButton.AddCssClass(StyleClasses.SuggestedAction);
         addButton.OnClicked += OnAddFactorClicked;
 
         widget.SetOrientation(Orientation.Vertical);
         widget.Spacing = spacing;
-        widget.Append(nameLabel);
+        Grid details = new Grid() { RowSpacing = spacing, ColumnSpacing = spacing };
+        Label nameLabel = Label.New("Scenario name:");
+        nameLabel.Halign = Align.Start;
+        details.Attach(nameLabel, 0, 0, 1, 1);
+        details.Attach(nameEntry, 1, 0, 1, 1);
+        widget.Append(details);
         widget.Append(listBox);
         widget.Append(addButton);
     }
@@ -128,7 +134,7 @@ public class CompositeFactorView : ViewBase<Box>, ICompositeFactorView
     /// <inheritdoc />
     public void Populate(string name, IEnumerable<INamedView> factorViews)
     {
-        nameLabel.SetText(name);
+        nameCommitter.SetText(name);
 
         // Remove existing rows from the listbox and dispose of them.
         listBox.RemoveAll();
@@ -138,7 +144,7 @@ public class CompositeFactorView : ViewBase<Box>, ICompositeFactorView
         foreach (INamedView view in factorViews)
         {
             RowWrapper row = new RowWrapper(view.View);
-            row.OnRemoveFactor.ConnectTo(() => OnRemoveFactor.Invoke(view.Name));
+            row.OnRemoveFactor.ConnectTo(() => OnRemoveFactor.Invoke(view.View));
             rows.Add(row);
             listBox.Append(row.GetWidget());
         }
@@ -147,7 +153,28 @@ public class CompositeFactorView : ViewBase<Box>, ICompositeFactorView
     /// <inheritdoc />
     public void Rename(string name)
     {
-        nameLabel.SetText(name);
+        nameCommitter.SetText(name);
+    }
+
+    /// <inheritdoc />
+    public override void Dispose()
+    {
+        addButton.OnClicked -= OnAddFactorClicked;
+        nameCommitter.Dispose();
+        rows.ForEach(row => row.Dispose());
+        rows.Clear();
+        OnChanged.Dispose();
+        OnAddFactor.Dispose();
+        OnRemoveFactor.Dispose();
+        base.Dispose();
+    }
+
+    private void OnNameChanged(string value)
+    {
+        OnChanged.Invoke(new LpjGuess.Frontend.Events.ModelChangeEventArgs<CompositeFactor, string>(
+            scenario => scenario.Name,
+            (scenario, name) => scenario.Name = name,
+            value));
     }
 
     /// <summary>

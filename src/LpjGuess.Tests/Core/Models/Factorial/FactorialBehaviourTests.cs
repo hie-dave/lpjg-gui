@@ -5,6 +5,8 @@ using LpjGuess.Core.Models.Factorial.Generators;
 using LpjGuess.Core.Models.Factorial.Generators.Factors;
 using LpjGuess.Core.Models.Factorial.Generators.Values;
 using LpjGuess.Core.Parsers;
+using LpjGuess.Core.Services;
+using LpjGuess.Core.Extensions;
 
 namespace LpjGuess.Tests.Core.Models.Factorial;
 
@@ -144,5 +146,162 @@ public class FactorialBehaviourTests
         Assert.Empty(experiment.DisabledInsFiles);
         Assert.Empty(experiment.Pfts);
         Assert.Single(experiment.SimulationGenerator.Generate());
+    }
+
+    [Fact]
+    public void ParameterOverrides_PreserveBlockIdentity()
+    {
+        var factor = new CompositeFactor([
+            new TopLevelParameter("npatch", "4"),
+            new BlockParameter("pft", "TeBE", "sla", "27")
+        ]);
+
+        ParameterOverride[] changes = factor.GetParameterOverrides().ToArray();
+
+        Assert.Equal("npatch", changes[0].Target.DisplayName);
+        Assert.Equal("pft[TeBE].sla", changes[1].Target.DisplayName);
+    }
+
+    [Fact]
+    public void ExperimentDesignAnalyser_CalculatesSimulationAndRunCounts()
+    {
+        var generator = new FactorialGenerator(true, [
+            new TopLevelFactorGenerator("npatch", new DiscreteValues<int>([1, 2])),
+            new BlockFactorGenerator("pft", "TeBE", "sla", new DiscreteValues<int>([20, 25, 30]))
+        ]);
+
+        ExperimentDesignAnalysis analysis = ExperimentDesignAnalyser.Analyse(generator, 4);
+
+        Assert.True(analysis.IsValid);
+        Assert.Equal(6, analysis.SimulationCount);
+        Assert.Equal(24, analysis.ModelRunCount);
+    }
+
+    [Fact]
+    public void ExperimentDesignAnalyser_DetectsConflictingCombinedTargets()
+    {
+        var generator = new FactorialGenerator(true, [
+            new TopLevelFactorGenerator("npatch", new DiscreteValues<int>([1, 2])),
+            new TopLevelFactorGenerator("npatch", new DiscreteValues<int>([3, 4]))
+        ]);
+
+        ExperimentDesignAnalysis analysis = ExperimentDesignAnalyser.Analyse(generator, 1);
+
+        Assert.False(analysis.IsValid);
+        Assert.Contains(analysis.Issues, issue => issue.Message.Contains("npatch"));
+    }
+
+    [Fact]
+    public void ExperimentDesignAnalyser_DetectsDuplicateTargetsInsideScenario()
+    {
+        var generator = new FactorialGenerator(false, [
+            new SimpleFactorGenerator("Climate scenarios", [
+                new CompositeFactor([
+                    new TopLevelParameter("co2", "400"),
+                    new TopLevelParameter("co2", "550")
+                ])
+            ])
+        ]);
+
+        ExperimentDesignAnalysis analysis = ExperimentDesignAnalyser.Analyse(generator, 1);
+
+        Assert.False(analysis.IsValid);
+        Assert.Contains(analysis.Issues, issue => issue.Message.Contains("more than once"));
+    }
+
+    [Fact]
+    public void CompositeFactor_UsesOptionalScenarioName()
+    {
+        var scenario = new CompositeFactor([
+            new TopLevelParameter("co2", "550"),
+            new TopLevelParameter("temperature", "2")
+        ]) { Name = "Moderate warming" };
+
+        Assert.Equal("Moderate warming", scenario.GetName());
+    }
+
+    [Fact]
+    public void InstructionFileAnalyser_TreatsUnknownParametersAsInformation()
+    {
+        using TempDirectory temp = TempDirectory.Create();
+        string file = Path.Combine(temp.AbsolutePath, "base.ins");
+        File.WriteAllText(file, """
+            npatch 1
+            pft "TeBE" (
+                include 1
+            )
+            """);
+        var generator = new FactorialGenerator(false, [
+            new TopLevelFactorGenerator("missing", new DiscreteValues<int>([1]))
+        ]);
+
+        IReadOnlyList<ExperimentDesignIssue> issues =
+            ExperimentInstructionFileAnalyser.Analyse(
+                generator,
+                [file],
+                ["TeBS"]);
+
+        Assert.Contains(issues, issue =>
+            issue.Severity == ExperimentDesignIssueSeverity.Information &&
+            issue.Message.Contains("'missing'"));
+        Assert.Contains(issues, issue =>
+            issue.Severity == ExperimentDesignIssueSeverity.Error &&
+            issue.Message.Contains("TeBS"));
+    }
+
+    [Fact]
+    public void InstructionFileAnalyser_TreatsMissingBlockAsError()
+    {
+        using TempDirectory temp = TempDirectory.Create();
+        string file = Path.Combine(temp.AbsolutePath, "base.ins");
+        File.WriteAllText(file, "npatch 1");
+        var generator = new FactorialGenerator(false, [
+            new BlockFactorGenerator(
+                "pft",
+                "TeBE",
+                "sla",
+                new DiscreteValues<int>([27]))
+        ]);
+
+        IReadOnlyList<ExperimentDesignIssue> issues =
+            ExperimentInstructionFileAnalyser.Analyse(generator, [file], []);
+
+        Assert.Contains(issues, issue =>
+            issue.Severity == ExperimentDesignIssueSeverity.Error &&
+            issue.Message.Contains("pft[TeBE]"));
+    }
+
+    [Fact]
+    public void InstructionFileAnalyser_DoesNotRejectInheritedBlockParameter()
+    {
+        using TempDirectory temp = TempDirectory.Create();
+        string file = Path.Combine(temp.AbsolutePath, "base.ins");
+        File.WriteAllText(file, """
+            group "tree" (
+                sla 27
+            )
+            pft "TeBE" (
+                tree
+                include 1
+            )
+            """);
+        var generator = new FactorialGenerator(false, [
+            new BlockFactorGenerator(
+                "pft",
+                "TeBE",
+                "sla",
+                new DiscreteValues<int>([30]))
+        ]);
+
+        IReadOnlyList<ExperimentDesignIssue> issues =
+            ExperimentInstructionFileAnalyser.Analyse(generator, [file], []);
+
+        Assert.DoesNotContain(
+            issues,
+            issue => issue.Severity == ExperimentDesignIssueSeverity.Error);
+        Assert.Contains(
+            issues,
+            issue => issue.Severity == ExperimentDesignIssueSeverity.Information &&
+                     issue.Message.Contains("inherited"));
     }
 }

@@ -1,10 +1,12 @@
 using Gtk;
+using LpjGuess.Core.Models.Factorial;
 using LpjGuess.Core.Models.Factorial.Factors;
 using LpjGuess.Frontend.Attributes;
 using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.Events;
 using LpjGuess.Frontend.Interfaces.Events;
 using LpjGuess.Frontend.Interfaces.Views;
+using LpjGuess.Frontend.Utility.Gtk;
 
 namespace LpjGuess.Frontend.Views;
 
@@ -20,24 +22,16 @@ public class TopLevelParameterView : ViewBase<Grid>, ITopLevelParameterView
     private const int spacing = 6;
 
     /// <summary>
-    /// Number of rows currently in the grid.
-    /// </summary>
-    private int nrow;
-
-    /// <summary>
     /// The entry widget for the parameter name.
     /// </summary>
-    private readonly Entry nameEntry;
-
-    /// <summary>
-    /// The label widget for the parameter value.
-    /// </summary>
-    private readonly Label valueLabel;
+    protected readonly SuggestionEntryView nameEntry;
 
     /// <summary>
     /// The entry widget for the parameter value.
     /// </summary>
-    private readonly Entry valueEntry;
+    protected readonly Entry valueEntry;
+    private readonly EntryCommitter valueCommitter;
+    private readonly List<Label> controlLabels;
 
     /// <inheritdoc />
     public Event<IModelChange<TopLevelParameter>> OnChanged { get; private init; }
@@ -48,17 +42,18 @@ public class TopLevelParameterView : ViewBase<Grid>, ITopLevelParameterView
     public TopLevelParameterView() : base(new Grid())
     {
         OnChanged = new Event<IModelChange<TopLevelParameter>>();
-        nrow = 0;
+        controlLabels = [];
 
-        nameEntry = new Entry() { Halign = Align.Fill, Hexpand = true };
+        nameEntry = new SuggestionEntryView("e.g. npatch", showHint: true);
         valueEntry = new Entry() { Halign = Align.Fill, Hexpand = true };
-        valueLabel = Label.New("Parameter Value:");
+        valueEntry.PlaceholderText = "Value";
+        nameEntry.OnCommitted.ConnectTo(OnNameChanged);
+        valueCommitter = new EntryCommitter(valueEntry, OnValueChanged);
 
         widget.RowSpacing = widget.ColumnSpacing = spacing;
-        widget.Attach(valueLabel, 0, nrow, 1, 1);
-        widget.Attach(valueEntry, 1, nrow, 1, 1);
-
-        AddControl("Parameter Name", nameEntry);
+        SetControls(
+            ("Parameter Name", nameEntry.GetWidget()),
+            ("Parameter Value", valueEntry));
 
         ConnectEvents();
     }
@@ -67,7 +62,7 @@ public class TopLevelParameterView : ViewBase<Grid>, ITopLevelParameterView
     public void Populate(string name, string value)
     {
         nameEntry.SetText(name);
-        valueEntry.SetText(value);
+        valueCommitter.SetText(value);
     }
 
     /// <inheritdoc />
@@ -75,29 +70,39 @@ public class TopLevelParameterView : ViewBase<Grid>, ITopLevelParameterView
     {
         OnChanged.Dispose();
         DisconnectEvents();
+        nameEntry.Dispose();
+        valueCommitter.Dispose();
         base.Dispose();
     }
 
-    /// <summary>
-    /// Add a control to the next row in the grid.
-    /// </summary>
-    /// <param name="title">The title of the control.</param>
-    /// <param name="control">The widget to add.</param>
-    protected void AddControl(string title, Widget control)
+    /// <inheritdoc />
+    public virtual void SetTargetSuggestions(IEnumerable<ParameterTarget> targets)
     {
-        // Temporarily remove the value label and entry from the grid.
-        widget.Remove(valueLabel);
-        widget.Remove(valueEntry);
+        nameEntry.SetSuggestions(targets
+            .Where(target => target.BlockType is null)
+            .Select(target => target.ParameterName));
+    }
 
-        Label label = Label.New($"{title}:");
-        label.Halign = Align.Start;
-        widget.Attach(label, 0, nrow, 1, 1);
-        widget.Attach(control, 1, nrow, 1, 1);
-        nrow++;
+    /// <summary>
+    /// Set the controls and their order in the grid.
+    /// </summary>
+    protected void SetControls(params (string Title, Widget Control)[] controls)
+    {
+        Widget? child;
+        while ((child = widget.GetFirstChild()) != null)
+            widget.Remove(child);
+        controlLabels.ForEach(label => label.Dispose());
+        controlLabels.Clear();
 
-        // Ensure the value label is always at the bottom of the grid.
-        widget.Attach(valueLabel, 0, nrow, 1, 1);
-        widget.Attach(valueEntry, 1, nrow, 1, 1);
+        for (int row = 0; row < controls.Length; row++)
+        {
+            (string title, Widget control) = controls[row];
+            Label label = Label.New($"{title}:");
+            label.Halign = Align.Start;
+            controlLabels.Add(label);
+            widget.Attach(label, 0, row, 1, 1);
+            widget.Attach(control, 1, row, 1, 1);
+        }
     }
 
     /// <summary>
@@ -105,8 +110,6 @@ public class TopLevelParameterView : ViewBase<Grid>, ITopLevelParameterView
     /// </summary>
     protected virtual void ConnectEvents()
     {
-        nameEntry.OnActivate += OnNameChanged;
-        valueEntry.OnActivate += OnValueChanged;
     }
 
     /// <summary>
@@ -114,49 +117,29 @@ public class TopLevelParameterView : ViewBase<Grid>, ITopLevelParameterView
     /// </summary>
     protected virtual void DisconnectEvents()
     {
-        nameEntry.OnActivate -= OnNameChanged;
-        valueEntry.OnActivate -= OnValueChanged;
     }
 
     /// <summary>
-    /// Called when the parameter name has been changed by the user.
+    /// Commit a changed parameter name.
     /// </summary>
-    /// <param name="sender">The entry widget.</param>
-    /// <param name="args">The event arguments.</param>
-    private void OnNameChanged(Entry sender, EventArgs args)
+    /// <param name="value">The new parameter name.</param>
+    private void OnNameChanged(string value)
     {
-        try
-        {
-            OnChanged.Invoke(new ModelChangeEventArgs<TopLevelParameter, string>(
-                p => p.Name,
-                (p, name) => p.Name = name,
-                nameEntry.GetText()
-            ));
-        }
-        catch (Exception error)
-        {
-            MainView.Instance.ReportError(error);
-        }
+        OnChanged.Invoke(new ModelChangeEventArgs<TopLevelParameter, string>(
+            parameter => parameter.Name,
+            (parameter, name) => parameter.Name = name,
+            value));
     }
 
     /// <summary>
-    /// Called when the parameter value has been changed by the user.
+    /// Commit a changed parameter value.
     /// </summary>
-    /// <param name="sender">The entry widget.</param>
-    /// <param name="args">The event arguments.</param>
-    private void OnValueChanged(Entry sender, EventArgs args)
+    /// <param name="value">The new parameter value.</param>
+    private void OnValueChanged(string value)
     {
-        try
-        {
-            OnChanged.Invoke(new ModelChangeEventArgs<TopLevelParameter, string>(
-                p => p.Value,
-                (p, value) => p.Value = value,
-                valueEntry.GetText()
-            ));
-        }
-        catch (Exception error)
-        {
-            MainView.Instance.ReportError(error);
-        }
+        OnChanged.Invoke(new ModelChangeEventArgs<TopLevelParameter, string>(
+            parameter => parameter.Value,
+            (parameter, newValue) => parameter.Value = newValue,
+            value));
     }
 }

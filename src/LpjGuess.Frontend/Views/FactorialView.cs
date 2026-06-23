@@ -11,34 +11,18 @@ using Microsoft.Extensions.Logging;
 namespace LpjGuess.Frontend.Views;
 
 /// <summary>
-/// A view which displays a factorial.
+/// Edits the strategy and dimensions used to generate experiment simulations.
 /// </summary>
 public class FactorialView : ViewBase<Box>, IFactorialView
 {
-    /// <summary>
-    /// Widget spacing.
-    /// </summary>
-    private readonly int spacing = 6;
+    private const int spacing = 8;
 
-    /// <summary>
-    /// The grid which displays the factorial properties.
-    /// </summary>
-    private readonly Grid grid;
-
-    /// <summary>
-    /// The switch which controls whether to generate a full factorial.
-    /// </summary>
-    private readonly Switch fullFactorialSwitch;
-
-    /// <summary>
-    /// The list box which displays the factors.
-    /// </summary>
+    private readonly CheckButton combineAllButton;
+    private readonly CheckButton oneAtATimeButton;
+    private readonly Label variationCount;
     private readonly ListBoxRevealerView factorsContainer;
-
-    /// <summary>
-    /// Number of rows currently in the grid.
-    /// </summary>
-    private int nrow;
+    private readonly Dictionary<IView, IValueGeneratorView> factorViews;
+    private bool updating;
 
     /// <inheritdoc />
     public Event<IModelChange<FactorialGenerator>> OnChanged { get; private init; }
@@ -50,116 +34,136 @@ public class FactorialView : ViewBase<Box>, IFactorialView
     public Event<IView> OnRemoveFactor => factorsContainer.OnRemove;
 
     /// <summary>
-    /// Create a new <see cref="FactorialView"/> instance.
+    /// Create a factorial design view.
     /// </summary>
-    /// <param name="loggerFactory">The logger factory.</param>
-    public FactorialView(ILoggerFactory loggerFactory) : base(new Box())
+    public FactorialView(ILoggerFactory loggerFactory) : base(Box.New(Orientation.Vertical, spacing))
     {
-        nrow = 0;
         OnChanged = new Event<IModelChange<FactorialGenerator>>();
 
-        factorsContainer = new ListBoxRevealerView(loggerFactory.CreateLogger<ListBoxNavigatorView>());
-        factorsContainer.AddText = "Add Factor";
+        combineAllButton = CheckButton.New();
+        combineAllButton.SetLabel("Combine every value");
+        oneAtATimeButton = CheckButton.New();
+        oneAtATimeButton.SetLabel("Vary one parameter at a time");
+        oneAtATimeButton.SetGroup(combineAllButton);
 
-        // Configure container.
-        widget.SetOrientation(Orientation.Vertical);
-        widget.Spacing = spacing;
+        factorsContainer = new ListBoxRevealerView(
+            loggerFactory.CreateLogger<ListBoxNavigatorView>());
+        factorsContainer.AddText = "Add parameter variation or scenario set";
+        factorViews = [];
 
-        // Initialise and configure child widgets.
-        grid = new Grid();
-        grid.RowSpacing = spacing;
-        grid.ColumnSpacing = spacing;
+        variationCount = new Label() { Halign = Align.Start, Xalign = 0 };
+        variationCount.AddCssClass(StyleClasses.Subtitle);
 
-        fullFactorialSwitch = new Switch();
-
-        // Label factorsLabel = new Label();
-        // factorsLabel.Halign = Align.Start;
-        // factorsLabel.SetText("Factors");
-        // factorsLabel.AddCssClass(StyleClasses.Heading);
-
-        // Pack controls into the grid.
-        AddControl("Full Factorial", fullFactorialSwitch);
-
-        // Pack child widgets into the container.
-        widget.Append(grid);
-        // widget.Append(factorsLabel);
+        widget.Append(CreateStrategySection());
+        widget.Append(variationCount);
         widget.Append(factorsContainer.GetWidget());
 
-        // Connect event handlers.
-        ConnectEvents();
+        combineAllButton.OnToggled += OnStrategyChanged;
+        oneAtATimeButton.OnToggled += OnStrategyChanged;
     }
 
     /// <inheritdoc />
     public void Populate(bool fullFactorial, IEnumerable<IValueGeneratorView> factorViews)
     {
-        // TODO: include factor levels in list box as a hint to the user?
-        fullFactorialSwitch.SetActive(fullFactorial);
-        factorsContainer.Populate(factorViews);
+        List<IValueGeneratorView> views = factorViews.ToList();
+        updating = true;
+        try
+        {
+            combineAllButton.Active = fullFactorial;
+            oneAtATimeButton.Active = !fullFactorial;
+        }
+        finally
+        {
+            updating = false;
+        }
+
+        this.factorViews.Clear();
+        foreach (IValueGeneratorView view in views)
+            this.factorViews[view.View] = view;
+        UpdateSummary();
+        factorsContainer.Populate(views);
     }
 
     /// <inheritdoc />
     public void RenameFactor(IView view, string name)
+        => factorsContainer.Rename(view, name);
+
+    /// <inheritdoc />
+    public void UpdateFactor(IValueGeneratorView factorView)
     {
-        factorsContainer.Rename(view, name);
+        factorViews[factorView.View] = factorView;
+        factorsContainer.Update(factorView);
+        UpdateSummary();
     }
 
     /// <inheritdoc />
     public override void Dispose()
     {
+        combineAllButton.OnToggled -= OnStrategyChanged;
+        oneAtATimeButton.OnToggled -= OnStrategyChanged;
+        factorViews.Clear();
         OnChanged.Dispose();
-        DisconnectEvents();
         base.Dispose();
     }
 
-    /// <summary>
-    /// Add a control to the grid.
-    /// </summary>
-    /// <param name="title">The title of the control.</param>
-    /// <param name="widget">The widget to add.</param>
-    private void AddControl(string title, Widget widget)
+    private Widget CreateStrategySection()
     {
-        Label label = Label.New($"{title}:");
-        label.Halign = Align.Start;
-        grid.Attach(label, 0, nrow, 1, 1);
-        grid.Attach(widget, 1, nrow, 1, 1);
-        nrow++;
+        Label heading = Label.New("How should variation rows be combined?");
+        heading.Halign = Align.Start;
+        heading.AddCssClass(StyleClasses.Heading);
+
+        Label combineHelp = CreateHelp(
+            "Creates every combination across rows. For 3 × 4 × 2 levels, this creates 24 simulations.");
+        Label oneHelp = CreateHelp(
+            "Creates one simulation for each configured level, leaving other variation rows unchanged.");
+
+        Box combine = Box.New(Orientation.Vertical, 2);
+        combine.Append(combineAllButton);
+        combine.Append(combineHelp);
+
+        Box oneAtATime = Box.New(Orientation.Vertical, 2);
+        oneAtATime.Append(oneAtATimeButton);
+        oneAtATime.Append(oneHelp);
+
+        Box section = Box.New(Orientation.Vertical, 6);
+        section.Append(heading);
+        section.Append(combine);
+        section.Append(oneAtATime);
+        return section;
     }
 
-    /// <summary>
-    /// Connect all events.
-    /// </summary>
-    private void ConnectEvents()
+    private static Label CreateHelp(string text)
     {
-        fullFactorialSwitch.OnStateSet += OnFullFactorialChanged;
+        Label label = new() { Halign = Align.Start, Wrap = true, Xalign = 0 };
+        label.SetText(text);
+        label.MarginStart = 24;
+        label.AddCssClass(StyleClasses.Subtitle);
+        return label;
     }
 
-    /// <summary>
-    /// Disconnect all events.
-    /// </summary>
-    private void DisconnectEvents()
+    private void UpdateSummary()
     {
-        fullFactorialSwitch.OnStateSet -= OnFullFactorialChanged;
+        int levels = factorViews.Values.Sum(view => Math.Max(0, view.LevelCount));
+        variationCount.SetText(
+            $"{factorViews.Count:N0} variation rows · {levels:N0} configured levels");
     }
 
-    /// <summary>
-    /// Called when the full factorial switch is toggled by the user.
-    /// </summary>
-    /// <param name="sender">The sender object.</param>
-    /// <param name="args">Event data.</param>
-    private bool OnFullFactorialChanged(Switch sender, Switch.StateSetSignalArgs args)
+    private void OnStrategyChanged(CheckButton sender, EventArgs args)
     {
+        if (updating || !sender.Active)
+            return;
+
         try
         {
+            bool fullFactorial = ReferenceEquals(sender, combineAllButton);
             OnChanged.Invoke(new ModelChangeEventArgs<FactorialGenerator, bool>(
-                f => f.FullFactorial,
-                (f, fullFactorial) => f.FullFactorial = fullFactorial,
-                args.State
-            ));
+                generator => generator.FullFactorial,
+                (generator, value) => generator.FullFactorial = value,
+                fullFactorial));
         }
         catch (Exception error)
         {
             MainView.Instance.ReportError(error);
         }
-        return false;
     }
 }

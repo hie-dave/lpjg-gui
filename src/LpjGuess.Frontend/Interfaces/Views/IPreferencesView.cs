@@ -21,6 +21,11 @@ public interface IPreferencesView : IDialogView
 	Event<bool> GoToLogsTabChanged { get; }
 
 	/// <summary>
+	/// Called when the experiment-preview parameter column limit changes.
+	/// </summary>
+	Event<int> SimulationPreviewParameterColumnLimitChanged { get; }
+
+	/// <summary>
 	/// Called when the user wants to add a new runner.
 	/// </summary>
 	Event OnAddRunner { get; }

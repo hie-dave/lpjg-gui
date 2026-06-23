@@ -56,9 +56,14 @@ public class PreferencesPresenter : IPreferencesPresenter
 		this.logger = logger;
 
 		runnerPresenters = GetRunnerPresenters().ToList();
-		view = new PreferencesView(preferences.PreferDarkMode, preferences.GoToLogsTabOnRun, runnerPresenters.Select(p => p.GetMetadata()).ToList());
+		view = new PreferencesView(
+			preferences.PreferDarkMode,
+			preferences.GoToLogsTabOnRun,
+			preferences.SimulationPreviewParameterColumnLimit,
+			runnerPresenters.Select(p => p.GetMetadata()).ToList());
 		view.DarkModeChanged.ConnectTo(OnToggleDarkMode);
 		view.GoToLogsTabChanged.ConnectTo(OnToggleGoToLogs);
+		view.SimulationPreviewParameterColumnLimitChanged.ConnectTo(OnPreviewColumnLimitChanged);
 		view.OnAddRunner.ConnectTo(OnAddRunner);
 		view.OnDeleteRunner.ConnectTo(OnDeleteRunner);
 		view.OnEditRunner.ConnectTo(OnEditRunner);
@@ -160,6 +165,11 @@ public class PreferencesPresenter : IPreferencesPresenter
 	private void OnToggleGoToLogs(bool goToLogs)
 	{
 		preferences.GoToLogsTabOnRun = goToLogs;
+	}
+
+	private void OnPreviewColumnLimitChanged(int limit)
+	{
+		preferences.SimulationPreviewParameterColumnLimit = limit;
 	}
 
 	/// <summary>

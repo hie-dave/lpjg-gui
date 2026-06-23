@@ -1,6 +1,7 @@
 using System.Globalization;
 using LpjGuess.Core.Interfaces.Factorial;
 using LpjGuess.Core.Parsers;
+using Newtonsoft.Json;
 
 namespace LpjGuess.Core.Models.Factorial.Factors;
 
@@ -24,6 +25,7 @@ public class TopLevelParameter : IFactor
     /// </summary>
     /// <param name="name">The name of the factor.</param>
     /// <param name="value">The value of the factor.</param>
+    [JsonConstructor]
     public TopLevelParameter(string name, string value)
     {
         Name = name;

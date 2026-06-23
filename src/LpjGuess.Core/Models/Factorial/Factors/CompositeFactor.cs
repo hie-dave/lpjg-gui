@@ -9,6 +9,12 @@ namespace LpjGuess.Core.Models.Factorial.Factors;
 public class CompositeFactor : IFactor
 {
     /// <summary>
+    /// Optional user-facing scenario name. If empty, a name is derived from
+    /// the contained parameter changes for backwards compatibility.
+    /// </summary>
+    public string Name { get; set; } = string.Empty;
+
+    /// <summary>
     /// List of factors in this composite factor.
     /// </summary>
     public IEnumerable<IFactor> Factors { get; set; }
@@ -28,6 +34,8 @@ public class CompositeFactor : IFactor
     /// <inheritdoc />
     public string GetName()
     {
+        if (!string.IsNullOrWhiteSpace(Name))
+            return Name;
         if (!Factors.Any())
             return string.Empty;
         return Factors.Select(f => f.GetName()).Aggregate((x, y) => $"{x}_{y}");

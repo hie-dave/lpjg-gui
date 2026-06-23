@@ -19,6 +19,7 @@ public class DiscreteValuesView : ViewBase<Box>, IDiscreteValuesView
         /// The entry widget allowing the user to edit the value.
         /// </summary>
         private readonly Entry entry;
+        private readonly EntryCommitter committer;
 
         /// <summary>
         /// The button to remove this value.
@@ -50,8 +51,8 @@ public class DiscreteValuesView : ViewBase<Box>, IDiscreteValuesView
             OnRemove = new Event();
 
             entry = new Entry();
-            entry.SetText(value);
-            entry.OnActivate += OnValueChanged;
+            committer = new EntryCommitter(entry, OnValueChanged);
+            committer.SetText(value);
             entry.Halign = Align.Fill;
             entry.Hexpand = true;
 
@@ -68,7 +69,7 @@ public class DiscreteValuesView : ViewBase<Box>, IDiscreteValuesView
         /// <inheritdoc />
         public override void Dispose()
         {
-            entry.OnActivate -= OnValueChanged;
+            committer.Dispose();
             removeButton.OnClicked -= OnRemoveClicked;
             OnChanged.Dispose();
             OnRemove.Dispose();
@@ -95,18 +96,11 @@ public class DiscreteValuesView : ViewBase<Box>, IDiscreteValuesView
         /// <summary>
         /// Handle a change to the value entry.
         /// </summary>
-        /// <param name="sender">The entry widget.</param>
-        /// <param name="args">The event arguments.</param>
-        private void OnValueChanged(Entry sender, EventArgs args)
+        /// <param name="value">The committed value.</param>
+        private void OnValueChanged(string value)
         {
-            try
-            {
-                OnChanged.Invoke();
-            }
-            catch (Exception error)
-            {
-                MainView.Instance.ReportError(error);
-            }
+            _ = value;
+            OnChanged.Invoke();
         }
     }
 
