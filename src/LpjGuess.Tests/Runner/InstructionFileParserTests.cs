@@ -31,6 +31,18 @@ public class InstructionFileParserTests
     }
 
     [Fact]
+    public async Task ParseBlock_AllowsTabs()
+    {
+        string file = GetTestFilePath("c3g.ins");
+        string content = await File.ReadAllTextAsync(file);
+        content = content.Replace("    ", "\t");
+        var parser = new InstructionFileParser(content, string.Empty);
+
+        var g0Value = parser.GetBlockParameterValue("group", "C3G", "g0");
+        Assert.Equal("0.161", g0Value);
+    }
+
+    [Fact]
     public void Parse_C3GFile_HandlesExclamationInString()
     {
         string file = GetTestFilePath("c3g.ins");

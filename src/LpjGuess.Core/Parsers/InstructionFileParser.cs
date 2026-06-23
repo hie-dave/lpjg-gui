@@ -419,7 +419,7 @@ public partial class InstructionFileParser : IInstructionFileParser
 
         // Check if this is a comment-only line
         int commentStart = line.IndexOf(commentChar);
-        if (commentStart == line.TrimStart().Length - line.Length)
+        if (commentStart >= 0 && commentStart == line.TrimStart().Length - line.Length)
             return null;
 
         // Find the first non-whitespace character
