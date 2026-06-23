@@ -73,6 +73,17 @@ public class GraphingStyleTests
     }
 
     [Fact]
+    public void SeriesContext_MatchesSeries_IgnoresLayerOnly()
+    {
+        SeriesContext x = BuildContext(layer: "Observed");
+        SeriesContext y = BuildContext(layer: "Predicted");
+        SeriesContext otherPatch = BuildContext(layer: "Predicted", patch: 99);
+
+        Assert.True(x.MatchesSeries(y));
+        Assert.False(x.MatchesSeries(otherPatch));
+    }
+
+    [Fact]
     public void IdentityClasses_EqualityAndToString_Work()
     {
         var stringA = new StringIdentity("abc");

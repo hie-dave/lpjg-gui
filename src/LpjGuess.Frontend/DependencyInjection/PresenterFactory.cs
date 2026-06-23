@@ -49,9 +49,13 @@ public class PresenterFactory : IPresenterFactory
     {
         Type viewType = typeof(ISeriesView<>).MakeGenericType(series.GetType());
         object view = serviceProvider.GetRequiredService(viewType);
-        IDataSourcePresenter presenter = CreatePresenter<IDataSourcePresenter>(series.DataSource);
         Type presenterType = typeof(SeriesPresenter<>).MakeGenericType(series.GetType());
-        return (ISeriesPresenter)ActivatorUtilities.CreateInstance(serviceProvider, presenterType, view, series, presenter);
+        return (ISeriesPresenter)ActivatorUtilities.CreateInstance(
+            serviceProvider,
+            presenterType,
+            view,
+            series,
+            this);
     }
 
     /// <inheritdoc />

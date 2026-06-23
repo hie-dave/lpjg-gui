@@ -4,6 +4,7 @@ using LpjGuess.Core.Models.Graphing.Style;
 using LpjGuess.Frontend.Attributes;
 using LpjGuess.Frontend.Commands;
 using LpjGuess.Frontend.Delegates;
+using LpjGuess.Frontend.DependencyInjection;
 using LpjGuess.Frontend.Interfaces;
 using LpjGuess.Frontend.Interfaces.Commands;
 using LpjGuess.Frontend.Interfaces.Events;
@@ -27,7 +28,8 @@ public class SeriesPresenter<T> : PresenterBase<ISeriesView<T>, T>, ISeriesPrese
     /// <summary>
     /// The data source presenter.
     /// </summary>
-    private readonly IDataSourcePresenter dataSourcePresenter;
+    private readonly IDataSourcePresenter yDataSourcePresenter;
+    private readonly IDataSourcePresenter? xDataSourcePresenter;
     private readonly SeriesValidationCommandFactory validationCommandFactory;
 
     /// <summary>
@@ -35,13 +37,13 @@ public class SeriesPresenter<T> : PresenterBase<ISeriesView<T>, T>, ISeriesPrese
     /// </summary>
     /// <param name="view">The view to present to.</param>
     /// <param name="series">The series being edited.</param>
-    /// <param name="dataSourcePresenter">The data source presenter.</param>
+    /// <param name="presenterFactory">Factory used to create data source presenters.</param>
     /// <param name="registry">The command registry.</param>
     public SeriesPresenter(
         ISeriesView<T> view,
         T series,
-        IDataSourcePresenter dataSourcePresenter,
-        ICommandRegistry registry) : base(view, series, registry)
+        ICommandRegistry registry,
+        IPresenterFactory presenterFactory) : base(view, series, registry)
     {
         Series = series;
         OnSeriesChanged = new Event<ICommand>();
@@ -50,9 +52,20 @@ public class SeriesPresenter<T> : PresenterBase<ISeriesView<T>, T>, ISeriesPrese
         view.OnEditSeries.ConnectTo(OnEditSeries);
         validationCommandFactory = new SeriesValidationCommandFactory();
 
-        this.dataSourcePresenter = dataSourcePresenter;
-        dataSourcePresenter.OnDataSourceChanged.ConnectTo(OnDataSourceChanged);
-        view.ShowDataSourceView(dataSourcePresenter.GetView());
+        yDataSourcePresenter =
+            presenterFactory.CreatePresenter<IDataSourcePresenter>(series.YDataSource);
+        xDataSourcePresenter = series.XDataSource is null
+            ? null
+            : presenterFactory.CreatePresenter<IDataSourcePresenter>(series.XDataSource);
+
+        yDataSourcePresenter.OnDataSourceChanged.ConnectTo(OnDataSourceChanged);
+        xDataSourcePresenter?.OnDataSourceChanged.ConnectTo(OnDataSourceChanged);
+        yDataSourcePresenter.GetView().SetRole(
+            xDataSourcePresenter is null ? DataSourceRole.Combined : DataSourceRole.YAxis);
+        xDataSourcePresenter?.GetView().SetRole(DataSourceRole.XAxis);
+        view.ShowDataSourceViews(
+            yDataSourcePresenter.GetView(),
+            xDataSourcePresenter?.GetView());
     }
 
     /// <inheritdoc />
@@ -70,6 +83,8 @@ public class SeriesPresenter<T> : PresenterBase<ISeriesView<T>, T>, ISeriesPrese
     public override void Dispose()
     {
         OnSeriesChanged.DisconnectAll();
+        xDataSourcePresenter?.Dispose();
+        yDataSourcePresenter.Dispose();
         base.Dispose();
     }
 
@@ -79,7 +94,13 @@ public class SeriesPresenter<T> : PresenterBase<ISeriesView<T>, T>, ISeriesPrese
     /// <returns>The allowed style variation strategies.</returns>
     private IEnumerable<StyleVariationStrategy> GetAllowedStyleVariationStrategies()
     {
-        var strategies = Series.DataSource.GetAllowedStyleVariationStrategies();
+        IEnumerable<StyleVariationStrategy> strategies =
+            Series.YDataSource.GetAllowedStyleVariationStrategies();
+        if (Series.XDataSource is not null)
+        {
+            strategies = strategies.Intersect(
+                Series.XDataSource.GetAllowedStyleVariationStrategies());
+        }
         if (!strategies.Contains(StyleVariationStrategy.Fixed))
             strategies = strategies.Append(StyleVariationStrategy.Fixed);
         return strategies;

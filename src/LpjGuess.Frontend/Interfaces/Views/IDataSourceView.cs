@@ -10,6 +10,12 @@ namespace LpjGuess.Frontend.Interfaces.Views;
 public interface IDataSourceView : IView
 {
     /// <summary>
+    /// Configure the editor for how this source is used by its series.
+    /// </summary>
+    /// <param name="role">The role of the data source.</param>
+    void SetRole(DataSourceRole role);
+
+    /// <summary>
     /// Gets the views needed to configure this data source type, which are
     /// suitable for adding to a grid.
     /// </summary>

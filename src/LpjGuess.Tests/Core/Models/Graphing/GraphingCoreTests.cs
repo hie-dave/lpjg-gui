@@ -24,7 +24,17 @@ public class GraphingCoreTests
     {
         public string Title { get; set; } = "S";
         public IStyleProvider<Colour> ColourProvider { get; set; } = new FixedStyleProvider<Colour>(Colours.Blue);
-        public IDataSource DataSource { get; set; } = new StubDataSource();
+        public IDataSource? XDataSource { get; set; }
+        public IDataSource YDataSource { get; set; } = new StubDataSource();
+        public IDataSource DataSource
+        {
+            get => YDataSource;
+            set
+            {
+                XDataSource = null;
+                YDataSource = value;
+            }
+        }
         public AxisPosition XAxisPosition { get; set; } = AxisPosition.Bottom;
         public AxisPosition YAxisPosition { get; set; } = AxisPosition.Left;
         private readonly AxisRequirements[] requirements;

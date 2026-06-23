@@ -98,7 +98,7 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
     /// <inheritdoc />
     public int GetNumSeries(ModelOutput source)
     {
-        return insFilesProvider.GetGeneratedInstructionFiles().Count() * source.YAxisColumns.Count();
+        return insFilesProvider.GetGeneratedInstructionFiles().Count() * source.ValueColumns.Count();
     }
 
     /// <summary>
@@ -294,7 +294,7 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
         // Iterate through the requested layers and generate series for each
         // one. Each layer can in principle generate multiple series - e.g. a
         // patch-level model output will generate one series per patch.
-        foreach (string column in source.YAxisColumns)
+        foreach (string column in source.ValueColumns)
         {
             Layer? layer = quantity.Layers.FirstOrDefault(l => l.Name == column);
             if (layer == null)
@@ -383,13 +383,17 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
 
             string name = GenerateSeriesName(source, context, contexts, ylayer);
 
-            IEnumerable<OxyDataPoint> data = MergeOn(
+            var merged = MergeOn(
                 xgroup,
                 ygroup,
                 xselector,
                 yselector,
                 predicates: (x, y) => x.Timestamp == y.Timestamp).ToList();
-            yield return new SeriesData(name, context, data);
+            yield return new SeriesData(
+                name,
+                context,
+                merged.Select(point => point.Point),
+                merged.Select(point => point.MatchValue));
         }
     }
 
@@ -403,13 +407,7 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
     /// </remarks>
     internal static bool AreSameSeries(SeriesContext x, SeriesContext y)
     {
-        return x.ExperimentName == y.ExperimentName &&
-               x.SimulationName == y.SimulationName &&
-               x.Gridcell.Equals(y.Gridcell) &&
-               x.Stand == y.Stand &&
-               x.Patch == y.Patch &&
-               x.Individual == y.Individual &&
-               x.Pft == y.Pft;
+        return x.MatchesSeries(y);
     }
 
     /// <summary>
@@ -461,7 +459,7 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
         // TODO: do we need metadata name if all series on the plot use the same
         // data source (and therefore the same output file type)?
         string name = metadata.Name;
-        if (source.YAxisColumns.Count() > 1)
+        if (source.ValueColumns.Count() > 1)
             name = ylayer.Name;
 
         // Gridcell name should be included if there are multiple gridcells.
@@ -510,7 +508,7 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
     /// <param name="xselector">Selector for the x value. If null, x.Value will be selected.</param>
     /// <param name="yselector">Selector for the y value. If null, y.Value will be selected.</param>
     /// <returns>The merged data points.</returns>
-    private static IEnumerable<OxyDataPoint> MergeOn(
+    private static IEnumerable<(OxyDataPoint Point, double MatchValue)> MergeOn(
         IEnumerable<DataPoint> xpoints,
         IEnumerable<DataPoint> ypoints,
         Func<DataPoint, double>? xselector = null,
@@ -528,7 +526,11 @@ public class ModelOutputReader : IDataProvider<ModelOutput>
             IEnumerable<DataPoint> matches = ypoints
                 .Where(yi => predicates.All(p => p(x, yi)));
             foreach (DataPoint y in matches)
-                yield return new OxyDataPoint(xselector(x), yselector(y));
+            {
+                yield return (
+                    new OxyDataPoint(xselector(x), yselector(y)),
+                    DateTimeAxis.ToDouble(x.Timestamp));
+            }
         }
         // We can assume commutativity of the predicates, so there's no need for
         // double-iteration.

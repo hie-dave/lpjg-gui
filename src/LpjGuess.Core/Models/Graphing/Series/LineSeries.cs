@@ -44,4 +44,22 @@ public class LineSeries : SeriesBase
         Type = typeProvider;
         Thickness = thicknessProvider;
     }
+
+    /// <summary>
+    /// Create a line series with independent x- and y-axis data sources.
+    /// </summary>
+    public LineSeries(
+        string title,
+        IStyleProvider<Colour> colourProvider,
+        IDataSource xDataSource,
+        IDataSource yDataSource,
+        AxisPosition xAxisPosition,
+        AxisPosition yAxisPosition,
+        IStyleProvider<LineType> typeProvider,
+        IStyleProvider<LineThickness> thicknessProvider)
+        : base(title, colourProvider, xDataSource, yDataSource, xAxisPosition, yAxisPosition)
+    {
+        Type = typeProvider;
+        Thickness = thicknessProvider;
+    }
 }

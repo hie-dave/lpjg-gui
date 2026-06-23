@@ -18,7 +18,22 @@ public abstract class SeriesBase : ISeries
     public IStyleProvider<Colour> ColourProvider { get; set; }
 
     /// <inheritdoc />
-    public IDataSource DataSource { get; set; }
+    public IDataSource? XDataSource { get; set; }
+
+    /// <inheritdoc />
+    public IDataSource YDataSource { get; set; }
+
+    /// <inheritdoc />
+    [JsonIgnore]
+    public IDataSource DataSource
+    {
+        get => YDataSource;
+        set
+        {
+            XDataSource = null;
+            YDataSource = value;
+        }
+    }
 
     /// <inheritdoc />
     public AxisPosition XAxisPosition { get; set; }
@@ -44,7 +59,27 @@ public abstract class SeriesBase : ISeries
     {
         Title = title;
         ColourProvider = colourProvider;
-        DataSource = dataSource;
+        XDataSource = null;
+        YDataSource = dataSource;
+        XAxisPosition = xAxisPosition;
+        YAxisPosition = yAxisPosition;
+    }
+
+    /// <summary>
+    /// Create a series with independent x- and y-axis data sources.
+    /// </summary>
+    protected SeriesBase(
+        string title,
+        IStyleProvider<Colour> colourProvider,
+        IDataSource xDataSource,
+        IDataSource yDataSource,
+        AxisPosition xAxisPosition,
+        AxisPosition yAxisPosition)
+    {
+        Title = title;
+        ColourProvider = colourProvider;
+        XDataSource = xDataSource;
+        YDataSource = yDataSource;
         XAxisPosition = xAxisPosition;
         YAxisPosition = yAxisPosition;
     }
@@ -54,8 +89,15 @@ public abstract class SeriesBase : ISeries
     {
         return
         [
-            new AxisRequirements(DataSource.GetXAxisType(), XAxisPosition, DataSource.GetXAxisTitle()),
-            new AxisRequirements(DataSource.GetYAxisType(), YAxisPosition, DataSource.GetYAxisTitle())
+            new AxisRequirements(
+                XDataSource?.GetYAxisType() ?? YDataSource.GetXAxisType(),
+                XAxisPosition,
+                XDataSource?.GetYAxisTitle() ?? YDataSource.GetXAxisTitle()),
+            new AxisRequirements(
+                YDataSource.GetYAxisType(),
+                YAxisPosition,
+                YDataSource.GetYAxisTitle())
         ];
     }
+
 }

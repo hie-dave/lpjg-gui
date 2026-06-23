@@ -29,10 +29,11 @@ public interface ISeriesView<T> : IView where T : ISeries
     void Populate(T series);
 
     /// <summary>
-    /// Show the specified data source view.
+    /// Show the data source views used by the series.
     /// </summary>
-    /// <param name="view">The view to show.</param>
-    void ShowDataSourceView(IDataSourceView view);
+    /// <param name="yView">The y-axis data source view.</param>
+    /// <param name="xView">The independent x-axis data source view, if enabled.</param>
+    void ShowDataSourceViews(IDataSourceView yView, IDataSourceView? xView);
 
     /// <summary>
     /// Set the allowed style variation strategies.

@@ -1,4 +1,5 @@
 using Gtk;
+using LpjGuess.Core.Interfaces;
 using LpjGuess.Core.Interfaces.Graphing;
 using LpjGuess.Core.Models.Graphing;
 using LpjGuess.Core.Models.Graphing.Series;
@@ -20,6 +21,7 @@ using LpjGuess.Core.Models.Graphing.Style;
 using LpjGuess.Core.Interfaces.Graphing.Style;
 using System.ComponentModel;
 using LpjGuess.Core.Models.Graphing.Style.Providers;
+using LpjGuess.Frontend.Serialisation.Json;
 
 namespace LpjGuess.Frontend.Views;
 
@@ -35,6 +37,11 @@ public abstract class SeriesViewBase<T> : ViewBase<Box>, ISeriesView<T> where T 
     /// The property name of the rgba property on the colour button.
     /// </summary>
     private const string rgbaProperty = "rgba";
+
+    /// <summary>
+    /// Name of the GtkSwitch active property.
+    /// </summary>
+    private const string activeProperty = "active";
 
     /// <summary>
     /// The grid widget containing the controls.
@@ -72,6 +79,16 @@ public abstract class SeriesViewBase<T> : ViewBase<Box>, ISeriesView<T> where T 
     private readonly StringDropDownView<DataSourceType> dataSourceTypeDropdown;
 
     /// <summary>
+    /// Switch controlling whether the series uses an independent x data source.
+    /// </summary>
+    private readonly Switch separateXDataSourceSwitch;
+
+    /// <summary>
+    /// The series currently displayed by the view.
+    /// </summary>
+    private T? series;
+
+    /// <summary>
     /// The number of rows of widgets currently in the grid.
     /// </summary>
     private int nrow = 0;
@@ -85,6 +102,7 @@ public abstract class SeriesViewBase<T> : ViewBase<Box>, ISeriesView<T> where T 
         OnDataSourceTypeChanged = new Event<DataSourceType>();
 
         widget.SetOrientation(Orientation.Vertical);
+        widget.Spacing = 6;
 
         // Create container widget for controls.
         container = Grid.New();
@@ -116,6 +134,11 @@ public abstract class SeriesViewBase<T> : ViewBase<Box>, ISeriesView<T> where T 
         dataSourceTypeDropdown = new StringDropDownView<DataSourceType>(Enum.GetName!);
         dataSourceTypeDropdown.Populate(Enum.GetValues<DataSourceType>());
 
+        separateXDataSourceSwitch = Switch.New();
+        separateXDataSourceSwitch.Halign = Align.Start;
+        separateXDataSourceSwitch.Valign = Align.Center;
+        AddControl("Separate X data source", separateXDataSourceSwitch);
+
         // Pack children into this widget.
         widget.Append(container);
 
@@ -141,6 +164,7 @@ public abstract class SeriesViewBase<T> : ViewBase<Box>, ISeriesView<T> where T 
     /// <inheritdoc />
     public void Populate(T series)
     {
+        this.series = series;
         DisconnectBaseClassEvents();
 
         titleEntry.SetText(series.Title);
@@ -160,6 +184,8 @@ public abstract class SeriesViewBase<T> : ViewBase<Box>, ISeriesView<T> where T 
         colourStrategyDropdown.Select(series.ColourProvider.GetStrategy());
         xAxisPositionDropdown.Select(series.XAxisPosition);
         yAxisPositionDropdown.Select(series.YAxisPosition);
+        separateXDataSourceSwitch.Active = series.XDataSource is not null;
+        separateXDataSourceSwitch.State = series.XDataSource is not null;
 
         ConnectBaseClassEvents();
 
@@ -167,21 +193,13 @@ public abstract class SeriesViewBase<T> : ViewBase<Box>, ISeriesView<T> where T 
     }
 
     /// <inheritdoc />
-    public void ShowDataSourceView(IDataSourceView view)
+    public void ShowDataSourceViews(IDataSourceView yView, IDataSourceView? xView)
     {
-        // FIXME: Should probably remove any existing data source views.
-        AddControl("Data source type", dataSourceTypeDropdown.GetWidget());
-        dataSourceTypeDropdown.OnSelectionChanged.ConnectTo(OnDataSourceTypeChanged);
-        foreach (INamedView namedView in view.GetGridConfigViews())
-            AddControl(namedView.Name, namedView.View.GetWidget());
-
-        // FIXME: Should remove existing extra config views.
-        foreach (INamedView named in view.GetExtraConfigViews())
-        {
-            Frame frame = Frame.New(named.Name);
-            frame.SetChild(named.View.GetWidget());
-            widget.Append(frame);
-        }
+        if (xView is not null)
+            widget.Append(CreateDataSourceFrame("X data source", xView));
+        widget.Append(CreateDataSourceFrame(
+            xView is null ? "Data source" : "Y data source",
+            yView));
     }
 
     /// <inheritdoc />
@@ -239,6 +257,7 @@ public abstract class SeriesViewBase<T> : ViewBase<Box>, ISeriesView<T> where T 
         xAxisPositionDropdown.OnSelectionChanged.ConnectTo(OnXAxisPositionChanged);
         yAxisPositionDropdown.OnSelectionChanged.ConnectTo(OnYAxisPositionChanged);
         colourStrategyDropdown.OnSelectionChanged.ConnectTo(OnColourStrategyChanged);
+        separateXDataSourceSwitch.OnNotify += OnSeparateXDataSourceChanged;
     }
 
     /// <summary>
@@ -251,6 +270,57 @@ public abstract class SeriesViewBase<T> : ViewBase<Box>, ISeriesView<T> where T 
         xAxisPositionDropdown.OnSelectionChanged.DisconnectAll();
         yAxisPositionDropdown.OnSelectionChanged.DisconnectAll();
         colourStrategyDropdown.OnSelectionChanged.DisconnectAll();
+        separateXDataSourceSwitch.OnNotify -= OnSeparateXDataSourceChanged;
+    }
+
+    /// <summary>
+    /// Build a frame containing all controls for a data source.
+    /// </summary>
+    private static Frame CreateDataSourceFrame(string title, IDataSourceView view)
+    {
+        Grid grid = Grid.New();
+        grid.RowSpacing = 6;
+        grid.ColumnSpacing = 6;
+        int row = 0;
+
+        foreach (INamedView named in view.GetGridConfigViews())
+        {
+            Label label = Label.New($"{named.Name}:");
+            label.Halign = Align.Start;
+            grid.Attach(label, 0, row, 1, 1);
+            grid.Attach(named.View.GetWidget(), 1, row, 1, 1);
+            row++;
+        }
+
+        Box contents = Box.New(Orientation.Vertical, 6);
+        contents.Append(grid);
+        foreach (INamedView named in view.GetExtraConfigViews())
+        {
+            Frame extra = Frame.New(named.Name);
+            extra.SetChild(named.View.GetWidget());
+            contents.Append(extra);
+        }
+
+        Frame frame = Frame.New(title);
+        frame.SetChild(contents);
+        return frame;
+    }
+
+    /// <summary>
+    /// Enable or disable an independent x-axis data source.
+    /// </summary>
+    private void OnSeparateXDataSourceChanged(Object sender, NotifySignalArgs args)
+    {
+        if (args.Pspec.GetName() != activeProperty || series is null)
+            return;
+
+        IDataSource? newSource = separateXDataSourceSwitch.Active
+            ? JsonSerialisation.DeepCloneRuntimeType(series.YDataSource)
+            : null;
+        OnEditSeries.Invoke(new ModelChangeEventArgs<T, IDataSource?>(
+            s => s.XDataSource,
+            (s, value) => s.XDataSource = value,
+            newSource));
     }
 
     /// <summary>

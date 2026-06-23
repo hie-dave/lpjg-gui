@@ -91,4 +91,29 @@ public static class JsonSerialisation
         return JsonConvert.DeserializeObject<T>(json, settings ?? DefaultSettings) ??
                throw new InvalidOperationException("Failed to deserialize cloned object");
     }
+
+    /// <summary>
+    /// Deep clone an object using its runtime type rather than its declared
+    /// interface or base type.
+    /// </summary>
+    /// <typeparam name="T">The declared type returned to the caller.</typeparam>
+    /// <param name="source">The object to clone.</param>
+    /// <param name="settings">Optional custom serialization settings.</param>
+    /// <returns>A deep clone of the source object.</returns>
+    public static T DeepCloneRuntimeType<T>(
+        T source,
+        JsonSerializerSettings? settings = null)
+    {
+        if (source == null)
+            throw new ArgumentNullException(nameof(source));
+
+        JsonSerializerSettings effectiveSettings = settings ?? DefaultSettings;
+        string json = JsonConvert.SerializeObject(source, effectiveSettings);
+        object clone = JsonConvert.DeserializeObject(
+            json,
+            source.GetType(),
+            effectiveSettings) ??
+            throw new InvalidOperationException("Failed to deserialize cloned object");
+        return (T)clone;
+    }
 }

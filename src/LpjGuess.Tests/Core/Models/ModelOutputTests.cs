@@ -11,6 +11,17 @@ namespace LpjGuess.Tests.Core.Models;
 
 public class ModelOutputTests
 {
+    [Fact]
+    public void ValueColumns_AliasYAxisColumns()
+    {
+        var model = new ModelOutput("file_lai", "Date", ["Total"], []);
+
+        model.ValueColumns = ["TeBE"];
+
+        Assert.Equal(["TeBE"], model.YAxisColumns);
+        Assert.Equal(["TeBE"], model.ValueColumns);
+    }
+
     private sealed class NeverFilter : IDataFilter
     {
         public bool IsFiltered(SeriesContext context) => false;

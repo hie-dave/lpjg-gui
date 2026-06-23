@@ -1,4 +1,5 @@
 using System.Data;
+using LpjGuess.Core.Interfaces;
 using LpjGuess.Core.Models;
 using LpjGuess.Core.Models.Importer;
 using LpjGuess.Core.Interfaces.Graphing;
@@ -95,7 +96,7 @@ public class OxyPlotConverter
             plot.Axes.Add(axis);
 
         // Add series.
-        int nseries = graph.Series.Sum(s => dataProviderFactory.GetNumSeries(s.DataSource));
+        int nseries = graph.Series.Sum(GetNumSeries);
         StyleContext context = new StyleContext(nseries);
         foreach (ISeries series in graph.Series)
         {
@@ -179,7 +180,7 @@ public class OxyPlotConverter
         {
             if (!string.IsNullOrWhiteSpace(graph.Series[0].Title))
                 return graph.Series[0].Title;
-            return graph.Series[0].DataSource.GetName();
+            return graph.Series[0].YDataSource.GetName();
         }
 
         return "";
@@ -228,7 +229,7 @@ public class OxyPlotConverter
         string title = titles.First();
         if (!string.IsNullOrWhiteSpace(title))
             return title;
-        IEnumerable<string> dataNames = graph.Series.Select(s => dataProviderFactory.GetName(s.DataSource));
+        IEnumerable<string> dataNames = graph.Series.Select(s => dataProviderFactory.GetName(s.YDataSource));
         if (dataNames.Distinct().Count() != 1)
             return graph.Title;
         return dataNames.First();
@@ -289,10 +290,92 @@ public class OxyPlotConverter
     /// <returns>An OxyPlot Series.</returns>
     public async Task<IEnumerable<OxySeries>> ToOxySeriesAsync(ISeries series, StyleContext context, CancellationToken ct)
     {
-        // FIXME - this probably doesn't work. Need to rethink the data provider API.
-        IEnumerable<SeriesData> data = await dataProviderFactory.ReadAsync(series.DataSource, ct);
+        IEnumerable<SeriesData> data;
+        if (series.XDataSource is null)
+        {
+            data = await dataProviderFactory.ReadAsync(series.YDataSource, ct);
+        }
+        else
+        {
+            Task<IEnumerable<SeriesData>> xTask =
+                dataProviderFactory.ReadAsync(series.XDataSource, ct);
+            Task<IEnumerable<SeriesData>> yTask =
+                dataProviderFactory.ReadAsync(series.YDataSource, ct);
+            await Task.WhenAll(xTask, yTask);
+            data = MergeDataSources(
+                SelectAxisValue(series.XDataSource, xTask.Result),
+                SelectAxisValue(series.YDataSource, yTask.Result));
+        }
 
         return data.Select(seriesData => CreateOxySeries(series, seriesData, context));
+    }
+
+    /// <summary>
+    /// Dedicated axes produce one value column even if an older graph contains
+    /// multiple configured columns.
+    /// </summary>
+    private static IEnumerable<SeriesData> SelectAxisValue(
+        IDataSource source,
+        IEnumerable<SeriesData> data)
+    {
+        if (source is not ModelOutput output)
+            return data;
+
+        string? column = output.ValueColumns.FirstOrDefault();
+        return column is null
+            ? []
+            : data.Where(series => series.Context.Layer == column);
+    }
+
+    /// <summary>
+    /// Combine independent data sources into plotted x/y values.
+    /// </summary>
+    /// <remarks>
+    /// Series are matched by context, ignoring their layer names. Points are
+    /// matched using their intrinsic x-value, which is normally a timestamp.
+    /// The plotted values are the y-values supplied by each source.
+    /// </remarks>
+    internal static IEnumerable<SeriesData> MergeDataSources(
+        IEnumerable<SeriesData> xData,
+        IEnumerable<SeriesData> yData)
+    {
+        List<SeriesData> ySeries = yData.ToList();
+        foreach (SeriesData xSeries in xData)
+        {
+            foreach (SeriesData matchingY in ySeries
+                .Where(y => xSeries.Context.MatchesSeries(y.Context)))
+            {
+                var xPoints = xSeries.Data.Zip(
+                    xSeries.MatchValues,
+                    (point, match) => (Point: point, Match: match));
+                var yPoints = matchingY.Data.Zip(
+                    matchingY.MatchValues,
+                    (point, match) => (Point: point, Match: match))
+                    .ToList();
+                IEnumerable<DataPoint> points = xPoints.SelectMany(
+                    x => yPoints
+                        .Where(y => x.Match == y.Match)
+                        .Select(y => new DataPoint(x.Point.Y, y.Point.Y)));
+
+                yield return new SeriesData(
+                    $"{matchingY.Name} vs {xSeries.Name}",
+                    matchingY.Context,
+                    points);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Estimate the number of rendered series for style initialization.
+    /// </summary>
+    private int GetNumSeries(ISeries series)
+    {
+        int yCount = dataProviderFactory.GetNumSeries(series.YDataSource);
+        if (series.XDataSource is null)
+            return yCount;
+
+        int xCount = dataProviderFactory.GetNumSeries(series.XDataSource);
+        return xCount * yCount;
     }
 
     private OxySeries CreateOxySeries(ISeries series, SeriesData data, StyleContext context)

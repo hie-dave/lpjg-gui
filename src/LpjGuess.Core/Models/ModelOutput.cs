@@ -40,6 +40,21 @@ public class ModelOutput : IDataSource
     }
 
     /// <summary>
+    /// Columns whose values are produced by this data source.
+    /// </summary>
+    /// <remarks>
+    /// This is the axis-neutral name for <see cref="YAxisColumns"/>. The
+    /// legacy property remains the serialized representation for backwards
+    /// compatibility.
+    /// </remarks>
+    [Newtonsoft.Json.JsonIgnore]
+    public IEnumerable<string> ValueColumns
+    {
+        get => YAxisColumns;
+        set => YAxisColumns = value;
+    }
+
+    /// <summary>
     /// The data filters.
     /// </summary>
     public List<IDataFilter> Filters { get; set; }
@@ -98,7 +113,7 @@ public class ModelOutput : IDataSource
     public string GetYAxisTitle()
     {
         OutputFileMetadata metadata = OutputFileDefinitions.GetMetadata(OutputFileType);
-        IEnumerable<Unit> units = YAxisColumns.Select(metadata.Layers.GetUnits);
+        IEnumerable<Unit> units = ValueColumns.Select(metadata.Layers.GetUnits);
         int nunits = units.Select(u => u.Name).Distinct().Count();
         if (nunits > 1)
             return metadata.Name;

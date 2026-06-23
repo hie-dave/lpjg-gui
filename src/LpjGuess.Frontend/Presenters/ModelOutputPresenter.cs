@@ -121,7 +121,7 @@ public class ModelOutputPresenter : PresenterBase<IModelOutputView, ModelOutput>
 
         IEnumerable<string> columns = GetColumns(DataSource.OutputFileType)
                 .Append(DataSource.XAxisColumn)
-                .Concat(DataSource.YAxisColumns)
+                .Concat(DataSource.ValueColumns)
                 .Distinct();
 
         IEnumerable<string> ycols = columns
@@ -144,7 +144,7 @@ public class ModelOutputPresenter : PresenterBase<IModelOutputView, ModelOutput>
             ycols,
             outputFileType,
             DataSource.XAxisColumn,
-            DataSource.YAxisColumns,
+            DataSource.ValueColumns,
             filterPresenters.Select(p => p.GetView()));
     }
 
@@ -337,9 +337,9 @@ public class ModelOutputPresenter : PresenterBase<IModelOutputView, ModelOutput>
             // A command to change the y-axis column.
             new PropertyChangeCommand<ModelOutput, IEnumerable<string>>(
                 DataSource,
-                DataSource.YAxisColumns,
+                DataSource.ValueColumns,
                 [ycol],
-                (m, v) => m.YAxisColumns = v)
+                (m, v) => m.ValueColumns = v)
         ];
 
         ICommand command = new CompositeCommand(commands);

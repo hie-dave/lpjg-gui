@@ -82,7 +82,13 @@ public abstract class SeriesValidationCommand<T> : ICommand where T : ISeries
         IStyleProvider<TStyle> provider = getter(series);
         StyleVariationStrategy strategy = provider.GetStrategy();
 
-        var allowedStrategies = series.DataSource.GetAllowedStyleVariationStrategies();
+        IEnumerable<StyleVariationStrategy> allowedStrategies =
+            series.YDataSource.GetAllowedStyleVariationStrategies();
+        if (series.XDataSource is not null)
+        {
+            allowedStrategies = allowedStrategies.Intersect(
+                series.XDataSource.GetAllowedStyleVariationStrategies());
+        }
         if (!allowedStrategies.Contains(StyleVariationStrategy.Fixed))
             allowedStrategies = allowedStrategies.Append(StyleVariationStrategy.Fixed);
         return allowedStrategies.Contains(strategy);

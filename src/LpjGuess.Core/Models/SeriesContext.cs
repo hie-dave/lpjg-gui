@@ -101,6 +101,21 @@ public readonly struct SeriesContext
         return HashCode.Combine(ExperimentName, SimulationName, Gridcell, Layer, Stand, Patch, Individual, Pft);
     }
 
+    /// <summary>
+    /// Determine whether another context represents the same series, ignoring
+    /// the data layer.
+    /// </summary>
+    public bool MatchesSeries(SeriesContext other)
+    {
+        return ExperimentName == other.ExperimentName &&
+               SimulationName == other.SimulationName &&
+               Gridcell.Equals(other.Gridcell) &&
+               Stand == other.Stand &&
+               Patch == other.Patch &&
+               Individual == other.Individual &&
+               Pft == other.Pft;
+    }
+
     /// <inheritdoc />
     public override string ToString()
     {        return $"{ExperimentName} - {SimulationName} - {Gridcell} - {Layer}" +

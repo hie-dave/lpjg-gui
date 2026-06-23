@@ -19,7 +19,20 @@ public interface ISeries
     IStyleProvider<Colour> ColourProvider { get; set; }
 
     /// <summary>
-    /// The source for data displayed in the series.
+    /// An optional independent source for values displayed on the x-axis.
+    /// When null, the intrinsic x-values from <see cref="YDataSource"/> are
+    /// used.
+    /// </summary>
+    IDataSource? XDataSource { get; set; }
+
+    /// <summary>
+    /// The source for values displayed on the y-axis.
+    /// </summary>
+    IDataSource YDataSource { get; set; }
+
+    /// <summary>
+    /// Backwards-compatible alias for <see cref="YDataSource"/>.
+    /// Assigning this property also clears <see cref="XDataSource"/>.
     /// </summary>
     IDataSource DataSource { get; set; }
 

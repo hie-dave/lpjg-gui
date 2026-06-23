@@ -33,6 +33,17 @@ public class ModelOutputView : IModelOutputView
     private readonly ColumnSelectionView yAxisColumnView;
 
     /// <summary>
+    /// The view for selecting the single value column used by a dedicated
+    /// x- or y-axis data source.
+    /// </summary>
+    private readonly StringDropDownView valueColumnView;
+
+    /// <summary>
+    /// How this data source is used by its parent series.
+    /// </summary>
+    private DataSourceRole role;
+
+    /// <summary>
     /// The view for selecting the filters.
     /// </summary>
     private readonly ListBoxPopoverView filtersView;
@@ -78,6 +89,12 @@ public class ModelOutputView : IModelOutputView
         yAxisColumnView.GetWidget().Hexpand = true;
         yAxisColumnView.OnSelectionChanged.ConnectTo(OnYAxisColumnChanged);
 
+        valueColumnView = new StringDropDownView();
+        valueColumnView.GetWidget().Hexpand = true;
+        valueColumnView.OnSelectionChanged.ConnectTo(OnValueColumnChanged);
+
+        role = DataSourceRole.Combined;
+
         filtersView = new ListBoxPopoverView(factory.CreateLogger<ListBoxPopoverView>());
         filtersView.AddText = "Add Filter";
         filtersView.OnRemove.ConnectTo(OnFilterRemoved);
@@ -86,11 +103,28 @@ public class ModelOutputView : IModelOutputView
     /// <inheritdoc/>
     public IEnumerable<INamedView> GetGridConfigViews()
     {
-        return [
-            new NamedView(fileTypeView, "Output file"),
-            new NamedView(xAxisColumnView, "X-axis column"),
-            new NamedView(yAxisColumnView, "Y-axis columns")
-        ];
+        return role switch
+        {
+            DataSourceRole.XAxis => [
+                new NamedView(fileTypeView, "Output file"),
+                new NamedView(valueColumnView, "X-axis column")
+            ],
+            DataSourceRole.YAxis => [
+                new NamedView(fileTypeView, "Output file"),
+                new NamedView(valueColumnView, "Y-axis column")
+            ],
+            _ => [
+                new NamedView(fileTypeView, "Output file"),
+                new NamedView(xAxisColumnView, "X-axis column"),
+                new NamedView(yAxisColumnView, "Y-axis columns")
+            ]
+        };
+    }
+
+    /// <inheritdoc/>
+    public void SetRole(DataSourceRole role)
+    {
+        this.role = role;
     }
 
     /// <inheritdoc/>
@@ -122,11 +156,15 @@ public class ModelOutputView : IModelOutputView
         fileTypeView.Populate(fileTypes);
         xAxisColumnView.Populate(xcols);
         yAxisColumnView.Populate(ycols);
+        valueColumnView.Populate(ycols);
 
         // This will fail if the collections don't contain the selected values.
         fileTypeView.Select(fileType);
         xAxisColumnView.Select(xColumn);
         yAxisColumnView.Select(selectedColumns);
+        string? selectedValue = selectedColumns.FirstOrDefault();
+        if (selectedValue is not null)
+            valueColumnView.Select(selectedValue);
 
         filtersView.Populate(filterViews
             .Select(v => new NamedView(v, Enum.GetName(v.Strategy)!.PascalToHumanCase())));
@@ -178,9 +216,28 @@ public class ModelOutputView : IModelOutputView
         try
         {
             var change = new ModelChangeEventArgs<ModelOutput, IEnumerable<string>>(
-                m => m.YAxisColumns,
-                (m, v) => m.YAxisColumns = v,
+                m => m.ValueColumns,
+                (m, v) => m.ValueColumns = v,
                 columns);
+            OnEditDataSource.Invoke(change);
+        }
+        catch (Exception error)
+        {
+            MainView.Instance.ReportError(error);
+        }
+    }
+
+    /// <summary>
+    /// Update the single value column used by a dedicated axis source.
+    /// </summary>
+    private void OnValueColumnChanged(string column)
+    {
+        try
+        {
+            var change = new ModelChangeEventArgs<ModelOutput, IEnumerable<string>>(
+                m => m.ValueColumns,
+                (m, value) => m.ValueColumns = value,
+                [column]);
             OnEditDataSource.Invoke(change);
         }
         catch (Exception error)

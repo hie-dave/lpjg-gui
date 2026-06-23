@@ -28,4 +28,18 @@ public class ScatterSeries : SeriesBase
         : base(title, colourProvider, dataSource, xAxisPosition, yAxisPosition)
     {
     }
+
+    /// <summary>
+    /// Create a scatter series with independent x- and y-axis data sources.
+    /// </summary>
+    public ScatterSeries(
+        string title,
+        IStyleProvider<Colour> colourProvider,
+        IDataSource xDataSource,
+        IDataSource yDataSource,
+        AxisPosition xAxisPosition,
+        AxisPosition yAxisPosition)
+        : base(title, colourProvider, xDataSource, yDataSource, xAxisPosition, yAxisPosition)
+    {
+    }
 }
