@@ -2,6 +2,7 @@ using LpjGuess.Frontend.Attributes;
 using LpjGuess.Frontend.Classes;
 using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.Extensions;
+using LpjGuess.Core.Models;
 using LpjGuess.Frontend.Interfaces;
 using LpjGuess.Frontend.Interfaces.Presenters;
 using LpjGuess.Frontend.Interfaces.Views;
@@ -60,10 +61,14 @@ public class PreferencesPresenter : IPreferencesPresenter
 			preferences.PreferDarkMode,
 			preferences.GoToLogsTabOnRun,
 			preferences.SimulationPreviewParameterColumnLimit,
+			preferences.DefaultInputModule,
+			preferences.DefaultExistingOutputPolicy,
 			runnerPresenters.Select(p => p.GetMetadata()).ToList());
 		view.DarkModeChanged.ConnectTo(OnToggleDarkMode);
 		view.GoToLogsTabChanged.ConnectTo(OnToggleGoToLogs);
 		view.SimulationPreviewParameterColumnLimitChanged.ConnectTo(OnPreviewColumnLimitChanged);
+		view.DefaultInputModuleChanged.ConnectTo(OnDefaultInputModuleChanged);
+		view.DefaultExistingOutputPolicyChanged.ConnectTo(OnDefaultExistingOutputPolicyChanged);
 		view.OnAddRunner.ConnectTo(OnAddRunner);
 		view.OnDeleteRunner.ConnectTo(OnDeleteRunner);
 		view.OnEditRunner.ConnectTo(OnEditRunner);
@@ -170,6 +175,16 @@ public class PreferencesPresenter : IPreferencesPresenter
 	private void OnPreviewColumnLimitChanged(int limit)
 	{
 		preferences.SimulationPreviewParameterColumnLimit = limit;
+	}
+
+	private void OnDefaultInputModuleChanged(string inputModule)
+	{
+		preferences.DefaultInputModule = inputModule;
+	}
+
+	private void OnDefaultExistingOutputPolicyChanged(ExistingOutputPolicy policy)
+	{
+		preferences.DefaultExistingOutputPolicy = policy;
 	}
 
 	/// <summary>

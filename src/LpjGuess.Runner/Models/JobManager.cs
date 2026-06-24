@@ -137,7 +137,7 @@ public class JobManager
 	/// <param name="cancellationToken">Cancellation token.</param>
 	private async ValueTask RunJobAsync(Job job, CancellationToken cancellationToken)
 	{
-		IRunner runner = CreateRunner();
+		IRunner runner = CreateRunner(job);
 		if (runner is IMonitorableRunner monitorable)
 		{
 			monitorable.ProgressChanged += HandleProgress;
@@ -226,8 +226,11 @@ public class JobManager
 	/// <summary>
 	/// Create a runner for the job.
 	/// </summary>
-	private IRunner CreateRunner()
+	private IRunner CreateRunner(Job job)
 	{
-		return settings.RunConfig.CreateRunner(settings.InputModule);
+		string inputModule = string.IsNullOrWhiteSpace(job.InputModule)
+			? settings.InputModule
+			: job.InputModule;
+		return settings.RunConfig.CreateRunner(inputModule);
 	}
 }

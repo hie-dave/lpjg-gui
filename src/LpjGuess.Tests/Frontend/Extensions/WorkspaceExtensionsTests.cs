@@ -44,6 +44,8 @@ public class WorkspaceExtensionsTests
             "Climate",
             string.Empty,
             string.Empty,
+            "nc",
+            ExistingOutputPolicy.CleanManaged,
             [],
             [],
             new FactorialGenerator(false, [
@@ -68,26 +70,43 @@ public class WorkspaceExtensionsTests
     }
 
     [Fact]
-    public void WorkspaceRoundTrip_PreservesExistingOutputPolicy()
+    public void WorkspaceRoundTrip_PreservesExperimentRunSettings()
     {
         using TempDirectory temp = TempDirectory.Create();
         string workspaceFile = Path.Combine(temp.AbsolutePath, "workspace.lpj");
         var workspace = new Workspace
         {
             FilePath = workspaceFile,
-            ExistingOutputPolicy = ExistingOutputPolicy.CleanManaged |
-                                   ExistingOutputPolicy.PruneStale
+            Experiments =
+            [
+                new Experiment(
+                    "Experiment",
+                    string.Empty,
+                    string.Empty,
+                    "site",
+                    ExistingOutputPolicy.CleanManaged |
+                    ExistingOutputPolicy.PruneStale,
+                    [],
+                    [],
+                    new FactorialGenerator(true, []))
+            ]
         };
 
         workspace.Save();
 
         string json = File.ReadAllText(workspaceFile);
+        Assert.Contains("\"InputModule\"", json);
+        Assert.Contains("site", json);
         Assert.Contains("\"ExistingOutputPolicy\"", json);
         Assert.Contains("clean_managed", json);
         Assert.Contains("prune_stale", json);
 
         Workspace loaded = workspaceFile.LoadWorkspace();
 
-        Assert.Equal(workspace.ExistingOutputPolicy, loaded.ExistingOutputPolicy);
+        Experiment experiment = Assert.Single(loaded.Experiments);
+        Assert.Equal("site", experiment.InputModule);
+        Assert.Equal(
+            ExistingOutputPolicy.CleanManaged | ExistingOutputPolicy.PruneStale,
+            experiment.ExistingOutputPolicy);
     }
 }

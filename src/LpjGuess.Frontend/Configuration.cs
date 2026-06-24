@@ -1,4 +1,5 @@
 using LpjGuess.Frontend.Serialisation.Json;
+using LpjGuess.Core.Models;
 using LpjGuess.Runner.Models;
 
 namespace LpjGuess.Frontend;
@@ -70,6 +71,17 @@ public class Configuration
 	/// experiment preview. Zero always uses the grouped changes column.
 	/// </summary>
 	public int SimulationPreviewParameterColumnLimit { get; set; } = 6;
+
+	/// <summary>
+	/// Default input module for newly-created experiments.
+	/// </summary>
+	public string DefaultInputModule { get; set; } = "nc";
+
+	/// <summary>
+	/// Default existing-output policy for newly-created experiments.
+	/// </summary>
+	public ExistingOutputPolicy DefaultExistingOutputPolicy { get; set; } =
+		ExistingOutputPolicy.CleanManaged;
 
 	/// <summary>
 	/// Maximum number of workspaces to remember in "recent workspaces".

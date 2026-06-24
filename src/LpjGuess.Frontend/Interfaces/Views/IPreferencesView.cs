@@ -1,3 +1,4 @@
+using LpjGuess.Core.Models;
 using LpjGuess.Frontend.Delegates;
 
 namespace LpjGuess.Frontend.Interfaces.Views;
@@ -24,6 +25,16 @@ public interface IPreferencesView : IDialogView
 	/// Called when the experiment-preview parameter column limit changes.
 	/// </summary>
 	Event<int> SimulationPreviewParameterColumnLimitChanged { get; }
+
+	/// <summary>
+	/// Called when the default input module for new experiments changes.
+	/// </summary>
+	Event<string> DefaultInputModuleChanged { get; }
+
+	/// <summary>
+	/// Called when the default existing-output policy for new experiments changes.
+	/// </summary>
+	Event<ExistingOutputPolicy> DefaultExistingOutputPolicyChanged { get; }
 
 	/// <summary>
 	/// Called when the user wants to add a new runner.

@@ -1,3 +1,4 @@
+using LpjGuess.Core.Models;
 using LpjGuess.Core.Models.Factorial;
 using LpjGuess.Frontend.Classes;
 using LpjGuess.Frontend.Delegates;
@@ -26,6 +27,8 @@ public interface IExperimentView : IView
     /// <param name="name">The name of the experiment.</param>
     /// <param name="description">The description of the experiment.</param>
     /// <param name="runner">The runner to use.</param>
+    /// <param name="inputModule">The input module to use.</param>
+    /// <param name="existingOutputPolicy">Policy used when generated output already exists.</param>
     /// <param name="instructionFiles">The available instruction files, and whether they are selected in this experiment.</param>
     /// <param name="inheritPfts">Whether generated files retain their base PFT enablement.</param>
     /// <param name="pfts">Available PFTs, their base enablement, and explicit selection state.</param>
@@ -33,6 +36,8 @@ public interface IExperimentView : IView
         string name,
         string description,
         string runner,
+        string inputModule,
+        ExistingOutputPolicy existingOutputPolicy,
         IEnumerable<(string, bool)> instructionFiles,
         bool inheritPfts,
         IEnumerable<(string Name, bool EnabledByDefault, bool Selected)> pfts);

@@ -98,6 +98,8 @@ public class ExperimentPresenter : PresenterBase<IExperimentView, Experiment>, I
             model.Name,
             model.Description,
             model.Runner,
+            model.InputModule,
+            model.ExistingOutputPolicy,
             instructionFiles.Select(f => (f, !model.DisabledInsFiles.Contains(f))),
             inheritPfts,
             availablePfts.Select(p => (

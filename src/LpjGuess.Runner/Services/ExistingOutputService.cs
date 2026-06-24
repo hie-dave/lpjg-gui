@@ -99,7 +99,7 @@ public class ExistingOutputService
                           .Select(Path.GetFullPath)
                           .ToHashSet();
         }
-        catch (FileNotFoundException)
+        catch (Exception)
         {
             return [];
         }

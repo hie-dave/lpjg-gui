@@ -1,5 +1,6 @@
 using Adw;
 using Gtk;
+using LpjGuess.Core.Models;
 using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.Extensions;
 using LpjGuess.Frontend.Interfaces;
@@ -34,6 +35,25 @@ public class PreferencesView : IPreferencesView
 	private readonly Switch goToLogsTabButton;
 	private readonly Entry previewColumnLimitEntry;
 	private readonly EntryCommitter previewColumnLimitCommitter;
+	private readonly StringDropDownView defaultInputModuleDropDown;
+	private readonly StringDropDownView<ExistingOutputPolicy> defaultExistingOutputPolicyDropDown;
+
+	private static readonly string[] inputModules =
+	[
+		"nc",
+		"site",
+		"cru",
+		"fluxnet"
+	];
+
+	private static readonly ExistingOutputPolicy[] existingOutputPolicies =
+	[
+		ExistingOutputPolicy.Preserve,
+		ExistingOutputPolicy.CleanManaged,
+		ExistingOutputPolicy.PruneStale,
+		ExistingOutputPolicy.CleanManaged | ExistingOutputPolicy.PruneStale,
+		ExistingOutputPolicy.Fail
+	];
 
 	/// <summary>
 	/// Preferencse page which displays runner configurations.
@@ -48,6 +68,12 @@ public class PreferencesView : IPreferencesView
 
 	/// <inheritdoc />
 	public Event<int> SimulationPreviewParameterColumnLimitChanged { get; private init; }
+
+	/// <inheritdoc />
+	public Event<string> DefaultInputModuleChanged { get; private init; }
+
+	/// <inheritdoc />
+	public Event<ExistingOutputPolicy> DefaultExistingOutputPolicyChanged { get; private init; }
 
 	/// <inheritdoc />
 	public Event OnClose { get; private init; }
@@ -76,11 +102,15 @@ public class PreferencesView : IPreferencesView
 	/// <param name="darkMode">The initial value of the 'prefer dark mode' property.</param>
 	/// <param name="goToLogs">The initial value of the 'go to logs tab' property.</param>
 	/// <param name="previewParameterColumnLimit">Maximum dedicated parameter columns in experiment previews.</param>
+	/// <param name="defaultInputModule">Default input module for new experiments.</param>
+	/// <param name="defaultExistingOutputPolicy">Default existing-output policy for new experiments.</param>
 	/// <param name="runnerMetadata">The runners' metadata.</param>
 	public PreferencesView(
 		bool darkMode,
 		bool goToLogs,
 		int previewParameterColumnLimit,
+		string defaultInputModule,
+		ExistingOutputPolicy defaultExistingOutputPolicy,
 		IReadOnlyList<IRunnerMetadata> runnerMetadata)
 	{
 		darkModeButton = new Switch();
@@ -99,6 +129,13 @@ public class PreferencesView : IPreferencesView
 			previewColumnLimitEntry,
 			OnPreviewColumnLimitChanged,
 			ValidatePreviewColumnLimit);
+		defaultInputModuleDropDown = new StringDropDownView();
+		defaultInputModuleDropDown.Populate(inputModules);
+		defaultInputModuleDropDown.Select(defaultInputModule);
+		defaultExistingOutputPolicyDropDown =
+			new StringDropDownView<ExistingOutputPolicy>(GetExistingOutputPolicyLabel);
+		defaultExistingOutputPolicyDropDown.Populate(existingOutputPolicies);
+		defaultExistingOutputPolicyDropDown.Select(defaultExistingOutputPolicy);
 
 		ActionRow darkModeRow = new ActionRow();
 		darkModeRow.Title = "Prefer dark mode";
@@ -116,10 +153,22 @@ public class PreferencesView : IPreferencesView
 			"Use dedicated parameter columns up to this count. Set to 0 to always group changes.";
 		previewColumnLimitRow.AddSuffix(previewColumnLimitEntry);
 
+		ActionRow inputModuleRow = new ActionRow();
+		inputModuleRow.Title = "Default input module";
+		inputModuleRow.Subtitle = "Used when a new experiment is created.";
+		inputModuleRow.AddSuffix(defaultInputModuleDropDown.GetWidget());
+
+		ActionRow existingOutputPolicyRow = new ActionRow();
+		existingOutputPolicyRow.Title = "Default existing-output policy";
+		existingOutputPolicyRow.Subtitle = "Used when a new experiment is created.";
+		existingOutputPolicyRow.AddSuffix(defaultExistingOutputPolicyDropDown.GetWidget());
+
 		PreferencesGroup generalGroup = new PreferencesGroup();
 		generalGroup.Add(darkModeRow);
 		generalGroup.Add(goToLogsTabRow);
 		generalGroup.Add(previewColumnLimitRow);
+		generalGroup.Add(inputModuleRow);
+		generalGroup.Add(existingOutputPolicyRow);
 
 		PreferencesPage generalPage = new PreferencesPage();
 		generalPage.Title = "Settings";
@@ -137,6 +186,8 @@ public class PreferencesView : IPreferencesView
 		DarkModeChanged = new Event<bool>();
 		GoToLogsTabChanged = new Event<bool>();
 		SimulationPreviewParameterColumnLimitChanged = new Event<int>();
+		DefaultInputModuleChanged = new Event<string>();
+		DefaultExistingOutputPolicyChanged = new Event<ExistingOutputPolicy>();
 		OnClose = new Event();
 		OnAddRunner = new Event();
 		OnDeleteRunner = new Event<int>();
@@ -185,6 +236,8 @@ public class PreferencesView : IPreferencesView
 	{
 		darkModeButton.OnStateSet += OnToggleDarkMode;
 		goToLogsTabButton.OnStateSet += OnToggleGoToLogsTab;
+		defaultInputModuleDropDown.OnSelectionChanged.ConnectTo(OnDefaultInputModuleChanged);
+		defaultExistingOutputPolicyDropDown.OnSelectionChanged.ConnectTo(OnDefaultExistingOutputPolicyChanged);
 		window.OnCloseRequest += OnWindowClosed;
 
 		ConnectRunnerEvents();
@@ -197,10 +250,14 @@ public class PreferencesView : IPreferencesView
 	{
 		darkModeButton.OnStateSet -= OnToggleDarkMode;
 		goToLogsTabButton.OnStateSet -= OnToggleGoToLogsTab;
+		defaultInputModuleDropDown.OnSelectionChanged.DisconnectFrom(OnDefaultInputModuleChanged);
+		defaultExistingOutputPolicyDropDown.OnSelectionChanged.DisconnectFrom(OnDefaultExistingOutputPolicyChanged);
 		window.OnCloseRequest -= OnWindowClosed;
 		DarkModeChanged.DisconnectAll();
 		GoToLogsTabChanged.DisconnectAll();
 		SimulationPreviewParameterColumnLimitChanged.DisconnectAll();
+		DefaultInputModuleChanged.DisconnectAll();
+		DefaultExistingOutputPolicyChanged.DisconnectAll();
 		OnClose.DisconnectAll();
 		DisconnectRunnerEvents();
 	}
@@ -286,10 +343,33 @@ public class PreferencesView : IPreferencesView
 		SimulationPreviewParameterColumnLimitChanged.Invoke(int.Parse(value));
 	}
 
+	private void OnDefaultInputModuleChanged(string inputModule)
+	{
+		DefaultInputModuleChanged.Invoke(inputModule);
+	}
+
+	private void OnDefaultExistingOutputPolicyChanged(ExistingOutputPolicy policy)
+	{
+		DefaultExistingOutputPolicyChanged.Invoke(policy);
+	}
+
 	private static string? ValidatePreviewColumnLimit(string value)
 	{
 		return int.TryParse(value, out int limit) && limit >= 0
 			? null
 			: "Column limit must be a whole number of zero or greater.";
+	}
+
+	private static string GetExistingOutputPolicyLabel(ExistingOutputPolicy policy)
+	{
+		return policy switch
+		{
+			ExistingOutputPolicy.Preserve => "Preserve existing outputs",
+			ExistingOutputPolicy.CleanManaged => "Clean rerun simulations",
+			ExistingOutputPolicy.PruneStale => "Remove stale simulations",
+			ExistingOutputPolicy.CleanManaged | ExistingOutputPolicy.PruneStale => "Clean and remove stale simulations",
+			ExistingOutputPolicy.Fail => "Fail if outputs exist",
+			_ => policy.ToConfigString()
+		};
 	}
 }

@@ -20,12 +20,17 @@ public class SimulationService : ISimulationService
 	private readonly SimulationGeneratorConfig config;
 
 	/// <summary>
+	/// Input module to use for generated jobs.
+	/// </summary>
+	private readonly string inputModule;
+
+	/// <summary>
 	/// Create a new <see cref="SimulationService"/> instance for the specified
 	/// simulation batch.
 	/// </summary>
 	/// <param name="batch">The simulation batch.</param>
 	public SimulationService(SimulationBatch batch)
-		: this(batch.PathResolver, batch.GeneratorConfig)
+		: this(batch.PathResolver, batch.GeneratorConfig, batch.InputModule)
 	{
 	}
 
@@ -34,10 +39,15 @@ public class SimulationService : ISimulationService
 	/// </summary>
 	/// <param name="pathResolver">The path resolver.</param>
 	/// <param name="config">The configuration to use.</param>
-	public SimulationService(IPathResolver pathResolver, SimulationGeneratorConfig config)
+	/// <param name="inputModule">Input module to use for generated jobs.</param>
+	public SimulationService(
+		IPathResolver pathResolver,
+		SimulationGeneratorConfig config,
+		string inputModule = "nc")
 	{
 		this.pathResolver = pathResolver;
 		this.config = config;
+		this.inputModule = inputModule;
 	}
 
 	/// <summary>
@@ -123,6 +133,6 @@ public class SimulationService : ISimulationService
 
 		// Return a job object encapsulating this information.
 		string jobName = Path.GetFileNameWithoutExtension(targetInsFile);
-		return new Job(jobName, targetInsFile, manifest);
+		return new Job(jobName, targetInsFile, manifest, inputModule);
 	}
 }

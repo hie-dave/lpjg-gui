@@ -46,14 +46,17 @@ public sealed class ExperimentRunner
 
         JobManagerConfiguration jobSettings = config.Settings.ToJobManagerConfig();
 
-        SimulationBatch batch = new SimulationBatch(resolver, generatorConfig);
+        SimulationBatch batch = new SimulationBatch(
+            resolver,
+            generatorConfig,
+            config.Settings.InputModule,
+            cleanupPolicy);
         RunPlan plan = new RunPlan([batch], jobSettings);
 
         var logger = LoggerFactory.Create(builder => builder.AddConsole()).CreateLogger<ExistingOutputService>();
         ExistingOutputService cleanupService = new ExistingOutputService(logger);
         RunOrchestrator orchestrator = new RunOrchestrator(cleanupService);
-        return await orchestrator.RunAsync(plan, cleanupPolicy, reporter,
-                                           helper, ct);
+        return await orchestrator.RunAsync(plan, reporter, helper, ct);
     }
 
     /// <summary>

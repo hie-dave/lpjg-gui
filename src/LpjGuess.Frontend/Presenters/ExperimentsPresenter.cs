@@ -1,5 +1,6 @@
 using LpjGuess.Core.Models.Factorial;
 using LpjGuess.Core.Models.Factorial.Generators;
+using LpjGuess.Core.Models;
 using LpjGuess.Frontend.Attributes;
 using LpjGuess.Frontend.Commands;
 using LpjGuess.Frontend.Data.Providers;
@@ -103,6 +104,8 @@ public class ExperimentsPresenter : PresenterBase<IExperimentsView, List<Experim
             "New Experiment",
             "Description",
             Configuration.Instance.GetDefaultRunner()?.Name ?? string.Empty,
+            Configuration.Instance.DefaultInputModule,
+            Configuration.Instance.DefaultExistingOutputPolicy,
             [],
             [],
             new FactorialGenerator(true, [])

@@ -32,20 +32,18 @@ public sealed class RunOrchestrator
     /// Execute the specified simulation plan, and return a summary of results.
     /// </summary>
     /// <param name="plan">The simulation plan to execute.</param>
-    /// <param name="cleanupPolicy">Policy for handling existing output.</param>
     /// <param name="progressReporter">Reporter for progress updates.</param>
     /// <param name="outputHelper">Helper for output operations.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>A summary of the experiment results.</returns>
     public async Task<ExperimentResult> RunAsync(
         RunPlan plan,
-        ExistingOutputPolicy cleanupPolicy,
         IProgressReporter progressReporter,
         IOutputHelper outputHelper,
         CancellationToken ct)
     {
         foreach (SimulationBatch batch in plan.Batches)
-            CleanBatch(batch, cleanupPolicy);
+            CleanBatch(batch);
 
         List<Job> jobs = new();
         foreach (SimulationBatch batch in plan.Batches)
@@ -82,8 +80,8 @@ public sealed class RunOrchestrator
             jobManager.GetJobDuration(j))), exception?.Message);
     }
 
-    private void CleanBatch(SimulationBatch batch, ExistingOutputPolicy cleanupPolicy)
+    private void CleanBatch(SimulationBatch batch)
     {
-        cleanupService.Apply(batch, cleanupPolicy);
+        cleanupService.Apply(batch, batch.ExistingOutputPolicy);
     }
 }

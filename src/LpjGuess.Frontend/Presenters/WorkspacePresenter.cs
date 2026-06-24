@@ -125,13 +125,11 @@ public class WorkspacePresenter : PresenterBase<IWorkspaceView, Workspace>, IWor
 
 		// Populate views.
 		PopulateRunners();
-		view.SetExistingOutputPolicy(GetExistingOutputPolicy());
 
 		// Connect events.
 		view.OnRun.ConnectTo(OnRun);
 		view.OnStop.ConnectTo(OnStop);
 		view.OnAddRunOption.ConnectTo(OnConfigureRunners);
-		view.OnExistingOutputPolicyChanged.ConnectTo(OnExistingOutputPolicyChanged);
 		insFilesPresenter.OnAddInsFile.ConnectTo(OnAddInsFile);
 		insFilesPresenter.OnRemoveInsFile.ConnectTo(OnRemoveInsFile);
 
@@ -210,6 +208,7 @@ public class WorkspacePresenter : PresenterBase<IWorkspaceView, Workspace>, IWor
 	{
 		try
 		{
+			Configuration.Instance.Save();
 			propertiesPresenter?.Dispose();
 			propertiesPresenter = null;
 			PopulateRunners();
@@ -320,18 +319,25 @@ public class WorkspacePresenter : PresenterBase<IWorkspaceView, Workspace>, IWor
 				new ResultCatalog());
 
 			IPathResolver pathResolver = pathHelper.CreatePathResolver(experiment);
-			batches.Add(new SimulationBatch(pathResolver, config));
+			batches.Add(new SimulationBatch(
+				pathResolver,
+				config,
+				experiment.InputModule,
+				experiment.ExistingOutputPolicy));
 		}
 
 		CustomProgressReporter progress = new CustomProgressReporter(ProgressCallback);
 		IOutputHelper outputHandler = new CustomOutputHelper(StdoutCallback, StderrCallback);
 		
-		JobManagerConfiguration configuration = new JobManagerConfiguration(runConfig, cpuCount, false, view.InputModule);
+		JobManagerConfiguration configuration = new JobManagerConfiguration(
+			runConfig,
+			cpuCount,
+			false,
+			Configuration.Instance.DefaultInputModule);
 
 		RunPlan plan = new RunPlan(batches, configuration);
 		Task<ExperimentResult> runTask = orchestrator.RunAsync(
 			plan,
-			GetExistingOutputPolicy(),
 			progress,
 			outputHandler,
 			cancellationTokenSource.Token);
@@ -391,25 +397,6 @@ public class WorkspacePresenter : PresenterBase<IWorkspaceView, Workspace>, IWor
 		}
 
 		Run(config);
-	}
-
-	/// <summary>
-	/// Called when the user changes the existing output policy.
-	/// </summary>
-	/// <param name="policy">The new policy.</param>
-	private void OnExistingOutputPolicyChanged(ExistingOutputPolicy policy)
-	{
-		model.ExistingOutputPolicy = policy;
-		model.Save();
-	}
-
-	/// <summary>
-	/// Get the workspace's existing output policy.
-	/// </summary>
-	/// <returns>The configured policy.</returns>
-	private ExistingOutputPolicy GetExistingOutputPolicy()
-	{
-		return model.ExistingOutputPolicy;
 	}
 
 	/// <summary>

@@ -1,4 +1,5 @@
 using Gtk;
+using LpjGuess.Core.Models;
 using LpjGuess.Core.Models.Factorial;
 using LpjGuess.Frontend.Classes;
 using LpjGuess.Frontend.Delegates;
@@ -21,6 +22,8 @@ public class ExperimentView : ViewBase<Notebook>, IExperimentView
     private readonly EntryCommitter nameCommitter;
     private readonly EntryCommitter descriptionCommitter;
     private readonly StringDropDownView runnerDropDown;
+    private readonly StringDropDownView inputModuleDropDown;
+    private readonly StringDropDownView<ExistingOutputPolicy> existingOutputPolicyDropDown;
     private readonly InstructionFileSelectionView insFileView;
     private readonly FlowBoxSelectionView pftView;
     private readonly CheckButton allPftsCheck;
@@ -34,6 +37,23 @@ public class ExperimentView : ViewBase<Notebook>, IExperimentView
     private readonly CustomColumnView<SimulationPreviewRow> simulationView;
 
     private bool updatingPfts;
+
+    private static readonly string[] inputModules =
+    [
+        "nc",
+        "site",
+        "cru",
+        "fluxnet"
+    ];
+
+    private static readonly ExistingOutputPolicy[] existingOutputPolicies =
+    [
+        ExistingOutputPolicy.Preserve,
+        ExistingOutputPolicy.CleanManaged,
+        ExistingOutputPolicy.PruneStale,
+        ExistingOutputPolicy.CleanManaged | ExistingOutputPolicy.PruneStale,
+        ExistingOutputPolicy.Fail
+    ];
 
     /// <inheritdoc />
     public Event<IModelChange<Experiment>> OnChanged { get; }
@@ -50,6 +70,11 @@ public class ExperimentView : ViewBase<Notebook>, IExperimentView
         nameCommitter = new EntryCommitter(nameEntry, OnNameChanged);
         descriptionCommitter = new EntryCommitter(descriptionEntry, OnDescriptionChanged);
         runnerDropDown = new StringDropDownView();
+        inputModuleDropDown = new StringDropDownView();
+        inputModuleDropDown.Populate(inputModules);
+        existingOutputPolicyDropDown = new StringDropDownView<ExistingOutputPolicy>(
+            GetExistingOutputPolicyLabel);
+        existingOutputPolicyDropDown.Populate(existingOutputPolicies);
         insFileView = new InstructionFileSelectionView();
         pftView = new FlowBoxSelectionView();
         allPftsCheck = CheckButton.NewWithLabel("Keep PFT enablement from the base instruction files");
@@ -85,6 +110,8 @@ public class ExperimentView : ViewBase<Notebook>, IExperimentView
         string name,
         string description,
         string runner,
+        string inputModule,
+        ExistingOutputPolicy existingOutputPolicy,
         IEnumerable<(string, bool)> instructionFiles,
         bool inheritPfts,
         IEnumerable<(string Name, bool EnabledByDefault, bool Selected)> pfts)
@@ -92,6 +119,8 @@ public class ExperimentView : ViewBase<Notebook>, IExperimentView
         nameCommitter.SetText(name);
         descriptionCommitter.SetText(description);
         runnerDropDown.Select(runner);
+        inputModuleDropDown.Select(inputModule);
+        existingOutputPolicyDropDown.Select(existingOutputPolicy);
         UpdateInstructionFiles(instructionFiles);
         UpdatePfts(inheritPfts, pfts);
     }
@@ -251,6 +280,8 @@ public class ExperimentView : ViewBase<Notebook>, IExperimentView
         AddControl(details, ref row, "Name", nameEntry);
         AddControl(details, ref row, "Description", descriptionEntry);
         AddControl(details, ref row, "Runner", runnerDropDown.GetWidget());
+        AddControl(details, ref row, "Input module", inputModuleDropDown.GetWidget());
+        AddControl(details, ref row, "Existing outputs", existingOutputPolicyDropDown.GetWidget());
 
         content.Append(CreateSection(
             "Experiment details",
@@ -466,6 +497,8 @@ public class ExperimentView : ViewBase<Notebook>, IExperimentView
     private void ConnectEvents()
     {
         runnerDropDown.OnSelectionChanged.ConnectTo(OnRunnerChanged);
+        inputModuleDropDown.OnSelectionChanged.ConnectTo(OnInputModuleChanged);
+        existingOutputPolicyDropDown.OnSelectionChanged.ConnectTo(OnExistingOutputPolicyChanged);
         insFileView.OnSelectionChanged.ConnectTo(OnInsFilesChanged);
         allPftsCheck.OnToggled += OnAllPftsToggled;
         pftView.OnSelectionChanged.ConnectTo(OnPftsChanged);
@@ -474,6 +507,8 @@ public class ExperimentView : ViewBase<Notebook>, IExperimentView
     private void DisconnectEvents()
     {
         runnerDropDown.OnSelectionChanged.DisconnectFrom(OnRunnerChanged);
+        inputModuleDropDown.OnSelectionChanged.DisconnectFrom(OnInputModuleChanged);
+        existingOutputPolicyDropDown.OnSelectionChanged.DisconnectFrom(OnExistingOutputPolicyChanged);
         insFileView.OnSelectionChanged.DisconnectFrom(OnInsFilesChanged);
         allPftsCheck.OnToggled -= OnAllPftsToggled;
         pftView.OnSelectionChanged.DisconnectFrom(OnPftsChanged);
@@ -499,6 +534,22 @@ public class ExperimentView : ViewBase<Notebook>, IExperimentView
             experiment => experiment.Runner,
             (experiment, value) => experiment.Runner = value,
             runnerName));
+    }
+
+    private void OnInputModuleChanged(string inputModule)
+    {
+        OnChanged.Invoke(new ModelChangeEventArgs<Experiment, string>(
+            experiment => experiment.InputModule,
+            (experiment, value) => experiment.InputModule = value,
+            inputModule));
+    }
+
+    private void OnExistingOutputPolicyChanged(ExistingOutputPolicy policy)
+    {
+        OnChanged.Invoke(new ModelChangeEventArgs<Experiment, ExistingOutputPolicy>(
+            experiment => experiment.ExistingOutputPolicy,
+            (experiment, value) => experiment.ExistingOutputPolicy = value,
+            policy));
     }
 
     private void OnAllPftsToggled(CheckButton sender, EventArgs args)
@@ -541,5 +592,18 @@ public class ExperimentView : ViewBase<Notebook>, IExperimentView
             experiment => experiment.Name,
             (experiment, value) => experiment.Name = value,
             value));
+    }
+
+    private static string GetExistingOutputPolicyLabel(ExistingOutputPolicy policy)
+    {
+        return policy switch
+        {
+            ExistingOutputPolicy.Preserve => "Preserve existing outputs",
+            ExistingOutputPolicy.CleanManaged => "Clean rerun simulations",
+            ExistingOutputPolicy.PruneStale => "Remove stale simulations",
+            ExistingOutputPolicy.CleanManaged | ExistingOutputPolicy.PruneStale => "Clean and remove stale simulations",
+            ExistingOutputPolicy.Fail => "Fail if outputs exist",
+            _ => policy.ToConfigString()
+        };
     }
 }
