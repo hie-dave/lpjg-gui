@@ -135,6 +135,42 @@ print(f"Failed jobs: {result.FailedJobs}")
 print(f"Error: {result.Error}")
 ```
 
+## Existing Output Files
+
+LPJ-Guess outputs are written into per-simulation directories under the run
+output directory. When an experiment is rerun, those directories may already
+contain files from an earlier run. This can make results ambiguous: a file left
+behind by an old configuration can look like it was produced by the latest run,
+and outputs from simulations that have since been removed from the experiment
+can remain beside current results.
+
+The existing-output policy controls how the runner handles these cases before
+starting new jobs. `run_simulations(...)` accepts the policy as its final
+argument. The default is `ExistingOutputPolicy.CleanManaged`, which is usually
+the right choice for rerunning experiments because it deletes old files for
+simulations that are about to be regenerated/rerun.
+
+Policies are flags and may be combined with `|`:
+
+- `ExistingOutputPolicy.Preserve`: leave existing outputs untouched.
+- `ExistingOutputPolicy.CleanManaged`: remove files for simulations
+  that are about to be rerun.
+- `ExistingOutputPolicy.PruneStale`: remove files from previous simulations in
+  this output directory that are not part of the current run.
+- `ExistingOutputPolicy.Fail`: abort if existing output directories are found.
+
+For example, to clean rerun simulations and remove stale managed outputs:
+
+```python
+policy = ExistingOutputPolicy.CleanManaged | ExistingOutputPolicy.PruneStale
+result = run_simulations(run_settings, simulations, ins, pfts,
+                         ConsoleProgressReporter(),
+                         ConsoleOutputHelper(),
+                         policy)
+```
+
+Managed outputs are outputs tracked by the runner's result catalog.
+
 ## Customising Progress and Output
 
 The default helpers `ConsoleProgressReporter()` and `ConsoleOutputHelper()`
