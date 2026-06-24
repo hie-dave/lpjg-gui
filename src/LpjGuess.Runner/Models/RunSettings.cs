@@ -1,4 +1,5 @@
 using System.Runtime.Serialization;
+using LpjGuess.Core.Models;
 
 namespace LpjGuess.Runner.Models;
 
@@ -98,6 +99,11 @@ public class RunSettings
 	public bool UseCpuAffinity { get; private init; }
 
 	/// <summary>
+	/// Policy controlling how existing outputs should be handled.
+	/// </summary>
+	public ExistingOutputPolicy CleanPolicy { get; private init; }
+
+	/// <summary>
 	/// Create a new <see cref="RunSettings"/> instance.
 	/// </summary>
 	/// <param name="dryRun">Iff true, the run directory will be created but the job will not be submitted.</param>
@@ -115,7 +121,23 @@ public class RunSettings
 	/// <param name="jobName">Name of the job.</param>
 	/// <param name="fullFactorial">Iff true, all combinations of parameters will be run.</param>
 	/// <param name="useCpuAffinity">True to use CPU affinity to pin each LPJ-Guess process to a single CPU (ie prevent context-switching of a guess process between CPUs). No effect on MacOS. Recommended: true.</param>
-	public RunSettings(bool dryRun, bool runLocal, string outputDirectory, string guessPath, string inputModule, ushort cpuCount, TimeSpan walltime, uint memory, string queue, string project, bool emailNotifications, string emailAddress, string jobName, bool fullFactorial, bool useCpuAffinity)
+	/// <param name="cleanPolicy">Policy controlling how existing outputs should be handled.</param>
+	public RunSettings(bool dryRun,
+					   bool runLocal,
+					   string outputDirectory,
+					   string guessPath,
+					   string inputModule,
+					   ushort cpuCount,
+					   TimeSpan walltime,
+					   uint memory,
+					   string queue,
+					   string project,
+					   bool emailNotifications,
+					   string emailAddress,
+					   string jobName,
+					   bool fullFactorial,
+					   bool useCpuAffinity,
+					   ExistingOutputPolicy cleanPolicy)
 	{
 		DryRun = dryRun;
 		RunLocal = runLocal;
@@ -133,6 +155,7 @@ public class RunSettings
 		FullFactorial = fullFactorial;
 		Parameters = [];
 		UseCpuAffinity = useCpuAffinity;
+		CleanPolicy = cleanPolicy;
 	}
 
 	/// <summary>
@@ -148,6 +171,7 @@ public class RunSettings
 	/// guess process between CPUs). No effect on MacOS. Recommended:
 	/// true.
 	/// </param>
+	/// <param name="cleanPolicy">Policy controlling how existing outputs should be handled.</param>
 	/// <remarks>
 	/// This is only necessary/useful because this class contains parameters for
 	/// both local and remote runs, some of which are useful only in remote runs
@@ -162,7 +186,8 @@ public class RunSettings
 		string inputModule,
 		ushort cpuCount,
 		string jobName,
-		bool useCpuAffinity)
+		bool useCpuAffinity,
+		string cleanPolicy)
 	{
 		return new RunSettings(
 			false,
@@ -179,7 +204,9 @@ public class RunSettings
 			"",
 			jobName,
 			true,
-			useCpuAffinity);
+			useCpuAffinity,
+			ExistingOutputPolicyExtensions.ParseExistingOutputPolicy(cleanPolicy)
+		);
 	}
 
 	/// <summary>

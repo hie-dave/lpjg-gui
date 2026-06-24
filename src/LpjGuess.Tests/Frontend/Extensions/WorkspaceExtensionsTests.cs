@@ -66,4 +66,28 @@ public class WorkspaceExtensionsTests
             scenarios.Levels.Single());
         Assert.Equal("Moderate", loadedScenario.Name);
     }
+
+    [Fact]
+    public void WorkspaceRoundTrip_PreservesExistingOutputPolicy()
+    {
+        using TempDirectory temp = TempDirectory.Create();
+        string workspaceFile = Path.Combine(temp.AbsolutePath, "workspace.lpj");
+        var workspace = new Workspace
+        {
+            FilePath = workspaceFile,
+            ExistingOutputPolicy = ExistingOutputPolicy.CleanManaged |
+                                   ExistingOutputPolicy.PruneStale
+        };
+
+        workspace.Save();
+
+        string json = File.ReadAllText(workspaceFile);
+        Assert.Contains("\"ExistingOutputPolicy\"", json);
+        Assert.Contains("clean_managed", json);
+        Assert.Contains("prune_stale", json);
+
+        Workspace loaded = workspaceFile.LoadWorkspace();
+
+        Assert.Equal(workspace.ExistingOutputPolicy, loaded.ExistingOutputPolicy);
+    }
 }

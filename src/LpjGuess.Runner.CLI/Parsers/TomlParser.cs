@@ -1,5 +1,6 @@
 using System.Globalization;
 using LpjGuess.Core.Interfaces.Factorial;
+using LpjGuess.Core.Models;
 using LpjGuess.Core.Models.Factorial;
 using LpjGuess.Core.Models.Factorial.Factors;
 using LpjGuess.Core.Models.Factorial.Generators;
@@ -80,6 +81,10 @@ internal class TomlParser : IParser
 		string emailAddress = ParseString(model, "email_address", !emailNotifications);
 
 		bool useCpuAffinity = ParseBool(model, "use_cpu_affinity");
+		string cleanupPolicy = ParseString(model, "cleanup_policy", optional: true);
+		if (string.IsNullOrWhiteSpace(cleanupPolicy))
+		    cleanupPolicy = "preserve";
+		ExistingOutputPolicy policy = ExistingOutputPolicyExtensions.ParseExistingOutputPolicy(cleanupPolicy);
 
 		return new RunSettings(
 			dryRun,
@@ -96,7 +101,8 @@ internal class TomlParser : IParser
 			emailAddress,
 			jobName,
 			fullFactorial,
-			useCpuAffinity
+			useCpuAffinity,
+			policy
 		);
 	}
 

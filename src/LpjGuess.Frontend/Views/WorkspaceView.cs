@@ -6,6 +6,7 @@ using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.Interfaces.Views;
 using LpjGuess.Frontend.Utility.Gtk;
 using LpjGuess.Frontend.Enumerations;
+using LpjGuess.Core.Models;
 
 namespace LpjGuess.Frontend.Views;
 
@@ -47,6 +48,15 @@ public class WorkspaceView : ViewBase<Box>, IWorkspaceView
 		"fluxnet",
 	};
 
+	private static readonly ExistingOutputPolicy[] existingOutputPolicies =
+	[
+		ExistingOutputPolicy.Preserve,
+		ExistingOutputPolicy.CleanManaged,
+		ExistingOutputPolicy.PruneStale,
+		ExistingOutputPolicy.CleanManaged | ExistingOutputPolicy.PruneStale,
+		ExistingOutputPolicy.Fail
+	];
+
 	/// <summary>
 	/// The run button.
 	/// </summary>
@@ -66,6 +76,11 @@ public class WorkspaceView : ViewBase<Box>, IWorkspaceView
 	/// Dropdown containing the input modules.
 	/// </summary>
 	private readonly DropDown inputModuleDropdown;
+
+	/// <summary>
+	/// Dropdown containing existing-output policy options.
+	/// </summary>
+	private readonly StringDropDownView<ExistingOutputPolicy> existingOutputPolicyDropdown;
 
 	/// <summary>
 	/// Notebook containing tabs for .ins files, guess output, etc.
@@ -96,6 +111,9 @@ public class WorkspaceView : ViewBase<Box>, IWorkspaceView
 	/// <inheritdoc />
 	public Event OnAddRunOption { get; private init; }
 
+	/// <inheritdoc />
+	public Event<ExistingOutputPolicy> OnExistingOutputPolicyChanged { get; private init; }
+
 	/// <summary>
 	/// Create a new <see cref="WorkspaceView"/> instance for a particular .ins file.
 	/// </summary>
@@ -104,18 +122,34 @@ public class WorkspaceView : ViewBase<Box>, IWorkspaceView
 		OnRun = new Event<string?>();
 		OnStop = new Event();
 		OnAddRunOption = new Event();
+		OnExistingOutputPolicyChanged = new Event<ExistingOutputPolicy>();
 
 		addFileDummyWidget = new Box();
 		addFileDummyWidget.Name = addFileDummyWidgetName;
 
 		inputModuleDropdown = DropDown.NewFromStrings(inputModules);
 		inputModuleDropdown.Hexpand = true;
+		existingOutputPolicyDropdown = new StringDropDownView<ExistingOutputPolicy>(
+			GetExistingOutputPolicyLabel);
+		existingOutputPolicyDropdown.Populate(existingOutputPolicies);
 
 		Box inputModuleBox = new Box();
 		inputModuleBox.SetOrientation(Orientation.Horizontal);
 		inputModuleBox.Spacing = spacing;
 		inputModuleBox.Append(Label.New("Input Module: "));
 		inputModuleBox.Append(inputModuleDropdown);
+
+		Box existingOutputPolicyBox = new Box();
+		existingOutputPolicyBox.SetOrientation(Orientation.Horizontal);
+		existingOutputPolicyBox.Spacing = spacing;
+		existingOutputPolicyBox.Append(Label.New("Existing Outputs: "));
+		existingOutputPolicyBox.Append(existingOutputPolicyDropdown.GetWidget());
+
+		Box runSettingsBox = new Box();
+		runSettingsBox.SetOrientation(Orientation.Vertical);
+		runSettingsBox.Spacing = spacing;
+		runSettingsBox.Append(inputModuleBox);
+		runSettingsBox.Append(existingOutputPolicyBox);
 
 		// Create a run button.
 		// todo: replace with SplitButton.
@@ -150,7 +184,7 @@ public class WorkspaceView : ViewBase<Box>, IWorkspaceView
 		progressBar.Valign = Align.End;
 		progressBar.Visible = false;
 		widget.Append(notebook);
-		widget.Append(inputModuleBox);
+		widget.Append(runSettingsBox);
 		widget.Append(runBox);
 		widget.Append(stop);
 		widget.Append(progressBar);
@@ -172,6 +206,10 @@ public class WorkspaceView : ViewBase<Box>, IWorkspaceView
 			throw new Exception($"No input module is selected");
 		}
 	}
+
+	/// <inheritdoc />
+	public ExistingOutputPolicy ExistingOutputPolicy =>
+		existingOutputPolicyDropdown.Selection;
 
 	/// <summary>
 	/// Dispose of native resources.
@@ -209,6 +247,7 @@ public class WorkspaceView : ViewBase<Box>, IWorkspaceView
 	{
 		run.OnClicked += Run;
 		stop.OnClicked += Stop;
+		existingOutputPolicyDropdown.OnSelectionChanged.ConnectTo(OnExistingOutputPolicySelected);
 	}
 
 	/// <summary>
@@ -219,9 +258,17 @@ public class WorkspaceView : ViewBase<Box>, IWorkspaceView
 		ClearRunOptions();
 		run.OnClicked -= Run;
 		stop.OnClicked -= Stop;
+		existingOutputPolicyDropdown.OnSelectionChanged.DisconnectAll();
 		OnRun.DisconnectAll();
 		OnStop.DisconnectAll();
 		OnAddRunOption.DisconnectAll();
+		OnExistingOutputPolicyChanged.DisconnectAll();
+	}
+
+	/// <inheritdoc />
+	public void SetExistingOutputPolicy(ExistingOutputPolicy policy)
+	{
+		existingOutputPolicyDropdown.Select(policy);
 	}
 
 	/// <summary>
@@ -326,4 +373,22 @@ public class WorkspaceView : ViewBase<Box>, IWorkspaceView
         progressBar.Text = $"Progress: {progress:P0}";
         progressBar.Visible = progress > 0 && progress < 1;
     }
+
+	private static string GetExistingOutputPolicyLabel(ExistingOutputPolicy policy)
+	{
+		return policy switch
+		{
+			ExistingOutputPolicy.Preserve => "Preserve existing outputs",
+			ExistingOutputPolicy.CleanManaged => "Clean rerun simulations",
+			ExistingOutputPolicy.PruneStale => "Remove stale simulations",
+			ExistingOutputPolicy.CleanManaged | ExistingOutputPolicy.PruneStale => "Clean and remove stale simulations",
+			ExistingOutputPolicy.Fail => "Fail if outputs exist",
+			_ => policy.ToConfigString()
+		};
+	}
+
+	private void OnExistingOutputPolicySelected(ExistingOutputPolicy policy)
+	{
+		OnExistingOutputPolicyChanged.Invoke(policy);
+	}
 }

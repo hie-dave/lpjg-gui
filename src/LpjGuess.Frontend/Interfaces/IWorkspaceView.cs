@@ -1,6 +1,7 @@
 using LpjGuess.Frontend.Delegates;
 using LpjGuess.Frontend.Enumerations;
 using LpjGuess.Frontend.Interfaces.Views;
+using LpjGuess.Core.Models;
 
 namespace LpjGuess.Frontend.Interfaces;
 
@@ -13,6 +14,11 @@ public interface IWorkspaceView : IView
 	/// Currently-selected input module.
 	/// </summary>
 	string InputModule { get; }
+
+	/// <summary>
+	/// Currently-selected existing output policy.
+	/// </summary>
+	ExistingOutputPolicy ExistingOutputPolicy { get; }
 
 	/// <summary>
 	/// Append a tab to the file view.
@@ -45,6 +51,12 @@ public interface IWorkspaceView : IView
 	void ShowProgress(double progress);
 
 	/// <summary>
+	/// Select the current existing output policy.
+	/// </summary>
+	/// <param name="policy">The policy to select.</param>
+	void SetExistingOutputPolicy(ExistingOutputPolicy policy);
+
+	/// <summary>
 	/// Select the specified tab.
 	/// </summary>
 	/// <param name="tab">The tab to be selected.</param>
@@ -66,4 +78,9 @@ public interface IWorkspaceView : IView
 	/// Called when the user wants to add a new run method.
 	/// </summary>
 	Event OnAddRunOption { get; }
+
+	/// <summary>
+	/// Called when the user changes the existing output policy.
+	/// </summary>
+	Event<ExistingOutputPolicy> OnExistingOutputPolicyChanged { get; }
 }

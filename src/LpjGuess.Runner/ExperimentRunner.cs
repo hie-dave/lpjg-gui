@@ -1,5 +1,7 @@
+using LpjGuess.Core.Models;
 using LpjGuess.Runner.Models;
 using LpjGuess.Runner.Services;
+using Microsoft.Extensions.Logging;
 
 namespace LpjGuess.Runner;
 
@@ -15,6 +17,7 @@ public sealed class ExperimentRunner
     /// <param name="resolver">Optional path resolver. If null, a static resolver is used.</param>
     /// <param name="reporter">Optional progress reporter. If null, progress is ignored.</param>
     /// <param name="helper">Optional output helper. If null, output is ignored.</param>
+    /// <param name="cleanupPolicy">Policy for handling existing output.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>An <see cref="ExperimentResult"/> with summary information.</returns>
     public async Task<ExperimentResult> RunAsync(
@@ -22,6 +25,7 @@ public sealed class ExperimentRunner
         IPathResolver? resolver,
         IProgressReporter? reporter,
         IOutputHelper? helper,
+        ExistingOutputPolicy cleanupPolicy,
         CancellationToken ct)
     {
         // TODO: make simulation naming strategy configurable.
@@ -33,47 +37,37 @@ public sealed class ExperimentRunner
             config.Pfts,
             new ManualNamingStrategy(),
             new ResultCatalog());
-        resolver ??= new StaticPathResolver(config.Settings.OutputDirectory, generatorConfig.NamingStrategy);
-        SimulationService generator = new SimulationService(resolver, generatorConfig);
-        List<Job> jobs = generator.GenerateAllJobs(ct).ToList();
-
         // Use provided reporter/output, or sensible no-op defaults for library
         // use.
+        resolver ??= new StaticPathResolver(config.Settings.OutputDirectory,
+                                            generatorConfig.NamingStrategy);
         reporter ??= new NullProgressReporter();
         helper ??= new OutputIgnorer();
 
         JobManagerConfiguration jobSettings = config.Settings.ToJobManagerConfig();
-        JobManager jobManager = new JobManager(jobSettings, reporter, helper, jobs);
 
-        Exception? exception = null;
-        int nsuccess;
-        int nfail;
-        try
-        {
-            await jobManager.RunAllAsync(ct);
-            nsuccess = jobs.Count;
-            nfail = 0;
-        }
-        catch (ModelException ex)
-        {
-            exception = ex;
-            // TODO: improve JobManager API to expose per-job results. For now, assume a single failure.
-            nfail = 1;
-            nsuccess = Math.Max(0, jobs.Count - nfail);
-        }
+        SimulationBatch batch = new SimulationBatch(resolver, generatorConfig);
+        RunPlan plan = new RunPlan([batch], jobSettings);
 
-        var result = new ExperimentResult(jobs.Count, nsuccess, nfail,
-                                          jobs.Select(j => new JobResult(
-            j.Name,
-            jobManager.GetJobDuration(j))), exception?.Message);
-        return result;
+        var logger = LoggerFactory.Create(builder => builder.AddConsole()).CreateLogger<ExistingOutputService>();
+        ExistingOutputService cleanupService = new ExistingOutputService(logger);
+        RunOrchestrator orchestrator = new RunOrchestrator(cleanupService);
+        return await orchestrator.RunAsync(plan, cleanupPolicy, reporter,
+                                           helper, ct);
     }
 
     /// <summary>
     /// Asynchronously runs an experiment with default reporter/output.
     /// </summary>
-    public Task<ExperimentResult> RunAsync(RunnerConfiguration config, CancellationToken ct)
-        => RunAsync(config, resolver: null, reporter: null, helper: null, ct);
+    /// <param name="config">Configuration for the experiment.</param>
+    /// <param name="cleanupPolicy">Policy for handling existing output.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>An <see cref="ExperimentResult"/> with summary information.</returns>
+    public Task<ExperimentResult> RunAsync(RunnerConfiguration config,
+                                           ExistingOutputPolicy cleanupPolicy,
+                                           CancellationToken ct)
+        => RunAsync(config, resolver: null, reporter: null, helper: null,
+                    cleanupPolicy: cleanupPolicy, ct);
 
     /// <summary>
     /// Runs an experiment synchronously.
@@ -81,13 +75,16 @@ public sealed class ExperimentRunner
     /// <param name="config">Configuration for the experiment.</param>
     /// <param name="progress">Optional progress reporter.</param>
     /// <param name="output">Optional output helper.</param>
+    /// <param name="cleanupPolicy">Policy for handling existing output.</param>
     /// <returns>An <see cref="ExperimentResult"/> summarizing the run.</returns>
     public ExperimentResult Run(
         RunnerConfiguration config,
         IProgressReporter? progress = null,
-        IOutputHelper? output = null)
+        IOutputHelper? output = null,
+        ExistingOutputPolicy cleanupPolicy = ExistingOutputPolicy.Preserve)
     {
         using CancellationTokenSource cts = new CancellationTokenSource();
-        return RunAsync(config, resolver: null, progress, output, cts.Token).GetAwaiter().GetResult();
+        return RunAsync(config, resolver: null, progress, output, cleanupPolicy,
+                        cts.Token).GetAwaiter().GetResult();
     }
 }

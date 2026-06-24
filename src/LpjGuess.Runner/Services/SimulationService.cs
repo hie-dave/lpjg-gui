@@ -20,6 +20,16 @@ public class SimulationService : ISimulationService
 	private readonly SimulationGeneratorConfig config;
 
 	/// <summary>
+	/// Create a new <see cref="SimulationService"/> instance for the specified
+	/// simulation batch.
+	/// </summary>
+	/// <param name="batch">The simulation batch.</param>
+	public SimulationService(SimulationBatch batch)
+		: this(batch.PathResolver, batch.GeneratorConfig)
+	{
+	}
+
+	/// <summary>
 	/// Create a new <see cref="SimulationService"/> instance.
 	/// </summary>
 	/// <param name="pathResolver">The path resolver.</param>

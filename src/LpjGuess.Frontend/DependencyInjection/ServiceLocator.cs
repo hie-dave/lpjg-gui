@@ -61,6 +61,8 @@ public class ServiceLocator : IServiceLocator
         services.AddTransient<IDataProvider<ModelOutput>, ModelOutputReader>();
         services.AddTransient<ModelOutputReader>();
         services.AddTransient<IGridlistParser, GridlistParser>();
+        services.AddTransient<ExistingOutputService>();
+        services.AddTransient<RunOrchestrator>();
 
         // Configure logging to use our custom console formatter.
         services.ConfigureLogging(Options.Instance.ToLoggingOptions());

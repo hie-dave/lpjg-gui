@@ -19,6 +19,7 @@ using LpjGuess.Frontend.Services;
 using LpjGuess.Frontend.Views;
 using LpjGuess.Runner.Models;
 using LpjGuess.Runner.Services;
+using LpjGuess.Runner;
 
 namespace LpjGuess.Frontend.Presenters;
 
@@ -86,19 +87,27 @@ public class WorkspacePresenter : PresenterBase<IWorkspaceView, Workspace>, IWor
     private CancellationTokenSource cancellationTokenSource = new();
 
 	/// <summary>
+	/// The run orchestrator service.
+	/// </summary>
+	private readonly RunOrchestrator orchestrator;
+
+	/// <summary>
 	/// Create a new <see cref="WorkspacePresenter"/> instance for the given file.
 	/// </summary>
 	/// <param name="workspace">The instruction file.</param>
 	/// <param name="view">The view object.</param>
 	/// <param name="registry">The command registry to use for command execution.</param>
 	/// <param name="presenterFactory">The presenter factory.</param>
+	/// <param name="runOrchestrator">The run orchestrator service.</param>
 	public WorkspacePresenter(
 		Workspace workspace,
 		IWorkspaceView view,
 		ICommandRegistry registry,
-		WorkspacePresenterFactory presenterFactory) : base(view, workspace, registry)
+		WorkspacePresenterFactory presenterFactory,
+		RunOrchestrator runOrchestrator) : base(view, workspace, registry)
 	{
 		this.presenterFactory = presenterFactory;
+		this.orchestrator = runOrchestrator;
 
 		insFilesProvider = presenterFactory.Initialise(workspace);
 
@@ -116,11 +125,13 @@ public class WorkspacePresenter : PresenterBase<IWorkspaceView, Workspace>, IWor
 
 		// Populate views.
 		PopulateRunners();
+		view.SetExistingOutputPolicy(GetExistingOutputPolicy());
 
 		// Connect events.
 		view.OnRun.ConnectTo(OnRun);
 		view.OnStop.ConnectTo(OnStop);
 		view.OnAddRunOption.ConnectTo(OnConfigureRunners);
+		view.OnExistingOutputPolicyChanged.ConnectTo(OnExistingOutputPolicyChanged);
 		insFilesPresenter.OnAddInsFile.ConnectTo(OnAddInsFile);
 		insFilesPresenter.OnRemoveInsFile.ConnectTo(OnRemoveInsFile);
 
@@ -260,7 +271,7 @@ public class WorkspacePresenter : PresenterBase<IWorkspaceView, Workspace>, IWor
 		string outputDirectory = model.GetOutputDirectory();
 		ushort cpuCount = (ushort)Environment.ProcessorCount;
 
-		List<Job> jobs = new List<Job>();
+		List<SimulationBatch> batches = new List<SimulationBatch>();
 		foreach (Experiment experiment in model.Experiments)
 		{
 			// Store simulations for this experiment in a subdirectory.
@@ -288,11 +299,13 @@ public class WorkspacePresenter : PresenterBase<IWorkspaceView, Workspace>, IWor
 						.ToList()
 				};
 				if (!analysis.IsValid)
-				throw new InvalidOperationException(
-					$"Experiment '{experiment.Name}' is not ready to run: " +
-					string.Join(" ", analysis.Issues
+				{
+					string issues =  string.Join(" ", analysis.Issues
 						.Where(issue => issue.Severity == ExperimentDesignIssueSeverity.Error)
-						.Select(issue => issue.Message)));
+						.Select(issue => issue.Message));
+					throw new InvalidOperationException(
+						$"Experiment '{experiment.Name}' is not ready to run: {issues}");
+				}
 			}
 			IEnumerable<ISimulation> simulations = experiment.SimulationGenerator.Generate();
 
@@ -307,17 +320,23 @@ public class WorkspacePresenter : PresenterBase<IWorkspaceView, Workspace>, IWor
 				new ResultCatalog());
 
 			IPathResolver pathResolver = pathHelper.CreatePathResolver(experiment);
-			SimulationService generator = new(pathResolver, config);
-			jobs.AddRange(generator.GenerateAllJobs(cancellationTokenSource.Token));
+			batches.Add(new SimulationBatch(pathResolver, config));
 		}
 
 		CustomProgressReporter progress = new CustomProgressReporter(ProgressCallback);
 		IOutputHelper outputHandler = new CustomOutputHelper(StdoutCallback, StderrCallback);
+		
 		JobManagerConfiguration configuration = new JobManagerConfiguration(runConfig, cpuCount, false, view.InputModule);
 
-		JobManager jobManager = new JobManager(configuration, progress, outputHandler, jobs);
-		simulations = jobManager.RunAllAsync(cancellationTokenSource.Token)
-							    .ContinueWithOnMainThread(() => OnCompleted());
+		RunPlan plan = new RunPlan(batches, configuration);
+		Task<ExperimentResult> runTask = orchestrator.RunAsync(
+			plan,
+			GetExistingOutputPolicy(),
+			progress,
+			outputHandler,
+			cancellationTokenSource.Token);
+		simulations = runTask.ContinueWith(
+			task => MainView.RunOnMainThread(() => OnCompleted(task)));
 
 		// Ensure that the stop button is visible and the run button hidden.
 		view.ShowRunButton(false);
@@ -375,6 +394,25 @@ public class WorkspacePresenter : PresenterBase<IWorkspaceView, Workspace>, IWor
 	}
 
 	/// <summary>
+	/// Called when the user changes the existing output policy.
+	/// </summary>
+	/// <param name="policy">The new policy.</param>
+	private void OnExistingOutputPolicyChanged(ExistingOutputPolicy policy)
+	{
+		model.ExistingOutputPolicy = policy;
+		model.Save();
+	}
+
+	/// <summary>
+	/// Get the workspace's existing output policy.
+	/// </summary>
+	/// <returns>The configured policy.</returns>
+	private ExistingOutputPolicy GetExistingOutputPolicy()
+	{
+		return model.ExistingOutputPolicy;
+	}
+
+	/// <summary>
 	/// User has clicked the 'stop' button.
 	/// </summary>
 	private void OnStop()
@@ -397,11 +435,21 @@ public class WorkspacePresenter : PresenterBase<IWorkspaceView, Workspace>, IWor
 	/// <summary>
 	/// The guess process has completed.
 	/// </summary>
-	private void OnCompleted()
+	private void OnCompleted(Task<ExperimentResult> task)
 	{
 		try
 		{
 			view.ShowRunButton(true);
+			if (task.IsCanceled)
+				return;
+			if (task.IsFaulted)
+			{
+				MainView.Instance.ReportError(
+					task.Exception?.GetBaseException()
+					?? new InvalidOperationException("Simulation failed"));
+				return;
+			}
+
 			outputsPresenter.RefreshData();
 			graphsPresenter.RefreshAll();
 		}

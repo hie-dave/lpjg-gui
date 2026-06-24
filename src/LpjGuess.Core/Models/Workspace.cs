@@ -43,6 +43,12 @@ public class Workspace
 	public List<Experiment> Experiments { get; set; }
 
 	/// <summary>
+	/// Policy used when generated output already exists.
+	/// </summary>
+	public ExistingOutputPolicy ExistingOutputPolicy { get; set; } =
+		ExistingOutputPolicy.Preserve;
+
+	/// <summary>
 	/// Default constructor provided for deserialization purposes only.
 	/// </summary>
 	public Workspace()
