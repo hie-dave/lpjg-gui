@@ -9,6 +9,7 @@ from typing import Optional
 # Import selected .NET symbols
 from LpjGuess.Runner import ExperimentRunner, ExperimentResult
 from LpjGuess.Runner.Models import RunSettings, RunnerConfiguration, IProgressReporter, IOutputHelper, ConsoleProgressReporter, ConsoleOutputHelper
+from LpjGuess.Core.Models import ExistingOutputPolicy
 from LpjGuess.Core.Models.Factorial import Simulation
 from LpjGuess.Core.Models.Factorial.Factors import TopLevelParameter, BlockParameter
 from LpjGuess.Core.Interfaces.Factorial import IFactor, ISimulation
@@ -17,6 +18,7 @@ __all__ = [
     # .NET types
     "ExperimentRunner", "ExperimentResult",
     "RunSettings", "RunnerConfiguration",
+    "ExistingOutputPolicy",
     "IProgressReporter", "IOutputHelper",
     "Simulation", "IFactor", "ISimulation",
     "TopLevelParameter", "BlockParameter",
@@ -60,9 +62,10 @@ def run_simulations(run_settings: RunSettings,
                     ins: list[str],
                     pfts: list[str],
                     progress_reporter: Optional[IProgressReporter] = None,
-                    output_helper: Optional[IOutputHelper] = None) -> ExperimentResult:
+                    output_helper: Optional[IOutputHelper] = None,
+                    cleanup_policy: ExistingOutputPolicy = ExistingOutputPolicy.CleanManaged) -> ExperimentResult:
     cfg = runner_config(run_settings, simulations, ins, pfts)
-    return ExperimentRunner().Run(cfg, progress_reporter, output_helper)
+    return ExperimentRunner().Run(cfg, progress_reporter, output_helper, cleanup_policy)
 
 class CustomOutputHelper(Object, IOutputHelper):
     """

@@ -126,7 +126,8 @@ result = run_simulations(run_settings,
                          ins,
                          pfts,
                          ConsoleProgressReporter(),   # Write progress messages to stdout
-                         ConsoleOutputHelper())       # Propagate subprocess output to stdout
+                         ConsoleOutputHelper(),        # Propagate subprocess output to stdout
+                         ExistingOutputPolicy.CleanManaged)
 
 print(f"Total jobs: {result.TotalJobs}")
 print(f"Successful jobs: {result.SuccessfulJobs}")

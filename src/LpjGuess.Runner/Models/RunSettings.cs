@@ -187,7 +187,7 @@ public class RunSettings
 		ushort cpuCount,
 		string jobName,
 		bool useCpuAffinity,
-		string cleanPolicy)
+		string cleanPolicy = "clean_managed")
 	{
 		return new RunSettings(
 			false,
