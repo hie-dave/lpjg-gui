@@ -83,7 +83,12 @@ public class ResultCatalogTests
 
         string content = File.ReadAllText(
             Path.Combine(simDir.AbsolutePath, "manifest.toml"));
-        Assert.Contains($"base_ins = \"{baseIns}\"", content);
+        SimulationManifest loaded = catalog.ReadManifest(simDir.AbsolutePath);
+
+        // Paths in the manifest toml will have backslashes encoded with \\.
+        // Therefore we can't compare paths to the raw toml string on windows.
+        Assert.Equal(baseIns, loaded.BaseIns);
+        Assert.Contains("base_ins =", content);
         Assert.Contains("ins_file = \"generated.ins\"", content);
         Assert.DoesNotContain("path =", content);
         Assert.DoesNotContain(simDir.AbsolutePath, content);
