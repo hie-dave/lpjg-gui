@@ -299,7 +299,7 @@ public static class OutputFileDefinitions
 
         // Annual individual-level outputs.
         AddOutput(builder, "file_dave_indiv_age", "Age", "Plant Age", "Years", ["age"], AggregationLevel.Individual, TemporalResolution.Annual);
-        AddOutput(builder, "file_dave_indiv_c_d_dbh", "DBH", "Change in DBH", "m", ["d_dbh"], AggregationLevel.Individual, TemporalResolution.Annual);
+        AddOutput(builder, "file_dave_indiv_c_d_dbh", "DBH", "Increment in Diameter at Bole Height", "m", ["d_dbh"], AggregationLevel.Individual, TemporalResolution.Annual);
         AddOutput(builder, "file_dave_indiv_mort", "Mortality", "Mortality Fractions", "0-1", ["mort_age", "mort_greff"], AggregationLevel.Individual, TemporalResolution.Annual);
         AddOutput(builder, "file_dave_indiv_cstarv", "Mortality", "Daily Carbon Starvation", "0-1", ["target", "previous", "storage_frac", "storage_frac_actual"], AggregationLevel.Individual, TemporalResolution.Daily);
 
@@ -320,6 +320,8 @@ public static class OutputFileDefinitions
         AddOutput(builder, "file_dave_indiv_cgrow_storage", "Storage C Demand", "Storage C Demand", "kgC/m2", ["cgrow_storage"], AggregationLevel.Individual, TemporalResolution.Daily);
         AddOutput(builder, "file_dave_indiv_crownarea", "Crown Area", "Crown Area", "m2", ["crownarea"], AggregationLevel.Individual, TemporalResolution.Daily);
         AddOutput(builder, "file_dave_indiv_dbh", "DBH", "Diameter at Bole Height", "m", ["diam", "deltadiam"], AggregationLevel.Individual, TemporalResolution.Daily);
+        AddOutput(builder, "file_dave_annual_indiv_dbh", "DBH", "Diameter at Bole Height", [("dbh", "m")], AggregationLevel.Individual, TemporalResolution.Annual);
+        AddOutput(builder, "file_dave_annual_indiv_c_d_dbh", "DBH", "Increment in Diameter at Bole Height", [("d_dbh", "m")], AggregationLevel.Individual, TemporalResolution.Annual);
         AddOutput(builder, "file_dave_indiv_density", "Density", "Tree Density", "/m2", ["density"], AggregationLevel.Individual, TemporalResolution.Daily);
         AddOutput(builder, "file_dave_indiv_fpar", "FPAR", "Fraction of PAR Absorbed by Foliage", "-", ["fpar"], AggregationLevel.Individual, TemporalResolution.Daily);
         AddOutput(builder, "file_dave_indiv_fpc", "FPC", "Foliar Projective Cover", "-", ["fpc"], AggregationLevel.Individual, TemporalResolution.Daily);
@@ -540,7 +542,8 @@ public static class OutputFileDefinitions
         AddPftOutput(builder, "file_dave_cton_root_min", "Cton Root Min", "Cton Root Min", "", AggregationLevel.Patch, TemporalResolution.Annual);
         AddPftOutput(builder, "file_dave_cton_sap_max", "Cton Sap Max", "Cton Sap Max", "", AggregationLevel.Patch, TemporalResolution.Annual);
         AddPftOutput(builder, "file_dave_cton_sap_min", "Cton Sap Min", "Cton Sap Min", "", AggregationLevel.Patch, TemporalResolution.Annual);
-
+        AddPftOutput(builder, "file_dave_amort_cstarve", "Carbon Starvation", "Carbon lost due to carbon starvation", "kgC/m2", AggregationLevel.Patch, TemporalResolution.Annual);
+        AddPftOutput(builder, "file_dave_amort_cstarve_ntree", "Carbon Starvation", "Number of trees lost due to carbon starvation", "kgC/m2", AggregationLevel.Patch, TemporalResolution.Annual);
 
         // Annual stand-level outputs
         AddOutput(builder, "file_dave_stand_frac", "Stand Fraction", "Fraction of the gridcell occupied by each stand", "", ["fraction"], AggregationLevel.Stand, TemporalResolution.Annual);
