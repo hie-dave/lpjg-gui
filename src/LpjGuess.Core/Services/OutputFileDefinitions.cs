@@ -19,6 +19,10 @@ public static class OutputFileDefinitions
         // Daily gridcell-level outputs
         AddPftOutput(builder, "file_agb", "AGB", "Above-Ground Biomass", "kg/m2", AggregationLevel.Gridcell, TemporalResolution.Daily);
         AddPftOutput(builder, "file_agb_tree", "AGB", "Above-Ground Tree Biomass", "kg/m2", AggregationLevel.Gridcell, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_dgpp", "GPP", "Gross Primary Productivity", "gC/m2/day", AggregationLevel.Gridcell, TemporalResolution.Daily);
+        AddPftOutput(builder, "file_dave_dnpp", "NPP", "Net Primary Productivity", "gC/m2/day", AggregationLevel.Gridcell, TemporalResolution.Daily);
+        AddOutput(builder, "file_dave_der", "ER", "Ecosystem Respiration", "gC/m2/day", ["RA", "RH", "total"], AggregationLevel.Gridcell, TemporalResolution.Daily);
+        AddOutput(builder, "file_dave_dnee", "NEE", "Net Ecosystem Exchange", "gC/m2/day", ["nee"], AggregationLevel.Gridcell, TemporalResolution.Daily);
         AddPftOutput(builder, "file_dlai", "LAI", "Leaf Area Index", "m2/m2", AggregationLevel.Gridcell, TemporalResolution.Daily);
         AddPftOutput(builder, "file_dave_lai_ymax", "LAI", "Max annual Leaf Area Index", "m2/m2", AggregationLevel.Gridcell, TemporalResolution.Annual);
         AddPftOutput(builder, "file_dave_agb_ymax", "AGB", "Max annual Above-Ground Biomass", "kg/m2", AggregationLevel.Gridcell, TemporalResolution.Annual);
