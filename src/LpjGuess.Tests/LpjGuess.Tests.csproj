@@ -21,6 +21,7 @@
     <ProjectReference Include="../LpjGuess.Core/LpjGuess.Core.csproj" />
     <ProjectReference Include="../LpjGuess.Frontend/LpjGuess.Frontend.csproj" />
     <ProjectReference Include="../LpjGuess.Runner/LpjGuess.Runner.csproj" />
+    <ProjectReference Include="../LpjGuess.Runner.CLI/LpjGuess.Runner.CLI.csproj" />
   </ItemGroup>
 
   <ItemGroup>

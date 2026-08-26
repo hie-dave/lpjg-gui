@@ -1,7 +1,7 @@
 using LpjGuess.Core.Models;
 using LpjGuess.Runner.Models;
 using LpjGuess.Runner.Services;
-using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace LpjGuess.Runner;
 
@@ -53,8 +53,10 @@ public sealed class ExperimentRunner
             cleanupPolicy);
         RunPlan plan = new RunPlan([batch], jobSettings);
 
-        var logger = LoggerFactory.Create(builder => builder.AddConsole()).CreateLogger<ExistingOutputService>();
-        ExistingOutputService cleanupService = new ExistingOutputService(logger);
+        // Library calls must not write unsolicited messages to stdout: callers
+        // such as the machine-readable CLI use stdout as a protocol channel.
+        ExistingOutputService cleanupService = new ExistingOutputService(
+            NullLogger<ExistingOutputService>.Instance);
         RunOrchestrator orchestrator = new RunOrchestrator(cleanupService);
         return await orchestrator.RunAsync(plan, reporter, helper, ct);
     }

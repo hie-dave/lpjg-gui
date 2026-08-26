@@ -11,18 +11,20 @@ BUILD_DIR := python/build
 EGG_INFO := python/lpjguess_runner.egg-info
 PY_CACHE := python/lpjguess_runner/__pycache__
 RIDS_ROOT := python/lpjguess_runner/rids
+R_PUBLISH_OUT := publish/r/$(RID)
+R_RUNNER_DIR := r/inst/runner
 VENV ?= .venv
 
 WHEEL := $(DIST_DIR)/lpjguess_runner-*-none-$(PLAT).whl
 
-.PHONY: clean build run check coverage clean-py publish stage wheel install dev install-venv install-user clean-venv
+.PHONY: clean build run check coverage clean-py publish stage wheel install dev install-venv install-user clean-venv publish-r stage-r check-r
 
 build:
 	dotnet build $(SLN)
 
 clean: clean-py
 	dotnet clean $(SLN)
-	rm -rf coverage src/LpjGuess.Tests/TestResults publish
+	rm -rf coverage src/LpjGuess.Tests/TestResults publish $(R_RUNNER_DIR)
 
 run:
 	dotnet run --project src/LpjGuess.Frontend
@@ -84,3 +86,18 @@ install-user: wheel
 
 # Convenience: one-shot local dev flow (no install)
 dev: clean-py publish stage wheel
+
+# -----------------------------
+# Packaging for R
+# -----------------------------
+
+# Framework-dependent CLI payload; the R package therefore requires .NET 9.
+publish-r:
+	dotnet publish src/LpjGuess.Runner.CLI -c Release -f $(TFM) -r $(RID) --self-contained false -o $(R_PUBLISH_OUT)
+
+stage-r: publish-r
+	mkdir -p $(R_RUNNER_DIR)
+	cp -v $(R_PUBLISH_OUT)/* $(R_RUNNER_DIR)/
+
+check-r: stage-r
+	R CMD build r

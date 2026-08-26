@@ -6,11 +6,10 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<AssemblyName>lpjg-experiment</AssemblyName>
-		<PublishAot>true</PublishAot>
-		<StripSymbols>true</StripSymbols>
 	</PropertyGroup>
 
 	<ItemGroup>
+		<PackageReference Include="CommandLineParser" Version="2.9.1" />
 		<PackageReference Include="Tomlyn" Version="0.16.2" />
 		<ProjectReference Include="../LpjGuess.Core/LpjGuess.Core.csproj" />
 		<ProjectReference Include="../LpjGuess.Runner/LpjGuess.Runner.csproj" />

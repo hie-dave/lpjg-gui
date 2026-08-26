@@ -8,3 +8,9 @@ python/dist
 python/lpjguess_runner/rids
 python/lpjguess_runner/__pycache__
 *.egg-info
+r/inst
+lpjguessRunner*.tar.gz
+r/example.r
+python/example.py
+__pycache__
+

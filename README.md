@@ -40,8 +40,10 @@ Install the following packages:
 ## Build
 
 Prerequisites:
+
 - .NET 9 SDK
-- Python 3.11 (if building wheel)
+- Python 3.11 (if building the Python wheel)
+- R (if building the R package)
 
 The solution may be built in an IDE of choice, or using the provided Makefile
 or .NET CLI:
@@ -82,9 +84,9 @@ The simulation runner provides a way to run a set of LPJ-Guess instructions
 multiple times by varying parameters in the instruction files. Generated
 simulations can be run locally, or submitted to PBS for execution.
 
-The simulation runner may be run via command-line interface or via the python
-bindings. If using the CLI, all options are passed via a .toml file. The CLI
-requires one argument - the path to the .toml file:
+The simulation runner may be run via the command-line interface or through its
+Python and R wrappers. For ordinary interactive CLI use, options are read from
+a TOML file:
 
 ```bash
 dotnet run --project src/LpjGuess.Runner.CLI -- <myconfig.toml>
@@ -105,6 +107,27 @@ pip install lpjguess-runner
 
 For more detailed information, consult the
 [PyPI page](https://pypi.org/project/lpjguess-runner/).
+
+### R Bindings
+
+The R wrapper exposes the same experiment concepts as the Python wrapper,
+including named simulations, top-level and block parameter changes, output
+cleanup policies, progress and model-output callbacks, complete results,
+asynchronous polling, and cancellation. It communicates with the runner over a
+versioned machine interface. Building it from this source checkout requires the
+.NET 9 SDK; an R package with a prebuilt runner would require only the matching
+.NET 9 runtime.
+
+Build and install it from a source checkout with:
+
+```bash
+make stage-r
+R CMD INSTALL r
+```
+
+For installation details, complete examples, local and PBS settings, parameter
+grid construction, output policies, callbacks, and asynchronous use, see the
+[R wrapper documentation](r/README.md).
 
 ## Screenshots
 
