@@ -88,14 +88,11 @@ jobs:
         with:
           r-version: "release"
 
-      - name: Install R system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libuv1-dev
-
       - name: Install R dependencies
-        run: |
-          Rscript -e 'install.packages(c("jsonlite", "processx", "testthat"), repos = "https://cloud.r-project.org")'
+        uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          working-directory: r
+          dependencies: '"all"'
 
       - name: Build and test R package
         run: |
