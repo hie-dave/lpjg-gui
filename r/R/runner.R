@@ -264,6 +264,7 @@ run_simulations <- function(settings, simulations, instruction_files,
     wait_run(handle, progress, output)
 }
 
+#' @export
 print.lpjguess_result <- function(x, ...) {
     cat("LPJ-GUESS experiment result\n")
     cat("  Total jobs:     ", x$total_jobs, "\n", sep = "")
@@ -272,6 +273,7 @@ print.lpjguess_result <- function(x, ...) {
     invisible(x)
 }
 
+#' @export
 print.lpjguess_run <- function(x, ...) {
     state <- if (x$process$is_alive()) "running" else "finished"
     cat("LPJ-GUESS run (", state, ")\n", sep = "")

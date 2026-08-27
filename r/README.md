@@ -39,7 +39,9 @@ git clone --recurse-submodules git@github.com:hie-dave/lpjg-gui.git
 cd lpjg-gui
 
 Rscript -e 'install.packages(c("jsonlite", "processx"), repos="https://cloud.r-project.org")'
+Rscript -e 'install.packages("roxygen2", repos="https://cloud.r-project.org")'
 make stage-r
+make docs-r
 R CMD INSTALL r
 ```
 

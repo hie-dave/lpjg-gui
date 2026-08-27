@@ -17,7 +17,7 @@ VENV ?= .venv
 
 WHEEL := $(DIST_DIR)/lpjguess_runner-*-none-$(PLAT).whl
 
-.PHONY: clean build run check coverage clean-py publish stage wheel install dev install-venv install-user clean-venv publish-r stage-r check-r
+.PHONY: clean build run check coverage clean-py publish stage wheel install dev install-venv install-user clean-venv publish-r stage-r docs-r check-r
 
 build:
 	dotnet build $(SLN)
@@ -100,5 +100,8 @@ stage-r: publish-r
 	mkdir -p $(R_RUNNER_DIR)
 	cp -v $(R_PUBLISH_OUT)/* $(R_RUNNER_DIR)/
 
-check-r: stage-r
+docs-r:
+	Rscript -e 'roxygen2::roxygenise("r", roclets = "rd")'
+
+check-r: stage-r docs-r
 	R CMD build r

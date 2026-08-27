@@ -93,10 +93,12 @@ jobs:
         with:
           working-directory: r
           dependencies: '"all"'
+          extra-packages: any::roxygen2
 
       - name: Build and test R package
         run: |
           make stage-r TFM=net9.0
+          make docs-r
           R CMD build r
           R CMD check --no-manual lpjguessRunner_*.tar.gz
 

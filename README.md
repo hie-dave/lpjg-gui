@@ -122,6 +122,7 @@ Build and install it from a source checkout with:
 
 ```bash
 make stage-r
+make docs-r
 R CMD INSTALL r
 ```
 
