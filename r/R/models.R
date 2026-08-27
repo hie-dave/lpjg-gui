@@ -12,9 +12,9 @@
 
 #' Create LPJ-GUESS runner settings
 #'
-#' `run_settings()` constructs the execution settings passed to the
-#' `lpjg-experiment` runner. Use `run_settings_local()` for the common case of
-#' running simulations directly on the current machine.
+#' `run_settings()` constructs the execution settings passed to the simulation
+#' runner. Use `run_settings_local()` for the common case of running simulations
+#' directly on the current machine.
 #'
 #' @param guess_path Path to the LPJ-GUESS executable.
 #' @param output_directory Directory where generated simulations and LPJ-GUESS
@@ -92,11 +92,11 @@ run_settings_local <- function(guess_path, output_directory,
 #' Describe a top-level LPJ-GUESS parameter change
 #'
 #' Parameter changes are used inside [simulation()] definitions. A top-level
-#' parameter targets a setting in the instruction file outside named blocks.
+#' parameter targets a setting in the instruction file outside named blocks -
+#' e.g. `npatch`, `nyear_spinup`, etc.
 #'
 #' @param name Parameter name in the LPJ-GUESS instruction file.
-#' @param value Replacement value. Logical and numeric values are converted to
-#'   the scalar string representation expected by the runner.
+#' @param value Replacement value.
 #'
 #' @return A named list describing the parameter change.
 #'
@@ -113,13 +113,12 @@ top_level_parameter <- function(name, value) {
 #' Describe a block-scoped LPJ-GUESS parameter change
 #'
 #' Block parameters target settings inside a named LPJ-GUESS instruction-file
-#' block, such as a PFT or output block.
+#' block, such as a PFT or or group block.
 #'
 #' @param block_type Type of block to edit, for example `"pft"`.
-#' @param block_name Name of the specific block to edit.
-#' @param name Parameter name inside the block.
-#' @param value Replacement value. Logical and numeric values are converted to
-#'   the scalar string representation expected by the runner.
+#' @param block_name Name of the specific block to edit, e.g. `"TeBE"`.
+#' @param name Parameter name inside the block, e.g. `"sla"`.
+#' @param value Replacement value.
 #'
 #' @return A named list describing the parameter change.
 #'
@@ -140,6 +139,9 @@ block_parameter <- function(block_type, block_name, name, value) {
 #' [top_level_parameter()] or [block_parameter()], either as separate arguments
 #' or as a single list.
 #'
+#' To run the returned simulation, pass it to [run_simulations()] or
+#' [run_simulations_async()].
+#'
 #' @param name Simulation name. The runner uses this in generated output paths
 #'   and result metadata.
 #' @param ... Parameter changes, or a single list of parameter changes.
@@ -148,7 +150,7 @@ block_parameter <- function(block_type, block_name, name, value) {
 #'   [run_simulations()] or [run_simulations_async()].
 #'
 #' @examples
-#' simulation(
+#' sim1 <- simulation(
 #'   "high-sla",
 #'   block_parameter("pft", "TeBE", "sla", 39),
 #'   top_level_parameter("ifcalcsla", FALSE)
@@ -158,7 +160,7 @@ block_parameter <- function(block_type, block_name, name, value) {
 #'   block_parameter("pft", "TeBE", "sla", 26),
 #'   block_parameter("pft", "TeBE", "nindiv_max", 1200)
 #' )
-#' simulation("baseline", changes)
+#' sim2 <- simulation("baseline", changes)
 #'
 #' @export
 simulation <- function(name, ...) {

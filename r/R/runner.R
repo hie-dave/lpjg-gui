@@ -51,11 +51,12 @@
 #' @param simulations A simulation object created by [simulation()], or a list
 #'   of simulation objects.
 #' @param instruction_files Character vector of LPJ-GUESS instruction files.
-#' @param pfts Optional character vector of PFT names to include.
+#' @param pfts Optional character vector of PFT names to include. If provided,
+#' only these PFTs will be enabled for the simulations. If empty, whichever PFTs
+#' are enabled in the instruction files will be used.
 #' @param existing_output_policy Policy used when generated output already
 #'   exists. Common values are `"clean_managed"`, `"fail"`, and `"overwrite"`.
-#'   Multiple policy flags may be supplied as a character vector and are passed
-#'   to the runner as a comma-separated value.
+#'   Multiple policy flags may be supplied as a character vector.
 #'
 #' @return An object of class `lpjguess_run`. The handle contains process state
 #'   and accumulated runner events and is intended to be passed to [poll_run()],
