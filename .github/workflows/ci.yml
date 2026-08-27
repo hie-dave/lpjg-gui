@@ -156,9 +156,38 @@ jobs:
           name: r-package
           path: dist
 
+      - name: Write R release install notes
+        shell: bash
+        run: |
+          # r/v0.2.0 tag -> 0.2.0 package version.
+          version="${GITHUB_REF_NAME#r/v}"
+          asset="lpjguessRunner_${version}.tar.gz"
+          tag_url="${GITHUB_REF_NAME//\//%2F}"
+          url="https://github.com/${GITHUB_REPOSITORY}/releases/download/${tag_url}/${asset}"
+          cat > dist/r-release-notes.md <<EOF
+          ## Installation
+
+          Install this R package release directly from GitHub:
+
+          \`\`\`r
+          install.packages(
+            "${url}",
+            repos = NULL,
+            type = "source"
+          )
+          \`\`\`
+
+          Or with pak:
+
+          \`\`\`r
+          pak::pkg_install("url::${url}")
+          \`\`\`
+          EOF
+
       - name: Publish GitHub release
         uses: softprops/action-gh-release@v2
         with:
+          body_path: dist/r-release-notes.md
           files: dist/lpjguessRunner_*.tar.gz
           generate_release_notes: true
 
