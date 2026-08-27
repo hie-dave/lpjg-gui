@@ -39,6 +39,44 @@
     )
 }
 
+#' Start LPJ-GUESS simulations asynchronously
+#'
+#' `run_simulations_async()` starts `lpjg-experiment` in the background and
+#' returns a handle. Use [poll_run()] to consume progress and output events,
+#' [wait_run()] to block until completion, or [cancel_run()] to request
+#' cancellation.
+#'
+#' @param settings Runner settings created by [run_settings()] or
+#'   [run_settings_local()].
+#' @param simulations A simulation object created by [simulation()], or a list
+#'   of simulation objects.
+#' @param instruction_files Character vector of LPJ-GUESS instruction files.
+#' @param pfts Optional character vector of PFT names to include.
+#' @param existing_output_policy Policy used when generated output already
+#'   exists. Common values are `"clean_managed"`, `"fail"`, and `"overwrite"`.
+#'   Multiple policy flags may be supplied as a character vector and are passed
+#'   to the runner as a comma-separated value.
+#'
+#' @return An object of class `lpjguess_run`. The handle contains process state
+#'   and accumulated runner events and is intended to be passed to [poll_run()],
+#'   [wait_run()], or [cancel_run()].
+#'
+#' @examples
+#' \dontrun{
+#' settings <- run_settings_local("lpjguess", "runs")
+#' sims <- list(
+#'   simulation("baseline"),
+#'   simulation("high-sla", block_parameter("pft", "TeBE", "sla", 39))
+#' )
+#'
+#' handle <- run_simulations_async(settings, sims, "global.ins")
+#' while (poll_run(handle, timeout = 1000)) {
+#'   # Update a UI, check for user cancellation, or do other work.
+#' }
+#' result <- wait_run(handle)
+#' }
+#'
+#' @export
 run_simulations_async <- function(settings, simulations, instruction_files,
                                   pfts = character(),
                                   existing_output_policy = "clean_managed") {
@@ -89,6 +127,44 @@ run_simulations_async <- function(settings, simulations, instruction_files,
     }
 }
 
+#' Poll, wait for, or cancel an asynchronous LPJ-GUESS run
+#'
+#' These functions operate on handles returned by [run_simulations_async()].
+#' `poll_run()` consumes any available runner events and returns whether the
+#' process is still alive. `wait_run()` blocks until the run completes and
+#' returns the final result. `cancel_run()` requests cancellation and returns
+#' the handle invisibly.
+#'
+#' @param handle An `lpjguess_run` handle returned by
+#'   [run_simulations_async()].
+#' @param timeout Maximum time, in milliseconds, for [poll_run()] to wait for
+#'   process output before returning.
+#' @param progress Optional callback function invoked for progress events. The
+#'   callback receives one argument: the decoded event payload.
+#' @param output Optional callback function invoked for model-output events. The
+#'   callback receives one argument: the decoded event payload.
+#' @param poll_interval Polling interval, in milliseconds, used by
+#'   [wait_run()] while the process is alive.
+#'
+#' @return `poll_run()` invisibly returns `TRUE` while the process is still
+#'   running and `FALSE` after it exits. `wait_run()` returns an
+#'   `lpjguess_result` object and raises an R error if the runner reports a
+#'   failure. `cancel_run()` invisibly returns `handle`.
+#'
+#' @examples
+#' \dontrun{
+#' handle <- run_simulations_async(settings, simulations, "global.ins")
+#'
+#' poll_run(
+#'   handle,
+#'   timeout = 1000,
+#'   progress = function(event) print(event)
+#' )
+#'
+#' cancel_run(handle)
+#' }
+#'
+#' @export
 poll_run <- function(handle, timeout = 0, progress = NULL, output = NULL) {
     stopifnot(inherits(handle, "lpjguess_run"))
     handle$process$poll_io(as.integer(timeout))
@@ -98,6 +174,8 @@ poll_run <- function(handle, timeout = 0, progress = NULL, output = NULL) {
     invisible(handle$process$is_alive())
 }
 
+#' @rdname poll_run
+#' @export
 wait_run <- function(handle, progress = NULL, output = NULL,
                      poll_interval = 100) {
     stopifnot(inherits(handle, "lpjguess_run"))
@@ -120,12 +198,59 @@ wait_run <- function(handle, progress = NULL, output = NULL,
     handle$result
 }
 
+#' @rdname poll_run
+#' @export
 cancel_run <- function(handle) {
     stopifnot(inherits(handle, "lpjguess_run"))
     if (handle$process$is_alive()) handle$process$interrupt()
     invisible(handle)
 }
 
+#' Run LPJ-GUESS simulations synchronously
+#'
+#' `run_simulations()` is the simplest entry point for ordinary scripts. It
+#' starts the runner, streams runner events through optional callbacks, waits
+#' for completion, and returns the final result.
+#'
+#' @param settings Runner settings created by [run_settings()] or
+#'   [run_settings_local()].
+#' @param simulations A simulation object created by [simulation()], or a list
+#'   of simulation objects.
+#' @param instruction_files Character vector of LPJ-GUESS instruction files.
+#' @param pfts Optional character vector of PFT names to include.
+#' @param progress Optional callback function invoked for progress events. The
+#'   callback receives one argument: the decoded event payload.
+#' @param output Optional callback function invoked for model-output events. The
+#'   callback receives one argument: the decoded event payload.
+#' @param existing_output_policy Policy used when generated output already
+#'   exists. Common values are `"clean_managed"`, `"fail"`, and `"overwrite"`.
+#'   Multiple policy flags may be supplied as a character vector and are passed
+#'   to the runner as a comma-separated value.
+#'
+#' @return An `lpjguess_result` object. The result contains the decoded summary
+#'   returned by the runner, including total, successful, and failed job counts.
+#'
+#' @examples
+#' \dontrun{
+#' settings <- run_settings_local("lpjguess", "runs", cpu_count = 2)
+#' simulations <- list(
+#'   simulation("baseline"),
+#'   simulation("high-sla", block_parameter("pft", "TeBE", "sla", 39))
+#' )
+#'
+#' result <- run_simulations(
+#'   settings,
+#'   simulations,
+#'   instruction_files = "global.ins",
+#'   progress = function(event) {
+#'     if (!is.null(event$message)) message(event$message)
+#'   },
+#'   existing_output_policy = "clean_managed"
+#' )
+#' print(result)
+#' }
+#'
+#' @export
 run_simulations <- function(settings, simulations, instruction_files,
                             pfts = character(), progress = NULL, output = NULL,
                             existing_output_policy = "clean_managed") {

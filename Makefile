@@ -11,7 +11,7 @@ BUILD_DIR := python/build
 EGG_INFO := python/lpjguess_runner.egg-info
 PY_CACHE := python/lpjguess_runner/__pycache__
 RIDS_ROOT := python/lpjguess_runner/rids
-R_PUBLISH_OUT := publish/r/$(RID)
+R_PUBLISH_OUT := publish/r/portable
 R_RUNNER_DIR := r/inst/runner
 VENV ?= .venv
 
@@ -91,9 +91,10 @@ dev: clean-py publish stage wheel
 # Packaging for R
 # -----------------------------
 
-# Framework-dependent CLI payload; the R package therefore requires .NET 9.
+# Portable framework-dependent CLI payload; the R package therefore requires
+# the .NET 9 runtime, but the same source package can be installed on any OS.
 publish-r:
-	dotnet publish src/LpjGuess.Runner.CLI -c Release -f $(TFM) -r $(RID) --self-contained false -o $(R_PUBLISH_OUT)
+	dotnet publish src/LpjGuess.Runner.CLI -c Release -f $(TFM) --self-contained false -o $(R_PUBLISH_OUT)
 
 stage-r: publish-r
 	mkdir -p $(R_RUNNER_DIR)

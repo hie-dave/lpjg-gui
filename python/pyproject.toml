@@ -45,3 +45,6 @@ include = ["lpjguess_runner"]
 [tool.setuptools_scm]
 root = ".."
 local_scheme = "no-local-version"
+tag_regex = "^python/v(?P<version>[0-9]+(?:\\.[0-9]+)*(?:[a-zA-Z0-9.\\-]*)?)$"
+git_describe_command = "git describe --dirty --tags --long --match 'python/v*'"
+fallback_version = "0.0.0"

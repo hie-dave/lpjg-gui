@@ -17,12 +17,30 @@ versioned JSON/NDJSON interface.
 
 GTK and libadwaita are not required for the R wrapper.
 
-## Build and installation
+## Installation
 
-The R package is not currently published as a prebuilt archive, so installation
-from a source checkout builds the runner and therefore requires the .NET 9 SDK.
-Clone the repository with its submodules, publish the CLI for the current
-platform, stage it into the R package, and install:
+Tagged R package releases are attached to GitHub releases as source archives
+with the published runner already included. Install a release archive directly:
+
+```r
+install.packages(
+  "https://github.com/hie-dave/lpjg-gui/releases/download/r/v0.1.0/lpjguessRunner_0.1.0.tar.gz",
+  repos = NULL,
+  type = "source"
+)
+
+# Or:
+pak::pkg_install("url::https://github.com/hie-dave/lpjg-gui/releases/download/r/v0.1.0/lpjguessRunner_0.1.0.tar.gz")
+```
+
+That installation path requires R, the R package dependencies, and the .NET 9
+runtime on `PATH`, but does not require the .NET SDK.
+
+## Build from source
+
+Installation from a source checkout builds the runner and therefore requires
+the .NET 9 SDK. Clone the repository with its submodules, publish the portable
+CLI, stage it into the R package, and install:
 
 ```bash
 git clone --recurse-submodules git@github.com:hie-dave/lpjg-gui.git
@@ -33,17 +51,8 @@ make stage-r
 R CMD INSTALL r
 ```
 
-`stage-r` builds a framework-dependent runner for `linux-x64` by default. Set
-`RID` for another supported .NET runtime identifier:
-
-```bash
-make stage-r RID=osx-arm64
-R CMD INSTALL r
-```
-
-Common values include `linux-x64`, `linux-arm64`, `win-x64`, `osx-x64`, and
-`osx-arm64`. The corresponding .NET 9 runtime must be installed on the target
-machine.
+`stage-r` builds a portable framework-dependent runner. The corresponding
+.NET 9 runtime must be installed on the target machine.
 
 For development, build the solution and install the R source without staging:
 

@@ -2,16 +2,16 @@ name: CI
 
 on:
   push:
-    branches: [ main, "**" ]
+    branches: [ master, "**" ]
     tags:
-      - "v*.*.*"
+      - "python/v*.*.*"
+      - "r/v*.*.*"
   pull_request:
   workflow_dispatch: {}
 
 # Required for PyPI/TestPyPI Trusted Publishing (OIDC)
 permissions:
   contents: read
-  id-token: write
 
 jobs:
   package:
@@ -69,14 +69,62 @@ jobs:
           path: python/dist/*.whl
           if-no-files-found: error
 
+  package-r:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Setup .NET 9
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: "9.0.x"
+
+      - name: Setup R
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: "release"
+
+      - name: Install R dependencies
+        run: |
+          Rscript -e 'install.packages(c("jsonlite", "processx", "testthat"), repos = "https://cloud.r-project.org")'
+
+      - name: Build and test R package
+        run: |
+          make stage-r TFM=net9.0
+          R CMD build r
+          R CMD check --no-manual lpjguessRunner_*.tar.gz
+
+      - name: Validate R release tag
+        if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/r/v') }}
+        shell: bash
+        run: |
+          tag="${GITHUB_REF_NAME#r/v}"
+          version="$(Rscript -e 'cat(read.dcf("r/DESCRIPTION")[1, "Version"])')"
+          test "$tag" = "$version" || {
+            echo "R release tag r/v$tag does not match r/DESCRIPTION Version: $version"
+            exit 1
+          }
+
+      - name: Upload R package artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: r-package
+          path: lpjguessRunner_*.tar.gz
+          if-no-files-found: error
+
   publish-pypi:
-    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') }}
+    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/python/v') }}
     needs: package
     runs-on: ubuntu-latest
     environment:
       name: pypi
       url: https://pypi.org/p/lpjguess-runner
     permissions:
+      contents: read
       id-token: write
     steps:
       - name: Download artifacts
@@ -92,11 +140,31 @@ jobs:
           print-hash: true
           skip-existing: true
 
+  publish-r-github:
+    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/r/v') }}
+    needs: package-r
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download R package artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: r-package
+          path: dist
+
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/lpjguessRunner_*.tar.gz
+          generate_release_notes: true
+
   publish-testpypi:
     if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/heads/master') }}
     needs: package
     runs-on: ubuntu-latest
     permissions:
+      contents: read
       id-token: write
     steps:
       - name: Download artifacts
