@@ -20,18 +20,10 @@ GTK and libadwaita are not required for the R wrapper.
 ## Installation
 
 Tagged R package releases are attached to GitHub releases as source archives
-with the published runner already included. Install a release archive directly:
-
-```r
-install.packages(
-  "https://github.com/hie-dave/lpjg-gui/releases/download/r/v0.1.0/lpjguessRunner_0.1.0.tar.gz",
-  repos = NULL,
-  type = "source"
-)
-
-# Or:
-pak::pkg_install("url::https://github.com/hie-dave/lpjg-gui/releases/download/r/v0.1.0/lpjguessRunner_0.1.0.tar.gz")
-```
+with the published runner already included. To install the latest published
+package, open the
+[latest release page](https://github.com/hie-dave/lpjg-gui/releases/latest) and
+follow the R installation instructions there.
 
 That installation path requires R, the R package dependencies, and the .NET 9
 runtime on `PATH`, but does not require the .NET SDK.

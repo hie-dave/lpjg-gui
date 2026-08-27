@@ -125,18 +125,10 @@ make stage-r
 R CMD INSTALL r
 ```
 
-Tagged R package releases are attached to GitHub releases. For example:
-
-```r
-install.packages(
-  "https://github.com/hie-dave/lpjg-gui/releases/download/r/v0.1.0/lpjguessRunner_0.1.0.tar.gz",
-  repos = NULL,
-  type = "source"
-)
-
-# Or:
-pak::pkg_install("url::https://github.com/hie-dave/lpjg-gui/releases/download/r/v0.1.0/lpjguessRunner_0.1.0.tar.gz")
-```
+Tagged R package releases are attached to GitHub releases. To install the
+latest published R package, open the
+[latest release page](https://github.com/hie-dave/lpjg-gui/releases/latest) and
+follow the R installation instructions there.
 
 For installation details, complete examples, local and PBS settings, parameter
 grid construction, output policies, callbacks, and asynchronous use, see the
