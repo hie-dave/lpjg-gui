@@ -132,6 +132,7 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v8
         with:
+          pattern: wheel-*
           path: dist
           merge-multiple: true
 
@@ -172,6 +173,7 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v8
         with:
+          pattern: wheel-*
           path: dist
           merge-multiple: true
 
