@@ -2,9 +2,8 @@
 
 [![CI](https://github.com/hie-dave/lpjg-gui/actions/workflows/ci.yml/badge.svg)](https://github.com/hie-dave/lpjg-gui/actions/workflows/ci.yml)
 
-R wrapper for the LPJ-GUESS experiment runner. The package starts the
-framework-dependent `lpjg-experiment` host and communicates with it through its
-versioned JSON/NDJSON interface.
+R wrapper for the LPJ-GUESS experiment runner. This package allows you to take a
+base set of LPJ-GUESS instruction files, define a set of parameter changes, and run the resulting simulations.
 
 ## Requirements
 
@@ -68,26 +67,23 @@ installed package, and finally the repository debug build.
 
 ## Concepts and workflow
 
-The package is an idiomatic R client for the same .NET experiment API used by
-the CLI and Python wrapper. A typical workflow defines run settings, constructs
+A typical workflow defines run settings, constructs
 one or more simulations, supplies instruction files and optional PFTs, and then
 runs the experiment synchronously or asynchronously.
 
 - **Run settings:** `run_settings_local()` covers normal local execution.
-  `run_settings()` exposes the complete local/PBS settings, including dry-run,
-  walltime, memory, queue, project, email, factorial, and CPU-affinity options.
+  `run_settings()` exposes PBS settings, for use on a HPC.
 
 - **Simulations:** `simulation()` describes a named set of changes applied to
   every base instruction file. Changes are created with
   `top_level_parameter()` or `block_parameter()`.
 
 - **Parameter values:** Numeric, logical, and character scalar values are
-  accepted. The wrapper converts values to the invariant strings required by
-  LPJ-GUESS; callers do not need to call `as.character()` themselves.
+  accepted.
 
 - **Instruction files and PFTs:** Each instruction file is run once for each
-  simulation. If `pfts` is non-empty, the generated instruction file disables
-  all PFTs and then enables the requested names.
+  simulation. If `pfts` is non-empty, only those PFTs are enabled in the
+  resulting simulations. Otherwise, if `pfts` is empty, whichever PFTs are enabled in the base instruction files are used.
 
 - **Progress and output:** Optional R functions receive structured progress
   and LPJ-GUESS stdout/stderr events. Callbacks are dispatched while R polls
