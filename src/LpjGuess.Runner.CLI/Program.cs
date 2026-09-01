@@ -46,7 +46,7 @@ static async Task<int> RunAsync(RunOptions options)
     {
         if (machineMode)
             new NdjsonEventWriter(Console.Out).Write(
-                new ProtocolEvent("error", Message: error.Message));
+                new ProtocolEvent("error", Message: error.ToString()));
         else
             Console.Error.WriteLine(error.Message);
         return 1;

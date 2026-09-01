@@ -1,6 +1,6 @@
 Package: lpjguessRunner
 Title: Run LPJ-GUESS Simulations from R
-Version: 0.3.0
+Version: 0.4.0
 Authors@R: person("Drew", "Holzworth", role = c("aut", "cre"),
                   email = "d.holzworth@westernsydney.edu.au")
 Author: Drew Holzworth [aut, cre]

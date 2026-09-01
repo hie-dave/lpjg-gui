@@ -77,7 +77,7 @@ public sealed class RunOrchestrator
         return new ExperimentResult(jobs.Count, nsuccess, nfail,
                                           jobs.Select(j => new JobResult(
             j.Name,
-            jobManager.GetJobDuration(j))), exception?.Message);
+            jobManager.GetJobDuration(j))), exception?.ToString());
     }
 
     private void CleanBatch(SimulationBatch batch)
