@@ -14,6 +14,9 @@ Imports:
     processx
 Suggests:
     data.table,
+    knitr,
+    rmarkdown,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
 Config/roxygen2/version: 8.1.0
+VignetteBuilder: knitr

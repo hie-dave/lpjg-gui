@@ -1,0 +1,105 @@
+---
+title: "Reading Outputs"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Reading Outputs}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(eval = FALSE)
+```
+
+Completed runs are catalogued below the output directory configured in
+`run_settings()` or `run_settings_local()`.
+
+## Read From a Result
+
+The result returned by `run_simulations()` knows where the run wrote outputs.
+
+```{r}
+result <- run_simulations(settings, simulations, "/path/to/site.ins")
+lai <- read_output(result, "lai")
+```
+
+`read_output()` returns the LPJ-GUESS output columns in their original wide
+form, with a leading `simulation` column.
+
+## Read From a Previous Run
+
+You can also discover and read outputs from an existing output directory.
+
+```{r}
+runs <- list_simulations("/scratch/me/lpjguess-runs")
+outputs <- list_outputs(runs)
+
+lai <- read_output(runs, "lai")
+```
+
+`list_simulations()` returns one row per completed simulation job. Simulation
+names are the primary user-facing identifier.
+
+```{r}
+baseline <- read_output(runs, "lai", simulations = "baseline")
+```
+
+If the same simulation name was run for multiple base instruction files, filter
+the simulation table first or provide `base_ins`.
+
+```{r}
+site1 <- subset(runs, simulation == "baseline" & basename(base_ins) == "site1.ins")
+lai_site1 <- read_output(site1, "lai")
+```
+
+## Output Names
+
+`read_output()` accepts the LPJ-GUESS instruction-file parameter, the concrete
+output filename, or the filename stem.
+
+```{r}
+read_output(runs, "file_lai")
+read_output(runs, "lai.out")
+read_output(runs, "lai")
+```
+
+For conventional output names, the stem also matches the corresponding
+`file_*` parameter.
+
+```{r}
+read_output(runs, "dave_lai")
+```
+
+If multiple outputs are requested, `read_output()` adds an `output_type` column
+so the rows can be distinguished.
+
+```{r}
+carbon <- read_output(runs, c("lai", "agpp"))
+```
+
+If one requested output does not exist, a warning is emitted and matching
+outputs are still returned.
+
+## Table Type
+
+If `data.table` is installed, `read_output()` uses `data.table::fread()` and
+returns a `data.table`. This is faster for large LPJ-GUESS output files and
+prints compactly at the console.
+
+Without `data.table`, the function falls back to base R and returns a
+`data.frame`.
+
+## Metadata Columns
+
+The default result includes only the identifiers most users need. Use
+`id_cols = "all"` to keep paths and internal catalog identifiers.
+
+```{r}
+lai <- read_output(runs, "lai", id_cols = "all")
+```
+
+Use `id_cols = FALSE` to read only the raw LPJ-GUESS columns.
+
+```{r}
+raw_lai <- read_output(runs, "lai", id_cols = FALSE)
+```

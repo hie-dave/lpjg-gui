@@ -39,6 +39,49 @@
     )
 }
 
+.default_progress <- function() {
+    force(Sys.time())
+    function(event) {
+        message <- sprintf(
+            "\rWorking: %.0f%% (%d of %d simulations completed)",
+            event$percent, event$completed, event$total)
+        cat(message)
+        utils::flush.console()
+    }
+}
+
+.clear_progress <- function(progress) {
+    if (is.function(progress) && isTRUE(attr(progress, "lpjguess_default"))) {
+        cat("\n")
+        utils::flush.console()
+    }
+}
+
+.normalise_progress_callback <- function(progress) {
+    if (identical(progress, TRUE)) {
+        callback <- .default_progress()
+        attr(callback, "lpjguess_default") <- TRUE
+        return(callback)
+    }
+    progress
+}
+
+.output_events <- function(handle) {
+    Filter(function(event) identical(event$type, "output"), handle$events)
+}
+
+.dump_output_events <- function(handle) {
+    events <- .output_events(handle)
+    if (!length(events)) return()
+
+    cat("LPJ-GUESS output from failed simulations:\n")
+    for (event in events) {
+        data <- event$data
+        cat(sprintf("[%s][%s] %s\n", data$job, data$stream, data$text))
+    }
+    utils::flush.console()
+}
+
 #' Start LPJ-GUESS simulations asynchronously
 #'
 #' `run_simulations_async()` starts `lpjg-experiment` in the background and
@@ -142,8 +185,9 @@ run_simulations_async <- function(settings, simulations, instruction_files,
 #'   [run_simulations_async()].
 #' @param timeout Maximum time, in milliseconds, for [poll_run()] to wait for
 #'   process output before returning.
-#' @param progress Optional callback function invoked for progress events. The
-#'   callback receives one argument: the decoded event payload.
+#' @param progress Progress handling. Pass `TRUE` for the default one-line
+#'   progress display, `NULL` to suppress progress, or a callback function
+#'   invoked with the decoded progress payload.
 #' @param output Optional callback function invoked for model-output events. The
 #'   callback receives one argument: the decoded event payload.
 #' @param poll_interval Polling interval, in milliseconds, used by
@@ -182,6 +226,7 @@ poll_run <- function(handle, timeout = 0, progress = NULL, output = NULL) {
 wait_run <- function(handle, progress = NULL, output = NULL,
                      poll_interval = 100) {
     stopifnot(inherits(handle, "lpjguess_run"))
+    progress <- .normalise_progress_callback(progress)
     tryCatch({
         while (handle$process$is_alive()) {
             poll_run(handle, poll_interval, progress, output)
@@ -191,12 +236,26 @@ wait_run <- function(handle, progress = NULL, output = NULL,
         cancel_run(handle)
         stop(e)
     })
+    .clear_progress(progress)
     unlink(handle$request_file)
-    if (!is.null(handle$error)) stop(handle$error, call. = FALSE)
+    if (!is.null(handle$error)) {
+        .dump_output_events(handle)
+        stop(handle$error, call. = FALSE)
+    }
     if (is.null(handle$result)) {
         details <- paste(handle$stderr, collapse = "\n")
         stop("lpjg-experiment exited without a result",
              if (nzchar(details)) paste0(":\n", details), call. = FALSE)
+    }
+    if (!is.null(handle$result$error) || handle$result$failed_jobs > 0L) {
+        .dump_output_events(handle)
+        error <- handle$result$error
+        if (is.null(error) || !nzchar(error)) {
+            error <- sprintf(
+                "LPJ-GUESS run failed: %d of %d simulations failed.",
+                handle$result$failed_jobs, handle$result$total_jobs)
+        }
+        stop(error, call. = FALSE)
     }
     handle$result
 }
@@ -221,8 +280,9 @@ cancel_run <- function(handle) {
 #'   of simulation objects.
 #' @param instruction_files Character vector of LPJ-GUESS instruction files.
 #' @param pfts Optional character vector of PFT names to include.
-#' @param progress Optional callback function invoked for progress events. The
-#'   callback receives one argument: the decoded event payload.
+#' @param progress Progress handling. The default `TRUE` prints a one-line
+#'   aggregate progress display. Pass `NULL` to suppress progress, or a
+#'   callback function invoked with the decoded progress payload.
 #' @param output Optional callback function invoked for model-output events. The
 #'   callback receives one argument: the decoded event payload.
 #' @param existing_output_policy Policy used when generated output already
@@ -255,7 +315,7 @@ cancel_run <- function(handle) {
 #'
 #' @export
 run_simulations <- function(settings, simulations, instruction_files,
-                            pfts = character(), progress = NULL, output = NULL,
+                            pfts = character(), progress = TRUE, output = NULL,
                             existing_output_policy = "clean_managed") {
     handle <- run_simulations_async(
         settings, simulations, instruction_files, pfts,

@@ -1,0 +1,148 @@
+---
+title: "Running Simulations"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Running Simulations}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(eval = FALSE)
+```
+
+This vignette covers the main ways to run LPJ-GUESS simulations from R.
+
+## Local Runs
+
+Use `run_settings_local()` when LPJ-GUESS should run directly on the current
+machine.
+
+```{r}
+library(lpjguessRunner)
+
+settings <- run_settings_local(
+    guess_path = "/path/to/lpjguess",
+    output_directory = "/scratch/me/lpjguess-runs",
+    input_module = "nc",
+    cpu_count = 4,
+    job_name = "experiment"
+)
+```
+
+The output directory is where generated instruction files, manifests, and
+LPJ-GUESS outputs are written.
+
+## Simulations
+
+A simulation is a named set of changes applied to each instruction file.
+
+```{r}
+simulations <- list(
+    simulation("baseline"),
+    simulation(
+        "high_sla",
+        block_parameter("pft", "MRS", "sla", 39)
+    )
+)
+```
+
+Run the experiment synchronously with `run_simulations()`.
+
+```{r}
+result <- run_simulations(
+    settings = settings,
+    simulations = simulations,
+    instruction_files = c("/path/to/site1.ins", "/path/to/site2.ins"),
+    pfts = "MRS"
+)
+```
+
+LPJ-GUESS stdout and stderr are captured but not printed during successful
+runs. If a run fails, the captured output is printed before `run_simulations()`
+raises an R error.
+
+Set `progress = NULL` to suppress the default progress line, or pass a function
+to handle progress yourself.
+
+```{r}
+result <- run_simulations(
+    settings,
+    simulations,
+    "/path/to/site.ins",
+    progress = function(event) {
+        message(sprintf("%0.1f%% complete", event$percent))
+    }
+)
+```
+
+Pass an `output` callback if you want to stream model output during the run.
+
+```{r}
+result <- run_simulations(
+    settings,
+    simulations,
+    "/path/to/site.ins",
+    output = function(event) {
+        cat(sprintf("[%s][%s] %s\n", event$job, event$stream, event$text))
+    }
+)
+```
+
+## Existing Outputs
+
+`existing_output_policy` controls how managed output directories are handled
+when a run is repeated.
+
+```{r}
+result <- run_simulations(
+    settings,
+    simulations,
+    "/path/to/site.ins",
+    existing_output_policy = c("clean_managed", "prune_stale")
+)
+```
+
+Common policies are:
+
+- `"clean_managed"`: remove old files for simulations being regenerated.
+- `"prune_stale"`: remove managed simulations from previous runs that are not
+  part of the current experiment.
+- `"preserve"`: leave existing outputs untouched.
+- `"fail"`: abort if existing output directories are found.
+
+## PBS Runs
+
+Use `run_settings()` with `run_local = FALSE` for PBS-backed execution.
+
+```{r}
+settings <- run_settings(
+    guess_path = "/apps/lpj-guess/lpjguess",
+    output_directory = "/scratch/me/lpjguess-runs",
+    input_module = "nc",
+    cpu_count = 16,
+    job_name = "experiment",
+    run_local = FALSE,
+    walltime = "12:00:00",
+    memory = 32,
+    queue = "normal",
+    project = "project-code"
+)
+```
+
+## Asynchronous Runs
+
+Use `run_simulations_async()` if R needs to remain responsive while the runner
+is active.
+
+```{r}
+handle <- run_simulations_async(settings, simulations, "/path/to/site.ins")
+
+while (poll_run(handle, timeout = 100)) {
+    # Do other R work between polls.
+}
+
+result <- wait_run(handle)
+```
+
+Cancel a running experiment with `cancel_run(handle)`.

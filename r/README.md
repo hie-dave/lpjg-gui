@@ -2,55 +2,34 @@
 
 [![CI](https://github.com/hie-dave/lpjg-gui/actions/workflows/ci.yml/badge.svg)](https://github.com/hie-dave/lpjg-gui/actions/workflows/ci.yml)
 
-R wrapper for the LPJ-GUESS experiment runner. This package allows you to take a
-base set of LPJ-GUESS instruction files, define a set of parameter changes, and run the resulting simulations.
+`lpjguessRunner` runs LPJ-GUESS simulation experiments from R. You provide one
+or more instruction files, define the parameter changes for each simulation,
+and read completed outputs back as ordinary R tables.
+
+GTK and libadwaita are not required for the R wrapper.
 
 ## Requirements
 
 - R
-- .NET 9 runtime, with `dotnet` available on `PATH`, when installing a package
-  that already contains the published runner
 - A working LPJ-GUESS executable
-- `jsonlite` and `processx` (installed automatically as R package dependencies)
-- .NET 9 SDK when building or staging the runner from source
-
-GTK and libadwaita are not required for the R wrapper.
+- .NET 9 runtime for published package builds
+- .NET 9 SDK when building the runner from source
 
 ## Installation
 
 Tagged R package releases are attached to GitHub releases as source archives
-with the published runner already included. To install the latest published
-package, open the
+with the published runner included. Open the
 [latest release page](https://github.com/hie-dave/lpjg-gui/releases/latest) and
 follow the R installation instructions there.
 
-That installation path requires R, the R package dependencies, and the .NET 9
-runtime on `PATH`, but does not require the .NET SDK.
-
-## Build from source
-
-Installation from a source checkout builds the runner and therefore requires
-the .NET 9 SDK. Clone the repository with its submodules, publish the portable
-CLI, stage it into the R package, and install:
+For development from a source checkout:
 
 ```bash
 git clone --recurse-submodules git@github.com:hie-dave/lpjg-gui.git
 cd lpjg-gui
 
 Rscript -e 'install.packages(c("jsonlite", "processx"), repos="https://cloud.r-project.org")'
-Rscript -e 'install.packages("roxygen2", repos="https://cloud.r-project.org")'
 make stage-r
-make docs-r
-R CMD INSTALL r
-```
-
-`stage-r` builds a portable framework-dependent runner. The corresponding
-.NET 9 runtime must be installed on the target machine.
-
-For development, build the solution and install the R source without staging:
-
-```bash
-dotnet build src/LpjGuess.sln
 R CMD INSTALL r
 ```
 
@@ -61,345 +40,49 @@ automatically. Otherwise, select a runner DLL or executable explicitly:
 options(lpjguess.runner.path = "/path/to/lpjg-experiment.dll")
 ```
 
-The `LPJGUESS_RUNNER` environment variable provides the same override. Lookup
-order is: the R option, the environment variable, the runner bundled in the
-installed package, and finally the repository debug build.
+The `LPJGUESS_RUNNER` environment variable provides the same override.
 
-## Concepts and workflow
-
-A typical workflow defines run settings, constructs
-one or more simulations, supplies instruction files and optional PFTs, and then
-runs the experiment synchronously or asynchronously.
-
-- **Run settings:** `run_settings_local()` covers normal local execution.
-  `run_settings()` exposes PBS settings, for use on a HPC.
-
-- **Simulations:** `simulation()` describes a named set of changes applied to
-  every base instruction file. Changes are created with
-  `top_level_parameter()` or `block_parameter()`.
-
-- **Parameter values:** Numeric, logical, and character scalar values are
-  accepted.
-
-- **Instruction files and PFTs:** Each instruction file is run once for each
-  simulation. If `pfts` is non-empty, only those PFTs are enabled in the
-  resulting simulations. Otherwise, if `pfts` is empty, whichever PFTs are enabled in the base instruction files are used.
-
-- **Progress and output:** Optional R functions receive structured progress
-  and LPJ-GUESS stdout/stderr events. Callbacks are dispatched while R polls
-  the runner, so they execute on R's main thread.
-
-- **Outputs:** Files are written below the output directory in the run
-  settings. Use `list_simulations()`, `list_outputs()`, and `read_output()` to
-  discover and read completed outputs as ordinary R data frames. The precise
-  files depend on the LPJ-GUESS instruction file and input module.
-
-- **Results:** A completed run returns an `lpjguess_result` containing summary
-  counts, any experiment error, and per-job names and durations.
-
-## Example
+## Quick Start
 
 ```r
 library(lpjguessRunner)
 
 settings <- run_settings_local(
-    guess_path = "/path/to/guess",
+    guess_path = "/path/to/lpjguess",
     output_directory = "/path/to/output",
     input_module = "nc",
-    cpu_count = 4,
-    job_name = "example",
-    use_cpu_affinity = TRUE
+    cpu_count = 4
 )
 
 simulations <- list(
+    simulation("baseline"),
     simulation(
-        "wateruptake_wcont_sla_26",
-        top_level_parameter("wateruptake", "wcont"),
-        block_parameter("pft", "MRS", "sla", 26)
-    ),
-    simulation(
-        "wateruptake_rootdist_sla_39",
-        top_level_parameter("wateruptake", "rootdist"),
+        "high_sla",
         block_parameter("pft", "MRS", "sla", 39)
     )
 )
 
-instruction_files <- c("/path/to/file1.ins", "/path/to/file2.ins")
-
 result <- run_simulations(
-    settings,
-    simulations,
-    instruction_files,
-    pfts = "MRS",
-    progress = function(event) {
-        message(sprintf(
-            "%.1f%%: %d/%d jobs (%.1f seconds)",
-            event$percent, event$completed, event$total,
-            event$elapsed_seconds
-        ))
-    },
-    output = function(event) {
-        destination <- if (event$stream == "stderr") stderr() else stdout()
-        cat(sprintf("[%s] %s\n", event$job, event$text), file = destination)
-    },
-    existing_output_policy = "clean_managed"
+    settings = settings,
+    simulations = simulations,
+    instruction_files = "/path/to/global.ins",
+    pfts = "MRS"
 )
 
-print(result)
-result$total_jobs
-result$successful_jobs
-result$failed_jobs
-result$error
-result$results
-
-lai <- read_output(result, "file_lai")
-plot(lai$Year, lai$TeBE)
+lai <- read_output(result, "lai")
+plot(lai$Year, lai$MRS)
 ```
 
-## Reading completed outputs
+By default, `run_simulations()` prints a single progress line while simulations
+are running. Model stdout and stderr are kept quiet unless a run fails, in
+which case the captured output is printed before the R error is raised.
 
-Completed runs are catalogued below the configured output directory. You can
-read outputs immediately from a run result, or later from the output directory:
+## Documentation
 
-```r
-runs <- list_simulations("/path/to/output")
-outputs <- list_outputs(runs)
+- `help(package = "lpjguessRunner")`
 
-lai <- read_output(runs, "file_lai")
-lai <- read_output("/path/to/output", "lai.out")
-lai <- read_output("/path/to/output", "lai")
-```
+## User Guides
 
-`read_output()` uses `data.table::fread()` and returns a `data.table` when
-`data.table` is installed, which gives compact head/tail printing for large
-outputs. It falls back to base R otherwise. The returned table keeps LPJ-GUESS
-output columns in their original wide form and prepends the user-facing
-`simulation` identifier. When multiple output types are requested,
-`output_type` is also included. Use `id_cols = "all"` to include
-internal/debugging metadata such as `base_ins`, `simulation_key`, and output
-paths, or `id_cols = FALSE` to return only the raw file columns.
-
-Simulation names are the primary user-facing selector:
-
-```r
-baseline <- read_output(runs, "file_lai", simulations = "baseline")
-```
-
-If the same simulation name was run for multiple base instruction files, filter
-the simulation table first or provide `base_ins` to disambiguate the completed
-job.
-
-## Run settings
-
-For local runs, use `run_settings_local()`:
-
-```r
-settings <- run_settings_local(
-    guess_path,
-    output_directory,
-    input_module = "nc",
-    cpu_count = 1L,
-    job_name = "lpjguess",
-    use_cpu_affinity = TRUE
-)
-```
-
-CPU affinity pins each LPJ-GUESS process to a CPU on supported platforms and is
-recommended for local parallel runs. It has no effect on macOS.
-
-`run_settings()` also supports PBS execution. Set `run_local = FALSE` and
-provide the scheduler fields as appropriate:
-
-```r
-settings <- run_settings(
-    guess_path = "/cluster/path/to/guess",
-    output_directory = "/cluster/path/to/output",
-    input_module = "nc",
-    cpu_count = 16,
-    job_name = "experiment",
-    run_local = FALSE,
-    dry_run = FALSE,
-    walltime = "12:00:00",
-    memory = 32,
-    queue = "normal",
-    project = "project-code",
-    email_notifications = TRUE,
-    email_address = "user@example.org"
-)
-```
-
-`walltime` uses the .NET constant `TimeSpan` format, such as `12:00:00` or
-`1.12:00:00` for one day and twelve hours. `memory` is measured in GiB.
-
-## Factors and simulations
-
-A top-level factor changes a parameter outside a named instruction-file block:
-
-```r
-top_level_parameter("npatch", 10)
-top_level_parameter("wateruptake", "rootdist")
-```
-
-A block factor identifies the block type, block name, parameter, and value:
-
-```r
-block_parameter("pft", "MRS", "sla", 26)
-```
-
-Factors may be passed individually or as a list:
-
-```r
-simulation("example",
-           top_level_parameter("npatch", 10),
-           block_parameter("pft", "MRS", "sla", 26))
-
-simulation("example", list(
-    top_level_parameter("npatch", 10),
-    block_parameter("pft", "MRS", "sla", 26)
-))
-```
-
-Simulation names are used to identify jobs and managed output directories, so
-they should be unique within an experiment.
-
-### Programmatic construction
-
-R's `expand.grid()` is convenient for generating a parameter grid:
-
-```r
-grid <- expand.grid(
-    wateruptake = c("wcont", "rootdist"),
-    npatch = seq(1, 41, by = 10),
-    stringsAsFactors = FALSE
-)
-
-simulations <- lapply(seq_len(nrow(grid)), function(i) {
-    values <- grid[i, ]
-    simulation(
-        sprintf("wu_%s_npatch_%d", values$wateruptake, values$npatch),
-        top_level_parameter("wateruptake", values$wateruptake),
-        top_level_parameter("npatch", values$npatch)
-    )
-})
-```
-
-The R code constructs explicit simulations; `full_factorial` is primarily
-relevant to configuration paths that generate simulations inside the .NET
-runner.
-
-## Existing output files
-
-LPJ-GUESS outputs are stored in per-simulation directories below the configured
-output directory. When rerunning an experiment, files from an earlier
-configuration may otherwise remain and appear to belong to the new run.
-
-`existing_output_policy` controls how managed outputs are handled. Its default
-is `"clean_managed"`.
-
-- `"preserve"`: leave existing outputs untouched.
-- `"clean_managed"`: remove old files for simulations being regenerated.
-- `"prune_stale"`: remove managed simulations from previous runs that are not
-  part of the current experiment.
-- `"fail"`: abort if existing output directories are found.
-
-Policies can be combined by passing a character vector:
-
-```r
-result <- run_simulations(
-    settings, simulations, instruction_files,
-    existing_output_policy = c("clean_managed", "prune_stale")
-)
-```
-
-Managed outputs are outputs tracked by the runner's result catalog.
-
-## Progress and model output
-
-`run_simulations()` accepts two optional callbacks:
-
-- `progress(event)` receives `percent`, `elapsed_seconds`, `completed`, and
-  `total`.
-- `output(event)` receives `job`, `text`, and `stream`; `stream` is either
-  `"stdout"` or `"stderr"`.
-
-Callbacks run on R's main thread. They should still be reasonably fast because
-the wrapper drains runner events between polling intervals. Model output can be
-frequent, so consider buffering or filtering it.
-
-If callbacks are omitted, progress and model output are retained in the run
-handle's event history during asynchronous operation but are not printed.
-
-## Asynchronous runs and cancellation
-
-Use `run_simulations_async()` when R must remain responsive:
-
-```r
-run <- run_simulations_async(
-    settings, simulations, instruction_files, pfts = "MRS"
-)
-
-while (poll_run(
-    run,
-    timeout = 100,
-    progress = function(event) message(event$percent, "%")
-)) {
-    # Perform other R work between polls.
-}
-
-result <- wait_run(run)
-```
-
-`poll_run()` returns invisibly whether the process is still running. Its
-`timeout` and the `poll_interval` accepted by `wait_run()` are milliseconds.
-Callbacks are invoked only while `poll_run()` or `wait_run()` drains events.
-
-Cancel a run explicitly with:
-
-```r
-cancel_run(run)
-```
-
-Interrupting synchronous `run_simulations()` also signals cancellation. The
-runner propagates cancellation to active jobs and cleans up its child process
-tree. If graceful cancellation is not possible, the wrapper terminates the
-bridge when its handle is discarded or the R session exits.
-
-## Results and errors
-
-An `lpjguess_result` contains:
-
-- `total_jobs`
-- `successful_jobs`
-- `failed_jobs`
-- `error`, or `NULL` when no experiment error was reported
-- `results`, a list of per-job `name` and `duration_seconds` records
-
-Protocol, configuration, and runner-startup failures are raised as R errors.
-Individual model failures are reflected in the completed experiment result and
-its failed-job count. Files remain under the output directory according to the
-selected existing-output policy.
-
-## Runner selection and troubleshooting
-
-Confirm that the required runtime is available with:
-
-```bash
-dotnet --list-runtimes
-```
-
-If the package cannot find the runner, set either:
-
-```r
-options(lpjguess.runner.path = "/absolute/path/to/lpjg-experiment.dll")
-```
-
-or:
-
-```bash
-export LPJGUESS_RUNNER=/absolute/path/to/lpjg-experiment.dll
-```
-
-The path may identify a framework-dependent `.dll` or a directly executable
-runner host. Paths to LPJ-GUESS, instruction files, and output directories are
-passed to the separate runner process and therefore must be accessible from
-that process's environment.
+- `vignette("running-simulations", package = "lpjguessRunner")`
+- `vignette("reading-outputs", package = "lpjguessRunner")`
+- `vignette("factorial-experiments", package = "lpjguessRunner")`

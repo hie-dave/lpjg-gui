@@ -1,0 +1,90 @@
+---
+title: "Factorial Experiments"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Factorial Experiments}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(eval = FALSE)
+```
+
+This vignette shows how to build simulation definitions programmatically.
+
+## Parameters
+
+A top-level parameter changes a value outside a named LPJ-GUESS block.
+
+```{r}
+top_level_parameter("npatch", 10)
+top_level_parameter("wateruptake", "rootdist")
+```
+
+A block parameter changes a value inside a named block, such as a PFT block.
+
+```{r}
+block_parameter("pft", "MRS", "sla", 26)
+block_parameter("pft", "MRS", "include", TRUE)
+```
+
+## Simulations
+
+Pass parameter changes to `simulation()`.
+
+```{r}
+simulation(
+    "rootdist_sla_26",
+    top_level_parameter("wateruptake", "rootdist"),
+    block_parameter("pft", "MRS", "sla", 26)
+)
+```
+
+You can also pass a list of changes.
+
+```{r}
+changes <- list(
+    top_level_parameter("wateruptake", "rootdist"),
+    block_parameter("pft", "MRS", "sla", 26)
+)
+
+simulation("rootdist_sla_26", changes)
+```
+
+## Parameter Grids
+
+R's `expand.grid()` is convenient when you want one simulation for each
+combination of parameter values.
+
+```{r}
+grid <- expand.grid(
+    wateruptake = c("wcont", "rootdist"),
+    sla = c(26, 39),
+    stringsAsFactors = FALSE
+)
+
+simulations <- lapply(seq_len(nrow(grid)), function(i) {
+    values <- grid[i, ]
+    simulation(
+        sprintf("wu_%s_sla_%s", values$wateruptake, values$sla),
+        top_level_parameter("wateruptake", values$wateruptake),
+        block_parameter("pft", "MRS", "sla", values$sla)
+    )
+})
+```
+
+The resulting `simulations` list can be passed directly to
+`run_simulations()`.
+
+```{r}
+result <- run_simulations(
+    settings,
+    simulations,
+    instruction_files = "/path/to/site.ins",
+    pfts = "MRS"
+)
+```
+
+Simulation names are used in output discovery and should be unique within an
+experiment whenever possible.
