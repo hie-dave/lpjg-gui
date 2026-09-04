@@ -71,6 +71,8 @@ result <- run_simulations(
 
 lai <- read_output(result, "lai")
 plot(lai$Year, lai$MRS)
+
+logs <- read_logs(result)
 ```
 
 By default, `run_simulations()` prints a single progress line while simulations

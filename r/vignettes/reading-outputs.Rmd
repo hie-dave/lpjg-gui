@@ -33,6 +33,7 @@ You can also discover and read outputs from an existing output directory.
 ```{r}
 runs <- list_simulations("/scratch/me/lpjguess-runs")
 outputs <- list_outputs(runs)
+logs <- read_logs(runs)
 
 lai <- read_output(runs, "lai")
 ```
@@ -102,4 +103,23 @@ Use `id_cols = FALSE` to read only the raw LPJ-GUESS columns.
 
 ```{r}
 raw_lai <- read_output(runs, "lai", id_cols = FALSE)
+```
+
+## Logs
+
+LPJ-GUESS writes `guess.log` next to each generated instruction file and
+manifest. Use `list_logs()` to find the log paths, or `read_logs()` to read
+them into a table.
+
+```{r}
+logs <- list_logs(runs)
+log_lines <- read_logs(runs)
+```
+
+The default table has `simulation`, `line`, and `text` columns. Use
+`id_cols = "all"` to include paths and catalog metadata.
+
+```{r}
+log_lines <- read_logs(runs, simulations = "baseline")
+raw_logs <- read_logs(runs, combine = FALSE)
 ```

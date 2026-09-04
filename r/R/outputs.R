@@ -274,6 +274,132 @@ list_outputs <- function(x, simulations = NULL, base_ins = NULL) {
     out
 }
 
+#' List LPJ-GUESS log files
+#'
+#' @param x Output directory, run settings object, `lpjguess_result`, or a
+#'   simulation table returned by [list_simulations()].
+#' @param simulations Optional simulation name filter.
+#' @param base_ins Optional base instruction-file filter, useful when the same
+#'   simulation name was run for multiple instruction files.
+#'
+#' @return A data frame with one row per expected `guess.log` file.
+#'
+#' @export
+list_logs <- function(x, simulations = NULL, base_ins = NULL) {
+    runs <- .filter_simulations(.as_simulations(x), simulations, base_ins)
+    rows <- lapply(seq_len(nrow(runs)), function(i) {
+        run <- runs[i, , drop = FALSE]
+        ins <- .ins_path(run)
+        path <- file.path(dirname(ins), "guess.log")
+        data.frame(
+            simulation = run$simulation,
+            path = normalizePath(path, mustWork = FALSE),
+            exists = file.exists(path),
+            base_ins = run$base_ins,
+            ins_file = ins,
+            simulation_key = run$key,
+            stringsAsFactors = FALSE
+        )
+    })
+
+    out <- .data_frame(rows)
+    class(out) <- c("lpjguess_logs", class(out))
+    out
+}
+
+.log_id_data <- function(log, n, id_cols) {
+    if (isFALSE(id_cols)) return(NULL)
+    if (identical(id_cols, "all")) {
+        return(data.frame(
+            simulation = rep(log$simulation, n),
+            base_ins = rep(log$base_ins, n),
+            ins_file = rep(log$ins_file, n),
+            log_path = rep(log$path, n),
+            simulation_key = rep(log$simulation_key, n),
+            stringsAsFactors = FALSE
+        ))
+    }
+    data.frame(
+        simulation = rep(log$simulation, n),
+        stringsAsFactors = FALSE
+    )
+}
+
+#' Read LPJ-GUESS log files
+#'
+#' Reads `guess.log` files for completed simulations discovered from the runner
+#' catalog.
+#'
+#' @param x Output directory, run settings object, `lpjguess_result`, a
+#'   simulation table returned by [list_simulations()], or a log table returned
+#'   by [list_logs()].
+#' @param simulations Optional simulation name filter.
+#' @param base_ins Optional base instruction-file filter.
+#' @param combine If `TRUE`, return one table with all log lines. If `FALSE`,
+#'   return a named list of character vectors.
+#' @param id_cols If `TRUE`, prepend common identifier columns. If `"all"`,
+#'   prepend all available metadata columns. If `FALSE`, return only `line` and
+#'   `text`.
+#' @param missing How to handle selected simulations without `guess.log`:
+#'   `"warn"`, `"error"`, or `"ignore"`.
+#'
+#' @return A data frame, or a list of character vectors when
+#'   `combine = FALSE`. If `data.table` is installed, combined results are
+#'   returned as a `data.table`.
+#'
+#' @export
+read_logs <- function(x, simulations = NULL, base_ins = NULL, combine = TRUE,
+                      id_cols = TRUE, missing = c("warn", "error", "ignore")) {
+    missing <- match.arg(missing)
+    logs <- if (inherits(x, "lpjguess_logs")) {
+        x
+    } else {
+        list_logs(x, simulations = simulations, base_ins = base_ins)
+    }
+    if (inherits(x, "lpjguess_logs")) {
+        if (!is.null(base_ins)) {
+            logs <- logs[logs$base_ins %in% base_ins, , drop = FALSE]
+        }
+        if (!is.null(simulations)) {
+            logs <- logs[logs$simulation %in% simulations, , drop = FALSE]
+        }
+    }
+
+    missing_logs <- logs[!logs$exists, , drop = FALSE]
+    if (nrow(missing_logs)) {
+        message <- paste(
+            "No guess.log found for:",
+            paste(missing_logs$simulation, collapse = ", "))
+        if (missing == "error") stop(message, call. = FALSE)
+        if (missing == "warn") warning(message, call. = FALSE)
+    }
+
+    logs <- logs[logs$exists, , drop = FALSE]
+    if (!nrow(logs)) {
+        stop("No guess.log files found", call. = FALSE)
+    }
+
+    if (!combine) {
+        data <- lapply(logs$path, readLines, warn = FALSE)
+        names(data) <- logs$simulation
+        return(data)
+    }
+
+    data <- lapply(seq_len(nrow(logs)), function(i) {
+        item <- logs[i, , drop = FALSE]
+        lines <- readLines(item$path, warn = FALSE)
+        values <- data.frame(
+            line = seq_along(lines),
+            text = lines,
+            stringsAsFactors = FALSE
+        )
+        ids <- .log_id_data(item, length(lines), id_cols)
+        if (is.null(ids)) values else cbind(ids, values)
+    })
+
+    .bind_rows(data)
+}
+
 .read_table <- function(path) {
     if (requireNamespace("data.table", quietly = TRUE)) {
         return(data.table::fread(path, data.table = TRUE))

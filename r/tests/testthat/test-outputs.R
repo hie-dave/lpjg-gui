@@ -31,6 +31,10 @@ write_run_catalog <- function(root) {
         "151.25 -33.25 2000 2.5 2.5",
         "151.25 -33.75 2000 2.6 2.6"
     ), file.path(output_dir, "lai.out"))
+    writeLines(c(
+        "LPJ-GUESS started",
+        "LPJ-GUESS finished"
+    ), file.path(site_dir, "guess.log"))
     root
 }
 
@@ -59,6 +63,48 @@ test_that("list_outputs maps file types through generated instruction file", {
     expect_equal(outputs$output_type, "file_lai")
     expect_equal(outputs$file, "lai.out")
     expect_true(file.exists(outputs$path))
+})
+
+test_that("list_logs discovers guess logs", {
+    root <- write_run_catalog(tempfile("lpjguess-runs-"))
+
+    logs <- list_logs(root)
+
+    expect_s3_class(logs, "lpjguess_logs")
+    expect_equal(logs$simulation, "baseline")
+    expect_true(logs$exists)
+    expect_true(file.exists(logs$path))
+})
+
+test_that("read_logs returns log lines with simulation ids", {
+    root <- write_run_catalog(tempfile("lpjguess-runs-"))
+
+    logs <- read_logs(root)
+
+    expect_s3_class(logs, "data.frame")
+    expect_equal(names(logs)[1:3], c("simulation", "line", "text"))
+    expect_equal(logs$simulation, c("baseline", "baseline"))
+    expect_equal(logs$line, 1:2)
+    expect_equal(logs$text, c("LPJ-GUESS started", "LPJ-GUESS finished"))
+})
+
+test_that("read_logs can return raw character vectors", {
+    root <- write_run_catalog(tempfile("lpjguess-runs-"))
+
+    logs <- read_logs(root, combine = FALSE)
+
+    expect_type(logs, "list")
+    expect_equal(logs$baseline, c("LPJ-GUESS started", "LPJ-GUESS finished"))
+})
+
+test_that("read_logs warns when selected log files are missing", {
+    root <- write_run_catalog(tempfile("lpjguess-runs-"))
+    unlink(file.path(root, "site", "baseline", "guess.log"))
+
+    expect_warning(
+        expect_error(read_logs(root), "No guess.log files found"),
+        "No guess.log found"
+    )
 })
 
 test_that("read_output returns a combined data frame with user-facing ids", {
