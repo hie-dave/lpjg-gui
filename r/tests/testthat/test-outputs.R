@@ -45,6 +45,7 @@ test_that("list_simulations reads runner catalog", {
 
     expect_s3_class(runs, "lpjguess_simulations")
     expect_equal(runs$simulation, "baseline")
+    expect_equal(runs$instruction_file, "site")
     expect_equal(runs$key, "baseline")
     expect_equal(runs$pfts[[1]], "TeBE")
     expect_equal(runs$factors[[1]][[1]], top_level_parameter("npatch", 3))
@@ -60,6 +61,7 @@ test_that("list_outputs maps file types through generated instruction file", {
 
     expect_s3_class(outputs, "lpjguess_outputs")
     expect_equal(outputs$simulation, "baseline")
+    expect_equal(outputs$instruction_file, "site")
     expect_equal(outputs$output_type, "file_lai")
     expect_equal(outputs$file, "lai.out")
     expect_true(file.exists(outputs$path))
@@ -72,6 +74,7 @@ test_that("list_logs discovers guess logs", {
 
     expect_s3_class(logs, "lpjguess_logs")
     expect_equal(logs$simulation, "baseline")
+    expect_equal(logs$instruction_file, "site")
     expect_true(logs$exists)
     expect_true(file.exists(logs$path))
 })
@@ -82,8 +85,10 @@ test_that("read_logs returns log lines with simulation ids", {
     logs <- read_logs(root)
 
     expect_s3_class(logs, "data.frame")
-    expect_equal(names(logs)[1:3], c("simulation", "line", "text"))
+    expect_equal(names(logs)[1:4],
+                 c("simulation", "instruction_file", "line", "text"))
     expect_equal(logs$simulation, c("baseline", "baseline"))
+    expect_equal(logs$instruction_file, c("site", "site"))
     expect_equal(logs$line, 1:2)
     expect_equal(logs$text, c("LPJ-GUESS started", "LPJ-GUESS finished"))
 })
@@ -113,7 +118,8 @@ test_that("read_output returns a combined data frame with user-facing ids", {
     lai <- read_output(root, "file_lai")
 
     expect_s3_class(lai, "data.frame")
-    expect_equal(names(lai)[1], "simulation")
+    expect_equal(names(lai)[1:2], c("simulation", "instruction_file"))
+    expect_equal(lai$instruction_file, c("site", "site"))
     expect_false("base_ins" %in% names(lai))
     expect_false("output_type" %in% names(lai))
     expect_equal(lai$simulation, c("baseline", "baseline"))
@@ -164,6 +170,31 @@ test_that("read_output can include all metadata columns", {
     expect_true("base_ins" %in% names(lai))
     expect_true("simulation_key" %in% names(lai))
     expect_true("output_path" %in% names(lai))
+})
+
+test_that("instruction file names match runner directory naming", {
+    root <- write_run_catalog(tempfile("lpjguess-runs-"))
+    site_dir <- file.path(root, "My Site", "baseline")
+    dir.create(file.path(site_dir, "out"), recursive = TRUE)
+    writeLines('simulations = ["My Site/baseline"]',
+               file.path(root, "index.toml"))
+    writeLines(c(
+        'key = "baseline"',
+        'name = "baseline"',
+        paste0('base_ins = "', file.path(root, "My Site.ins"), '"'),
+        'ins_file = "generated.ins"',
+        'generated_at_utc = 2024-05-01T13:15:00Z',
+        'pfts = []',
+        'factors = []'
+    ), file.path(site_dir, "manifest.toml"))
+    writeLines(c('outputdirectory "out"', 'file_lai "lai.out"'),
+               file.path(site_dir, "generated.ins"))
+    writeLines(c("Lon Lat Year TeBE", "151 -33 2000 1"),
+               file.path(site_dir, "out", "lai.out"))
+
+    lai <- read_output(root, "lai")
+
+    expect_equal(lai$instruction_file, "My_Site")
 })
 
 test_that("read_output accepts filenames and conventional output stems", {

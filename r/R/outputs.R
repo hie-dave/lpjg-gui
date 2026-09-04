@@ -136,6 +136,12 @@
     out
 }
 
+.instruction_file_name <- function(path) {
+    name <- tools::file_path_sans_ext(basename(path))
+    name <- gsub("\\s+", "_", trimws(name))
+    gsub("[/\\\\]", "", name)
+}
+
 #' List completed LPJ-GUESS simulations
 #'
 #' Discovers simulations managed by the runner by reading `index.toml` and the
@@ -155,6 +161,7 @@ list_simulations <- function(x) {
         manifest <- .read_manifest(directory)
         data.frame(
             simulation = manifest$simulation,
+            instruction_file = .instruction_file_name(manifest$base_ins),
             path = directory,
             base_ins = manifest$base_ins,
             ins_file = manifest$ins_file,
@@ -258,6 +265,7 @@ list_outputs <- function(x, simulations = NULL, base_ins = NULL) {
             output_type <- unname(reverse[name])
             rows[[length(rows) + 1L]] <- data.frame(
                 simulation = run$simulation,
+                instruction_file = run$instruction_file,
                 base_ins = run$base_ins,
                 ins_file = ins,
                 output_type = if (is.na(output_type)) NA_character_ else output_type,
@@ -293,6 +301,7 @@ list_logs <- function(x, simulations = NULL, base_ins = NULL) {
         path <- file.path(dirname(ins), "guess.log")
         data.frame(
             simulation = run$simulation,
+            instruction_file = run$instruction_file,
             path = normalizePath(path, mustWork = FALSE),
             exists = file.exists(path),
             base_ins = run$base_ins,
@@ -312,6 +321,7 @@ list_logs <- function(x, simulations = NULL, base_ins = NULL) {
     if (identical(id_cols, "all")) {
         return(data.frame(
             simulation = rep(log$simulation, n),
+            instruction_file = rep(log$instruction_file, n),
             base_ins = rep(log$base_ins, n),
             ins_file = rep(log$ins_file, n),
             log_path = rep(log$path, n),
@@ -321,6 +331,7 @@ list_logs <- function(x, simulations = NULL, base_ins = NULL) {
     }
     data.frame(
         simulation = rep(log$simulation, n),
+        instruction_file = rep(log$instruction_file, n),
         stringsAsFactors = FALSE
     )
 }
@@ -467,6 +478,7 @@ read_logs <- function(x, simulations = NULL, base_ins = NULL, combine = TRUE,
     if (identical(id_cols, "all")) {
         return(data.frame(
             simulation = rep(output$simulation, n),
+            instruction_file = rep(output$instruction_file, n),
             base_ins = rep(output$base_ins, n),
             ins_file = rep(output$ins_file, n),
             output_type = rep(output$output_type, n),
@@ -478,6 +490,7 @@ read_logs <- function(x, simulations = NULL, base_ins = NULL, combine = TRUE,
     }
     ids <- data.frame(
         simulation = rep(output$simulation, n),
+        instruction_file = rep(output$instruction_file, n),
         stringsAsFactors = FALSE
     )
     if (include_output_type) {

@@ -70,14 +70,10 @@ result <- run_simulations(
 )
 
 lai <- read_output(result, "lai")
-plot(lai$Year, lai$MRS)
+with(lai, plot(Year, Total))
 
 logs <- read_logs(result)
 ```
-
-By default, `run_simulations()` prints a single progress line while simulations
-are running. Model stdout and stderr are kept quiet unless a run fails, in
-which case the captured output is printed before the R error is raised.
 
 ## Documentation
 

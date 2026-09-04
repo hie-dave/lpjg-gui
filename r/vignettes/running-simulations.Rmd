@@ -13,7 +13,7 @@ knitr::opts_chunk$set(eval = FALSE)
 
 This vignette covers the main ways to run LPJ-GUESS simulations from R.
 
-## Local Runs
+## Configuration
 
 Use `run_settings_local()` when LPJ-GUESS should run directly on the current
 machine.
@@ -22,8 +22,8 @@ machine.
 library(lpjguessRunner)
 
 settings <- run_settings_local(
-    guess_path = "/path/to/lpjguess",
-    output_directory = "/scratch/me/lpjguess-runs",
+    guess_path = "/path/to/guess/executable",
+    output_directory = "/desired/path/to/output",
     input_module = "nc",
     cpu_count = 4,
     job_name = "experiment"
@@ -33,7 +33,11 @@ settings <- run_settings_local(
 The output directory is where generated instruction files, manifests, and
 LPJ-GUESS outputs are written.
 
-## Simulations
+The guess executable will typically be found in the build directory of an
+LPJ-GUESS checkout, e.g. `~/lpj-guess/build/guess`. On Windows, it will be
+`guesscmd.exe` (e.g. `C:\lpj-guess\build\guesscmd.exe`).
+
+## Running Simulations
 
 A simulation is a named set of changes applied to each instruction file.
 
@@ -58,9 +62,11 @@ result <- run_simulations(
 )
 ```
 
-LPJ-GUESS stdout and stderr are captured but not printed during successful
-runs. If a run fails, the captured output is printed before `run_simulations()`
-raises an R error.
+LPJ-GUESS standard output/error messages are captured but not printed during
+successful runs. If a run fails, the captured output is printed before
+`run_simulations()` raises an R error.
+
+## Output Streaming
 
 Set `progress = NULL` to suppress the default progress line, or pass a function
 to handle progress yourself.
@@ -117,8 +123,8 @@ Use `run_settings()` with `run_local = FALSE` for PBS-backed execution.
 
 ```{r}
 settings <- run_settings(
-    guess_path = "/apps/lpj-guess/lpjguess",
-    output_directory = "/scratch/me/lpjguess-runs",
+    guess_path = "/apps/lpj-guess/guess",
+    output_directory = "/output/path",
     input_module = "nc",
     cpu_count = 16,
     job_name = "experiment",

@@ -14,7 +14,7 @@ knitr::opts_chunk$set(eval = FALSE)
 Completed runs are catalogued below the output directory configured in
 `run_settings()` or `run_settings_local()`.
 
-## Read From a Result
+## Read From a Completed Run
 
 The result returned by `run_simulations()` knows where the run wrote outputs.
 
@@ -24,14 +24,14 @@ lai <- read_output(result, "lai")
 ```
 
 `read_output()` returns the LPJ-GUESS output columns in their original wide
-form, with a leading `simulation` column.
+form, with leading `simulation` and `instruction_file` columns.
 
 ## Read From a Previous Run
 
 You can also discover and read outputs from an existing output directory.
 
 ```{r}
-runs <- list_simulations("/scratch/me/lpjguess-runs")
+runs <- list_simulations("/output/path")
 outputs <- list_outputs(runs)
 logs <- read_logs(runs)
 
@@ -39,7 +39,8 @@ lai <- read_output(runs, "lai")
 ```
 
 `list_simulations()` returns one row per completed simulation job. Simulation
-names are the primary user-facing identifier.
+names are the primary user-facing identifier, and `instruction_file` identifies
+the base instruction file without carrying the full absolute path.
 
 ```{r}
 baseline <- read_output(runs, "lai", simulations = "baseline")
@@ -92,7 +93,9 @@ Without `data.table`, the function falls back to base R and returns a
 
 ## Metadata Columns
 
-The default result includes only the identifiers most users need. Use
+The default result includes only the identifiers most users need:
+`simulation`, `instruction_file`, and `output_type` when multiple outputs are
+requested. Use
 `id_cols = "all"` to keep paths and internal catalog identifiers.
 
 ```{r}
@@ -116,8 +119,8 @@ logs <- list_logs(runs)
 log_lines <- read_logs(runs)
 ```
 
-The default table has `simulation`, `line`, and `text` columns. Use
-`id_cols = "all"` to include paths and catalog metadata.
+The default table has `simulation`, `instruction_file`, `line`, and `text`
+columns. Use `id_cols = "all"` to include paths and catalog metadata.
 
 ```{r}
 log_lines <- read_logs(runs, simulations = "baseline")
