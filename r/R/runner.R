@@ -98,6 +98,7 @@ run_simulations_async <- function(settings, simulations, instruction_files,
     handle$result <- NULL
     handle$error <- NULL
     handle$stderr <- character()
+    handle$request <- request
     class(handle) <- "lpjguess_run"
     reg.finalizer(handle, function(x) {
         if (x$process$is_alive()) x$process$kill_tree()
@@ -119,6 +120,7 @@ run_simulations_async <- function(settings, simulations, instruction_files,
             output(event$data)
         } else if (identical(event$type, "completed")) {
             handle$result <- event$data
+            handle$result$output_directory <- handle$request$settings$output_directory
             class(handle$result) <- c("lpjguess_result", class(handle$result))
         } else if (identical(event$type, "error")) {
             handle$error <- event$message

@@ -90,8 +90,9 @@ runs the experiment synchronously or asynchronously.
   the runner, so they execute on R's main thread.
 
 - **Outputs:** Files are written below the output directory in the run
-  settings. The precise files depend on the LPJ-GUESS instruction file and
-  input module.
+  settings. Use `list_simulations()`, `list_outputs()`, and `read_output()` to
+  discover and read completed outputs as ordinary R data frames. The precise
+  files depend on the LPJ-GUESS instruction file and input module.
 
 - **Results:** A completed run returns an `lpjguess_result` containing summary
   counts, any experiment error, and per-job names and durations.
@@ -150,7 +151,43 @@ result$successful_jobs
 result$failed_jobs
 result$error
 result$results
+
+lai <- read_output(result, "file_lai")
+plot(lai$Year, lai$TeBE)
 ```
+
+## Reading completed outputs
+
+Completed runs are catalogued below the configured output directory. You can
+read outputs immediately from a run result, or later from the output directory:
+
+```r
+runs <- list_simulations("/path/to/output")
+outputs <- list_outputs(runs)
+
+lai <- read_output(runs, "file_lai")
+lai <- read_output("/path/to/output", "lai.out")
+lai <- read_output("/path/to/output", "lai")
+```
+
+`read_output()` uses `data.table::fread()` and returns a `data.table` when
+`data.table` is installed, which gives compact head/tail printing for large
+outputs. It falls back to base R otherwise. The returned table keeps LPJ-GUESS
+output columns in their original wide form and prepends the user-facing
+`simulation` identifier. When multiple output types are requested,
+`output_type` is also included. Use `id_cols = "all"` to include
+internal/debugging metadata such as `base_ins`, `simulation_key`, and output
+paths, or `id_cols = FALSE` to return only the raw file columns.
+
+Simulation names are the primary user-facing selector:
+
+```r
+baseline <- read_output(runs, "file_lai", simulations = "baseline")
+```
+
+If the same simulation name was run for multiple base instruction files, filter
+the simulation table first or provide `base_ins` to disambiguate the completed
+job.
 
 ## Run settings
 
