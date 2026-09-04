@@ -172,6 +172,8 @@ jobs:
           Install this R package release directly from GitHub:
 
           \`\`\`r
+          install.packages(c("jsonlite", "processx"), repos = "https://cloud.r-project.org")
+
           install.packages(
             "${url}",
             repos = NULL,
