@@ -28,10 +28,16 @@
     if (!length(instruction_files)) {
         stop("At least one instruction file is required", call. = FALSE)
     }
+    # A simulation is itself a named list; the protocol always requires an
+    # array of simulations, including when only one was supplied.
+    if (is.list(simulations) && is.character(simulations$name) &&
+        is.list(simulations$factors)) {
+        simulations <- list(simulations)
+    }
     list(
         protocol_version = 1L,
         settings = settings,
-        simulations = simulations,
+        simulations = unname(simulations),
         instruction_files = unname(as.list(normalizePath(
             instruction_files, mustWork = FALSE))),
         pfts = unname(as.list(pfts)),
@@ -86,7 +92,7 @@
 #'
 #' `run_simulations_async()` starts `lpjg-experiment` in the background and
 #' returns a handle. Use [poll_run()] to consume progress and output events,
-#' [wait_run()] to block until completion, or [cancel_run()] to request
+#' [wait_run()] or [wait_runs()] to block until completion, or [cancel_run()] to request
 #' cancellation.
 #'
 #' @param settings Runner settings created by [run_settings()] or
@@ -237,6 +243,10 @@ wait_run <- function(handle, progress = NULL, output = NULL,
         stop(e)
     })
     .clear_progress(progress)
+    .run_result(handle)
+}
+
+.run_result <- function(handle) {
     unlink(handle$request_file)
     if (!is.null(handle$error)) {
         .dump_output_events(handle)
@@ -258,6 +268,90 @@ wait_run <- function(handle, progress = NULL, output = NULL,
         stop(error, call. = FALSE)
     }
     handle$result
+}
+
+#' Wait for multiple asynchronous LPJ-GUESS runs
+#'
+#' Polls all handles until every run has finished, displaying one overall
+#' progress line in the same format as [run_simulations()]. Progress percentages
+#' are weighted by each run's total simulation count. The display begins once
+#' all runs have reported their totals. Previously consumed events are included.
+#' All runs are drained before runner failures are raised; interrupting the wait
+#' requests cancellation of every running handle.
+#'
+#' @param handles A non-empty list of distinct `lpjguess_run` handles returned
+#'   by [run_simulations_async()].
+#' @param progress `TRUE` for the default display, `NULL` to suppress it, or a
+#'   callback receiving aggregate `percent`, `completed`, `total`, and
+#'   `elapsed_seconds` (time since this wait began).
+#' @param output Optional callback receiving each decoded model-output payload.
+#' @param poll_interval Polling interval in milliseconds.
+#' @return A list of `lpjguess_result` objects in the same order and with the
+#'   same names as `handles`. Raises an error if any run fails.
+#' @export
+wait_runs <- function(handles, progress = TRUE, output = NULL,
+                      poll_interval = 100) {
+    if (!is.list(handles) || !length(handles) ||
+        !all(vapply(handles, inherits, logical(1), "lpjguess_run"))) {
+        stop("handles must be a non-empty list of lpjguess_run handles",
+             call. = FALSE)
+    }
+    if (anyDuplicated(handles)) {
+        stop("handles must contain distinct runs", call. = FALSE)
+    }
+    stopifnot(length(poll_interval) == 1L, is.finite(poll_interval),
+              poll_interval >= 0)
+    progress <- .normalise_progress_callback(progress)
+    on.exit(.clear_progress(progress), add = TRUE)
+    started <- Sys.time()
+    states <- lapply(handles, function(handle) {
+        events <- Filter(function(event) identical(event$type, "progress"),
+                         handle$events)
+        if (length(events)) events[[length(events)]]$data else NULL
+    })
+    previous <- NULL
+    tryCatch({
+        repeat {
+            alive <- logical(length(handles))
+            for (i in seq_along(handles)) {
+                alive[[i]] <- poll_run(handles[[i]], 0, function(event) {
+                    states[[i]] <<- event
+                }, output)
+                result <- handles[[i]]$result
+                if (!is.null(result) && is.null(result$error) &&
+                    isTRUE(result$failed_jobs == 0L)) {
+                    states[[i]] <- list(percent = 100,
+                                        completed = result$total_jobs,
+                                        total = result$total_jobs)
+                }
+            }
+            if (all(vapply(states, function(x) !is.null(x), logical(1)))) {
+                total <- sum(vapply(states, function(x) x$total, numeric(1)))
+                completed <- sum(vapply(states, function(x) x$completed, numeric(1)))
+                percent <- if (total > 0) {
+                    sum(vapply(states, function(x) x$percent * x$total,
+                               numeric(1))) / total
+                } else 100
+                current <- list(percent = percent, completed = completed,
+                                total = total)
+                if (!identical(current, previous) && is.function(progress)) {
+                    event <- current
+                    event$elapsed_seconds <- as.numeric(difftime(
+                        Sys.time(), started, units = "secs"))
+                    progress(event)
+                }
+                previous <- current
+            }
+            if (!any(alive)) break
+            Sys.sleep(poll_interval / 1000)
+        }
+    }, interrupt = function(e) {
+        lapply(handles, cancel_run)
+        stop(e)
+    })
+    # Clean up every request even if extracting an earlier result raises.
+    for (handle in handles) unlink(handle$request_file)
+    lapply(handles, .run_result)
 }
 
 #' @rdname poll_run

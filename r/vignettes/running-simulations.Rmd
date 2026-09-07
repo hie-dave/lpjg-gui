@@ -152,3 +152,24 @@ result <- wait_run(handle)
 ```
 
 Cancel a running experiment with `cancel_run(handle)`.
+
+Start multiple experiments before waiting to run them concurrently. Use separate
+output directories for each experiment, then pass their handles to `wait_runs()`:
+
+```{r}
+first_settings <- run_settings_local("/path/to/guess", "runs/first")
+second_settings <- run_settings_local("/path/to/guess", "runs/second")
+handles <- list(
+    first = run_simulations_async(first_settings, simulations, "site1.ins"),
+    second = run_simulations_async(second_settings, simulations, "site2.ins")
+)
+results <- wait_runs(handles)
+```
+
+This prints one updating line, such as
+`Working: 48% (3 of 7 simulations completed)`, weighted by the simulation counts
+across all experiments. The display starts once all experiments report their
+totals. Results retain the names and order of the handles (`results$first`,
+`results$second`). Use `progress = NULL` to suppress the display or supply a
+callback to receive aggregate progress. Interrupting the wait requests
+cancellation of all runs. Runner failures are raised after all runs finish.
