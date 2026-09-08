@@ -2,12 +2,14 @@ test_that("default progress writes one-line status", {
     progress <- .normalise_progress_callback(TRUE)
 
     output <- capture.output(
-        progress(list(percent = 48, completed = 3L, total = 7L)),
+        progress(list(percent = 48, completed = 3L, total = 7L,
+                      elapsed_seconds = 1.2)),
         type = "output"
     )
 
     expect_true(is.function(progress))
     expect_true(isTRUE(attr(progress, "lpjguess_default")))
+
     expect_match(paste(output, collapse = ""), "Working: 48%")
     expect_match(paste(output, collapse = ""), "3 of 7 simulations completed")
 })
@@ -124,7 +126,9 @@ test_that("wait_runs prints a single overall progress format and supports silenc
     text <- capture.output(wait_runs(list(.make_wait_handle(2),
                                          .make_wait_handle(3)), poll_interval = 0))
     expect_match(paste(text, collapse = ""),
-                 "Working: 100% \\(5 of 5 simulations completed\\)")
+                 "Working: 100%")
+    expect_match(paste(text, collapse = ""),
+                 "\\(5 of 5 simulations completed\\)")
     text <- capture.output(invisible(wait_runs(list(.make_wait_handle(1)),
                                       progress = NULL, poll_interval = 0)))
     expect_length(text, 0)

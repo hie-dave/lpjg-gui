@@ -47,10 +47,24 @@
 
 .default_progress <- function() {
     force(Sys.time())
+    to_hhmmss <- function(seconds) {
+        sprintf("%02d:%02d:%02d", as.integer(seconds %/% 3600),
+                as.integer(seconds %% 3600 %/% 60),
+                as.integer(seconds %% 60))
+    }
     function(event) {
+        progress <- event$percent / 100
+        remaining <- event$elapsed_seconds / progress - event$elapsed_seconds
+        remaining_hhmmss <- if (is.finite(remaining)) {
+            to_hhmmss(remaining)
+        } else {
+            "??:??:??"
+        }
+        elapsed_hhmmss <- to_hhmmss(event$elapsed_seconds)
         message <- sprintf(
-            "\rWorking: %.0f%% (%d of %d simulations completed)",
-            event$percent, event$completed, event$total)
+            "\rWorking: %.0f%%; Elapsed: %s; Remaining: %s (%d of %d simulations completed)",
+            event$percent, elapsed_hhmmss, remaining_hhmmss, event$completed,
+            event$total)
         cat(message)
         utils::flush.console()
     }

@@ -91,6 +91,11 @@ dev: clean-py publish stage wheel
 # Packaging for R
 # -----------------------------
 
+clean-r:
+	rm -rf $(R_PUBLISH_OUT) $(R_RUNNER_DIR)
+	rm -rf r/man/*.Rd
+	rm lpjguessRunner_*.tar.gz
+
 # Portable framework-dependent CLI payload; the R package therefore requires
 # the .NET 9 runtime, but the same source package can be installed on any OS.
 publish-r:
@@ -103,5 +108,9 @@ stage-r: publish-r
 docs-r:
 	Rscript -e 'roxygen2::roxygenise("r", roclets = "rd")'
 
-check-r: stage-r docs-r
+build-r: clean-r stage-r docs-r
 	R CMD build r
+
+check-r: build-r
+	R CMD build r
+	R CMD check --no-manual lpjguessRunner_*.tar.gz
