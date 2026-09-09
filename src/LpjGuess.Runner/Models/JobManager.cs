@@ -76,7 +76,7 @@ public class JobManager
 
         if (settings.RunConfig is LocalRunnerConfiguration && Environment.ProcessorCount > 64 && settings.CpuCount > 64)
             throw new NotImplementedException("TODO: use platform-specific API to suppost >64 CPUs");
-        if (settings.CpuCount > Environment.ProcessorCount)
+        if (settings.CpuCount > Environment.ProcessorCount && settings.RunConfig is LocalRunnerConfiguration)
             throw new NotImplementedException($"cpu_count must be < NCPUs ({Environment.ProcessorCount} in this case), but is: {settings.CpuCount}");
 
 		List<string> duplicates = jobs.GroupBy(j => j.Name)
