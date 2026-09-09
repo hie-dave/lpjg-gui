@@ -52,15 +52,37 @@ public class PbsRunner : IRunner
 				if (settings.DryRun)
 					proc.StartInfo.ArgumentList.Add("-d");
 
+				// Need to redirect stdout/stderr in case this is being run in
+				// machine mode (or from GUI).
+				proc.StartInfo.RedirectStandardOutput = true;
+				proc.StartInfo.RedirectStandardError = true;
+
 				// Run the submit script.
 				proc.Start();
+
+				Task<string> stdoutTask = proc.StandardOutput.ReadToEndAsync();
+				Task<string> stderrTask = proc.StandardError.ReadToEndAsync();
+
 				await proc.WaitForExitAsync(ct);
+
+				string stdout = await stdoutTask;
+				string stderr = await stderrTask;
+
 				if (ct.IsCancellationRequested && !proc.HasExited)
 					proc.Kill();
 				ct.ThrowIfCancellationRequested();
+
+				if (proc.ExitCode != 0)
+					throw new ModelException(
+						$"{job.Name}: Failed to run submit script for .ins file '{job.InsFile}' with exit code {proc.ExitCode}.",
+						$"stdout:\n{stdout}\nstderr:\n{stderr}");
 			}
 		}
 		catch (OperationCanceledException)
+		{
+			throw;
+		}
+		catch (ModelException)
 		{
 			throw;
 		}
