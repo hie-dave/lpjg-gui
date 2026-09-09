@@ -123,8 +123,16 @@ public class JobManager
 	public TimeSpan GetJobDuration(Job job)
 	{
 		lock (jobEndTime)
+		{
 			lock (jobStartTime)
+			{
+				if (!jobStartTime.ContainsKey(job) || !jobEndTime.ContainsKey(job))
+					// We can get here if job duration is requested before all
+					// jobs have finished submission.
+					return TimeSpan.Zero;
 				return jobEndTime[job] - jobStartTime[job];
+			}
+		}
 	}
 
 	/// <summary>
