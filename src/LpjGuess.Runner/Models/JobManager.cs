@@ -94,10 +94,7 @@ public class JobManager
 	public async Task RunAllAsync(CancellationToken ct)
 	{
 		if (settings.DryRun)
-		{
-			Console.WriteLine("Dry run - jobs would be executed");
 			return;
-		}
 
 		// Set progress to 0 for all jobs. If we don't do this, only those jobs
 		// which have run or are running will exist in jobProgress.
