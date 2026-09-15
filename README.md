@@ -2,7 +2,31 @@
 
 [![CI](https://github.com/hie-dave/lpjg-gui/actions/workflows/ci.yml/badge.svg)](https://github.com/hie-dave/lpjg-gui/actions/workflows/ci.yml)
 
-A simple cross-platform LPJ-Guess graphical frontend and simulation runner.
+This repository contains:
+
+- A GUI for LPJ-GUESS, a Dynamic Global Vegetation Model (DGVM)
+- A simulation runner for LPJ-GUESS
+- Python bindings to the simulation runner
+- R bindings to the simulation runner
+
+## Overview
+
+Everything in this repository is built on top of the simulation runner, which
+allows the user to programmatically configure and run LPJ-GUESS simulations. For
+example, the user can run a set of instruction files, co-varying several
+parameters in some predefined way. Simulations can be executed locally or
+submitted to a PBS cluster. The simulation runner is exposed through a
+command-line interface, the GUI, and Python and R bindings.
+
+The GUI provides a way to interactively configure and run LPJ-GUESS simulations,
+view results, and generate plots. It is built with Gtk4 and libadwaita, and is
+cross-platform, running on Windows, MacOS, and Linux.
+
+The Python bindings are a thin wrapper around the simulation runner, and are
+published to PyPI.
+
+The R bindings are a thin wrapper around the simulation runner, and are
+published to, and installable from, GitHub releases.
 
 ## Requirements
 
