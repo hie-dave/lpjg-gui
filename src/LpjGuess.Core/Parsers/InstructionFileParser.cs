@@ -283,8 +283,8 @@ public partial class InstructionFileParser : IInstructionFileParser
         if (string.IsNullOrWhiteSpace(trimmedCurrentLine) || trimmedCurrentLine.StartsWith(commentChar))
             return new VerbatimLine(currentLine, lineNumber);
 
-        if (IsBlockStart(trimmedCurrentLine, out string? blockType, out string? blockName, out string? inlineContent))
-            return ParseBlock(lines, currentLine, blockType, blockName, inlineContent, ref lineNumber);
+        if (IsBlockStart(currentLine, out string? blockType, out string? blockName, out string? inlineContent, out int inlineContentStart))
+            return ParseBlock(lines, currentLine, blockType, blockName, inlineContent, inlineContentStart, ref lineNumber);
         else
             return ParseTopLevelParameter(currentLine, lineNumber);
     }
@@ -297,6 +297,7 @@ public partial class InstructionFileParser : IInstructionFileParser
     /// <param name="blockType">The type of the block.</param>
     /// <param name="blockName">The name of the block.</param>
     /// <param name="inlineContent">The inline content of the block.</param>
+    /// <param name="inlineContentStart">The start index of the inline content within <paramref name="currentLine"/>.</param>
     /// <param name="lineNumber">Line number at which the block starts. This will be incremented by the method if the block contains multiple lines.</param>
     /// <returns>A <see cref="Block"/> object representing the block.</returns>
     private Block ParseBlock(
@@ -305,6 +306,7 @@ public partial class InstructionFileParser : IInstructionFileParser
         string blockType,
         string blockName,
         string inlineContent,
+        int inlineContentStart,
         ref int lineNumber)
     {
         Block block = new Block(blockType, blockName, lineNumber);
@@ -336,18 +338,23 @@ public partial class InstructionFileParser : IInstructionFileParser
         for (int i = 0; i < contentLines.Count; i++)
         {
             string contentLine = contentLines[i];
-            string contentToParse = contentLine.SplitHonouringQuotes([commentChar]).First();
+            string[] parts = contentLine.SplitHonouringQuotes([commentChar]);
+            string contentToParse = parts.First();
+            string remainder = parts.Length > 1 ? string.Join(commentChar, parts[1..]) : string.Empty;
 
             if (TryParseParameter(contentToParse, out ParameterInfo? info))
             {
                 InstructionParameter param = new(info.Value);
                 block.Parameters[info.Name] = param;
+                int lineStartIndex = i == 0 ? inlineContentStart : 0;
 
                 block.ParameterOccurrences.Add(new ParameterOccurrence(
                     info.Name,
                     param,
                     i, // Relative line number in block content
                     contentToParse, // The exact substring that was parsed
+                    lineStartIndex + info.StartIndex,
+                    info.Length,
                     info.PreNameSpacing,
                     info.PreValueSpacing,
                     info.PostValue
@@ -370,7 +377,7 @@ public partial class InstructionFileParser : IInstructionFileParser
     /// <exception cref="ArgumentException">Thrown if the line is invalid (e.g. a name without a value).</exception>
     private ParameterOccurrence ParseTopLevelParameter(string line, int lineNumber)
     {
-        if (!TryParseParameter(line.Trim(), out ParameterInfo? info))
+        if (!TryParseParameter(line, out ParameterInfo? info))
             throw new ArgumentException($"Invalid line: {line}");
 
         return new ParameterOccurrence(
@@ -378,6 +385,8 @@ public partial class InstructionFileParser : IInstructionFileParser
             new InstructionParameter(info.Value),
             lineNumber,
             line,
+            info.StartIndex,
+            info.Length,
             info.PreNameSpacing,
             info.PreValueSpacing,
             info.PostValue);
@@ -390,8 +399,14 @@ public partial class InstructionFileParser : IInstructionFileParser
     /// <param name="blockType">The type of the block.</param>
     /// <param name="blockName">The name of the block.</param>
     /// <param name="inlineContent">The inline content of the block.</param>
+    /// <param name="inlineContentStart">The start index of the inline content within <paramref name="line"/>.</param>
     /// <returns>True iff the line is the start of a block.</returns>
-    private bool IsBlockStart(string line, [NotNullWhen(true)] out string? blockType, [NotNullWhen(true)] out string? blockName, [NotNullWhen(true)] out string? inlineContent)
+    private bool IsBlockStart(
+        string line,
+        [NotNullWhen(true)] out string? blockType,
+        [NotNullWhen(true)] out string? blockName,
+        [NotNullWhen(true)] out string? inlineContent,
+        out int inlineContentStart)
     {
         // Replace everything after a comment character, if one is present.
         line = line.SplitHonouringQuotes([commentChar]).First();
@@ -407,12 +422,14 @@ public partial class InstructionFileParser : IInstructionFileParser
 
             // Group 3 captures any content within the parentheses on the same line.
             inlineContent = match.Groups[3].Value;
+            inlineContentStart = match.Groups[3].Index;
             return true;
         }
 
         blockType = null;
         blockName = null;
         inlineContent = null;
+        inlineContentStart = -1;
         return false;
     }
 
@@ -495,7 +512,7 @@ public partial class InstructionFileParser : IInstructionFileParser
         string preNameSpacing = line[..nameStart];
         string preValueSpacing = line[nameEnd..valueStart];
         string postValue = line[valueEnd..line.Length];
-        return new ParameterInfo(name, value, preNameSpacing, preValueSpacing, postValue);
+        return new ParameterInfo(name, value, preNameSpacing, preValueSpacing, postValue, 0, line.Length);
     }
 
     private void SetBlockParameterValue(Block block, string paramName, string value)
@@ -526,8 +543,10 @@ public partial class InstructionFileParser : IInstructionFileParser
             block.ParameterOccurrences.Add(new ParameterOccurrence(
                 paramName,
                 newParam,
-                insertPosition - 1, // -1 to account for block header
+                insertPosition,
                 newLine,
+                0,
+                newLine.Length,
                 "",  // No spacing before the name
                 " ", // One whitespace between the name and value
                 ""   // No spacing after the value
@@ -537,23 +556,7 @@ public partial class InstructionFileParser : IInstructionFileParser
         {
             // For existing parameters, update the last occurrence.
             ParameterOccurrence occurrence = block.ParameterOccurrences.Last(p => p.Name == paramName);
-            string oldParameterLine = occurrence.OriginalLine;
-
-            // Create the new parameter line string.
             occurrence.Value = new InstructionParameter(value);
-            string newValueString = occurrence.Value.ToInsFileString();
-            string newParameterLine = $"{occurrence.PreNameSpacing}{occurrence.Name}{occurrence.PreValueSpacing}{newValueString}{occurrence.PostValue}";
-
-            // Find the raw line containing the old parameter text and replace it.
-            // This is more robust than relying on indices, especially for inline blocks.
-            for (int i = 0; i < block.RawLines.Count; i++)
-            {
-                if (block.RawLines[i].Contains(oldParameterLine))
-                {
-                    block.RawLines[i] = block.RawLines[i].Replace(oldParameterLine, newParameterLine);
-                    break; // Assume the first match is the correct one.
-                }
-            }
         }
     }
 
@@ -588,6 +591,6 @@ public partial class InstructionFileParser : IInstructionFileParser
     {
         return items
             .OfType<ParameterOccurrence>()
-            .FirstOrDefault(p => p.Name == name);
+            .LastOrDefault(p => p.Name == name);
     }
 }

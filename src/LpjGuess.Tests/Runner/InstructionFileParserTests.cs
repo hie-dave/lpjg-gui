@@ -198,6 +198,35 @@ float_param 1.2";
     }
 
     [Fact]
+    public void GetToplevelParameter_ReturnsLastOccurrence()
+    {
+        string content = @"myparam 1
+myparam 3
+float_param 1.2";
+
+        var parser = new InstructionFileParser(content, string.Empty);
+
+        int value = parser.GetTopLevelParameter("myparam")!.AsInt();
+        Assert.Equal(3, value);
+    }
+
+    [Fact]
+    public void SetTopLevelParameter_OverwritesLastOccurrence()
+    {
+        string content = @"asdf 1
+asdf 3
+float_param 1.2";
+
+        var parser = new InstructionFileParser(content, string.Empty);
+
+        bool success = parser.SetTopLevelParameterValue("asdf", "14");
+        Assert.True(success);
+        Assert.Equal(@"asdf 1
+asdf 14
+float_param 1.2", parser.GenerateContent());
+    }
+
+    [Fact]
     public void Parse_C3GFile_ModifiesParametersCorrectly()
     {
         string content = @"group ""C3G"" (
@@ -428,6 +457,19 @@ sla 53.1
         string newContent = parser.GenerateContent();
 
         Assert.Equal("param \"test_param\" (str \"new_value\")", newContent);
+        Assert.DoesNotContain("old_value", newContent);
+    }
+
+    [Fact]
+    public void TestGenerateModifiedInlineBlockParameterWithDifferentLength()
+    {
+        string content = "param \"test_param\" (str \"old_value\")";
+        var parser = new InstructionFileParser(content, string.Empty);
+
+        parser.SetBlockParameterValue("param", "test_param", "str", "\"longer_new_value\"");
+        string newContent = parser.GenerateContent();
+
+        Assert.Equal("param \"test_param\" (str \"longer_new_value\")", newContent);
         Assert.DoesNotContain("old_value", newContent);
     }
 

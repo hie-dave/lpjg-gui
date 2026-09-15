@@ -65,11 +65,28 @@ public partial class InstructionFileParser
         public string ToInsFileString(string lineEnding)
         {
             StringBuilder sb = new();
-            foreach (string line in RawLines)
+            List<string> lines = [..RawLines];
+
+            foreach (IGrouping<int, ParameterOccurrence> lineOccurrences in ParameterOccurrences.GroupBy(p => p.LineNumber))
+            {
+                int lineNumber = lineOccurrences.Key;
+                if (lineNumber < 0 || lineNumber >= lines.Count)
+                    throw new InvalidOperationException($"Parameter found on invalid line {lineNumber} of block {Type}/{Name}.");
+
+                StringBuilder line = new StringBuilder(lines[lineNumber]);
+                foreach (ParameterOccurrence parameter in lineOccurrences.OrderByDescending(p => p.StartIndex))
+                    line.Remove(parameter.StartIndex, parameter.Length)
+                        .Insert(parameter.StartIndex, parameter.ToInsFileFragmentString());
+
+                lines[lineNumber] = line.ToString();
+            }
+
+            foreach (string line in lines)
             {
                 sb.Append(line);
                 sb.Append(lineEnding);
             }
+
             return sb.ToString();
         }
     }

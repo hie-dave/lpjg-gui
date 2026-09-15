@@ -33,6 +33,16 @@ public partial class InstructionFileParser
         public string PostValue { get; set; }
 
         /// <summary>
+        /// The start index of the parsed parameter fragment.
+        /// </summary>
+        public int StartIndex { get; set; }
+
+        /// <summary>
+        /// The length of the parsed parameter fragment.
+        /// </summary>
+        public int Length { get; set; }
+
+        /// <summary>
         /// Create a new <see cref="ParameterInfo"/> instance.
         /// </summary>
         /// <param name="name">The name of the parameter.</param>
@@ -40,13 +50,24 @@ public partial class InstructionFileParser
         /// <param name="preNameSpacing">Whitespace before the parameter's name.</param>
         /// <param name="preValueSpacing">Space between the parameter name and value.</param>
         /// <param name="postValue">Everything in the line after the parameter value.</param>
-        public ParameterInfo(string name, string value, string preNameSpacing, string preValueSpacing, string postValue)
+        /// <param name="startIndex">The start index of the parsed parameter fragment.</param>
+        /// <param name="length">The length of the parsed parameter fragment.</param>
+        public ParameterInfo(
+            string name,
+            string value,
+            string preNameSpacing,
+            string preValueSpacing,
+            string postValue,
+            int startIndex,
+            int length)
         {
             Name = name;
             Value = value;
             PreNameSpacing = preNameSpacing;
             PreValueSpacing = preValueSpacing;
             PostValue = postValue;
+            StartIndex = startIndex;
+            Length = length;
         }
     }
 }

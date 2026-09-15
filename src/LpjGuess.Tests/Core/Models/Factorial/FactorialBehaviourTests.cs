@@ -137,6 +137,34 @@ public class FactorialBehaviourTests
     }
 
     [Fact]
+    public void SimulationGenerate_ReEnablesSelectedPftAfterDisablingAllPfts()
+    {
+        using TempDirectory temp = TempDirectory.Create();
+        string insFile = Path.Combine(temp.AbsolutePath, "base.ins");
+        string target = Path.Combine(temp.AbsolutePath, "generated.ins");
+
+        File.WriteAllText(insFile, """
+            pft "A" (
+                include 0
+            )
+
+            pft "NFT" (
+
+             ! ////------------------------GENERAL
+             include 1
+             tree
+            )
+            """);
+
+        var simulation = new Simulation("baseline", []);
+        simulation.Generate(insFile, target, ["NFT"]);
+
+        var parser = InstructionFileParser.FromFile(target);
+        Assert.Equal(0, parser.GetBlockParameter("pft", "A", "include")!.AsInt());
+        Assert.Equal(1, parser.GetBlockParameter("pft", "NFT", "include")!.AsInt());
+    }
+
+    [Fact]
     public void ExperimentCreateBaseline_ReturnsExpectedDefaults()
     {
         Experiment experiment = Experiment.CreateBaseline();
