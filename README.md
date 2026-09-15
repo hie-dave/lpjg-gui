@@ -12,11 +12,11 @@ This repository contains:
 ## Overview
 
 Everything in this repository is built on top of the simulation runner, which
-allows the user to programmatically configure and run LPJ-GUESS simulations. For
-example, the user can run a set of instruction files, co-varying several
-parameters in some predefined way. Simulations can be executed locally or
-submitted to a PBS cluster. The simulation runner is exposed through a
-command-line interface, the GUI, and Python and R bindings.
+allows the user to programmatically configure and run LPJ-GUESS simulations. The
+user can run a set of instruction files, co-varying several parameters in some
+predefined way. Simulations can be executed locally or submitted to a PBS
+cluster. The simulation runner is exposed through a command-line interface, the
+GUI, and Python and R bindings.
 
 The GUI provides a way to interactively configure and run LPJ-GUESS simulations,
 view results, and generate plots. It is built with Gtk4 and libadwaita, and is
