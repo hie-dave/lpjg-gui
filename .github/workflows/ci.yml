@@ -24,7 +24,7 @@ jobs:
           - os: windows-latest
             rid: win-x64
             plat: win_amd64
-          - os: macos-14
+          - os: macos-15
             rid: osx-arm64
             plat: macosx_11_0_arm64
     runs-on: ${{ matrix.os }}
