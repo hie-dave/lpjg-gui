@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using CommandLine;
 using LpjGuess.Core.Parsers;
 using LpjGuess.Runner;
@@ -17,9 +17,10 @@ Parser parser = new(settings =>
     settings.AutoVersion = false;
 });
 
-ParserResult<object> parsed = parser.ParseArguments<RunOptions, VersionOptions>(parserArgs);
+ParserResult<object> parsed = parser.ParseArguments<RunOptions, NormaliseOptions, VersionOptions>(parserArgs);
 return await parsed.MapResult(
     (RunOptions options) => RunAsync(options),
+    (NormaliseOptions options) => NormaliseAsync(options),
     (VersionOptions _) => ShowVersionAsync(),
     errors => Task.FromResult(ParserExitCode(errors)));
 
@@ -146,7 +147,7 @@ static string[] NormaliseLegacyArguments(string[] arguments)
     if (arguments.Length == 1 && arguments[0] == "--version")
         return ["version"];
     if (arguments.Length > 0 && !arguments[0].StartsWith('-') &&
-        arguments[0] is not ("run" or "version"))
+        arguments[0] is not ("run" or "normalise" or "version"))
         return ["run", .. arguments];
     return arguments;
 }

@@ -46,5 +46,25 @@ public sealed class RunOptions
     }
 }
 
+[Verb("normalise", HelpText = "Normalise an LPJ-GUESS instruction file.")]
+public sealed class NormaliseOptions
+{
+    [Value(0, MetaName = "input.ins", Required = true,
+        HelpText = "Input instruction file.")]
+    public string InputFile { get; init; } = string.Empty;
+
+    [Value(1, MetaName = "output.ins", Required = true,
+        HelpText = "Output instruction file.")]
+    public string OutputFile { get; init; } = string.Empty;
+
+    public void Validate()
+    {
+        if (string.IsNullOrWhiteSpace(InputFile))
+            throw new ArgumentException("Specify an input instruction file.");
+        if (string.IsNullOrWhiteSpace(OutputFile))
+            throw new ArgumentException("Specify an output instruction file.");
+    }
+}
+
 [Verb("version", HelpText = "Show the machine protocol version.")]
 public sealed class VersionOptions;

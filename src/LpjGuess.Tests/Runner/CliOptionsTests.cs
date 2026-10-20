@@ -46,4 +46,30 @@ public class CliOptionsTests
         };
         Assert.Throws<ArgumentException>(() => options.Validate());
     }
+
+    [Fact]
+    public void NormaliseValidate_AcceptsInputAndOutputFiles()
+    {
+        NormaliseOptions options = new()
+        {
+            InputFile = "input.ins",
+            OutputFile = "output.ins"
+        };
+
+        options.Validate();
+    }
+
+    [Theory]
+    [InlineData("", "output.ins")]
+    [InlineData("input.ins", "")]
+    public void NormaliseValidate_RejectsMissingPaths(string input, string output)
+    {
+        NormaliseOptions options = new()
+        {
+            InputFile = input,
+            OutputFile = output
+        };
+
+        Assert.Throws<ArgumentException>(() => options.Validate());
+    }
 }
