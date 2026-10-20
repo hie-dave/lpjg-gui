@@ -62,10 +62,9 @@ def run_simulations(run_settings: RunSettings,
                     ins: list[str],
                     pfts: list[str],
                     progress_reporter: Optional[IProgressReporter] = None,
-                    output_helper: Optional[IOutputHelper] = None,
-                    cleanup_policy: ExistingOutputPolicy = ExistingOutputPolicy.CleanManaged) -> ExperimentResult:
+                    output_helper: Optional[IOutputHelper] = None) -> ExperimentResult:
     cfg = runner_config(run_settings, simulations, ins, pfts)
-    return ExperimentRunner().Run(cfg, progress_reporter, output_helper, cleanup_policy)
+    return ExperimentRunner().Run(cfg, progress_reporter, output_helper)
 
 class CustomOutputHelper(Object, IOutputHelper):
     """
