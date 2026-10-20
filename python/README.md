@@ -105,7 +105,8 @@ run_settings = RunSettings.Local(
     "nc",   # input module
     4,      # cpu count
     "job_name",
-    True)   # Whether to allow context switching of LPJ-Guess processes between CPUs (recommended: True)
+    True,   # Whether to allow context switching of LPJ-Guess processes between CPUs (recommended: True)
+    "clean_managed,prune_stale") # Optional existing-output policy (default: clean_managed)
 
 simulations = [
     simulation("nindiv_max_0_sla_26", [               # Run all .ins files with:
@@ -137,7 +138,7 @@ print(f"Error: {result.Error}")
 
 ## Existing Output Files
 
-LPJ-Guess outputs are written into per-simulation directories under the run
+LPJ-GUESS outputs are written into per-simulation directories under the run
 output directory. When an experiment is rerun, those directories may already
 contain files from an earlier run. This can make results ambiguous: a file left
 behind by an old configuration can look like it was produced by the latest run,
@@ -145,10 +146,11 @@ and outputs from simulations that have since been removed from the experiment
 can remain beside current results.
 
 The existing-output policy controls how the runner handles these cases before
-starting new jobs. `run_simulations(...)` accepts the policy as its final
-argument. The default is `ExistingOutputPolicy.CleanManaged`, which is usually
-the right choice for rerunning experiments because it deletes old files for
-simulations that are about to be regenerated/rerun.
+starting new jobs. `RunSettings(...)` accepts the policy as its final
+argument. The default when using the `RunSettings.Local()` helper is
+`ExistingOutputPolicy.CleanManaged`, which is usually the right choice for
+rerunning experiments because it deletes old files for simulations that are
+about to be regenerated/rerun.
 
 Policies are flags and may be combined with `|`:
 
@@ -163,10 +165,10 @@ For example, to clean rerun simulations and remove stale managed outputs:
 
 ```python
 policy = ExistingOutputPolicy.CleanManaged | ExistingOutputPolicy.PruneStale
+run_settings = RunSettings(..., policy)
 result = run_simulations(run_settings, simulations, ins, pfts,
                          ConsoleProgressReporter(),
-                         ConsoleOutputHelper(),
-                         policy)
+                         ConsoleOutputHelper())
 ```
 
 Managed outputs are outputs tracked by the runner's result catalog.
