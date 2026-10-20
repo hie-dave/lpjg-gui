@@ -17,7 +17,6 @@ public sealed class ExperimentRunner
     /// <param name="resolver">Optional path resolver. If null, a static resolver is used.</param>
     /// <param name="reporter">Optional progress reporter. If null, progress is ignored.</param>
     /// <param name="helper">Optional output helper. If null, output is ignored.</param>
-    /// <param name="cleanupPolicy">Policy for handling existing output.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>An <see cref="ExperimentResult"/> with summary information.</returns>
     public async Task<ExperimentResult> RunAsync(
@@ -25,7 +24,6 @@ public sealed class ExperimentRunner
         IPathResolver? resolver,
         IProgressReporter? reporter,
         IOutputHelper? helper,
-        ExistingOutputPolicy cleanupPolicy,
         CancellationToken ct)
     {
         // TODO: make simulation naming strategy configurable.
@@ -50,7 +48,7 @@ public sealed class ExperimentRunner
             resolver,
             generatorConfig,
             config.Settings.InputModule,
-            cleanupPolicy);
+            config.Settings.CleanPolicy);
         RunPlan plan = new RunPlan([batch], jobSettings);
 
         // Library calls must not write unsolicited messages to stdout: callers
@@ -65,14 +63,11 @@ public sealed class ExperimentRunner
     /// Asynchronously runs an experiment with default reporter/output.
     /// </summary>
     /// <param name="config">Configuration for the experiment.</param>
-    /// <param name="cleanupPolicy">Policy for handling existing output.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>An <see cref="ExperimentResult"/> with summary information.</returns>
     public Task<ExperimentResult> RunAsync(RunnerConfiguration config,
-                                           ExistingOutputPolicy cleanupPolicy,
                                            CancellationToken ct)
-        => RunAsync(config, resolver: null, reporter: null, helper: null,
-                    cleanupPolicy: cleanupPolicy, ct);
+        => RunAsync(config, resolver: null, reporter: null, helper: null, ct);
 
     /// <summary>
     /// Runs an experiment synchronously.
@@ -80,16 +75,14 @@ public sealed class ExperimentRunner
     /// <param name="config">Configuration for the experiment.</param>
     /// <param name="progress">Optional progress reporter.</param>
     /// <param name="output">Optional output helper.</param>
-    /// <param name="cleanupPolicy">Policy for handling existing output.</param>
     /// <returns>An <see cref="ExperimentResult"/> summarizing the run.</returns>
     public ExperimentResult Run(
         RunnerConfiguration config,
         IProgressReporter? progress = null,
-        IOutputHelper? output = null,
-        ExistingOutputPolicy cleanupPolicy = ExistingOutputPolicy.Preserve)
+        IOutputHelper? output = null)
     {
         using CancellationTokenSource cts = new CancellationTokenSource();
-        return RunAsync(config, resolver: null, progress, output, cleanupPolicy,
+        return RunAsync(config, resolver: null, progress, output,
                         cts.Token).GetAwaiter().GetResult();
     }
 }

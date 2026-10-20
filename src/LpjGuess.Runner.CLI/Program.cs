@@ -59,13 +59,35 @@ static Task<int> ShowVersionAsync()
     return Task.FromResult(0);
 }
 
+static Task<int> NormaliseAsync(NormaliseOptions options)
+{
+    try
+    {
+        options.Validate();
+        InstructionFileParser parser = InstructionFileParser.FromFile(options.InputFile);
+        string content = parser.GenerateContent();
+
+        string? directory = Path.GetDirectoryName(options.OutputFile);
+        if (!string.IsNullOrEmpty(directory))
+            Directory.CreateDirectory(directory);
+
+        File.WriteAllText(options.OutputFile, content);
+        return Task.FromResult(0);
+    }
+    catch (Exception error)
+    {
+        Console.Error.WriteLine(error.Message);
+        return Task.FromResult(1);
+    }
+}
+
 static async Task<int> RunTomlAsync(string inputFile)
 {
     RunnerConfiguration config = new TomlParser().Parse(inputFile);
     using CancellationTokenSource cancellation = CreateCancellationSource();
     ExperimentResult result = await new ExperimentRunner().RunAsync(
         config, resolver: null, new ConsoleProgressReporter(),
-        new OutputIgnorer(), config.Settings.CleanPolicy, cancellation.Token);
+        new OutputIgnorer(), cancellation.Token);
     Console.WriteLine();
     PrintSummary(result);
     return result.FailedJobs == 0 && result.Error is null ? 0 : 1;
@@ -89,7 +111,7 @@ static async Task<int> RunMachineAsync(string requestPath)
 
     using CancellationTokenSource cancellation = CreateCancellationSource();
     ExperimentResult result = await new ExperimentRunner().RunAsync(
-        config, resolver: null, events, events, policy, cancellation.Token);
+        config, resolver: null, events, events, cancellation.Token);
     CompletedData completed = new(
         result.TotalJobs, result.SuccessfulJobs, result.FailedJobs, result.Error,
         result.Results.Select(job => new JobResultDto(
