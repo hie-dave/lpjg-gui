@@ -12,6 +12,12 @@ runner itself, in addition to changes in the Python wrapper.
 
 ## [Unreleased]
 
+### [2.0.0]
+
+#### Updates
+
+- Add support for python 3.14.*
+
 ## [1.0.4] - 2026-06-24
 
 - RunSettings now requires a cleanup policy, which is a breaking change. Consult
