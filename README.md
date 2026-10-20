@@ -1,4 +1,4 @@
-# LPJ-Guess GUI
+# LPJ-GUESS GUI
 
 [![CI](https://github.com/hie-dave/lpjg-gui/actions/workflows/ci.yml/badge.svg)](https://github.com/hie-dave/lpjg-gui/actions/workflows/ci.yml)
 
@@ -121,9 +121,8 @@ present in the repository.
 
 ### Python Bindings
 
-The python bindings to the runner tool are currently the best way to run large
-numbers of simulations with non-trivial parameter combinations. The bindings
-may be built locally, or installed from PyPI:
+The python bindings to the simulation runner tool may be built locally, or
+installed from PyPI:
 
 ```bash
 pip install lpjguess-runner
@@ -134,13 +133,15 @@ For more detailed information, consult the
 
 ### R Bindings
 
-The R wrapper exposes the same experiment concepts as the Python wrapper,
-including named simulations, top-level and block parameter changes, output
-cleanup policies, progress and model-output callbacks, complete results,
-asynchronous polling, and cancellation. It communicates with the runner over a
-versioned machine interface. Building it from this source checkout requires the
-.NET 9 SDK; an R package with a prebuilt runner would require only the matching
-.NET 9 runtime.
+Tagged R package releases are attached to GitHub releases. **To install the
+latest published R package, open the [latest release
+page](https://github.com/hie-dave/lpjg-gui/releases/latest)** and follow the R
+installation instructions there. This also requires the [.NET 9
+runtime](https://dotnet.microsoft.com/download/dotnet/9.0) to be installed on
+the system.
+
+Alternatively, the R wrapper may be built from source. This requires the .NET 9
+SDK.
 
 Build and install it from a source checkout with:
 
@@ -149,11 +150,6 @@ make stage-r
 make docs-r
 R CMD INSTALL r
 ```
-
-Tagged R package releases are attached to GitHub releases. To install the
-latest published R package, open the
-[latest release page](https://github.com/hie-dave/lpjg-gui/releases/latest) and
-follow the R installation instructions there.
 
 For installation details, complete examples, local and PBS settings, parameter
 grid construction, output policies, callbacks, and asynchronous use, see the
