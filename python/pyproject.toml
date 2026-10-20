@@ -31,6 +31,7 @@ dependencies = [
 Homepage = "https://github.com/hie-dave/lpjg-gui"
 Source = "https://github.com/hie-dave/lpjg-gui"
 Issues = "https://github.com/hie-dave/lpjg-gui/issues"
+Changelog = "https://github.com/hie-dave/lpjg-gui/blob/master/python/CHANGELOG.md"
 
 [tool.setuptools]
 include-package-data = false
