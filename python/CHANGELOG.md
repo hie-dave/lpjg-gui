@@ -12,15 +12,15 @@ runner itself, in addition to changes in the Python wrapper.
 
 ## [Unreleased]
 
-### [2.0.0]
+## [2.0.0]
 
-#### Breaking Changes
+### Breaking Changes
 
 - Breaking change: removed the `cleanup_policy` argument from
   `run_simulations(...)`. The cleanup policy should now specified in the
   `RunSettings(...)` constructor instead
 
-#### Updates
+### Updates
 
 - Add support for python 3.14.*
 
