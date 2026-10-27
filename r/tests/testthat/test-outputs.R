@@ -1,3 +1,13 @@
+toml_test_string <- function(value) {
+    as.character(jsonlite::toJSON(value, auto_unbox = TRUE))
+}
+
+test_that("manifest fixture preserves Windows paths", {
+    path <- "C:\\Users\\Jane\\site.ins"
+    line <- paste0("base_ins = ", toml_test_string(path))
+    expect_equal(.toml_string(line, "base_ins"), path)
+})
+
 write_run_catalog <- function(root) {
     site_dir <- file.path(root, "site", "baseline")
     dir.create(site_dir, recursive = TRUE)
@@ -8,7 +18,7 @@ write_run_catalog <- function(root) {
     writeLines(c(
         'key = "baseline"',
         'name = "baseline"',
-        paste0('base_ins = "', file.path(root, "site.ins"), '"'),
+        paste0("base_ins = ", toml_test_string(file.path(root, "site.ins"))),
         'ins_file = "generated.ins"',
         'generated_at_utc = 2024-05-01T13:15:00Z',
         'pfts = ["TeBE"]',
@@ -181,7 +191,7 @@ test_that("instruction file names match runner directory naming", {
     writeLines(c(
         'key = "baseline"',
         'name = "baseline"',
-        paste0('base_ins = "', file.path(root, "My Site.ins"), '"'),
+        paste0("base_ins = ", toml_test_string(file.path(root, "My Site.ins"))),
         'ins_file = "generated.ins"',
         'generated_at_utc = 2024-05-01T13:15:00Z',
         'pfts = []',
@@ -228,7 +238,7 @@ test_that("read_output rejects ambiguous explicit simulation names", {
     writeLines(c(
         'key = "baseline-2"',
         'name = "baseline"',
-        paste0('base_ins = "', file.path(root, "site2.ins"), '"'),
+        paste0("base_ins = ", toml_test_string(file.path(root, "site2.ins"))),
         'ins_file = "generated.ins"',
         'generated_at_utc = 2024-05-01T13:15:00Z',
         'pfts = []',

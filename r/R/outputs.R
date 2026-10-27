@@ -227,10 +227,10 @@ list_simulations <- function(x) {
 }
 
 .output_mappings <- function(ins_file) {
-    if (!file.exists(ins_file)) return(setNames(character(), character()))
+    if (!file.exists(ins_file)) return(stats::setNames(character(), character()))
     lines <- readLines(ins_file, warn = FALSE)
     match <- grep("^\\s*file_[A-Za-z0-9_]+\\s+\"[^\"]+\"", lines, value = TRUE)
-    if (!length(match)) return(setNames(character(), character()))
+    if (!length(match)) return(stats::setNames(character(), character()))
     types <- sub("^\\s*(file_[A-Za-z0-9_]+)\\s+\"[^\"]+\".*$", "\\1", match)
     files <- sub("^\\s*file_[A-Za-z0-9_]+\\s+\"([^\"]+)\".*$", "\\1", match)
     stats::setNames(files, types)
