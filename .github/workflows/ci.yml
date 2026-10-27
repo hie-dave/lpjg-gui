@@ -70,7 +70,16 @@ jobs:
           if-no-files-found: error
 
   package-r:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            rid: linux-x64
+          - os: windows-latest
+            rid: win-x64
+          - os: macos-15
+            rid: osx-arm64
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -96,11 +105,26 @@ jobs:
           extra-packages: any::roxygen2
 
       - name: Build and test R package
+        shell: bash
         run: |
-          make stage-r TFM=net9.0
-          make docs-r
+          dotnet publish src/LpjGuess.Runner.CLI -c Release -f net9.0 -r ${{ matrix.rid }} --self-contained true -p:UseAppHost=true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o publish/r/${{ matrix.rid }}
+          mkdir -p r/inst/runner
+          cp publish/r/${{ matrix.rid }}/lpjg-experiment${{ matrix.rid == 'win-x64' && '.exe' || '' }} r/inst/runner/
+          printf 'inst/runner/%s\n' 'lpjg-experiment${{ matrix.rid == 'win-x64' && '.exe' || '' }}' > r/BinaryFiles
+          Rscript -e 'roxygen2::roxygenise("r", roclets = "rd")'
           R CMD build r
           R CMD check --no-manual lpjguessRunner_*.tar.gz
+
+      - name: Name archive for target platform
+        shell: bash
+        run: |
+          version="$(Rscript -e 'cat(read.dcf("r/DESCRIPTION")[1, "Version"])')"
+          mv "lpjguessRunner_${version}.tar.gz" "lpjguessRunner_${version}_${{ matrix.rid }}.tar.gz"
+
+      - name: Smoke test bundled runner without .NET on PATH
+        shell: bash
+        run: |
+          Rscript -e 'lib <- tempfile(); dir.create(lib); install.packages(Sys.glob("lpjguessRunner_*.tar.gz"), lib = lib, repos = NULL, type = "source"); .libPaths(c(lib, .libPaths())); runner <- lpjguessRunner:::.runner_command(); executable <- if (.Platform$OS.type == "windows") "lpjg-experiment.exe" else "lpjg-experiment"; stopifnot(basename(runner$command) == executable, length(runner$prefix) == 0L); old_path <- Sys.getenv("PATH"); Sys.setenv(PATH = dirname(runner$command), DOTNET_ROOT = ""); stopifnot(Sys.which("dotnet") == ""); result <- processx::run(runner$command, "version"); Sys.setenv(PATH = old_path); stopifnot(result$status == 0L, grepl("lpjg-experiment protocol", result$stdout))'
 
       - name: Validate R release tag
         if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/r/v') }}
@@ -116,7 +140,7 @@ jobs:
       - name: Upload R package artifact
         uses: actions/upload-artifact@v7
         with:
-          name: r-package
+          name: r-package-${{ matrix.rid }}
           path: lpjguessRunner_*.tar.gz
           if-no-files-found: error
 
@@ -152,39 +176,45 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Download R package artifact
+      - name: Download R package artifacts
         uses: actions/download-artifact@v8
         with:
-          name: r-package
+          pattern: r-package-*
           path: dist
+          merge-multiple: true
 
       - name: Write R release install notes
         shell: bash
         run: |
           # r/v0.2.0 tag -> 0.2.0 package version.
           version="${GITHUB_REF_NAME#r/v}"
-          asset="lpjguessRunner_${version}.tar.gz"
           tag_url="${GITHUB_REF_NAME//\//%2F}"
-          url="https://github.com/${GITHUB_REPOSITORY}/releases/download/${tag_url}/${asset}"
+          url="https://github.com/${GITHUB_REPOSITORY}/releases/download/${tag_url}"
           cat > dist/r-release-notes.md <<EOF
           ## Installation
 
-          Install this R package release directly from GitHub:
+          Download the archive for your computer. The runner is self-contained;
+          you do not need to install .NET or have administrator access.
+
+          - [Linux x64](${url}/lpjguessRunner_${version}_linux-x64.tar.gz)
+          - [Windows x64](${url}/lpjguessRunner_${version}_win-x64.tar.gz)
+          - [macOS arm64](${url}/lpjguessRunner_${version}_osx-arm64.tar.gz)
+
+          Install the downloaded archive in your user R library:
 
           \`\`\`r
-          install.packages(c("jsonlite", "processx"), repos = "https://cloud.r-project.org")
+          user_lib <- file.path(path.expand("~"), "R", "lpjguess-library")
+          dir.create(user_lib, recursive = TRUE, showWarnings = FALSE)
+          .libPaths(c(user_lib, .libPaths()))
+          install.packages(c("jsonlite", "processx"), lib = user_lib,
+                           repos = "https://cloud.r-project.org")
 
           install.packages(
-            "${url}",
+            "/path/to/downloaded/lpjguessRunner_${version}_<platform>.tar.gz",
+            lib = user_lib,
             repos = NULL,
             type = "source"
           )
-          \`\`\`
-
-          Or with pak:
-
-          \`\`\`r
-          pak::pkg_install("url::${url}")
           \`\`\`
           EOF
 

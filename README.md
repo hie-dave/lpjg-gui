@@ -133,20 +133,19 @@ For more detailed information, consult the
 
 ### R Bindings
 
-Tagged R package releases are attached to GitHub releases. **To install the
-latest published R package, open the [latest release
-page](https://github.com/hie-dave/lpjg-gui/releases/latest)** and follow the R
-installation instructions there. This also requires the [.NET 9
-runtime](https://dotnet.microsoft.com/download/dotnet/9.0) to be installed on
-the system.
+Tagged R package releases are attached to GitHub releases for Linux x64,
+Windows x64, and macOS arm64. **To install the latest published R package, open
+the [latest release page](https://github.com/hie-dave/lpjg-gui/releases/latest)**
+and choose the archive matching your platform. The runner is self-contained, so
+no .NET installation or administrator access is required to run it.
 
 Alternatively, the R wrapper may be built from source. This requires the .NET 9
-SDK.
+SDK on the build machine.
 
 Build and install it from a source checkout with:
 
 ```bash
-make stage-r
+make stage-r RID=linux-x64  # choose the RID for your target machine
 make docs-r
 R CMD INSTALL r
 ```

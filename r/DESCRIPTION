@@ -8,7 +8,7 @@ Description: Constructs and runs LPJ-GUESS simulation experiments through the
     versioned machine interface provided by lpjg-experiment.
 License: MIT + file LICENSE
 Encoding: UTF-8
-SystemRequirements: .NET 9 runtime
+SystemRequirements: Matching operating system and architecture for bundled runner
 Imports:
     jsonlite,
     processx

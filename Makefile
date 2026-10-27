@@ -11,8 +11,9 @@ BUILD_DIR := python/build
 EGG_INFO := python/lpjguess_runner.egg-info
 PY_CACHE := python/lpjguess_runner/__pycache__
 RIDS_ROOT := python/lpjguess_runner/rids
-R_PUBLISH_OUT := publish/r/portable
+R_PUBLISH_OUT := publish/r/$(RID)
 R_RUNNER_DIR := r/inst/runner
+R_RUNNER_FILE := lpjg-experiment$(if $(filter win-%,$(RID)),.exe)
 VENV ?= .venv
 
 WHEEL := $(DIST_DIR)/lpjguess_runner-*-none-$(PLAT).whl
@@ -24,7 +25,7 @@ build:
 
 clean: clean-py
 	dotnet clean $(SLN)
-	rm -rf coverage src/LpjGuess.Tests/TestResults publish $(R_RUNNER_DIR)
+	rm -rf coverage src/LpjGuess.Tests/TestResults publish $(R_RUNNER_DIR) r/BinaryFiles
 
 run:
 	dotnet run --project src/LpjGuess.Frontend
@@ -92,18 +93,19 @@ dev: clean-py publish stage wheel
 # -----------------------------
 
 clean-r:
-	rm -rf $(R_PUBLISH_OUT) $(R_RUNNER_DIR)
+	rm -rf $(R_PUBLISH_OUT) $(R_RUNNER_DIR) r/BinaryFiles
 	rm -rf r/man/*.Rd
 	rm lpjguessRunner_*.tar.gz
 
-# Portable framework-dependent CLI payload; the R package therefore requires
-# the .NET 9 runtime, but the same source package can be installed on any OS.
+# Self-contained single-file CLI payload. Build one R source archive per target RID.
 publish-r:
-	dotnet publish src/LpjGuess.Runner.CLI -c Release -f $(TFM) --self-contained false -o $(R_PUBLISH_OUT)
+	dotnet publish src/LpjGuess.Runner.CLI -c Release -f $(TFM) -r $(RID) --self-contained true -p:UseAppHost=true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o $(R_PUBLISH_OUT)
 
 stage-r: publish-r
+	rm -rf $(R_RUNNER_DIR)
 	mkdir -p $(R_RUNNER_DIR)
-	cp -v $(R_PUBLISH_OUT)/* $(R_RUNNER_DIR)/
+	cp $(R_PUBLISH_OUT)/$(R_RUNNER_FILE) $(R_RUNNER_DIR)/
+	printf '%s\n' 'inst/runner/$(R_RUNNER_FILE)' > r/BinaryFiles
 
 docs-r:
 	Rscript -e 'roxygen2::roxygenise("r", roclets = "rd")'

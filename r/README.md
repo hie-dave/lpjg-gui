@@ -12,13 +12,14 @@ GTK and libadwaita are not required for the R wrapper.
 
 - R
 - A working LPJ-GUESS executable
-- .NET 9 runtime for published package builds
+- A release archive matching your operating system and architecture
 - .NET 9 SDK when building the runner from source
 
 ## Installation
 
-Tagged R package releases are attached to GitHub releases as source archives
-with the published runner included. Open the
+Tagged R package releases are attached to GitHub releases as platform-specific
+source archives with a self-contained runner included. No .NET installation is
+needed to use a release archive. Open the
 [latest release page](https://github.com/hie-dave/lpjg-gui/releases/latest) and
 follow the R installation instructions there.
 
@@ -29,7 +30,7 @@ git clone --recurse-submodules git@github.com:hie-dave/lpjg-gui.git
 cd lpjg-gui
 
 Rscript -e 'install.packages(c("jsonlite", "processx"), repos="https://cloud.r-project.org")'
-make stage-r
+make stage-r RID=linux-x64  # choose the RID for your target machine
 R CMD INSTALL r
 ```
 

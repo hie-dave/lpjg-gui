@@ -3,7 +3,13 @@
     if (nzchar(configured)) {
         path <- normalizePath(configured, mustWork = TRUE)
     } else {
+        executable <- if (.Platform$OS.type == "windows") {
+            "lpjg-experiment.exe"
+        } else {
+            "lpjg-experiment"
+        }
         candidates <- c(
+            system.file("runner", executable, package = "lpjguessRunner"),
             system.file("runner", "lpjg-experiment.dll",
                         package = "lpjguessRunner"),
             file.path("src", "LpjGuess.Runner.CLI", "bin", "Debug", "net9.0",

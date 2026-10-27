@@ -9,6 +9,7 @@ python/lpjguess_runner/rids
 python/lpjguess_runner/__pycache__
 *.egg-info
 r/inst
+r/BinaryFiles
 r/man
 lpjguessRunner*.tar.gz
 r/example.r
