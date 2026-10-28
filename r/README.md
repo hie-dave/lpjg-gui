@@ -12,16 +12,19 @@ GTK and libadwaita are not required for the R wrapper.
 
 - R
 - A working LPJ-GUESS executable
-- A release archive matching your operating system and architecture
+- Linux x64, Windows x64, or macOS arm64 for release packages
 - .NET 9 SDK when building the runner from source
 
 ## Installation
 
-Tagged R package releases are attached to GitHub releases as platform-specific
-source archives with a self-contained runner included. No .NET installation is
-needed to use a release archive. Open the
-[latest release page](https://github.com/hie-dave/lpjg-gui/releases/latest) and
-follow the R installation instructions there.
+Open the [latest release page](https://github.com/hie-dave/lpjg-gui/releases/latest)
+and copy its installation block into R or RStudio. The block automatically
+selects the archive for your operating system and architecture, installs the R
+dependencies, and installs `lpjguessRunner` directly from GitHub into your usual
+R library. No manual download or .NET installation is needed: release packages
+include a self-contained runner.
+
+In subsequent R sessions, load the package with `library(lpjguessRunner)`.
 
 For development from a source checkout:
 

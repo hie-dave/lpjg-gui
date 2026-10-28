@@ -134,10 +134,11 @@ For more detailed information, consult the
 ### R Bindings
 
 Tagged R package releases are attached to GitHub releases for Linux x64,
-Windows x64, and macOS arm64. **To install the latest published R package, open
-the [latest release page](https://github.com/hie-dave/lpjg-gui/releases/latest)**
-and choose the archive matching your platform. The runner is self-contained, so
-no .NET installation or administrator access is required to run it.
+Windows x64, and macOS arm64. **Copy the installation block from the
+[latest release page](https://github.com/hie-dave/lpjg-gui/releases/latest) into
+R or RStudio.** It detects your platform and installs the package and its R
+dependencies directly, with no manual download. The runner is self-contained,
+so no .NET installation is required to run it.
 
 Alternatively, the R wrapper may be built from source. This requires the .NET 9
 SDK on the build machine.

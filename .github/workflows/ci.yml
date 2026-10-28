@@ -193,29 +193,34 @@ jobs:
           cat > dist/r-release-notes.md <<EOF
           ## Installation
 
-          Download the archive for your computer. The runner is self-contained;
-          you do not need to install .NET or have administrator access.
-
-          - [Linux x64](${url}/lpjguessRunner_${version}_linux-x64.tar.gz)
-          - [Windows x64](${url}/lpjguessRunner_${version}_win-x64.tar.gz)
-          - [macOS arm64](${url}/lpjguessRunner_${version}_osx-arm64.tar.gz)
-
-          Install the downloaded archive in your user R library:
+          Copy and paste this block into R or RStudio. It selects the archive
+          for your platform and installs the package and its R dependencies
+          directly from their download URLs.
 
           \`\`\`r
-          user_lib <- file.path(path.expand("~"), "R", "lpjguess-library")
-          dir.create(user_lib, recursive = TRUE, showWarnings = FALSE)
-          .libPaths(c(user_lib, .libPaths()))
-          install.packages(c("jsonlite", "processx"), lib = user_lib,
-                           repos = "https://cloud.r-project.org")
-
+          rid <- switch(paste(Sys.info()[["sysname"]], R.Version()[["arch"]], sep = "/"),
+            "Linux/x86_64" = "linux-x64",
+            "Windows/x86_64" = "win-x64",
+            "Darwin/aarch64" = "osx-arm64",
+            "Darwin/arm64" = "osx-arm64",
+            stop("Supported platforms: Linux x64, Windows x64, and macOS arm64.")
+          )
+          install.packages(c("jsonlite", "processx"), repos = "https://cloud.r-project.org")
           install.packages(
-            "/path/to/downloaded/lpjguessRunner_${version}_<platform>.tar.gz",
-            lib = user_lib,
+            paste0("${url}/lpjguessRunner_${version}_", rid, ".tar.gz"),
             repos = NULL,
             type = "source"
           )
           \`\`\`
+
+          The package is installed into your usual R library. In subsequent R
+          sessions, load it with \`library(lpjguessRunner)\`.
+
+          For manual installation, the archives are also available here:
+
+          - [Linux x64](${url}/lpjguessRunner_${version}_linux-x64.tar.gz)
+          - [Windows x64](${url}/lpjguessRunner_${version}_win-x64.tar.gz)
+          - [macOS arm64](${url}/lpjguessRunner_${version}_osx-arm64.tar.gz)
           EOF
 
       - name: Publish GitHub release
