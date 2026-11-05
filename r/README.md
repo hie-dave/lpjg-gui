@@ -81,6 +81,7 @@ logs <- read_logs(result)
 
 ## Documentation
 
+- `browseVignettes(package = "lpjguessRunner")`
 - `help(package = "lpjguessRunner")`
 
 ## User Guides
