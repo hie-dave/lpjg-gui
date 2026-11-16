@@ -121,7 +121,7 @@ file ""{blockName}"" (
                 column "ph" (source "pH")
             )
             npatch 1
-            """.Replace("\n", lineEnding);
+            """.ReplaceLineEndings(lineEnding);
         await File.WriteAllTextAsync(file, content);
 
         string absolute = Path.GetFullPath("../forcing/soil data !(sample$1.dat", temp.AbsolutePath);
