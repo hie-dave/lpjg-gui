@@ -259,7 +259,6 @@ public class CommandRegistryTests
     [Fact]
     public void CommandRegistry_ShouldBeSingleton()
     {
-        // Arrange & Act
         var instance1 = CommandRegistry.Instance;
         var instance2 = CommandRegistry.Instance;
 
@@ -284,7 +283,6 @@ public class CommandRegistryTests
             registry.Execute(command);
         }
 
-        // Act & Assert - Undo in reverse order
         for (int i = commands.Count - 1; i >= 0; i--)
         {
             registry.Undo();
@@ -302,7 +300,6 @@ public class CommandRegistryTests
     [Fact]
     public void MaxHistorySize_ShouldRemoveOldestCommandsWhenExceeded()
     {
-        // Arrange
         var registry = CommandRegistry.Instance;
         registry.ClearHistory(); // Start with a clean state
 
@@ -311,15 +308,12 @@ public class CommandRegistryTests
         const int commandCount = 105;
         var commands = new List<TestCommand>();
 
-        // Act - Execute more commands than the max history size
         for (int i = 0; i < commandCount; i++)
         {
             var command = new TestCommand($"Command {i}");
             commands.Add(command);
             registry.Execute(command);
         }
-
-        // Assert
 
         // 1. We should be able to undo the most recent commands
         for (int i = commandCount - 1; i >= commandCount - 10; i--)

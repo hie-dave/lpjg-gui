@@ -142,13 +142,11 @@ public class ModelOutputParserTests : IAsyncLifetime
     [Fact]
     public async Task ParseOutputFile_InvalidHeader_ThrowsException()
     {
-        // Arrange
         var content = @"Invalid Header Format
 151.25 -33.75 2000 1 2.5 10.2";
         var filePath = Path.Combine(_testDir.AbsolutePath, "lai.out");
         await File.WriteAllTextAsync(filePath, content);
 
-        // Act & Assert
         var ex = await Assert.ThrowsAsync<InvalidDataException>(
             () => _parser.ParseOutputFileAsync(filePath));
 
@@ -168,13 +166,11 @@ public class ModelOutputParserTests : IAsyncLifetime
     [Fact]
     public async Task ParseOutputFile_InvalidFileType_ThrowsException()
     {
-        // Arrange
         var content = @"Lon Lat Year Day LAI NPP
 151.25 -33.75 2000 1 invalid 10.2";
         var filePath = Path.Combine(_testDir.AbsolutePath, "laif");
         await File.WriteAllTextAsync(filePath, content);
 
-        // Act & Assert
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(
             () => _parser.ParseOutputFileAsync(filePath));
 
@@ -184,13 +180,11 @@ public class ModelOutputParserTests : IAsyncLifetime
     [Fact]
     public async Task ParseOutputFile_InvalidDataRow_ThrowsException()
     {
-        // Arrange
         var content = @"Lon Lat Year Day LAI NPP
 151.25 -33.75 2000 1 invalid 10.2";
         var filePath = Path.Combine(_testDir.AbsolutePath, "lai.out");
         await File.WriteAllTextAsync(filePath, content);
 
-        // Act & Assert
         var ex = await Assert.ThrowsAsync<InvalidDataException>(
             () => _parser.ParseOutputFileAsync(filePath));
 
@@ -210,11 +204,9 @@ public class ModelOutputParserTests : IAsyncLifetime
     [Fact]
     public async Task ParseOutputFile_EmptyFile_ThrowsException()
     {
-        // Arrange
         var filePath = Path.Combine(_testDir.AbsolutePath, "lai.out");
         await File.WriteAllTextAsync(filePath, string.Empty);
 
-        // Act & Assert
         var ex = await Assert.ThrowsAsync<InvalidDataException>(
             () => _parser.ParseOutputFileAsync(filePath));
 
@@ -234,11 +226,9 @@ public class ModelOutputParserTests : IAsyncLifetime
     [Fact]
     public async Task ParseOutputFile_UnknownFileKind_ThrowsException()
     {
-        // Arrange
         var filePath = Path.Combine(_testDir.AbsolutePath, "empty.out");
         await File.WriteAllTextAsync(filePath, string.Empty);
 
-        // Act & Assert
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(
             () => _parser.ParseOutputFileAsync(filePath));
 
