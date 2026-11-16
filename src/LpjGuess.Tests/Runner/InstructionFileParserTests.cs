@@ -495,4 +495,40 @@ sla 53.1
         string? str = parser.GetBlockParameter("param", "test", "str")?.UnquotedString;
         Assert.Equal("asdf", str);
     }
+
+    [Fact]
+    public void Parse_FileBlock_OnlyExposesParametersInItsOwnScope()
+    {
+        const string content = """
+            file "soildata" (
+                path "soil.dat"
+                column "orgc" (source "orgC")
+                column "cn" (
+                    source "CN"
+                )
+                max_distance 50
+            )
+            """;
+        InstructionFileParser parser = new(content, "memory.ins");
+
+        Assert.Equal(new[] { "path", "max_distance" }, parser.GetBlockParameterNames("file", "soildata"));
+        Assert.Null(parser.GetBlockParameter("file", "soildata", "source"));
+        Assert.Equal(content, parser.GenerateContent());
+
+        parser.SetBlockParameterValue("file", "soildata", "path", "\"replacement.dat\"");
+        Assert.Equal(content.Replace("\"soil.dat\"", "\"replacement.dat\""), parser.GenerateContent());
+    }
+
+    [Theory]
+    [InlineData("soil(map.dat")]
+    [InlineData("soil)map.dat")]
+    public void Parse_FileBlock_IgnoresParenthesesInQuotedPaths(string path)
+    {
+        string content = $"file \"soildata\" (path \"{path}\")\nnpatch 1";
+        InstructionFileParser parser = new(content, "memory.ins");
+
+        Assert.Equal(path, parser.GetBlockParameterValue("file", "soildata", "path"));
+        Assert.Equal("1", parser.GetTopLevelParameterValue("npatch"));
+        Assert.Equal(content, parser.GenerateContent());
+    }
 }

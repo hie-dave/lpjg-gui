@@ -316,10 +316,7 @@ public partial class InstructionFileParser : IInstructionFileParser
         List<string> contentLines = [inlineContent];
 
         // First, check parenthesis balance on the inline content.
-        int parenthesesCount = 1;
-        string lineToCheck = inlineContent.SplitHonouringQuotes([commentChar]).First();
-        parenthesesCount += lineToCheck.Count(c => c == '(');
-        parenthesesCount -= lineToCheck.Count(c => c == ')');
+        int parenthesesCount = 1 + GetParenthesisBalance(inlineContent);
 
         // Gather subsequent lines until the block is closed.
         int currentBlockLine = lineNumber;
@@ -329,20 +326,23 @@ public partial class InstructionFileParser : IInstructionFileParser
             block.RawLines.Add(blockLine);
             contentLines.Add(blockLine);
 
-            lineToCheck = blockLine.SplitHonouringQuotes([commentChar]).First();
-            parenthesesCount += lineToCheck.Count(c => c == '(');
-            parenthesesCount -= lineToCheck.Count(c => c == ')');
+            parenthesesCount += GetParenthesisBalance(blockLine);
         }
 
-        // Parse all the parameters from the collected content.
+        // Only parameters directly within this block belong to it. Preserve
+        // nested blocks verbatim rather than interpreting their parameters here.
+        int depth = 1;
         for (int i = 0; i < contentLines.Count; i++)
         {
             string contentLine = contentLines[i];
             string[] parts = contentLine.SplitHonouringQuotes([commentChar]);
             string contentToParse = parts.First();
-            string remainder = parts.Length > 1 ? string.Join(commentChar, parts[1..]) : string.Empty;
+            bool isDirectContent = depth == 1;
+            depth += GetParenthesisBalance(contentLine);
 
-            if (TryParseParameter(contentToParse, out ParameterInfo? info))
+            if (isDirectContent
+                && !IsBlockStart(contentToParse, out _, out _, out _, out _)
+                && TryParseParameter(contentToParse, out ParameterInfo? info))
             {
                 InstructionParameter param = new(info.Value);
                 block.Parameters[info.Name] = param;
@@ -366,6 +366,30 @@ public partial class InstructionFileParser : IInstructionFileParser
         lineNumber = block.EndLine;
 
         return block;
+    }
+
+    /// <summary>
+    /// Count block delimiters, ignoring parentheses in strings and comments.
+    /// </summary>
+    private static int GetParenthesisBalance(string line)
+    {
+        int balance = 0;
+        bool inQuotes = false;
+        foreach (char c in line)
+        {
+            if (c == '"')
+                inQuotes = !inQuotes;
+            else if (!inQuotes)
+            {
+                if (c == commentChar)
+                    break;
+                if (c == '(')
+                    balance++;
+                else if (c == ')')
+                    balance--;
+            }
+        }
+        return balance;
     }
 
     /// <summary>
