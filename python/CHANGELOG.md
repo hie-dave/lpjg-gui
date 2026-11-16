@@ -12,7 +12,13 @@ runner itself, in addition to changes in the Python wrapper.
 
 ## [Unreleased]
 
-## [2.0.0]
+## [2.1.0] - 2026-11-16
+
+### Updates
+
+- Add support for file blocks in instruction files
+
+## [2.0.0] - 2026-10-20
 
 ### Breaking Changes
 
