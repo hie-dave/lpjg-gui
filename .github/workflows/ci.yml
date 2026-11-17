@@ -206,7 +206,7 @@ jobs:
             stop("Supported platforms: Linux x64, Windows x64, and macOS arm64.")
           )
           install.packages(c("jsonlite", "processx"), repos = "https://cloud.r-project.org")
-          install.packages(
+          utils::install.packages(
             paste0("${url}/lpjguessRunner_${version}_", rid, ".tar.gz"),
             repos = NULL,
             type = "source"
