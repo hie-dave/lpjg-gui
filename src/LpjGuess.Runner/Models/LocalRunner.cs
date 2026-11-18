@@ -83,7 +83,12 @@ public class LocalRunner : IMonitorableRunner
         await Task.WhenAll(stdoutTask, stderrTask);
 
         if (proc.ExitCode != 0 && !ct.IsCancellationRequested)
-            throw new ModelException($"{job.Name}: execution failed with exit code: {proc.ExitCode}", output.ToString());
+        {
+            string context = "Model execution failed";
+            if (Environment.OSVersion.Platform == PlatformID.Win32NT && (uint)proc.ExitCode == 0xC0000139)
+                context = $"{context}: STATUS_ENTRYPOINT_NOT_FOUND (possibly you are running in anaconda but the model was built with incompatible DLL versions).";
+            throw new ModelException(context, job.Name, proc.ExitCode, output.ToString());
+        }
 
         if (ct.IsCancellationRequested && !proc.HasExited)
             proc.Kill();

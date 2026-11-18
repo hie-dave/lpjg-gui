@@ -74,7 +74,9 @@ public class PbsRunner : IRunner
 
 				if (proc.ExitCode != 0)
 					throw new ModelException(
-						$"{job.Name}: Failed to run submit script for .ins file '{job.InsFile}' with exit code {proc.ExitCode}.",
+						$"Failed to run submit script for .ins file '{job.InsFile}'",
+						job.Name,
+						proc.ExitCode,
 						$"stdout:\n{stdout}\nstderr:\n{stderr}");
 			}
 		}
