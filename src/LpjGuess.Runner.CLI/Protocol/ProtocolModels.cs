@@ -34,6 +34,7 @@ public sealed record RunSettingsDto
     public string JobName { get; init; } = "lpjguess";
     public bool FullFactorial { get; init; } = true;
     public bool UseCpuAffinity { get; init; } = true;
+    public IReadOnlyDictionary<string, string?>? EnvironmentOverrides { get; init; }
 }
 
 public sealed record SimulationDto

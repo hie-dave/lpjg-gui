@@ -59,6 +59,15 @@ public class LocalRunner : IMonitorableRunner
         proc.StartInfo.UseShellExecute = false;
         proc.StartInfo.CreateNoWindow = true;
 
+        // Override configured environment variables in the child process.
+        foreach ((string name, string? value) in settings.EnvironmentOverrides)
+        {
+            if (value is null)
+                proc.StartInfo.Environment.Remove(name);
+            else
+                proc.StartInfo.Environment[name] = value;
+        }
+
         proc.Start();
 
         using CpuAffinity cpu = CpuAffinity.Acquire();

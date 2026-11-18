@@ -18,16 +18,27 @@ public class LocalRunnerConfiguration : IRunnerConfiguration
     public bool UseCpuAffinity { get; set; }
 
     /// <summary>
+    /// Environment variables to override when running the model. `null` values remove the variable.
+    /// </summary>
+    public IReadOnlyDictionary<string, string?> EnvironmentOverrides { get; }
+
+    /// <summary>
     /// Create a new <see cref="LocalRunnerConfiguration"/> instance.
     /// </summary>
     /// <param name="guessPath">Path to the lpj-guess executable.</param>
     /// <param name="name">Name of the runner.</param>
     /// <param name="useCpuAffinity">Whether to use CPU affinity to pin the process to a single CPU.</param>
-    public LocalRunnerConfiguration(string guessPath, string name, bool useCpuAffinity)
+    /// <param name="environmentOverrides">Environment variables to override when running the model.</param>
+    public LocalRunnerConfiguration(
+        string guessPath,
+        string name,
+        bool useCpuAffinity,
+        IReadOnlyDictionary<string, string?> environmentOverrides)
     {
         GuessPath = guessPath;
         Name = name;
         UseCpuAffinity = useCpuAffinity;
+        EnvironmentOverrides = environmentOverrides;
     }
 
     /// <summary>
@@ -38,6 +49,7 @@ public class LocalRunnerConfiguration : IRunnerConfiguration
         GuessPath = "";
         Name = "";
         UseCpuAffinity = true;
+        EnvironmentOverrides = new Dictionary<string, string?>();
     }
 
     /// <inheritdoc />

@@ -173,3 +173,28 @@ totals. Results retain the names and order of the handles (`results$first`,
 `results$second`). Use `progress = NULL` to suppress the display or supply a
 callback to receive aggregate progress. Interrupting the wait requests
 cancellation of all runs. Runner failures are raised after all runs finish.
+
+## Environment Overrides
+
+For most users, this will not be necessary, but if needed, you can override
+environment variables for the LPJ-GUESS runner using `environment_overrides()`.
+For example, to set `LD_LIBRARY_PATH`:
+
+```{r}
+overrides <- environment_overrides(list(LD_LIBRARY_PATH = "/my/libs"))
+settings <- run_settings_local(
+    guess_path = "/path/to/guess",
+    output_directory = "runs",
+    environment_overrides = list(
+        PATH = "/opt/model/bin:/usr/bin:/bin",
+        LD_LIBRARY_PATH = NULL,
+        EMPTY_VAR = ""
+    )
+)
+```
+
+The child process will inherit the current environment, with any variables in
+`environment_overrides` taking precedence. Setting a variable to `NULL` removes
+it from the environment, while setting it to an empty string sets it to an empty
+value. Variables not mentioned in `environment_overrides` are inherited
+unchanged from the parent process.

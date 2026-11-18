@@ -172,6 +172,34 @@ result = run_simulations(run_settings, simulations, ins, pfts,
 
 Managed outputs are outputs tracked by the runner's result catalog.
 
+## Overriding Environment Variables
+
+The model is launched as a subprocess, and therefore inherits the environment of
+the Python process. Normally this is fine, but if, for example, the python code
+is being run in a conda environment and the model was not built within that
+environment, the model may fail at runtime due to missing/conflicting libraries.
+
+In that case, the `RunSettings` constructor accepts an optional dictionary of
+environment variable overrides. This dictionary maps environment variable names
+(strings) to their values (string or `None`). If a variable is set to `None`, it
+will be removed from the subprocess environment. If a variable is set to a
+string, the subprocess environment will contain that variable with the given
+value.
+
+```python
+
+run_settings = RunSettings.Local(
+    "/path/to/guess/executable",
+    "/path/to/output/directory",
+    "nc",
+    4,
+    "job_name",
+    True,
+    "clean_managed,prune_stale",
+    { "PATH": "/bin:/usr/local/bin" })
+
+```
+
 ## Customising Progress and Output
 
 The default helpers `ConsoleProgressReporter()` and `ConsoleOutputHelper()`

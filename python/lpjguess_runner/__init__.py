@@ -3,7 +3,8 @@
 from ._loader import ensure_loaded
 ensure_loaded() # TODO: lazy loading?
 
-from System import Array, Object
+from System import String, Array, Object
+from System.Collections.Generic import Dictionary
 from typing import Optional
 
 # Import selected .NET symbols
@@ -24,7 +25,7 @@ __all__ = [
     "TopLevelParameter", "BlockParameter",
     "ConsoleProgressReporter", "ConsoleOutputHelper",
     # Python helpers
-    "simulation", "runner_config", "run_simulations",
+    "simulation", "environment_overrides", "runner_config", "run_simulations",
     # Python base classes for extensibility
     "CustomOutputHelper", "CustomProgressReporter",
 ]
@@ -38,6 +39,19 @@ __all__ = [
 #
 def simulation(name: str, factors: list[IFactor]) -> Simulation:
     return Simulation(name, Array[IFactor](factors))
+
+#
+# Create a dictionary of environment variable overrides.
+#
+# @param values: Optional dictionary of environment variable overrides.
+# @return Dictionary[String, String] of environment variable overrides.
+#
+def environment_overrides(values: dict[str, Optional[str]]) -> Dictionary[String, String]:
+    result = Dictionary[String, String]()
+    if values is not None:
+        for key, value in values.items():
+            result[key] = value
+    return result
 
 #
 # Create a RunnerConfiguration object.

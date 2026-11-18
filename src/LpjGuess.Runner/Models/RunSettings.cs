@@ -104,6 +104,11 @@ public class RunSettings
 	public ExistingOutputPolicy CleanPolicy { get; private init; }
 
 	/// <summary>
+	/// Environment variables to override when running the model. `null` values remove the variable.
+	/// </summary>
+	public IReadOnlyDictionary<string, string?> EnvironmentOverrides { get; private init; }
+
+	/// <summary>
 	/// Create a new <see cref="RunSettings"/> instance.
 	/// </summary>
 	/// <param name="dryRun">Iff true, the run directory will be created but the job will not be submitted.</param>
@@ -122,6 +127,7 @@ public class RunSettings
 	/// <param name="fullFactorial">Iff true, all combinations of parameters will be run.</param>
 	/// <param name="useCpuAffinity">True to use CPU affinity to pin each LPJ-Guess process to a single CPU (ie prevent context-switching of a guess process between CPUs). No effect on MacOS. Recommended: true.</param>
 	/// <param name="cleanPolicy">Policy controlling how existing outputs should be handled.</param>
+	/// <param name="environmentOverrides">Environment variables to override when running the model. `null` values remove the variable.</param>
 	public RunSettings(bool dryRun,
 					   bool runLocal,
 					   string outputDirectory,
@@ -137,7 +143,8 @@ public class RunSettings
 					   string jobName,
 					   bool fullFactorial,
 					   bool useCpuAffinity,
-					   ExistingOutputPolicy cleanPolicy)
+					   ExistingOutputPolicy cleanPolicy,
+					   IReadOnlyDictionary<string, string?> environmentOverrides)
 	{
 		DryRun = dryRun;
 		RunLocal = runLocal;
@@ -156,6 +163,7 @@ public class RunSettings
 		Parameters = [];
 		UseCpuAffinity = useCpuAffinity;
 		CleanPolicy = cleanPolicy;
+		EnvironmentOverrides = environmentOverrides;
 	}
 
 	/// <summary>
@@ -172,6 +180,7 @@ public class RunSettings
 	/// true.
 	/// </param>
 	/// <param name="cleanPolicy">Policy controlling how existing outputs should be handled.</param>
+	/// <param name="environmentOverrides">Environment variables to override when running the model. `null` values remove the variable.</param>
 	/// <remarks>
 	/// This is only necessary/useful because this class contains parameters for
 	/// both local and remote runs, some of which are useful only in remote runs
@@ -187,7 +196,8 @@ public class RunSettings
 		ushort cpuCount,
 		string jobName,
 		bool useCpuAffinity,
-		string cleanPolicy = "clean_managed")
+		string cleanPolicy = "clean_managed",
+		IReadOnlyDictionary<string, string?>? environmentOverrides = null)
 	{
 		return new RunSettings(
 			false,
@@ -205,7 +215,8 @@ public class RunSettings
 			jobName,
 			true,
 			useCpuAffinity,
-			ExistingOutputPolicyExtensions.ParseExistingOutputPolicy(cleanPolicy)
+			ExistingOutputPolicyExtensions.ParseExistingOutputPolicy(cleanPolicy),
+			environmentOverrides ?? new Dictionary<string, string?>()
 		);
 	}
 
@@ -227,7 +238,13 @@ public class RunSettings
     private IRunnerConfiguration CreateRunConfig()
     {
         if (RunLocal)
-			return new LocalRunnerConfiguration(GuessPath, "Local Runner", UseCpuAffinity);
+		{
+			return new LocalRunnerConfiguration(
+				GuessPath,
+				"Local Runner",
+				UseCpuAffinity,
+				EnvironmentOverrides);
+		}
 
 		// Not "local" - assume PBS job submission.
 		return new PbsRunnerConfiguration(

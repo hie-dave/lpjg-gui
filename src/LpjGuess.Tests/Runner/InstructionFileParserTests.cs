@@ -211,6 +211,35 @@ float_param 1.2";
     }
 
     [Fact]
+    public async Task SetTopLevelParameter_OverwritesLastImportedOccurrence()
+    {
+        using TempDirectory temp = TempDirectory.Create();
+
+        const string childContent = @"xyz 2
+xyz 3
+";
+        const string content = @"xyz 1
+import ""child.ins""
+";
+        string child = Path.Combine(temp.AbsolutePath, "child.ins");
+        await File.WriteAllTextAsync(child, childContent);
+
+        string file = Path.Combine(temp.AbsolutePath, "file.ins");
+        await File.WriteAllTextAsync(file, content);
+
+        var parser = InstructionFileParser.FromFile(file);
+        parser.SetTopLevelParameterValue("xyz", "4");
+
+        const string expected = @"xyz 1
+xyz 2
+xyz 4
+";
+
+        string actual = parser.GenerateContent();
+        Assert.Equal(expected, actual);
+    }
+
+    [Fact]
     public void SetTopLevelParameter_OverwritesLastOccurrence()
     {
         string content = @"asdf 1

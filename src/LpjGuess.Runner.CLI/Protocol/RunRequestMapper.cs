@@ -25,12 +25,16 @@ public static class RunRequestMapper
 
         ExistingOutputPolicy policy = ExistingOutputPolicyExtensions.ParseExistingOutputPolicy(
             request.ExistingOutputPolicy ?? "clean_managed");
+
+        IReadOnlyDictionary<string, string?> overrides = input.EnvironmentOverrides
+            ?? new Dictionary<string, string?>();
+
         RunSettings settings = new(
             input.DryRun, input.RunLocal, input.OutputDirectory, input.GuessPath,
             input.InputModule, input.CpuCount, walltime, input.Memory,
             input.Queue, input.Project, input.EmailNotifications,
             input.EmailAddress, input.JobName, input.FullFactorial,
-            input.UseCpuAffinity, policy);
+            input.UseCpuAffinity, policy, overrides);
 
         List<ISimulation> simulations = request.Simulations.Select(MapSimulation).ToList();
         return (new RunnerConfiguration(settings, simulations,

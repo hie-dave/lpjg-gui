@@ -86,6 +86,19 @@ internal class TomlParser : IParser
 		    cleanupPolicy = "preserve";
 		ExistingOutputPolicy policy = ExistingOutputPolicyExtensions.ParseExistingOutputPolicy(cleanupPolicy);
 
+		// No support at present for env overrides via legacy TOML input.
+		IReadOnlyDictionary<string, string?> overrides;
+		if (model.ContainsKey("environment_overrides"))
+		{
+			if (model["environment_overrides"] is not TomlTable table)
+				throw new InvalidOperationException("environment_overrides must be a table");
+			overrides = ParseTable(table);
+		}
+		else
+		{
+			overrides = new Dictionary<string, string?>();
+		}
+
 		return new RunSettings(
 			dryRun,
 			runLocal,
@@ -102,7 +115,8 @@ internal class TomlParser : IParser
 			jobName,
 			fullFactorial,
 			useCpuAffinity,
-			policy
+			policy,
+			overrides
 		);
 	}
 
@@ -153,6 +167,21 @@ internal class TomlParser : IParser
 		else
 			combinations = factors.SelectMany(f => f.Select(f => new List<IFactor> { f })).ToList();
 		return combinations.Select(c => new Simulation(c)).ToList();
+	}
+
+	private IReadOnlyDictionary<string, string?> ParseTable(TomlTable table)
+	{
+		Dictionary<string, string?> data = new();
+		foreach (string key in table.Keys)
+		{
+			if (table[key] is string value)
+				data[key] = value;
+			else if (table[key] is null)
+				data[key] = null;
+			else
+				throw new InvalidOperationException($"Value for {key} must be a string or null");
+		}
+		return data;
 	}
 
 	private IReadOnlyDictionary<string, List<string>> ParseTableOfArrays(TomlTable table, string keyName)

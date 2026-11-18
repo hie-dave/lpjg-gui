@@ -265,7 +265,10 @@ public class PreferencesPresenter : IPreferencesPresenter
 	{
 		// fixme
 		if (name == "Local")
-			return new LocalRunnerConfiguration("", "New Local Runner", true);
+		{
+			IReadOnlyDictionary<string, string?> overrides = new Dictionary<string, string?>();
+			return new LocalRunnerConfiguration("", "New Local Runner", true, overrides);
+		}
 		throw new InvalidOperationException($"Unknown runner type: {name}");
 	}
 }

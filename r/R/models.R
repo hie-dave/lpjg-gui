@@ -10,6 +10,28 @@
     as.character(value)
 }
 
+.normalise_environment_overrides <- function(values) {
+    if (is.null(values)) return(NULL)
+    if (!is.list(values)) {
+        stop("environment_overrides must be a named list", call. = FALSE)
+    }
+    if (!length(values)) return(NULL)
+    keys <- names(values)
+    if (is.null(keys) || anyNA(keys) || any(!nzchar(keys)) ||
+        anyDuplicated(keys)) {
+        stop("environment_overrides must have unique, non-empty names",
+             call. = FALSE)
+    }
+    lapply(values, function(value) {
+        if (is.null(value)) return(NULL)
+        if (!is.character(value) || length(value) != 1L || is.na(value)) {
+            stop("environment_overrides values must be single strings or NULL",
+                 call. = FALSE)
+        }
+        unname(as.character(value))
+    })
+}
+
 #' Create LPJ-GUESS runner settings
 #'
 #' `run_settings()` constructs the execution settings passed to the simulation
@@ -37,6 +59,13 @@
 #'   changes by position where supported by the runner.
 #' @param use_cpu_affinity Logical flag controlling whether local worker
 #'   processes are pinned to CPU cores.
+#' @param environment_overrides Optional named list of environment variables
+#'   for local model processes. A single string replaces a variable, including
+#'   `""` to set an empty value; `NULL` removes a variable. For example,
+#'   `list(PATH = "/opt/model/bin", LD_LIBRARY_PATH = NULL)`. Variables not
+#'   listed retain their inherited values. `NULL` or `list()` supplies no
+#'   overrides. Use `overrides["NAME"] <- list(NULL)` to add a removal to an
+#'   existing list; assigning `overrides$NAME <- NULL` deletes the list entry.
 #'
 #' @return A named list suitable for the `settings` argument of
 #'   [run_simulations()] or [run_simulations_async()].
@@ -65,8 +94,11 @@ run_settings <- function(guess_path, output_directory, input_module = "nc",
                          walltime = "01:00:00", memory = 1L,
                          queue = "local", project = "local",
                          email_notifications = FALSE, email_address = "",
-                         full_factorial = TRUE, use_cpu_affinity = TRUE) {
-    list(
+                         full_factorial = TRUE, use_cpu_affinity = TRUE,
+                         environment_overrides = NULL) {
+    environment_overrides <- .normalise_environment_overrides(
+        environment_overrides)
+    settings <- list(
         dry_run = isTRUE(dry_run), run_local = isTRUE(run_local),
         output_directory = normalizePath(output_directory, mustWork = FALSE),
         guess_path = normalizePath(guess_path, mustWork = FALSE),
@@ -77,6 +109,10 @@ run_settings <- function(guess_path, output_directory, input_module = "nc",
         full_factorial = isTRUE(full_factorial),
         use_cpu_affinity = isTRUE(use_cpu_affinity)
     )
+    if (!is.null(environment_overrides)) {
+        settings$environment_overrides <- environment_overrides
+    }
+    settings
 }
 
 #' @rdname run_settings
@@ -84,9 +120,11 @@ run_settings <- function(guess_path, output_directory, input_module = "nc",
 run_settings_local <- function(guess_path, output_directory,
                                input_module = "nc", cpu_count = 1L,
                                job_name = "lpjguess",
-                               use_cpu_affinity = TRUE) {
+                               use_cpu_affinity = TRUE,
+                               environment_overrides = NULL) {
     run_settings(guess_path, output_directory, input_module, cpu_count,
-                 job_name, use_cpu_affinity = use_cpu_affinity)
+                 job_name, use_cpu_affinity = use_cpu_affinity,
+                 environment_overrides = environment_overrides)
 }
 
 #' Describe a top-level LPJ-GUESS parameter change
