@@ -12,6 +12,13 @@ runner itself, in addition to changes in the Python wrapper.
 
 ## [Unreleased]
 
+## [2.1.1] - 2026-11-18
+
+### Updates
+
+- Add support for overriding model process environment variables. If needed,
+  use `Runner.Local(..., environment_overrides({"PATH": "/my/path"}))`.
+
 ## [2.1.0] - 2026-11-16
 
 ### Updates
