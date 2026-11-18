@@ -26,6 +26,8 @@ build:
 clean: clean-py
 	dotnet clean $(SLN)
 	rm -rf coverage src/LpjGuess.Tests/TestResults publish $(R_RUNNER_DIR) r/BinaryFiles
+	rm -rf $(DIST_DIR) $(BUILD_DIR) $(EGG_INFO) $(PY_CACHE)
+	rm -rf lpjguessRunner_*.tar.gz
 
 run:
 	dotnet run --project src/LpjGuess.Frontend
