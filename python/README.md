@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/hie-dave/lpjg-gui/actions/workflows/ci.yml/badge.svg)](https://github.com/hie-dave/lpjg-gui/actions/workflows/ci.yml)
 
-Python wrapper for LPJ-Guess experiment runner (via pythonnet + .NET 9)
+Python wrapper for LPJ-GUESS simulation runner (via pythonnet + .NET 9)
 
 ## Build
 
@@ -109,13 +109,13 @@ run_settings = RunSettings.Local(
     "clean_managed,prune_stale") # Optional existing-output policy (default: clean_managed)
 
 simulations = [
-    simulation("nindiv_max_0_sla_26", [               # Run all .ins files with:
-        TopLevelParameter("wateruptake", "wcont"),    # - wateruptake = wcont
-        BlockParameter("pft", "MRS", "sla", "26")     # - SLA of "MRS" pft set to 26
+    simulation("depth_soil_150_sla_26", [         # Run all .ins files with:
+        TopLevelParameter("depth_soil", "1500"),  # - soil depth = 1.5m
+        BlockParameter("pft", "MRS", "sla", "26") # - SLA of "MRS" pft set to 26
     ]),
-    simulation("nindiv_max_1_sla_39", [               # Run all .ins files with:
-        TopLevelParameter("wateruptake", "rootdist"), # - wateruptake = rootdist
-        BlockParameter("pft", "MRS", "sla", "39")     # - SLA of "MRS" pft set to 39
+    simulation("depth_soil_300_sla_39", [         # Run all .ins files with:
+        TopLevelParameter("depth_soil", "3000"),  # - soil depth = 3m
+        BlockParameter("pft", "MRS", "sla", "39") # - SLA of "MRS" pft set to 39
     ]),
 ]
 
