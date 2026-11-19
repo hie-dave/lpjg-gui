@@ -12,3 +12,9 @@
 ### Updates
 
 - Support for file blocks in instruction files
+
+## [lpjguessRunner 0.9.0] - 2026-10-27
+
+### Fixes
+
+- Parameter changes now override the last occurrence of that parameter
